@@ -10,6 +10,15 @@
       ]
     },
     {
+      "source": "/llms.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
+    },
+    {
       "source": "/.well-known/apple-app-site-association",
       "headers": [
         {
@@ -35,6 +44,60 @@
           "value": "staging.inhockia.com"
         }
       ],
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(admin|dashboard|settings|messages|inbox|home|pulse|search|discover|discovery|notifications|complete-profile|onboarding|auth|email-action|verify-email|forgot-password|reset-password|offline|saved|shortlist|shortlists|signin)(/.*)?",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(l|invite|investors)/(.+)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(members|players|brands)/id/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/opportunities/(applications|new)(/.*)?",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/opportunities/([^/]+)/applicants(/.*)?",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/signup/email(/.*)?",
       "headers": [
         {
           "key": "X-Robots-Tag",
@@ -76,6 +139,10 @@
     {
       "source": "/manifest.json",
       "destination": "/manifest.json"
+    },
+    {
+      "source": "/llms.txt",
+      "destination": "/llms.txt"
     },
     {
       "source": "/api/sitemap.xml",
@@ -126,8 +193,20 @@
       "destination": "/api/page-head?path=/signup"
     },
     {
+      "source": "/signup/email",
+      "destination": "/api/page-head?path=/signup/email"
+    },
+    {
+      "source": "/signin",
+      "destination": "/api/page-head?path=/signin"
+    },
+    {
       "source": "/juniors-waitlist",
       "destination": "/api/page-head?path=/juniors-waitlist"
+    },
+    {
+      "source": "/:key([0-9a-f]{32}).txt",
+      "destination": "/api/indexnow-key?key=:key"
     },
     {
       "source": "/:path((?!assets/).*)",

@@ -6,6 +6,13 @@
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<!-- Interface languages (Spanish localization, 2026-11-16): lets the web view
+	     report Spanish to the app when the device prefers it. -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>es</string>
+	</array>
 	<key>CFBundleDisplayName</key>
         <string>Hockia</string>
 	<key>CFBundleExecutable</key>

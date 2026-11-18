@@ -25,6 +25,8 @@ import {
   type WorkPermitStatus,
 } from '@/lib/workPermits'
 import { cn } from '@/lib/utils'
+import { tProfileEdit, useProfileEditT } from '@/i18n/ns/profileEdit'
+import { countryLabel as countryLabelText } from '@/i18n/countryNames'
 
 /**
  * Passports & permits (Figma D2.3 395:563). Up to two passports (the two
@@ -49,11 +51,13 @@ type PermitDraftRow = {
   expires_on: string
 }
 
-const DRAFT_ERROR: Record<WorkPermitDraftError, string> = {
-  country_required: 'Choose the country.',
-  type_invalid: 'Choose visa, work permit or residency.',
-  date_invalid: 'One of the dates doesn’t look right.',
-  dates_out_of_order: 'The start date is after the expiry date.',
+function draftErrorText(code: WorkPermitDraftError): string {
+  switch (code) {
+    case 'country_required': return tProfileEdit('passports.errors.countryRequired')
+    case 'type_invalid': return tProfileEdit('passports.errors.typeInvalid')
+    case 'date_invalid': return tProfileEdit('passports.errors.dateInvalid')
+    case 'dates_out_of_order': return tProfileEdit('passports.errors.datesOutOfOrder')
+  }
 }
 
 const input = 'h-[50px] w-full rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30'
@@ -65,15 +69,14 @@ const newKey = () => `new-${++draftSeq}`
 function permitSubtitle(type: string | null, validFrom: string, expiresOn: string, status: WorkPermitStatus): string {
   const until = formatMonth(expiresOn)
   const from = formatMonth(validFrom)
-  const when = status === 'expired'
-    ? `expired ${until ?? ''}`.trim()
-    : status === 'not_yet_valid' && from
-      ? `from ${from}${until ? ` until ${until}` : ''}`
-      : until ? `until ${until}` : 'no expiry'
-  return `${workPermitTypeLabel(type)} · ${when}`
+  const label = workPermitTypeLabel(type)
+  if (status === 'expired') return until ? tProfileEdit('passports.subtitle.expired', { type: label, until }) : tProfileEdit('passports.subtitle.expiredNoDate', { type: label })
+  if (status === 'not_yet_valid' && from) return until ? tProfileEdit('passports.subtitle.fromUntil', { type: label, from, until }) : tProfileEdit('passports.subtitle.from', { type: label, from })
+  return until ? tProfileEdit('passports.subtitle.until', { type: label, until }) : tProfileEdit('passports.subtitle.noExpiry', { type: label })
 }
 
 export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScreenProps) {
+  const t = useProfileEditT()
   const { user, profile, refreshProfile } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const { countries, getCountryById } = useCountries()
@@ -115,16 +118,16 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
       })), countries),
       fullMatchCount: 0, highlightCount: 0, age: null,
     }, { viewer: 'recruiter', today }).find((f) => f.id === 'passport')
-    if (!fact) return { main: 'Not given', lines: [] as string[] }
-    return { main: fact.missing ? 'Passport not given' : [fact.value, fact.detail].filter(Boolean).join(' · '), lines: fact.extraLines.map((l) => l.text) }
-  }, [heldPassports, draftPermits, countries, today])
+    if (!fact) return { main: t('passports.screen.previewNotGiven'), lines: [] as string[] }
+    return { main: fact.missing ? t('passports.screen.previewPassportNotGiven') : [fact.value, fact.detail].filter(Boolean).join(' · '), lines: fact.extraLines.map((l) => l.text) }
+  }, [heldPassports, draftPermits, countries, today, t])
 
   if (!profile || !user) return null
 
   const hasEu = passportInputs(heldPassports, countries).some((p) => p.isEu)
   const countryLabel = (id: number | null) => {
     const c = getCountryById(id)
-    return c ? [c.flag_emoji, c.common_name || c.name].filter(Boolean).join(' ') : 'Choose a country'
+    return c ? [c.flag_emoji, countryLabelText(c.common_name || c.name)].filter(Boolean).join(' ') : t('passports.screen.chooseCountry')
   }
   const attention = draftPermits
     .map((p) => ({ p, status: workPermitStatus(p.valid_from || null, p.expires_on || null, today) }))
@@ -133,9 +136,9 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
   const openPassport = (index: 0 | 1) => { setPassportPick(passports[index]); setSheetError(null); setPassportSheet(index) }
   const applyPassport = () => {
     if (passportSheet === null) return
-    if (!passportPick) { setSheetError('Choose a country.'); return }
+    if (!passportPick) { setSheetError(t('passports.errors.chooseCountry')); return }
     const other = passports[passportSheet === 0 ? 1 : 0]
-    if (other === passportPick) { setSheetError('You already added this passport.'); return }
+    if (other === passportPick) { setSheetError(t('passports.errors.duplicate')); return }
     const next = [...passports]
     next[passportSheet] = passportPick
     setPassports(next)
@@ -166,7 +169,7 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
   }
   const permitError = permitSheet && permitErrorCode
     && validateWorkPermitDraft({ country_id: permitSheet.country_id, type: permitSheet.type, valid_from: permitSheet.valid_from, expires_on: permitSheet.expires_on }) === permitErrorCode
-    ? DRAFT_ERROR[permitErrorCode]
+    ? draftErrorText(permitErrorCode)
     : null
   const removePermit = () => {
     if (!permitSheet) return
@@ -211,11 +214,11 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
         // Permits change the completeness score server-side.
         if (removed.length || draftPermits.some((p) => !p.id)) void refreshProfile()
       }
-      addToast('Passports & permits saved', 'success')
+      addToast(t('passports.screen.saved'), 'success')
       onDone()
     } catch (err) {
       logger.error('[PassportsPermitsScreen] save failed', err)
-      setError('Could not save everything. Please try again.')
+      setError(t('passports.errors.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -223,42 +226,42 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
 
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28" data-testid="passports-permits-screen">
-      <CancelSaveBar title="Passports & permits" onCancel={onDone} onSave={() => void save()} saving={saving} />
+      <CancelSaveBar title={t('passports.screen.title')} onCancel={onDone} onSave={() => void save()} saving={saving} />
 
       <div className="flex flex-col gap-3 px-5 pt-3">
-        <p className="text-[15px] leading-[21px] text-ink-2">Clubs abroad check this before anything else. Add every passport you hold and any visa or work permit that lets you play somewhere.</p>
+        <p className="text-[15px] leading-[21px] text-ink-2">{t('passports.screen.intro')}</p>
 
         {attention.map(({ p, status }) => {
           const c = getCountryById(p.country_id)
           return (
             <PermitAttentionRow
               key={p.key}
-              permit={{ id: p.key, type: p.type ?? '', expires_on: p.expires_on || null, status, countryName: c ? c.common_name || c.name : 'Your', flag: c?.flag_emoji ?? null }}
+              permit={{ id: p.key, type: p.type ?? '', expires_on: p.expires_on || null, status, countryName: c ? countryLabelText(c.common_name || c.name) : t('passports.screen.unknownCountry'), flag: c?.flag_emoji ?? null }}
               onClick={() => openPermit(p)}
             />
           )
         })}
 
-        <SectionLabel>Passports</SectionLabel>
+        <SectionLabel>{t('passports.screen.passports')}</SectionLabel>
         <GroupCard>
           {heldPassports.map((id, i) => (
             <button key={id} type="button" onClick={() => openPassport(i as 0 | 1)} className="flex items-center gap-2.5 py-[13px] text-left">
               <span className="min-w-0 flex-1 truncate text-[16px] leading-[21px] text-ink-1">{countryLabel(id)}</span>
-              <span className="text-row text-ink-2">{i === 0 ? 'Primary' : 'Second'}</span>
+              <span className="text-row text-ink-2">{i === 0 ? t('passports.screen.primary') : t('passports.screen.second')}</span>
               <ChevronRight className="h-4 w-4 text-ink-4" strokeWidth={2} />
             </button>
           ))}
           {heldPassports.length < 2 && (
             <button type="button" onClick={() => openPassport(heldPassports.length as 0 | 1)} className="py-[13px] text-left text-[16px] font-semibold leading-[21px] text-hockia-primary">
-              {heldPassports.length === 0 ? '+ Add a passport' : '+ Add another passport'}
+              {heldPassports.length === 0 ? t('passports.screen.addFirst') : t('passports.screen.addAnother')}
             </button>
           )}
         </GroupCard>
         <p className="text-secondary text-ink-2">
-          {hasEu ? 'Your EU passport opens every opportunity that needs one.' : 'If you also hold a European passport, add it: it opens every opportunity that needs one.'}
+          {hasEu ? t('passports.screen.euHeld') : t('passports.screen.euMissing')}
         </p>
 
-        <SectionLabel>Visas &amp; work permits</SectionLabel>
+        <SectionLabel>{t('passports.screen.permitsLabel')}</SectionLabel>
         {work.available ? (
           <GroupCard>
             {draftPermits.map((p) => {
@@ -275,18 +278,18 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
               )
             })}
             {draftPermits.length < MAX_WORK_PERMITS ? (
-              <button type="button" onClick={() => openPermit(null)} className="py-[13px] text-left text-[16px] font-semibold leading-[21px] text-hockia-primary">+ Add a visa or permit</button>
+              <button type="button" onClick={() => openPermit(null)} className="py-[13px] text-left text-[16px] font-semibold leading-[21px] text-hockia-primary">{t('passports.screen.addPermit')}</button>
             ) : (
-              <p className="py-[13px] text-secondary text-ink-2">You’ve added the maximum of {MAX_WORK_PERMITS}.</p>
+              <p className="py-[13px] text-secondary text-ink-2">{t('passports.screen.maxReached', { max: MAX_WORK_PERMITS })}</p>
             )}
           </GroupCard>
         ) : (
-          <GroupCard><p className="py-[13px] text-secondary text-ink-2">Visas &amp; permits aren’t available yet.</p></GroupCard>
+          <GroupCard><p className="py-[13px] text-secondary text-ink-2">{t('passports.screen.unavailable')}</p></GroupCard>
         )}
-        <p className="text-secondary text-ink-2">For example a UK visa or a working-holiday visa for Australia. Add the country and, if it has one, when it expires.</p>
+        <p className="text-secondary text-ink-2">{t('passports.screen.permitsHint')}</p>
 
         <div className="flex flex-col gap-1.5 rounded-card border border-line p-3.5" data-testid="clubs-see-preview">
-          <p className="text-caption text-ink-2">On your profile, clubs will see</p>
+          <p className="text-caption text-ink-2">{t('passports.screen.previewLabel')}</p>
           <p className="text-row font-semibold text-ink-1">{preview.main}</p>
           {preview.lines.map((l) => <p key={l} className="text-secondary text-ink-1">{l}</p>)}
         </div>
@@ -294,50 +297,50 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
         {error && <p role="alert" className="text-secondary text-red-600">{error}</p>}
       </div>
 
-      <BottomSheet open={passportSheet !== null} onClose={() => setPassportSheet(null)} ariaLabel="Passport">
+      <BottomSheet open={passportSheet !== null} onClose={() => setPassportSheet(null)} ariaLabel={t('passports.sheet.passportAria')}>
         <div className="flex flex-col gap-4 px-5 pb-3 pt-1">
-          <h2 className="text-title text-ink-1">{passportSheet === 1 ? 'Second passport' : 'Passport'}</h2>
-          <CountrySelect appearance="field" label="Country" value={passportPick} onChange={(id) => { setPassportPick(id); setSheetError(null) }} />
-          <p className="text-caption text-ink-3">Whether it’s an EU passport is worked out from the country.</p>
+          <h2 className="text-title text-ink-1">{passportSheet === 1 ? t('passports.sheet.secondTitle') : t('passports.sheet.passportTitle')}</h2>
+          <CountrySelect appearance="field" label={t('passports.sheet.country')} value={passportPick} onChange={(id) => { setPassportPick(id); setSheetError(null) }} />
+          <p className="text-caption text-ink-3">{t('passports.sheet.euHint')}</p>
           {sheetError && <p role="alert" className="text-secondary text-red-600">{sheetError}</p>}
-          <button type="button" onClick={applyPassport} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">Done</button>
+          <button type="button" onClick={applyPassport} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">{t('passports.sheet.done')}</button>
           {passportSheet !== null && passports[passportSheet] !== null && (
-            <button type="button" onClick={removePassport} className="h-11 text-row font-semibold text-red-600">Remove passport</button>
+            <button type="button" onClick={removePassport} className="h-11 text-row font-semibold text-red-600">{t('passports.sheet.removePassport')}</button>
           )}
         </div>
       </BottomSheet>
 
-      <BottomSheet open={permitSheet !== null} onClose={() => setPermitSheet(null)} ariaLabel="Visa or permit">
+      <BottomSheet open={permitSheet !== null} onClose={() => setPermitSheet(null)} ariaLabel={t('passports.sheet.permitAria')}>
         {permitSheet && (
           <div className="flex flex-col gap-4 px-5 pb-3 pt-1">
-            <h2 className="text-title text-ink-1">{permitSheet.id || draftPermits.some((p) => p.key === permitSheet.key) ? 'Visa or permit' : 'Add a visa or permit'}</h2>
-            <CountrySelect appearance="field" label="Country" value={permitSheet.country_id} onChange={(id) => setPermitSheet({ ...permitSheet, country_id: id })} />
+            <h2 className="text-title text-ink-1">{permitSheet.id || draftPermits.some((p) => p.key === permitSheet.key) ? t('passports.sheet.permitTitle') : t('passports.sheet.addPermitTitle')}</h2>
+            <CountrySelect appearance="field" label={t('passports.sheet.permitCountry')} value={permitSheet.country_id} onChange={(id) => setPermitSheet({ ...permitSheet, country_id: id })} />
             <div>
-              <span className={fieldLabel}>Type</span>
-              <div className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped" role="radiogroup" aria-label="Type">
-                {WORK_PERMIT_TYPES.map((t) => (
-                  <button key={t} type="button" role="radio" aria-checked={permitSheet.type === t} onClick={() => setPermitSheet({ ...permitSheet, type: t })} className="flex h-[50px] w-full items-center justify-between px-4 text-left text-body text-ink-1">
-                    {WORK_PERMIT_TYPE_LABELS[t]}
-                    <span className={cn('h-5 w-5 rounded-full border-2', permitSheet.type === t ? 'border-hockia-primary bg-hockia-primary shadow-[inset_0_0_0_3px_white]' : 'border-line')} />
+              <span className={fieldLabel}>{t('passports.sheet.type')}</span>
+              <div className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped" role="radiogroup" aria-label={t('passports.sheet.type')}>
+                {WORK_PERMIT_TYPES.map((type) => (
+                  <button key={type} type="button" role="radio" aria-checked={permitSheet.type === type} onClick={() => setPermitSheet({ ...permitSheet, type })} className="flex h-[50px] w-full items-center justify-between px-4 text-left text-body text-ink-1">
+                    {WORK_PERMIT_TYPE_LABELS[type]}
+                    <span className={cn('h-5 w-5 rounded-full border-2', permitSheet.type === type ? 'border-hockia-primary bg-hockia-primary shadow-[inset_0_0_0_3px_white]' : 'border-line')} />
                   </button>
                 ))}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="permit-from" className={fieldLabel}>Start date (optional)</label>
+                <label htmlFor="permit-from" className={fieldLabel}>{t('passports.sheet.startDate')}</label>
                 <input id="permit-from" type="date" value={permitSheet.valid_from} onChange={(e) => setPermitSheet({ ...permitSheet, valid_from: e.target.value })} className={input} />
               </div>
               <div>
-                <label htmlFor="permit-expiry" className={fieldLabel}>Expires (optional)</label>
+                <label htmlFor="permit-expiry" className={fieldLabel}>{t('passports.sheet.expires')}</label>
                 <input id="permit-expiry" type="date" value={permitSheet.expires_on} onChange={(e) => setPermitSheet({ ...permitSheet, expires_on: e.target.value })} className={input} />
               </div>
             </div>
-            <p className="text-caption text-ink-3">No expiry date means it doesn’t expire. Clubs and recruiting coaches see valid visas and permits; nobody else does.</p>
+            <p className="text-caption text-ink-3">{t('passports.sheet.permitHint')}</p>
             {permitError && <p role="alert" className="text-secondary text-red-600">{permitError}</p>}
-            <button type="button" onClick={applyPermit} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">Done</button>
+            <button type="button" onClick={applyPermit} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">{t('passports.sheet.permitDone')}</button>
             {draftPermits.some((p) => p.key === permitSheet.key) && (
-              <button type="button" onClick={removePermit} className="h-11 text-row font-semibold text-red-600">Remove</button>
+              <button type="button" onClick={removePermit} className="h-11 text-row font-semibold text-red-600">{t('passports.sheet.remove')}</button>
             )}
           </div>
         )}

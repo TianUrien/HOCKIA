@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { useAuthStore } from '@/lib/auth'
+import { currentLanguage } from '@/i18n'
 import { allDone, applyStep, streamNlSearch, type AiStep } from '@/lib/aiStream'
 import { chatKind, chatSummary, chatTitle, forStorage, loadChat, saveChat } from '@/lib/aiChats'
 
@@ -12,7 +13,9 @@ import { chatKind, chatSummary, chatTitle, forStorage, loadChat, saveChat } from
  *  function's getUser() returns 401. Refreshing + retrying self-heals it instead
  *  of surfacing "I had trouble connecting". A genuinely dead session (refresh
  *  throws) falls through to the normal error path. */
-export async function invokeNlSearch(body: Record<string, unknown>) {
+export async function invokeNlSearch(input: Record<string, unknown>) {
+  // The member's interface language: Hockia AI answers in it.
+  const body = { ...input, locale: currentLanguage() }
   let res = await supabase.functions.invoke('nl-search', { body })
   const status = (res.error as { context?: Response } | null)?.context?.status
   if (res.error && status === 401) {
@@ -135,7 +138,7 @@ export interface AppliedSearch {
 }
 
 export type SuggestedActionIntent =
-  | { type: 'free_text'; query: string }
+  | { type: 'free_text'; query: string; /** The prompt in the member's language, for their bubble. */ shown?: string }
   | { type: 'retry' }
   | { type: 'clear' }
   /** Client-only (Hockia AI v2): leave the chat for an in-app route. The
@@ -255,6 +258,8 @@ export interface DiscoverChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
+  /** A prepared prompt as the member read it (their language). `content` is the English prompt Hockia AI reads. */
+  shown?: string
   results?: DiscoverResult[]
   parsed_filters?: ParsedFilters | null
   total?: number
@@ -325,7 +330,7 @@ interface DiscoverChatStore {
   finishReveal: () => void
   /** `extra` joins the request body, e.g. a role question: { mode: 'role_ask', opportunity_id } (handoff B4).
    *  `meta.roleLabel` names the role in the chat history row ("Lazio Hockey"). */
-  sendMessage: (query: string, extra?: Record<string, unknown>, meta?: { roleLabel?: string }) => Promise<void>
+  sendMessage: (query: string, extra?: Record<string, unknown>, meta?: { roleLabel?: string; shown?: string }) => Promise<void>
   /** Saved conversation this chat writes to (handoff C2 history); null until the first answer. */
   chatId: string | null
   /** The role a role chat is about, for its history row. */
@@ -400,7 +405,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
   setGoalOn: (goalOn) => set({ goalOn }),
   finishReveal: () => set({ revealId: null }),
 
-  sendMessage: async (query: string, extra?: Record<string, unknown>, meta?: { roleLabel?: string }) => {
+  sendMessage: async (query: string, extra?: Record<string, unknown>, meta?: { roleLabel?: string; shown?: string }) => {
     const trimmed = query.trim()
     if (!trimmed || get().isPending) return
     if (meta?.roleLabel && !get().messages.length) set({ chatRoleLabel: meta.roleLabel })
@@ -409,6 +414,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
       id: crypto.randomUUID(),
       role: 'user',
       content: trimmed,
+      ...(meta?.shown && meta.shown.trim() !== trimmed ? { shown: meta.shown.trim() } : {}),
       timestamp: Date.now(),
       status: 'complete',
     }
@@ -535,11 +541,13 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
     // Sentry-feeding logger so we see it in dashboards.
     switch (intent.type) {
       case 'free_text':
-        get().sendMessage(intent.query)
+        if (intent.shown && intent.shown !== intent.query) get().sendMessage(intent.query, undefined, { shown: intent.shown })
+        else get().sendMessage(intent.query)
         return
       case 'retry': {
         const lastUserMsg = [...get().messages].reverse().find(m => m.role === 'user')
-        if (lastUserMsg) get().sendMessage(lastUserMsg.content)
+        if (lastUserMsg?.shown) get().sendMessage(lastUserMsg.content, undefined, { shown: lastUserMsg.shown })
+        else if (lastUserMsg) get().sendMessage(lastUserMsg.content)
         return
       }
       case 'clear':

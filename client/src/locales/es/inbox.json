@@ -1,0 +1,684 @@
+{
+  "chat": {
+    "loadingEarlier": "Cargando mensajes anteriores...",
+    "bubble": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "dayLabel": "{{weekday}}, {{date}}",
+      "copied": "Copiado",
+      "copyFailed": "No se pudo copiar el mensaje.",
+      "sheet": {
+        "copy": "Copiar",
+        "edit": "Editar",
+        "delete": "Eliminar"
+      },
+      "menu": {
+        "copy": "Copiar",
+        "edit": "Editar",
+        "delete": "Eliminar"
+      },
+      "newMarker": "Nuevos",
+      "deleted": "Mensaje eliminado",
+      "editLabel": "Editar mensaje",
+      "editCancel": "Cancelar",
+      "editSave": "Guardar",
+      "options": "Opciones del mensaje",
+      "edited": "editado",
+      "retry": "Reintentar el envío del mensaje",
+      "deleteFailed": "Eliminar el mensaje no enviado",
+      "deleteConfirm": {
+        "label": "¿Eliminar este mensaje?",
+        "title": "¿Eliminar este mensaje?",
+        "bodyBoth": "\"Eliminar para ambas partes\" lo quita para ti y para la otra persona. \"Eliminar para mí\" lo quita solo de tu chat.",
+        "bodyEveryone": "El mensaje se elimina para ti y para la otra persona. No se puede deshacer.",
+        "bodyMe": "El mensaje se elimina solo de tu chat. La otra persona lo conserva.",
+        "deleting": "Eliminando…",
+        "deletingMine": "Eliminando…",
+        "forEveryone": "Eliminar para ambas partes",
+        "delete": "Eliminar",
+        "forMe": "Eliminar para mí",
+        "cancel": "Cancelar"
+      }
+    },
+    "newMessagesToast_one": "{{label}} mensaje nuevo",
+    "newMessagesToast_other": "{{label}} mensajes nuevos",
+    "newMessagesToast_many": "{{label}} mensajes nuevos",
+    "empty": "Todavía no hay mensajes. Envía un saludo.",
+    "header": {
+      "backDefault": "Mensajes",
+      "memberFallback": "Integrante de Hockia",
+      "viewProfile": "Ver perfil",
+      "markUnread": "Marcar como no leída",
+      "block": "Bloquear a {{name}}",
+      "deleteConversation": "Eliminar conversación",
+      "options": "Opciones del chat",
+      "activeToday": "con actividad hoy",
+      "backTo": "Volver a {{label}}",
+      "backToConversations": "Volver a las conversaciones",
+      "viewNamedProfile": "Ver el perfil de {{name}}"
+    },
+    "composer": {
+      "label": "Mensaje",
+      "placeholder": "Mensaje",
+      "send": "Enviar mensaje"
+    },
+    "inviteCard": {
+      "playerFallback": "La persona invitada",
+      "from": "Desde {{when}}",
+      "facts": {
+        "when": "Cuándo",
+        "pay": "Pago",
+        "package": "Beneficios",
+        "league": "Liga"
+      },
+      "openFailed": "No se pudo abrir la oportunidad. Intenta de nuevo.",
+      "title": "Invitación a postularse",
+      "viewOpportunity": "Ver oportunidad",
+      "viewOpportunityClub": "Ver oportunidad",
+      "opening": "Abriendo…",
+      "apply": "Postularse",
+      "notInterested": "No me interesa",
+      "passConfirm": {
+        "title": "¿No te interesa esta oportunidad?",
+        "message": "{{club}} va a ver que la descartaste. Igual puedes enviarle mensajes.",
+        "clubFallback": "El club",
+        "confirm": "No me interesa",
+        "busy": "Enviando…"
+      }
+    },
+    "offerCard": {
+      "playerFallback": "La persona",
+      "facts": {
+        "start": "Inicio",
+        "pay": "Pago",
+        "package": "Beneficios"
+      },
+      "title": "Oferta",
+      "decline": "Rechazar",
+      "accept": "Aceptar",
+      "questions": "¿Dudas? Responde acá antes de decidir.",
+      "declineSheet": {
+        "label": "Rechazar la oferta",
+        "title": "¿Rechazar esta oferta?",
+        "body": "El club va a recibir un aviso. Puedes indicar el motivo (es opcional).",
+        "placeholder": "Agrega un motivo (opcional)",
+        "reasonLabel": "Motivo (opcional)",
+        "confirm": "Rechazar oferta",
+        "keep": "Conservar la oferta"
+      }
+    },
+    "sharedPost": {
+      "unknownAuthor": "Sin nombre",
+      "view": "Ver publicación"
+    },
+    "errors": {
+      "empty": "El mensaje no puede estar vacío.",
+      "tooLong_one": "El mensaje es demasiado largo. Máximo {{count}} carácter.",
+      "tooLong_other": "El mensaje es demasiado largo. Máximo {{count}} caracteres.",
+      "tooLong_many": "El mensaje es demasiado largo. Máximo {{count}} caracteres.",
+      "editFailed": "No se pudo editar el mensaje. Intenta de nuevo.",
+      "deleteFailed": "No se pudo eliminar el mensaje. Intenta de nuevo.",
+      "hideFailed": "No se pudo eliminar el mensaje. Intenta de nuevo.",
+      "failedStatus": "No se pudo enviar",
+      "sendFailed": "No se pudo enviar el mensaje. Intenta de nuevo.",
+      "createConversationFailed": "No se pudo crear la conversación"
+    }
+  },
+  "signing": {
+    "prompt": {
+      "confirm": "Confirmar incorporación"
+    },
+    "offer": {
+      "immediately": "De inmediato",
+      "openUntilMissing": "Elige hasta cuándo está abierta la oferta.",
+      "openUntilPast": "La fecha límite no puede estar en el pasado.",
+      "openUntilTooFar_one": "La fecha límite puede ser, como máximo, dentro de {{count}} día.",
+      "openUntilTooFar_other": "La fecha límite puede ser, como máximo, dentro de {{count}} días.",
+      "openUntilTooFar_many": "La fecha límite puede ser, como máximo, dentro de {{count}} días.",
+      "contractNoteClub": "Una oferta en Hockia detalla lo que ofreces. El contrato en sí es entre tu club y quien se incorpora.",
+      "contractNoteOrg": "Una oferta en Hockia detalla lo que ofreces. El contrato en sí es entre {{org}} y quien se incorpora.",
+      "contractNoteFallback": "Una oferta en Hockia detalla lo que ofreces. El contrato en sí es entre el club y quien se incorpora."
+    },
+    "card": {
+      "playerFallback": "La persona",
+      "deadline": "Abierta hasta el {{day}}",
+      "deadlineNoDay": "Abierta hasta",
+      "waitingAnswer": "Esperando la respuesta de {{name}}",
+      "acceptedPlayer": "Aceptaste esta oferta",
+      "acceptedClub": "{{name}} aceptó",
+      "declinedPlayer": "Rechazaste esta oferta",
+      "declinedClub": "{{name}} rechazó la oferta",
+      "declinedClubReason": "{{name}} rechazó la oferta: {{reason}}",
+      "superseded": "Actualizada. La oferta nueva está más abajo",
+      "withdrawnPlayer": "El club retiró esta oferta",
+      "withdrawnClub": "Retiraste esta oferta",
+      "expired": "Esta oferta venció",
+      "closed": "Esta oferta está cerrada"
+    },
+    "road": {
+      "declinedNote": "{{name}} rechazó tu oferta.",
+      "declinedNoteReason": "{{name}} rechazó tu oferta: “{{reason}}”",
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "done": "Hecho",
+      "offerAccepted": "{{name}} aceptó",
+      "offerAcceptedOn": "{{name}} aceptó · {{day}}",
+      "offerSkipped": "Omitida",
+      "offerSent": "Enviada · abierta hasta el {{day}}",
+      "offerTerms": "Las condiciones que ofreces",
+      "signedThroughHockia": "Incorporación a través de Hockia",
+      "signedOn": "Incorporación a través de Hockia · {{day}}",
+      "waitingConfirm": "Esperando la confirmación de {{name}}",
+      "confirmsToo": "{{name}} también lo confirma",
+      "talkedDetail": "Cuando ambas partes hayan escrito",
+      "optional": "Opcional",
+      "steps": {
+        "shortlisted": "Preselección",
+        "talked": "Conversación",
+        "trial": "Prueba o videollamada",
+        "offer": "Oferta",
+        "signed": "Incorporación"
+      },
+      "header": {
+        "shortlisted": "En preselección",
+        "shortlistedToday": "En preselección desde hoy",
+        "shortlistedYesterday": "En preselección desde ayer",
+        "shortlistedOn": "En preselección desde el {{day}}",
+        "applied": "postulación del {{day}}"
+      },
+      "waitingLine": "Esperando la confirmación de {{name}}",
+      "signedLine": "Incorporación a través de Hockia"
+    },
+    "clubNote": {
+      "offered": "Le enviaste una oferta a {{name}}.",
+      "accepted": "{{name}} aceptó tu oferta.",
+      "pending": "Esperando que {{name}} confirme la incorporación.",
+      "signed": "{{name}} confirmó la incorporación, hecha a través de Hockia."
+    },
+    "markSigned": {
+      "bodyClub": "Se le va a pedir a {{name}} que lo confirme. Después pasa a integrar tu plantel en Hockia y la incorporación se suma a su trayectoria.",
+      "bodyOrg": "Se le va a pedir a {{name}} que lo confirme. Después la incorporación a {{org}} se suma a su trayectoria.",
+      "body": "Se le va a pedir a {{name}} que lo confirme. Después la incorporación se suma a su trayectoria.",
+      "closeRoleNone": "No hay nadie más esperando en esta oportunidad.",
+      "closeRoleWaiting_one": "Queda {{count}} persona esperando: recibe un aviso amable de que la oportunidad se cubrió.",
+      "closeRoleWaiting_other": "Quedan {{count}} personas esperando: reciben un aviso amable de que la oportunidad se cubrió.",
+      "closeRoleWaiting_many": "Quedan {{count}} personas esperando: reciben un aviso amable de que la oportunidad se cubrió."
+    },
+    "confirm": {
+      "title": "{{club}} marcó tu incorporación",
+      "hideTitle": "Dejar de mostrar mi perfil a otros clubes",
+      "hideDetailPlayer": "Desactiva \"Disponible para jugar\". Puedes volver a activarlo cuando quieras.",
+      "hideDetailCoach": "Desactiva \"Disponible para entrenar\". Puedes volver a activarlo cuando quieras."
+    },
+    "signed": {
+      "titlePlayerA": "Ahora juegas en {{club}}",
+      "titlePlayerAn": "Ahora juegas en {{club}}",
+      "titleCoachA": "Ahora entrenas en {{club}}",
+      "titleCoachAn": "Ahora entrenas en {{club}}",
+      "shareText": "Me incorporé a {{club}} a través de Hockia."
+    },
+    "playerSteps": {
+      "shortlisted": "Preselección",
+      "offer": "Oferta",
+      "signed": "Incorporación"
+    },
+    "lines": {
+      "playerFallback": "la persona",
+      "markedSigned": "Marcaste la incorporación de {{name}}. Falta su confirmación.",
+      "markedSignedFor": "Marcaste la incorporación de {{name}} para {{role}}. Falta su confirmación.",
+      "offerSent": "Enviaste una oferta para {{role}}, abierta hasta el {{day}}.",
+      "offerUpdated": "Actualizaste tu oferta para {{role}}, abierta hasta el {{day}}.",
+      "invited": "Invitaste a {{name}} a postularse a {{role}}."
+    },
+    "errors": {
+      "roleNotOpen": "Esta oportunidad no está abierta.",
+      "shortlistedOnly": "Solo puedes hacer ofertas a postulantes en preselección.",
+      "cannotReceive": "Esta persona no puede recibir una oferta.",
+      "openUntilRange": "La fecha límite debe estar entre hoy y los próximos 90 días.",
+      "fieldsTooLong": "Algunos campos de la oferta son demasiado largos.",
+      "offerNotOpen": "Esta oferta ya no está abierta.",
+      "offerExpired": "Esta oferta venció.",
+      "reasonTooLong": "El motivo puede tener hasta 500 caracteres.",
+      "withdrawOnlyLive": "Solo puedes retirar una oferta que todavía espera respuesta.",
+      "markSignedOnly": "Solo puedes marcar la incorporación de postulantes en preselección o con una oferta aceptada.",
+      "undoOnlyPending": "Solo puedes deshacer una incorporación que todavía espera la confirmación de quien se incorpora.",
+      "noPendingSigning": "No hay ninguna incorporación esperando tu confirmación.",
+      "signingExpired": "Esta solicitud de incorporación venció.",
+      "confirmedFinal": "Una incorporación confirmada no se puede retirar.",
+      "applicationClosed": "Esta postulación ya está cerrada.",
+      "trialShortlistedOnly": "Solo puedes registrar una prueba para postulantes en preselección.",
+      "withdrawnFinal": "Una postulación retirada no se puede modificar.",
+      "addClub": "Para marcar una incorporación, primero agrega tu club a tu perfil.",
+      "notConfirmable": "Esta incorporación todavía no se puede confirmar."
+    },
+    "tags": {
+      "offerSent": "Oferta enviada",
+      "offerAccepted": "Oferta aceptada",
+      "waitingConfirm": "Esperando confirmación",
+      "signed": "Incorporación",
+      "withdrawn": "Retirada",
+      "filled": "Oportunidad cubierta"
+    },
+    "withdraw": {
+      "title": "¿Retirar tu postulación?",
+      "body": "El club la va a ver como retirada. No se puede deshacer.",
+      "bodyOffered": "Se cancela cualquier oferta que tengas pendiente. El club la va a ver como retirada. No se puede deshacer.",
+      "bodySigning": "La incorporación no se concreta. El club la va a ver como retirada. No se puede deshacer."
+    },
+    "playerHint": {
+      "offered": "El club te envió una oferta. Respóndela en tu chat con el club.",
+      "accepted": "Aceptaste la oferta. El próximo paso es que el club marque la incorporación.",
+      "pending": "El club marcó tu incorporación. Confírmala para sumarla a tu trayectoria.",
+      "signed": "Incorporación a través de Hockia. Ya figura en tu trayectoria."
+    },
+    "actionErrors": {
+      "sendOffer": "No se pudo enviar la oferta. Intenta de nuevo.",
+      "withdrawOffer": "No se pudo retirar la oferta. Intenta de nuevo.",
+      "respondOffer": "No se pudo enviar tu respuesta. Intenta de nuevo.",
+      "markSigned": "No se pudo marcar la incorporación. Intenta de nuevo.",
+      "undoSigning": "No se pudo deshacer la incorporación. Intenta de nuevo.",
+      "confirmSigning": "No se pudo confirmar la incorporación. Intenta de nuevo.",
+      "setTrial": "No se pudo guardar la prueba. Intenta de nuevo.",
+      "withdrawApplication": "No se pudo retirar la postulación. Intenta de nuevo."
+    },
+    "confirmPage": {
+      "documentTitle": "Incorporación",
+      "unavailable": "Esta incorporación no está disponible.",
+      "myApplications": "Mis postulaciones",
+      "myApplicationsNotWaiting": "Mis postulaciones",
+      "clubFallback": "El club",
+      "copied": "Copiado. Puedes pegarlo donde quieras",
+      "shareFailed": "No se pudo compartir. Intenta de nuevo.",
+      "signedBody": "Ya figura en tu trayectoria. Los clubes van a ver dónde te incorporaste y que fue a través de Hockia.",
+      "roleSeason": "{{role}} · {{season}}",
+      "share": "Compartir la noticia",
+      "done": "Listo",
+      "expired": "Esta solicitud de incorporación venció.",
+      "notWaiting": "No hay ninguna incorporación esperando tu confirmación.",
+      "messageClub": "Si algo no está bien, puedes escribirle al club.",
+      "rows": {
+        "club": "Club",
+        "role": "Oportunidad",
+        "league": "Liga",
+        "from": "Desde"
+      },
+      "confirmBody": "Confírmala y se suma a tu trayectoria con la marca “Incorporación a través de Hockia”.",
+      "clubMissing": "Esta incorporación todavía no se puede confirmar: faltan datos del club. Escríbele al club y después intenta de nuevo.",
+      "confirm": "Sí, confirmo",
+      "confirming": "Confirmando…",
+      "notYet": "Todavía no"
+    },
+    "serverLines": {
+      "inviteFirstLine": "{{name}} te invitó a postularte a {{role}}.",
+      "markedYou": "{{name}} marcó tu incorporación para {{role}}. Confírmala en Hockia para sumarla a tu trayectoria.",
+      "offerSent": "{{name}} te envió una oferta para {{role}}, abierta hasta el {{day}}. Abre Hockia para ver las condiciones y responder.",
+      "offerUpdated": "{{name}} actualizó su oferta para {{role}}, abierta hasta el {{day}}. Abre Hockia para ver las condiciones y responder.",
+      "applied": "{{name}} se postuló a {{role}}.",
+      "passedOn": "{{name}} no aceptó la invitación para {{role}}.",
+      "offerWithdrawn": "{{name}} retiró su oferta para {{role}}.",
+      "applicationWithdrawn": "{{name}} retiró su postulación a {{role}}.",
+      "offerAccepted": "{{name}} aceptó la oferta para {{role}}.",
+      "offerDeclined": "{{name}} no aceptó la oferta para {{role}}.",
+      "signingUndone": "{{name}} deshizo la incorporación para {{role}}.",
+      "signingConfirmed": "{{name}} confirmó la incorporación para {{role}}, hecha a través de Hockia.",
+      "yourRole": "tu oportunidad"
+    },
+    "serverLinesNoName": {
+      "inviteFirstLine": "Te invitaron a postularte a {{role}}.",
+      "markedYou": "Se marcó tu incorporación para {{role}}. Confírmala en Hockia para sumarla a tu trayectoria.",
+      "offerSent": "Recibiste una oferta para {{role}}, abierta hasta el {{day}}. Abre Hockia para ver las condiciones y responder.",
+      "offerUpdated": "Se actualizó tu oferta para {{role}}, abierta hasta el {{day}}. Abre Hockia para ver las condiciones y responder.",
+      "applied": "Llegó una postulación para {{role}}.",
+      "passedOn": "No aceptaron la invitación para {{role}}.",
+      "offerWithdrawn": "Se retiró la oferta para {{role}}.",
+      "applicationWithdrawn": "Se retiró la postulación a {{role}}.",
+      "offerAccepted": "Se aceptó la oferta para {{role}}.",
+      "offerDeclined": "No se aceptó la oferta para {{role}}.",
+      "signingUndone": "Se deshizo la incorporación para {{role}}.",
+      "signingConfirmed": "Se confirmó la incorporación para {{role}}, hecha a través de Hockia."
+    }
+  },
+  "invites": {
+    "limitReason_one": "Hoy ya enviaste {{count}} invitación, el límite diario. Mañana puedes volver a invitar.",
+    "limitReason_other": "Hoy ya enviaste {{count}} invitaciones, el límite diario. Mañana puedes volver a invitar.",
+    "limitReason_many": "Hoy ya enviaste {{count}} invitaciones, el límite diario. Mañana puedes volver a invitar.",
+    "sheetFooter": "{{name}} ve la oportunidad y tu nota en Mensajes. Si se postula, pasa directo a \"Por revisar\", con la etiqueta \"Con invitación\".",
+    "thisPlayer": "esta persona",
+    "roleFallback": "Oportunidad",
+    "offerLine": {
+      "paid": "Pago",
+      "housing": "Vivienda",
+      "flights": "Pasajes",
+      "insurance": "Seguro",
+      "job": "Trabajo",
+      "bonuses": "Premios",
+      "visa": "Visa",
+      "car": "Auto",
+      "equipment": "Equipamiento",
+      "meals": "Comidas",
+      "education": "Estudios"
+    },
+    "note": {
+      "clubFallback": "nuestro club",
+      "clubTeam": "el equipo {{team}} de {{club}}",
+      "team": {
+        "men": "de Caballeros",
+        "women": "de Damas",
+        "mixed": "mixto",
+        "boys": "de Juveniles caballeros",
+        "girls": "de Juveniles damas"
+      },
+      "greetingPositionA": "Hola, {{firstName}}: en {{where}} buscamos {{position}} y tu perfil se destacó.",
+      "greetingPositionAn": "Hola, {{firstName}}: en {{where}} buscamos {{position}} y tu perfil se destacó.",
+      "greetingRole": "Hola, {{firstName}}: en {{where}} hay una búsqueda para {{title}} y tu perfil se destacó.",
+      "titleFallback": "una oportunidad",
+      "includes": "La oportunidad incluye {{list}}.",
+      "question": "¿Te interesa postularte?",
+      "benefits": {
+        "pay": "remuneración",
+        "housing": "vivienda",
+        "flights": "pasajes",
+        "insurance": "seguro",
+        "job": "un trabajo",
+        "bonuses": "premios",
+        "visa": "ayuda con la visa",
+        "car": "un auto",
+        "equipment": "equipamiento",
+        "meals": "comidas",
+        "education": "estudios"
+      }
+    },
+    "errors": {
+      "passed": "Esta persona dejó pasar esta oportunidad.",
+      "cannotInvite": "No se puede invitar a esta persona a esta oportunidad.",
+      "alreadyApplied": "Esta persona ya se postuló a una de tus oportunidades.",
+      "alreadyInvited": "Esta persona ya tiene una invitación abierta de tu parte.",
+      "roleNotOpen": "Esta oportunidad no está abierta.",
+      "noteTooLong": "La nota puede tener hasta 500 caracteres.",
+      "ownRolesOnly": "Solo puedes invitar a jugadores/as a tus propias oportunidades.",
+      "generic": "No se pudo enviar la invitación. Intenta de nuevo."
+    },
+    "respondErrors": {
+      "expired": "Esta invitación venció.",
+      "answered": "Ya respondiste esta invitación.",
+      "generic": "No se pudo actualizar la invitación. Intenta de nuevo."
+    },
+    "card": {
+      "playerFallback": "La persona invitada",
+      "appliedPlayer": "Postulación enviada",
+      "appliedClub": "{{name}} se postuló",
+      "passedPlayer": "Descartaste esta oportunidad",
+      "passedClub": "{{name}} dejó pasar esta oportunidad",
+      "closed": "Esta oportunidad está cerrada",
+      "expired": "Esta invitación venció",
+      "pending": "Invitación pendiente"
+    },
+    "sentToast": "Invitación enviada a {{name}}",
+    "sentToastFallback": "la persona"
+  },
+  "list": {
+    "contactFallback": "Contacto",
+    "previewMine": "Tú: {{text}}",
+    "sayHello": "Saludar",
+    "memberFallback": "Integrante de Hockia"
+  },
+  "actions": {
+    "markRead": "Marcar como leída",
+    "markUnread": "Marcar como no leída",
+    "block": "Bloquear a {{name}}",
+    "delete": "Eliminar conversación",
+    "deleteConfirm": {
+      "title": "¿Eliminar esta conversación?",
+      "message": "La conversación sale de tu bandeja y sus mensajes se borran solo para ti. {{name}} conserva la conversación y, si vuelve a escribir, reaparece solo con los mensajes nuevos.",
+      "confirm": "Eliminar",
+      "busy": "Eliminando…"
+    },
+    "toasts": {
+      "markUnreadFailed": "No se pudo marcar como no leída. Intenta de nuevo.",
+      "markReadFailed": "No se pudo marcar como leída. Intenta de nuevo.",
+      "deleted": "Conversación eliminada",
+      "deleteFailed": "No se pudo eliminar la conversación. Intenta de nuevo."
+    }
+  },
+  "row": {
+    "waiting": "Esperando tu primera respuesta",
+    "unread": "Sin leer",
+    "swipeRead": "Leída",
+    "swipeUnread": "No leída",
+    "swipeDelete": "Eliminar"
+  },
+  "activity": {
+    "label": "Actividad",
+    "markAllRead": "Marcar todo como leído",
+    "empty": "Todavía no hay novedades. Acá aparecen las visitas al perfil, las respuestas de clubes y las referencias.",
+    "memberFallback": "Integrante de Hockia",
+    "requestFailed": "No se pudo actualizar la solicitud. Intenta de nuevo.",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "groups": {
+      "today": "Hoy",
+      "thisWeek": "Esta semana",
+      "earlier": "Anteriores"
+    }
+  },
+  "messages": {
+    "label": "Mensajes",
+    "searchPlaceholder": "Buscar",
+    "searchLabel": "Buscar conversaciones",
+    "clearSearch": "Borrar búsqueda",
+    "loadFailed": "No se pudieron cargar tus mensajes",
+    "retry": "Reintentar",
+    "noMatch": "Ninguna conversación coincide",
+    "emptyTitle": "Todavía no hay mensajes",
+    "noMatchHint": "Prueba con otro nombre.",
+    "emptyBodyClub": "Acá aparecen los mensajes de jugadores/as, entrenadores/as y clubes.",
+    "emptyBody": "Acá aparecen los mensajes con clubes, jugadores/as y entrenadores/as.",
+    "newMessage": "Nuevo mensaje",
+    "memberFallback": "Integrante de Hockia",
+    "previewMine": "Tú: {{text}}",
+    "sayHello": "Saludar"
+  },
+  "requests": {
+    "label": "Solicitudes",
+    "explainer": "Tus conexiones pueden enviarte mensajes, ver todo tu contenido multimedia y escribirte una referencia.",
+    "clubInvitationsLabel": "Invitaciones de clubes",
+    "empty": "No tienes solicitudes por ahora.",
+    "memberFallback": "Integrante de Hockia",
+    "sentMemberFallback": "Integrante de Hockia",
+    "acceptedDetail": "Ahora pueden enviarse mensajes y referencias",
+    "declined": "Rechazada",
+    "friends": "Conexión",
+    "accepting": "Aceptando",
+    "accept": "Aceptar",
+    "declineLabel": "Rechazar la solicitud de {{name}}",
+    "sentTitle": "Enviadas",
+    "sentMeta": "{{identity}} · enviada {{age}}",
+    "waiting": "En espera",
+    "noMutualFriends": "Todavía no hay conexiones en común",
+    "mutualFriends_one": "{{count}} conexión en común",
+    "mutualFriends_other": "{{count}} conexiones en común",
+    "mutualFriends_many": "{{count}} conexiones en común",
+    "clubFallback": "Un club",
+    "clubInviteMeta": "Te invitó a unirte a su club",
+    "clubInviteDetail": "Invitación de club · {{age}}",
+    "clubAccepting": "Aceptando",
+    "clubAccept": "Aceptar",
+    "clubDeclineLabel": "Rechazar la invitación de {{name}}"
+  },
+  "messagesPage": {
+    "back": {
+      "inbox": "Mensajes",
+      "profile": "Perfil",
+      "opportunity": "Oportunidad",
+      "opportunities": "Oportunidades",
+      "community": "Comunidad",
+      "home": "Inicio",
+      "fallback": "Volver"
+    },
+    "loadFailed": "No se pudieron cargar las conversaciones. Intenta de nuevo.",
+    "documentTitleThread": "{{name}} • Mensajes",
+    "documentTitleMessages": "Mensajes",
+    "documentTitleInbox": "Mensajes",
+    "titleMessages": "Mensajes",
+    "titleInbox": "Mensajes",
+    "newMessage": "Nuevo mensaje",
+    "searchPlaceholder": "Buscar",
+    "searchLabel": "Buscar conversaciones",
+    "clearSearch": "Borrar búsqueda",
+    "errorTitle": "Algo salió mal",
+    "retry": "Reintentar",
+    "emptyTitle": "Todavía no hay mensajes",
+    "emptyBody": "Inicia una conversación con alguien de la comunidad",
+    "emptyNewMessage": "Nuevo mensaje",
+    "loadingMore": "Cargando...",
+    "loadMore": "Cargar más",
+    "memberFallback": "Integrante de Hockia",
+    "thisMember": "esta persona",
+    "selectTitle": "Elige una conversación",
+    "selectBody": "Acá se abren tus conversaciones.",
+    "selectBodyOther": "Abre Mensajes para leer una conversación."
+  },
+  "page": {
+    "documentTitle": "Mensajes",
+    "newMessage": "Nuevo mensaje",
+    "title": "Mensajes"
+  },
+  "newMessage": {
+    "recentFailed": "No se pudieron cargar los contactos recientes. Igual puedes buscar por nombre.",
+    "title": "Nuevo mensaje",
+    "subtitle": "Iniciar una conversación",
+    "searchPlaceholder": "Buscar por nombre o club...",
+    "searchResults": "Resultados de búsqueda",
+    "recent": "Conversaciones recientes",
+    "noResults": "No hay personas que coincidan con \"{{term}}\"",
+    "startTyping": "Escribe para buscar personas",
+    "help": "Elige una persona para iniciar una conversación"
+  },
+  "safety": {
+    "removedAccount": {
+      "notice": "Una cuenta que te escribió fue eliminada por spam. Hockia nunca te va a pedir dinero. No envíes dinero, cripto ni datos personales a personas que no conoces, y ten cuidado si alguien te pide pasar a WhatsApp u otra app. Si algo no te parece normal, toca \"Reportar\"."
+    },
+    "blockedList": {
+      "unblocked": "Se desbloqueó a {{name}}",
+      "unblockFailed": "No se pudo desbloquear. Intenta de nuevo.",
+      "empty": "No hay cuentas bloqueadas",
+      "unknownName": "Sin nombre",
+      "unblock": "Desbloquear",
+      "unblocking": "Desbloqueando..."
+    },
+    "block": {
+      "blocked": "Se bloqueó a {{name}}",
+      "failed": "No se pudo bloquear. Intenta de nuevo.",
+      "title": "¿Bloquear a {{name}}?",
+      "titleNoName": "Bloquear",
+      "message": "No va a poder enviarte mensajes ni ver tu perfil ni tus publicaciones, y tú no vas a ver los suyos. La conversación sale de tus mensajes. No se le avisa. Puedes deshacer el bloqueo desde Ajustes.",
+      "confirm": "Bloquear",
+      "busy": "Bloqueando…"
+    },
+    "moreMenu": {
+      "label": "Más acciones",
+      "cancel": "Cancelar"
+    },
+    "report": {
+      "menuLabel": "Reportar",
+      "thanks": "Gracias. Lo vamos a revisar.",
+      "reasons": {
+        "spam": "Spam o estafa",
+        "impersonation": "Cuenta falsa o suplantación de identidad",
+        "harassment": "Acoso u hostigamiento",
+        "inappropriateContent": "Contenido inapropiado",
+        "hateSpeech": "Discurso de odio",
+        "violence": "Violencia o amenazas",
+        "misinformation": "Información falsa",
+        "other": "Otro motivo"
+      },
+      "titles": {
+        "profile": "Reportar este perfil",
+        "post": "Reportar esta publicación",
+        "comment": "Reportar este comentario",
+        "chat": "Reportar este chat",
+        "role": "Reportar esta oportunidad",
+        "feedItem": "Reportar esta publicación",
+        "feedItemComment": "Reportar este comentario",
+        "video": "Reportar este video",
+        "offer": "Reportar esta oferta"
+      },
+      "rateLimited": "Hoy ya enviaste muchos reportes. Intenta de nuevo mañana.",
+      "failed": "No se pudo enviar el reporte. Intenta de nuevo.",
+      "blockOffer": {
+        "label": "¿Bloquear a {{name}}?",
+        "title": "Reporte enviado",
+        "body": "Lo vamos a revisar. ¿También quieres bloquear a {{name}}? No va a poder enviarte mensajes y no se le avisa.",
+        "block": "Bloquear a {{name}}",
+        "notNow": "Ahora no"
+      },
+      "intro": "Elige un motivo. No le vamos a decir que hiciste el reporte.",
+      "reasonLabel": "Motivo",
+      "noteLabel": "¿Algo más? (opcional)",
+      "notePlaceholder": "Agrega detalles que nos ayuden a revisarlo",
+      "send": "Enviar reporte",
+      "sending": "Enviando…",
+      "cancel": "Cancelar"
+    }
+  },
+  "contact": {
+    "title": "Contacto",
+    "close": "Cerrar",
+    "body": "¿Tienes alguna pregunta antes de sumarte a Hockia? Con gusto te ayudamos. El equipo responde en:",
+    "copyLabel": "Copiar dirección de email",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "copyFailed": "No se pudo copiar automáticamente. Toca la dirección de arriba para seleccionarla.",
+    "openEmailApp": "Abrir app de email"
+  },
+  "newConversationLimit": {
+    "message": "Hoy ya iniciaste muchas conversaciones nuevas. Mañana puedes iniciar más."
+  },
+  "segments": {
+    "messages": "Mensajes",
+    "requests": "Solicitudes",
+    "activity": "Actividad",
+    "ariaLabel": "Secciones de mensajes"
+  },
+  "clubInbox": {
+    "week": {
+      "toReview": "por revisar",
+      "views_one": "vista de perfil",
+      "views_many": "vistas de perfil",
+      "views_other": "vistas de perfil",
+      "openRoles_one": "oportunidad abierta",
+      "openRoles_many": "oportunidades abiertas",
+      "openRoles_other": "oportunidades abiertas"
+    },
+    "applied": "Se postuló",
+    "roleLineApplied": "{{base}} · {{applied}}",
+    "waitingTitle_one": "{{count}} persona espera una primera respuesta",
+    "waitingTitle_many": "{{count}} personas esperan una primera respuesta",
+    "waitingTitle_other": "{{count}} personas esperan una primera respuesta",
+    "waitingSubOne": "Se postuló a tus oportunidades.",
+    "waitingSubAll": "Todas se postularon a tus oportunidades.",
+    "waitingSubSome": "{{count}} de ellas se postularon a tus oportunidades.",
+    "cardTitle": "Postulación a {{role}}",
+    "cardTitleNone": "Postulación a una de tus oportunidades",
+    "status": {
+      "shortlisted": "en preselección",
+      "maybe": "marcada como tal vez",
+      "rejected": "no encaja",
+      "withdrawn": "retirada por quien se postuló",
+      "offered": "oferta enviada",
+      "accepted": "oferta aceptada",
+      "signed_pending_confirmation": "incorporación por confirmar",
+      "signed": "incorporación confirmada",
+      "offer_declined": "oferta rechazada",
+      "filled": "oportunidad cubierta"
+    },
+    "closesToday": "cierra hoy",
+    "daysLeft_one": "Queda {{count}} día para responder",
+    "daysLeft_many": "Quedan {{count}} días para responder",
+    "daysLeft_other": "Quedan {{count}} días para responder",
+    "closedOn": "cerrada sin respuesta el {{day}}",
+    "closed": "cerrada sin respuesta",
+    "emptyTitle": "Todavía no hay mensajes",
+    "emptyBody": "Un saludo corto hace mucho. La mayoría de quienes se postulan nunca recibe respuesta."
+  }
+}

@@ -11,8 +11,11 @@ import {
   generateEmailHtml,
   generateEmailText,
   sendEmail,
+  messageDigestTemplateVars,
+  unnamedSender,
 } from '../_shared/message-digest-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
+import { type MemberLanguage, readMemberLanguage } from '../_shared/member-language.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 
 /**
@@ -196,6 +199,9 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // The recipient's interface language, read on its own (fails to English).
+    const language = await readMemberLanguage(supabase, recipient.id)
+
     // Fetch sender profiles
     const senderIds = Array.from(senderIdSet)
     const { data: senders, error: sendersError } = await supabase
@@ -225,7 +231,7 @@ Deno.serve(async (req: Request) => {
         || metadata?.sender_ids?.[0]
 
       const senderProfile = primarySenderId ? senderMap.get(primarySenderId) : null
-      const senderName = senderProfile?.full_name?.trim() || 'Someone'
+      const senderName = senderProfile?.full_name?.trim() || unnamedSender(language)
       const senderAvatar = senderProfile?.avatar_url || null
 
       return {
@@ -241,43 +247,35 @@ Deno.serve(async (req: Request) => {
       totalMessages: conversations.reduce((sum, c) => sum + c.message_count, 0),
     })
 
-    const totalMessages = conversations.reduce((sum, c) => sum + c.message_count, 0)
-    const firstName = recipient.full_name?.split(' ')[0]?.trim() || 'there'
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
-    const templateVars = {
-      first_name: firstName,
-      heading: conversations.length === 1
-        ? `New message from ${conversations[0].sender_name}`
-        : `You have ${totalMessages} new message${totalMessages === 1 ? '' : 's'}`,
-      message_count: String(totalMessages),
-      conversations: JSON.stringify(conversations),
-      conversations_text: conversations
-        .map(c => `${c.sender_name}: ${c.message_count} new message${c.message_count === 1 ? '' : 's'}`)
-        .join('\n'),
-      cta_url: `${HOCKIA_BASE_URL}/messages`,
-      cta_label: 'View messages',
-      settings_url: `${HOCKIA_BASE_URL}/settings`,
-    }
+    // Built for the language of the row actually used (a Spanish member gets
+    // English variables if only the English row exists).
+    const templateVars = (lang: MemberLanguage) =>
+      messageDigestTemplateVars(recipient.full_name, conversations, HOCKIA_BASE_URL, lang)
 
     // Try DB template, fall back to hardcoded
     let subject: string
     let emailHtml: string
     let emailText: string
 
-    const rendered = await renderTemplate(supabase, 'message_digest', templateVars)
+    const rendered = await renderTemplate(supabase, 'message_digest', templateVars, language)
     if (rendered) {
       subject = rendered.subject
       emailHtml = rendered.html
       emailText = rendered.text
-      logger.info('Using DB template for message_digest')
+      logger.info('Using DB template for message_digest', { language: rendered.language })
     } else {
-      emailHtml = generateEmailHtml(recipient as RecipientData, conversations)
-      emailText = generateEmailText(recipient as RecipientData, conversations)
-      subject = conversations.length === 1
+      emailHtml = generateEmailHtml(recipient as RecipientData, conversations, language)
+      emailText = generateEmailText(recipient as RecipientData, conversations, language)
+      subject = language === 'es'
+        ? conversations.length === 1
+          ? `Nuevo mensaje de ${conversations[0].sender_name} en Hockia`
+          : 'Mensajes nuevos en Hockia'
+        : conversations.length === 1
         ? `New message from ${conversations[0].sender_name} on Hockia`
         : 'You have new messages on Hockia'
-      logger.info('Falling back to hardcoded template')
+      logger.info('Falling back to hardcoded template', { language })
     }
 
     // Send tracked email

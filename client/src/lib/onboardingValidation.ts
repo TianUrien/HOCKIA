@@ -16,6 +16,7 @@
  *                              (umpiring_categories optional)
  */
 
+import { tOnboarding } from '@/i18n/ns/onboarding'
 import type { PlayingCategory, CoachUmpireCategory } from './hockeyCategories'
 import { isValidCategoryArray, isValidPlayingCategory } from './hockeyCategories'
 
@@ -53,57 +54,59 @@ export interface OnboardingFormSubset {
 export function validateOnboardingStep(
   step: WizardStep,
   role: OnboardingRole,
-  formData: OnboardingFormSubset
+  formData: OnboardingFormSubset,
+  /** Defaults to the interface language; pass the English translator for analytics values. */
+  t: typeof tOnboarding = tOnboarding,
 ): string | null {
   if (step === 1) {
-    if (!formData.fullName?.trim()) return 'Full name is required.'
-    if (!formData.nationalityCountryId) return 'Nationality is required.'
+    if (!formData.fullName?.trim()) return t('validation.fullName')
+    if (!formData.nationalityCountryId) return t('validation.nationality')
     return null
   }
 
   if (step === 2) {
-    if (!formData.city?.trim()) return 'Base location is required.'
+    if (!formData.city?.trim()) return t('validation.location')
     // DOB lives on this step for every person role. Gate it here so the
     // requirement surfaces in place — previously it was only enforced at final
     // submit on step 3, stranding OAuth signups (which collect no DOB at
     // sign-up) on an error for a field two steps back. The 18+ check itself
     // remains server-authoritative (declare_date_of_birth).
     if (!formData.dateOfBirth) {
-      return 'Date of birth is required. Hockia is an 18+ platform.'
+      return t('validation.dateOfBirth')
     }
     return null
   }
 
   // step === 3: role-specific last-step gates
   if (role === 'player') {
-    if (!formData.position) return 'Position is required.'
+    if (!formData.position) return t('validation.position')
     if (!isValidPlayingCategory(formData.playingCategory)) {
-      return 'Please select your playing category.'
+      return t('validation.playingCategory')
     }
     if (
       formData.secondaryPosition &&
       formData.secondaryPosition === formData.position
     ) {
-      return 'Primary and secondary positions must be different.'
+      return t('validation.positionsDiffer')
     }
     return null
   }
 
   if (role === 'coach') {
     if (!formData.coachingCategories || formData.coachingCategories.length === 0) {
-      return 'Please select at least one coaching category.'
+      return t('validation.coachCategories')
     }
     if (!isValidCategoryArray(formData.coachingCategories)) {
-      return 'Coaching categories are invalid.'
+      return t('validation.coachCategoriesInvalid')
     }
     if (!formData.coachSpecialization) {
-      return 'Please select your coaching specialization.'
+      return t('validation.coachSpecialization')
     }
     if (
       formData.coachSpecialization === 'other' &&
       !formData.coachSpecializationCustom?.trim()
     ) {
-      return 'Please enter your role title.'
+      return t('validation.coachRoleTitle')
     }
     return null
   }
@@ -114,22 +117,22 @@ export function validateOnboardingStep(
     formData.umpiringCategories.length > 0 &&
     !isValidCategoryArray(formData.umpiringCategories)
   ) {
-    return 'Umpiring categories are invalid.'
+    return t('validation.umpireCategoriesInvalid')
   }
   if (!formData.umpireLevel?.trim()) {
-    return 'Please add your umpire level.'
+    return t('validation.umpireLevel')
   }
   if (!formData.federation?.trim()) {
-    return 'Please add the federation you officiate with.'
+    return t('validation.federation')
   }
   if (!formData.officiatingSpecialization) {
-    return 'Please choose outdoor, indoor, or both.'
+    return t('validation.officiating')
   }
   // Languages are deliberately required — officiating across the hockey
   // ecosystem is bilingual by default, and leaving this blank produces
   // a much weaker profile. At least one language keeps the bar low.
   if (!formData.languages || formData.languages.length === 0) {
-    return 'Please add at least one language you can officiate in.'
+    return t('validation.languages')
   }
   return null
 }

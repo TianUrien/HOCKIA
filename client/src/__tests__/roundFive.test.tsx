@@ -74,7 +74,7 @@ import { RoleActions } from '@/components/club/RoleActions'
 import { DeclineSheet } from '@/components/club/DeclineSheet'
 import OpportunityDetailView from '@/components/OpportunityDetailView'
 import Header from '@/components/Header'
-import { closeRoleToast, REOPEN_ROLE_TOAST, CLOSE_NOT_FILLED_LABEL } from '@/lib/roleLifecycle'
+import { closeRoleToast, reopenRoleToast, closeNotFilledLabel } from '@/lib/roleLifecycle'
 import { postedLine, rolePostedAt } from '@/lib/opportunityCopy'
 import { greetingName } from '@/lib/profile'
 import { clubLeadLeague, clubLeagueLine } from '@/lib/clubProfileCopy'
@@ -274,8 +274,8 @@ describe('close / reopen copy', () => {
     expect(closeRoleToast('withdrawn', 3)).toBe('Opportunity closed.')
   })
   it('desktop uses the phone wording', () => {
-    expect(REOPEN_ROLE_TOAST).toBe('Opportunity reopened.')
-    expect(CLOSE_NOT_FILLED_LABEL).toBe('Not filled / no longer needed')
+    expect(reopenRoleToast()).toBe('Opportunity reopened.')
+    expect(closeNotFilledLabel()).toBe('Not filled / no longer needed')
     const desktop = read('../components/OpportunitiesTab.tsx')
     expect(desktop).not.toContain('Opportunity reopened.')
     expect(desktop).not.toContain('Just closing')
@@ -323,7 +323,7 @@ describe('phone Opportunities: Open counts published roles only', () => {
   it('drafts are listed but not counted', () => {
     const src = read('../components/club/ClubOpportunitiesScreen.tsx')
     expect(src).toContain("const publishedOpen = data.open.filter((r) => r.status === 'open').length")
-    expect(src).toContain("{ value: 'open', label: 'Open', count: publishedOpen }")
+    expect(src).toContain("{ value: 'open', label: t('clubRoles.segment.open'), count: publishedOpen }")
   })
 })
 

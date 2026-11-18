@@ -1,7 +1,12 @@
 import HockiaSocials from './HockiaSocials'
+import { useCommonT } from '@/i18n/ns/common'
+
+/** Decorative separator between the links (hidden from screen readers). */
+const BULLET = '•'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
+  const t = useCommonT()
 
   return (
     <footer
@@ -15,7 +20,7 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 text-sm text-gray-600 dark:text-gray-400">
           {/* Copyright */}
           <div className="text-center sm:text-left">
-            © {currentYear} Hockia
+            {t('footer.copyright', { year: currentYear })}
           </div>
 
           {/* Links */}
@@ -23,39 +28,39 @@ export default function Footer() {
             <a
               href="/privacy-policy"
               className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline-offset-4 hover:underline"
-              aria-label="Privacy Policy"
+              aria-label={t('footer.privacy')}
             >
-              Privacy Policy
+              {t('footer.privacy')}
             </a>
 
-            <span className="text-gray-400 dark:text-gray-600" aria-hidden="true">•</span>
+            <span className="text-gray-400 dark:text-gray-600" aria-hidden="true">{BULLET}</span>
 
             <a
               href="/terms"
               className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline-offset-4 hover:underline"
-              aria-label="Terms of Service"
+              aria-label={t('footer.termsLabel')}
             >
-              Terms
+              {t('footer.terms')}
             </a>
 
-            <span className="text-gray-400 dark:text-gray-600" aria-hidden="true">•</span>
+            <span className="text-gray-400 dark:text-gray-600" aria-hidden="true">{BULLET}</span>
 
             <a
               href="/developers"
               className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline-offset-4 hover:underline"
-              aria-label="Developer documentation and API"
+              aria-label={t('footer.developersLabel')}
             >
-              For Developers
+              {t('footer.developers')}
             </a>
 
-            <span className="text-gray-400 dark:text-gray-600" aria-hidden="true">•</span>
+            <span className="text-gray-400 dark:text-gray-600" aria-hidden="true">{BULLET}</span>
 
             <a
               href="mailto:team@inhockia.com"
               className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline-offset-4 hover:underline"
-              aria-label="Contact support via email"
+              aria-label={t('footer.supportLabel')}
             >
-              Contact support
+              {t('footer.support')}
             </a>
           </div>
 

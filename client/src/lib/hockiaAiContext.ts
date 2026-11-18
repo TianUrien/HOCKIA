@@ -1,4 +1,5 @@
 import { GOAL_OPTIONS, isGoalRole, type MyGoal } from '@/lib/memberGoals'
+import { tHockiaAi } from '@/i18n/ns/hockiaAi'
 
 /**
  * The Hockia AI sheet's context chip (rebrand page 17, store screenshot 10;
@@ -29,26 +30,27 @@ export interface AiChipInput {
   matchesOfficiated?: number | null
 }
 
-const counted = (n: number | null | undefined, word: string): string | null =>
-  typeof n === 'number' && Number.isFinite(n) && n > 0 ? `${n} ${word}` : null
+type CountKey = 'context.openCount' | 'context.liveCount' | 'context.officiatedCount'
+const counted = (n: number | null | undefined, key: CountKey): string | null =>
+  typeof n === 'number' && Number.isFinite(n) && n > 0 ? tHockiaAi(key, { count: n }) : null
 
 export function aiContextChip(i: AiChipInput): AiContextChip | null {
   if (!i.role) return null
-  if (i.recruiter) return { kind: 'screen', topic: 'Your opportunities', fact: counted(i.myOpenRoles, 'open') }
-  if (i.role === 'brand') return { kind: 'screen', topic: 'Your offers', fact: counted(i.liveOffers, 'live') }
+  if (i.recruiter) return { kind: 'screen', topic: tHockiaAi('context.yourOpportunities'), fact: counted(i.myOpenRoles, 'context.openCount') }
+  if (i.role === 'brand') return { kind: 'screen', topic: tHockiaAi('context.yourOffers'), fact: counted(i.liveOffers, 'context.liveCount') }
   // Umpires: "Matches officiated", never "appointments" (founder 2026-10-03).
   if (i.role === 'umpire') {
-    return { kind: 'screen', topic: 'Your record', fact: counted(i.matchesOfficiated, i.matchesOfficiated === 1 ? 'match officiated' : 'matches officiated') }
+    return { kind: 'screen', topic: tHockiaAi('context.yourRecord'), fact: counted(i.matchesOfficiated, 'context.officiatedCount') }
   }
   if (i.entry === 'opportunities') {
-    return { kind: 'screen', topic: i.role === 'coach' ? 'Coaching opportunities' : 'Opportunities', fact: counted(i.openOpportunities, 'open') }
+    return { kind: 'screen', topic: i.role === 'coach' ? tHockiaAi('context.coachingOpportunities') : tHockiaAi('context.opportunities'), fact: counted(i.openOpportunities, 'context.openCount') }
   }
-  if (i.goalLabel) return { kind: 'goal', topic: 'Your goal', fact: i.goalLabel }
+  if (i.goalLabel) return { kind: 'goal', topic: tHockiaAi('context.yourGoal'), fact: i.goalLabel }
   return null
 }
 
 export function aiContextChipLabel(c: AiContextChip): string {
-  return c.fact ? `${c.topic} · ${c.fact}` : c.topic
+  return c.fact ? tHockiaAi('context.chipLabel', { topic: c.topic, fact: c.fact }) : c.topic
 }
 
 /** The chip shows the first pick ("Play abroad"), or the member's own words. */
@@ -60,7 +62,5 @@ export function goalChipLabel(role: string | null | undefined, goal: Pick<MyGoal
 
 /** Greeting while the goal chip is on; ✕ drops "and your goal". */
 export function goalIntro(goalOn: boolean): string {
-  return goalOn
-    ? 'Ask me anything about your hockey. I can see your profile and your goal.'
-    : 'Ask me anything about your hockey. I can see your profile.'
+  return goalOn ? tHockiaAi('intro.goalOn') : tHockiaAi('intro.goalOff')
 }

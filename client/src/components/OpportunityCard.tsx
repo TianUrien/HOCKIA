@@ -2,8 +2,12 @@ import { MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import Avatar from './Avatar'
-import { roleTeamLabel } from '@/lib/opportunityCopy'
+import { BENEFIT_TILES, roleTeamLabel } from '@/lib/opportunityCopy'
+import { positionLabel } from '@/lib/identity'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
+import { intlLocale, isEnglish } from '@/i18n/format'
 import { getInitials, getTimeAgo } from '@/lib/utils'
+import { countryLabel } from '@/i18n/countryNames'
 
 export interface WorldClubInfo {
   id: string
@@ -28,17 +32,18 @@ interface OpportunityCardProps {
   onViewDetails: () => void
 }
 
-const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
-  housing: { icon: Home, label: 'Housing', iconColor: 'text-hockia-primary' },
-  car: { icon: Car, label: 'Car', iconColor: 'text-hockia-primary' },
-  visa: { icon: GlobeIcon, label: 'Visa', iconColor: 'text-hockia-primary' },
-  flights: { icon: Plane, label: 'Flights', iconColor: 'text-purple-500' },
-  meals: { icon: Utensils, label: 'Meals', iconColor: 'text-hockia-primary' },
-  job: { icon: Briefcase, label: 'Job', iconColor: 'text-hockia-primary' },
-  insurance: { icon: Shield, label: 'Insurance', iconColor: 'text-hockia-primary' },
-  education: { icon: GraduationCap, label: 'Education', iconColor: 'text-hockia-primary' },
-  bonuses: { icon: DollarSign, label: 'Bonuses', iconColor: 'text-hockia-primary' },
-  equipment: { icon: Dumbbell, label: 'Equipment', iconColor: 'text-hockia-primary' },
+// The words come from BENEFIT_TILES (lib/opportunityCopy), the one owner of benefit labels.
+const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; iconColor: string }> = {
+  housing: { icon: Home, iconColor: 'text-hockia-primary' },
+  car: { icon: Car, iconColor: 'text-hockia-primary' },
+  visa: { icon: GlobeIcon, iconColor: 'text-hockia-primary' },
+  flights: { icon: Plane, iconColor: 'text-purple-500' },
+  meals: { icon: Utensils, iconColor: 'text-hockia-primary' },
+  job: { icon: Briefcase, iconColor: 'text-hockia-primary' },
+  insurance: { icon: Shield, iconColor: 'text-hockia-primary' },
+  education: { icon: GraduationCap, iconColor: 'text-hockia-primary' },
+  bonuses: { icon: DollarSign, iconColor: 'text-hockia-primary' },
+  equipment: { icon: Dumbbell, iconColor: 'text-hockia-primary' },
 }
 
 const MAX_VISIBLE_PERKS = 3
@@ -81,6 +86,7 @@ export default function OpportunityCard({
   onViewDetails,
 }: OpportunityCardProps) {
   const navigate = useNavigate()
+  const t = useOpportunitiesT()
 
   const cardType = getCardType(publisherRole, worldClub, publisherOrganization)
   const isCoachPublisher = cardType !== 'club'
@@ -92,7 +98,7 @@ export default function OpportunityCard({
   const accent = isPlayerOpening
     ? { dot: 'bg-role-player-ink', text: 'text-role-player-ink' }
     : { dot: 'bg-role-coach-ink', text: 'text-role-coach-ink' }
-  const openingLabel = isPlayerOpening ? 'Player opening' : 'Coach opening'
+  const openingLabel = isPlayerOpening ? t('card.playerOpening') : t('card.coachOpening')
 
   const handlePublisherClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -107,7 +113,7 @@ export default function OpportunityCard({
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null
-    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    return new Date(dateString).toLocaleDateString(isEnglish() ? 'en-US' : intlLocale(), { month: 'short', year: 'numeric' })
   }
 
   // Key pills — team + position. The team (Men's / Women's / Mixed / Boys /
@@ -115,12 +121,13 @@ export default function OpportunityCard({
   // stays player-only (mirrors OpportunityDetailView).
   const teamLabel = roleTeamLabel(vacancy.gender)
   const pills: string[] = []
-  if (!isPlayerOpening) pills.push('Coach')
+  if (!isPlayerOpening) pills.push(t('card.coachPill'))
   if (teamLabel) pills.push(teamLabel)
   if (isPlayerOpening && vacancy.position) {
-    pills.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
+    const titleCased = vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    pills.push(isEnglish() ? titleCased : positionLabel(vacancy.position) ?? titleCased)
   }
-  if (pills.length === 0) pills.push('Player')
+  if (pills.length === 0) pills.push(t('card.playerPill'))
 
   const benefits = vacancy.benefits || []
   const visibleBenefits = benefits.slice(0, MAX_VISIBLE_PERKS)
@@ -129,7 +136,7 @@ export default function OpportunityCard({
   // Identity — club cards lead with the club; coach cards lead with the coach.
   const publisherName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
   const publisherLogo = cardType === 'club' ? (worldClub?.avatarUrl || clubLogo) : clubLogo
-  const locationText = [vacancy.location_city, vacancy.location_country]
+  const locationText = [vacancy.location_city, countryLabel(vacancy.location_country)]
     .map((part) => part?.trim())
     .filter(Boolean)
     .join(', ')
@@ -150,7 +157,7 @@ export default function OpportunityCard({
           {vacancy.location_country && (
             <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-gray-100 bg-gray-50 py-1 pl-2 pr-1 text-[12px] font-medium text-gray-600">
               {countryFlag && <span aria-hidden="true">{countryFlag}</span>}
-              <span className="max-w-[110px] truncate">{vacancy.location_country}</span>
+              <span className="max-w-[110px] truncate">{countryLabel(vacancy.location_country)}</span>
               <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
             </span>
           )}
@@ -191,7 +198,7 @@ export default function OpportunityCard({
                 {publisherName}
               </button>
               <span className="flex-shrink-0 rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-600">
-                {isCoachPublisher ? 'Coach' : 'Club'}
+                {isCoachPublisher ? t('card.coachBadge') : t('card.clubBadge')}
               </span>
             </div>
           </div>
@@ -214,7 +221,7 @@ export default function OpportunityCard({
             />
             <span className="min-w-0 flex-1">
               <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                Recruiting for
+                {t('card.recruitingFor')}
               </span>
               <span className="block text-[13.5px] font-semibold leading-snug text-gray-800 group-hover:text-gray-900">
                 {worldClub.clubName}
@@ -230,7 +237,7 @@ export default function OpportunityCard({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                Recruiting for
+                {t('card.recruitingFor')}
               </span>
               <span className="block text-[13.5px] font-semibold leading-snug text-gray-800">
                 {publisherOrganization}
@@ -272,7 +279,7 @@ export default function OpportunityCard({
           )}
           <span className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-            {isImmediate ? 'Starts immediately' : `Starts ${formatDate(vacancy.start_date)}`}
+            {isImmediate ? t('card.startsImmediately') : t('card.startsOn', { date: formatDate(vacancy.start_date) })}
           </span>
           {/* Deliberately created_at, NOT published_at/updated_at: this is
               the key "Newest" sorts on (founder ruling 2026-08-13), shown so
@@ -280,7 +287,7 @@ export default function OpportunityCard({
               published_at, which would make the list look mis-sorted. */}
           <span className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-            {`Posted ${getTimeAgo(vacancy.created_at, true).replace(/^Just now$/, 'just now')}`}
+            {t('card.posted', { when: getTimeAgo(vacancy.created_at, true).replace(/^Just now$/, 'just now') })}
           </span>
         </div>
 
@@ -297,13 +304,13 @@ export default function OpportunityCard({
                   className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600"
                 >
                   <Icon className={`h-3.5 w-3.5 ${config.iconColor}`} />
-                  {config.label}
+                  {BENEFIT_TILES[benefit.toLowerCase()]?.label}
                 </span>
               )
             })}
             {extraBenefits > 0 && (
               <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-500">
-                +{extraBenefits} more
+                {t('card.moreBenefits', { count: extraBenefits })}
               </span>
             )}
           </div>

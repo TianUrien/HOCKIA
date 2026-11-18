@@ -11,7 +11,9 @@ import { fieldInput } from '@/components/ui/fieldClasses'
 import { BrandLogo, OfferHero, PerkPill } from '@/components/offers/OfferVisuals'
 import { dismissOffer, hideBrandOffers } from '@/lib/memberOffers'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { useBrandsT } from '@/i18n/ns/brands'
 import { suggestBrand, trackItemImpression, trackMarket, type MarketItem, type MarketSurface } from '@/lib/marketplace'
+import { countryLabel } from '@/i18n/countryNames'
 
 /** Shared pieces of the Marketplace (Figma 08 · Brands P6: MK1–MK4). */
 
@@ -49,11 +51,13 @@ function ItemImage({ item, className, logoClassName, eager }: { item: MarketItem
 }
 
 export function OfferPill({ className, perk }: { className?: string; perk?: string | null }) {
-  return <span className={cn('rounded-full bg-brand-soft px-2.5 py-0.5 text-caption font-semibold text-brand-primary', className)}>{(perk ?? '').trim() || 'Offer'}</span>
+  const t = useBrandsT()
+  return <span className={cn('rounded-full bg-brand-soft px-2.5 py-0.5 text-caption font-semibold text-brand-primary', className)}>{(perk ?? '').trim() || t('marketParts.offerPill')}</span>
 }
 
 /** Rail tile (MK1): 200 pt for offers, 160 pt for the need rails. */
 export function MarketTile({ item, wide = false, surface, onOpen, onMenu }: { item: MarketItem; wide?: boolean; surface: MarketSurface; onOpen: () => void; onMenu: () => void }) {
+  const t = useBrandsT()
   const ref = useSeenOnce<HTMLDivElement>(() => trackItemImpression(item, surface))
   return (
     <div ref={ref} className={cn('relative shrink-0 snap-start overflow-hidden rounded-[20px] border border-line bg-white', wide ? 'w-[200px]' : 'w-[160px]')} onContextMenu={(e) => { e.preventDefault(); onMenu() }} data-testid="market-tile" data-kind={item.kind}>
@@ -67,7 +71,7 @@ export function MarketTile({ item, wide = false, surface, onOpen, onMenu }: { it
           <span className="mt-0.5 block text-row font-semibold leading-[19px] text-ink-1 line-clamp-2">{item.title}</span>
         </span>
       </button>
-      <button type="button" onClick={onMenu} aria-label={`Options for ${item.title}`} className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center">
+      <button type="button" onClick={onMenu} aria-label={t('marketParts.optionsFor', { title: item.title })} className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center">
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm"><MoreHorizontal className="h-4 w-4" /></span>
       </button>
     </div>
@@ -76,6 +80,7 @@ export function MarketTile({ item, wide = false, surface, onOpen, onMenu }: { it
 
 /** List row (MK2 / MK3): thumb, title, brand · detail, Offer pill. */
 export function MarketRow({ item, surface, detail, onOpen, onMenu }: { item: MarketItem; surface: MarketSurface; detail?: string | null; onOpen: () => void; onMenu: () => void }) {
+  const t = useBrandsT()
   const ref = useSeenOnce<HTMLDivElement>(() => trackItemImpression(item, surface))
   const line = [item.brand_name, detail ?? (item.body ? item.body.split(/[.\n]/)[0].trim() : null)].filter(Boolean).join(' · ')
   return (
@@ -88,7 +93,7 @@ export function MarketRow({ item, surface, detail, onOpen, onMenu }: { item: Mar
         </span>
       </button>
       {item.kind === 'offer' ? <OfferPill className="shrink-0" perk={item.perk} /> : null}
-      <button type="button" onClick={onMenu} aria-label={`Options for ${item.title}`} className="-mr-1 flex h-11 w-9 shrink-0 items-center justify-center text-ink-3">
+      <button type="button" onClick={onMenu} aria-label={t('marketParts.optionsFor', { title: item.title })} className="-mr-1 flex h-11 w-9 shrink-0 items-center justify-center text-ink-3">
         <MoreHorizontal className="h-4 w-4" />
       </button>
     </div>
@@ -97,6 +102,7 @@ export function MarketRow({ item, surface, detail, onOpen, onMenu }: { item: Mar
 
 /** "Not useful" / "Hide this brand", the same everywhere offers and products show. */
 export function ItemMenuSheet({ item, surface, onClose, onRemoved }: { item: MarketItem | null; surface: MarketSurface; onClose: () => void; onRemoved: (item: MarketItem, wholeBrand: boolean) => void }) {
+  const t = useBrandsT()
   const run = async (hideBrand: boolean) => {
     if (!item) return
     onClose()
@@ -114,14 +120,14 @@ export function ItemMenuSheet({ item, surface, onClose, onRemoved }: { item: Mar
     }
   }
   return (
-    <BottomSheet open={item !== null} onClose={onClose} ariaLabel="Item options">
+    <BottomSheet open={item !== null} onClose={onClose} ariaLabel={t('marketParts.menuAria')}>
       {item ? (
         <div className="px-5 pb-2" data-testid="market-item-menu">
           <p className="text-row text-ink-2">{item.brand_name}</p>
           <p className="text-body font-semibold text-ink-1">{item.title}</p>
           <ul className="mt-3 divide-y divide-line border-t border-line">
-            <li><button type="button" onClick={() => void run(false)} className="block w-full py-3.5 text-left text-body text-ink-1">Not useful</button></li>
-            <li><button type="button" onClick={() => void run(true)} className="block w-full py-3.5 text-left text-body text-ink-1">Hide this brand</button></li>
+            <li><button type="button" onClick={() => void run(false)} className="block w-full py-3.5 text-left text-body text-ink-1">{t('marketParts.notUseful')}</button></li>
+            <li><button type="button" onClick={() => void run(true)} className="block w-full py-3.5 text-left text-body text-ink-1">{t('marketParts.hideBrand')}</button></li>
           </ul>
         </div>
       ) : null}
@@ -131,6 +137,7 @@ export function ItemMenuSheet({ item, surface, onClose, onRemoved }: { item: Mar
 
 /** "Near you England ▾" / "Moving to Germany ▾": switch the country. */
 export function CountryChip({ label, countryId, tone = 'outline', onChange }: { label: string; countryId: number | null; tone?: 'outline' | 'soft'; onChange: (id: number) => void }) {
+  const t = useBrandsT()
   const { countries, getCountryById } = useCountries()
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
@@ -145,22 +152,22 @@ export function CountryChip({ label, countryId, tone = 'outline', onChange }: { 
         className={cn('inline-flex h-11 items-center gap-1 rounded-full px-4 text-row font-semibold', tone === 'soft' ? 'bg-brand-soft text-brand-primary' : 'border border-line bg-white text-ink-1')}
         data-testid="market-country-chip"
       >
-        {current ? (current.common_name || current.name) : 'Choose a country'}
+        {current ? countryLabel(current.common_name || current.name) : t('marketParts.chooseCountry')}
         <ChevronDown className="h-4 w-4" aria-hidden="true" />
       </button>
-      <BottomSheet open={open} onClose={() => { setOpen(false); setQ('') }} ariaLabel="Choose a country">
+      <BottomSheet open={open} onClose={() => { setOpen(false); setQ('') }} ariaLabel={t('marketParts.countrySheetAria')}>
         <div className="px-5 pb-3 pt-1">
-          <h2 className="text-title text-ink-1">Choose a country</h2>
+          <h2 className="text-title text-ink-1">{t('marketParts.countrySheetTitle')}</h2>
           <div className="relative mt-3">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
-            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search countries" aria-label="Search countries" className={cn(fieldInput, 'pl-10')} />
+            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('marketParts.searchCountries')} aria-label={t('marketParts.searchCountriesAria')} className={cn(fieldInput, 'pl-10')} />
           </div>
         </div>
         <ul className="max-h-[50dvh] overflow-y-auto px-2 pb-3">
           {results.map((c) => (
             <li key={c.id}>
               <button type="button" onClick={() => { onChange(c.id); setOpen(false); setQ('') }} className="flex h-12 w-full items-center rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted">
-                {c.common_name || c.name}
+                {countryLabel(c.common_name || c.name)}
               </button>
             </li>
           ))}
@@ -172,6 +179,7 @@ export function CountryChip({ label, countryId, tone = 'outline', onChange }: { 
 
 /** "Suggest a brand" (MK3): a short form that reaches the admins only. */
 export function SuggestBrandSheet({ open, countryId, onClose }: { open: boolean; countryId: number | null; onClose: () => void }) {
+  const t = useBrandsT()
   const addToast = useToastStore((s) => s.addToast)
   const [name, setName] = useState('')
   const [link, setLink] = useState('')
@@ -185,25 +193,25 @@ export function SuggestBrandSheet({ open, countryId, onClose }: { open: boolean;
     try {
       await suggestBrand(name, link, countryId, note)
       trackMarket('brand_suggest', { country: countryId })
-      addToast('Thanks. We’ll look into it.', 'success')
+      addToast(t('marketParts.suggestThanks'), 'success')
       onClose()
     } catch (err) {
       logger.error('[Marketplace] suggest failed', err)
-      addToast('Could not send it. Please try again.', 'error')
+      addToast(t('marketParts.suggestFailed'), 'error')
     } finally {
       setBusy(false)
     }
   }
   return (
-    <BottomSheet open={open} onClose={onClose} ariaLabel="Suggest a brand">
+    <BottomSheet open={open} onClose={onClose} ariaLabel={t('marketParts.suggestAria')}>
       <div className="space-y-3 px-5 pb-3" data-testid="suggest-brand-sheet">
-        <h2 className="text-title text-ink-1">Suggest a brand</h2>
-        <p className="text-row text-ink-2">Tell us who should be here. Only the Hockia team sees this.</p>
-        <input value={name} onChange={(e) => { setName(e.target.value.slice(0, 80)); setMissing(false) }} placeholder="Brand or service name" aria-label="Brand or service name" aria-invalid={missing || undefined} aria-describedby={missing ? 'suggest-brand-name-hint' : undefined} className={fieldInput} data-testid="suggest-brand-name" />
-        {missing ? <p id="suggest-brand-name-hint" role="alert" className="-mt-1 text-row text-ink-2">Add a brand or service name</p> : null}
-        <input value={link} onChange={(e) => setLink(e.target.value.slice(0, 300))} placeholder="Website (optional)" aria-label="Website" inputMode="url" autoCapitalize="none" className={fieldInput} />
-        <input value={note} onChange={(e) => setNote(e.target.value.slice(0, 300))} placeholder="What do they offer? (optional)" aria-label="What do they offer" className={fieldInput} />
-        <Button block className="rounded-full" loading={busy} onClick={() => void send()} data-testid="suggest-brand-send">Send suggestion</Button>
+        <h2 className="text-title text-ink-1">{t('marketParts.suggestTitle')}</h2>
+        <p className="text-row text-ink-2">{t('marketParts.suggestBody')}</p>
+        <input value={name} onChange={(e) => { setName(e.target.value.slice(0, 80)); setMissing(false) }} placeholder={t('marketParts.namePlaceholder')} aria-label={t('marketParts.nameAria')} aria-invalid={missing || undefined} aria-describedby={missing ? 'suggest-brand-name-hint' : undefined} className={fieldInput} data-testid="suggest-brand-name" />
+        {missing ? <p id="suggest-brand-name-hint" role="alert" className="-mt-1 text-row text-ink-2">{t('marketParts.nameMissing')}</p> : null}
+        <input value={link} onChange={(e) => setLink(e.target.value.slice(0, 300))} placeholder={t('marketParts.linkPlaceholder')} aria-label={t('marketParts.linkAria')} inputMode="url" autoCapitalize="none" className={fieldInput} />
+        <input value={note} onChange={(e) => setNote(e.target.value.slice(0, 300))} placeholder={t('marketParts.notePlaceholder')} aria-label={t('marketParts.noteAria')} className={fieldInput} />
+        <Button block className="rounded-full" loading={busy} onClick={() => void send()} data-testid="suggest-brand-send">{t('marketParts.send')}</Button>
       </div>
     </BottomSheet>
   )

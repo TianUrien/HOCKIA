@@ -15,24 +15,25 @@ import { createPortal } from 'react-dom'
 import { X, Bug, HelpCircle, Sparkles, Heart, MessageSquare, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useFeedback, type FeedbackCategory } from '@/hooks/useFeedback'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
+import { Trans } from 'react-i18next'
+import { useSettingsT } from '@/i18n/ns/settings'
 
 interface FeedbackModalProps {
   open: boolean
   onClose: () => void
 }
 
+/** Label and description: settings catalog, `feedbackModal.categories.<id>.label` / `.description`. */
 const CATEGORIES: Array<{
   id: FeedbackCategory
-  label: string
-  description: string
   icon: typeof Bug
   iconColor: string
 }> = [
-  { id: 'bug',       label: 'Something is broken',   description: 'A bug or error',           icon: Bug,           iconColor: 'text-ink-2' },
-  { id: 'confusing', label: 'Something is confusing', description: 'Unclear UX or copy',      icon: HelpCircle,    iconColor: 'text-ink-2' },
-  { id: 'idea',      label: 'Idea or feature request', description: 'Something missing',     icon: Sparkles,      iconColor: 'text-hockia-primary' },
-  { id: 'praise',    label: 'Love it',                description: 'Tell us what works',     icon: Heart,         iconColor: 'text-hockia-primary' },
-  { id: 'other',     label: 'Other',                  description: 'Anything else',          icon: MessageSquare, iconColor: 'text-ink-2' },
+  { id: 'bug',       icon: Bug,           iconColor: 'text-ink-2' },
+  { id: 'confusing', icon: HelpCircle,    iconColor: 'text-ink-2' },
+  { id: 'idea',      icon: Sparkles,      iconColor: 'text-hockia-primary' },
+  { id: 'praise',    icon: Heart,         iconColor: 'text-hockia-primary' },
+  { id: 'other',     icon: MessageSquare, iconColor: 'text-ink-2' },
 ]
 
 const MIN_BODY_LENGTH = 50
@@ -41,6 +42,7 @@ const MAX_BODY_LENGTH = 2000
 export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
   // Bottom sheet on phones: lift it above the iOS keyboard.
   const kb = useKeyboardInset(open)
+  const t = useSettingsT()
   const { status, submitFeedback, reset } = useFeedback()
   const [category, setCategory] = useState<FeedbackCategory | null>(null)
   const [body, setBody] = useState('')
@@ -127,10 +129,10 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
         <div className="flex items-start justify-between p-5 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl">
           <div>
             <h2 id="feedback-modal-title" className="text-lg font-bold text-gray-900">
-              Send feedback
+              {t('feedbackModal.title')}
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Help us make Hockia better. We read every message.
+              {t('feedbackModal.subtitle')}
             </p>
           </div>
           <button
@@ -138,7 +140,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
             onClick={handleClose}
             disabled={status.kind === 'submitting'}
             className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-40"
-            aria-label="Close feedback"
+            aria-label={t('feedbackModal.close')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -150,16 +152,16 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
             <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-positive-soft">
               <CheckCircle2 className="h-7 w-7 text-positive" />
             </div>
-            <h3 className="text-base font-semibold text-gray-900">Thanks, we got it.</h3>
+            <h3 className="text-base font-semibold text-gray-900">{t('feedbackModal.successTitle')}</h3>
             <p className="mt-1 text-sm text-gray-500">
-              We&apos;ll follow up if we have questions.
+              {t('feedbackModal.successBody')}
             </p>
             <button
               type="button"
               onClick={handleClose}
               className="mt-5 inline-flex items-center justify-center min-h-[44px] px-5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold shadow-sm hover:opacity-90"
             >
-              Done
+              {t('feedbackModal.done')}
             </button>
           </div>
         ) : (
@@ -168,7 +170,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
             <div className="p-5 space-y-5">
               {/* Category */}
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">What&apos;s this about?</p>
+                <p className="text-sm font-medium text-gray-700 mb-2">{t('feedbackModal.categoryQuestion')}</p>
                 <div className="space-y-1.5">
                   {CATEGORIES.map((cat, i) => {
                     const Icon = cat.icon
@@ -189,8 +191,8 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                       >
                         <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${cat.iconColor}`} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{cat.label}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">{cat.description}</p>
+                          <p className="text-sm font-medium text-gray-900">{t(`feedbackModal.categories.${cat.id}.label`)}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{t(`feedbackModal.categories.${cat.id}.description`)}</p>
                         </div>
                       </button>
                     )
@@ -201,14 +203,14 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
               {/* Body textarea */}
               <div>
                 <label htmlFor="feedback-body" className="text-sm font-medium text-gray-700">
-                  Tell us more
+                  {t('feedbackModal.bodyLabel')}
                 </label>
                 <textarea
                   id="feedback-body"
                   value={body}
                   onChange={(e) => setBody(e.target.value.slice(0, MAX_BODY_LENGTH))}
                   rows={5}
-                  placeholder="What happened, what you expected, anything that would help us understand…"
+                  placeholder={t('feedbackModal.bodyPlaceholder')}
                   className="mt-1 w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary/40"
                   data-testid="feedback-body"
                 />
@@ -221,8 +223,8 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                     }
                   >
                     {body.length < MIN_BODY_LENGTH
-                      ? `${MIN_BODY_LENGTH - body.length} more characters needed`
-                      : `${body.length}/${MAX_BODY_LENGTH}`}
+                      ? t('feedbackModal.charsNeeded', { count: MIN_BODY_LENGTH - body.length })
+                      : t('feedbackModal.charCount', { length: body.length, max: MAX_BODY_LENGTH })}
                   </span>
                 </div>
               </div>
@@ -237,19 +239,17 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                 />
                 <span>
                   <span className="block text-sm font-medium text-gray-900">
-                    This is urgent (affecting my work)
+                    {t('feedbackModal.urgentLabel')}
                   </span>
                   <span className="block text-xs text-gray-500 mt-0.5">
-                    Use sparingly so the urgent label keeps its signal.
+                    {t('feedbackModal.urgentHint')}
                   </span>
                 </span>
               </label>
 
               {/* Disclosure */}
               <div className="rounded-lg bg-gray-50 p-3 text-[11px] text-gray-500 leading-snug">
-                We&apos;ll include with your message: your role, the page
-                you&apos;re on, and the time. We will <strong>not</strong>{' '}
-                capture a screenshot or your console.
+                <Trans t={t} i18nKey="feedbackModal.disclosure" components={{ strong: <strong /> }} />
               </div>
 
               {/* Error */}
@@ -269,7 +269,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                 disabled={status.kind === 'submitting'}
                 className="min-h-[44px] px-4 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
               >
-                Cancel
+                {t('feedbackModal.cancel')}
               </button>
               <button
                 type="button"
@@ -280,10 +280,10 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                 {status.kind === 'submitting' ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Sending…
+                    {t('feedbackModal.sending')}
                   </>
                 ) : (
-                  'Send feedback'
+                  t('feedbackModal.send')
                 )}
               </button>
             </div>

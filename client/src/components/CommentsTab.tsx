@@ -17,6 +17,8 @@ import { checkContent } from '@/lib/contentFilter'
 import InfoTooltip from './InfoTooltip'
 import ReportUserModal from './ReportUserModal'
 import RequestFeedbackModal from './RequestFeedbackModal'
+import { useProfileT } from '@/i18n/ns/profile'
+import { getDateFnsLocale } from '@/i18n/format'
 
 interface CommentsTabProps {
   profileId: string
@@ -32,19 +34,15 @@ interface CommentsTabProps {
   forceVisitorMode?: boolean
 }
 
+type ProfileT = ReturnType<typeof useProfileT>
+
 /** Role-aware composer placeholder — keeps tone appropriate to the
  * profile being commented on. */
-function composerPlaceholderFor(role: Profile['role'] | null | undefined): string {
-  if (role === 'umpire') {
-    return "Share a note about this umpire's officiating: fair decisions, professionalism, knowledge of the laws..."
-  }
-  if (role === 'coach') {
-    return "Tell clubs and players why this coach stands out..."
-  }
-  if (role === 'club') {
-    return 'Share your experience with this club: culture, facilities, professionalism...'
-  }
-  return 'Tell clubs, coaches, and players why this profile stands out...'
+function composerPlaceholderFor(t: ProfileT, role: Profile['role'] | null | undefined): string {
+  if (role === 'umpire') return t('commentsTab.placeholder.umpire')
+  if (role === 'coach') return t('commentsTab.placeholder.coach')
+  if (role === 'club') return t('commentsTab.placeholder.club')
+  return t('commentsTab.placeholder.default')
 }
 
 /** Role-aware empty-state body copy.
@@ -53,54 +51,37 @@ function composerPlaceholderFor(role: Profile['role'] | null | undefined): strin
  *  state explicitly tells them so). Owner-mode copy nudges them to ask
  *  someone in their network instead. */
 function emptyStateCopyFor(
+  t: ProfileT,
   role: Profile['role'] | null | undefined,
   isOwner: boolean,
 ): string {
-  if (isOwner) {
-    return 'No comments yet. Ask a player, coach, or visitor to leave one.'
-  }
-  if (role === 'umpire') {
-    return 'Be the first to share a note about this umpire.'
-  }
-  if (role === 'club') {
-    return 'Be the first to share your experience with this club.'
-  }
-  if (role === 'brand') {
-    return 'Be the first to share your experience with this brand.'
-  }
-  return 'Be the first to share constructive feedback for this profile.'
+  if (isOwner) return t('commentsTab.empty.owner')
+  if (role === 'umpire') return t('commentsTab.empty.umpire')
+  if (role === 'club') return t('commentsTab.empty.club')
+  if (role === 'brand') return t('commentsTab.empty.brand')
+  return t('commentsTab.empty.default')
 }
 
 /** Role-aware section header subtitle for the Comments tab. */
-function commentsSubtitleFor(role: Profile['role'] | null | undefined): string {
+function commentsSubtitleFor(t: ProfileT, role: Profile['role'] | null | undefined): string {
   if (role === 'umpire') {
     // Avoid the word "References" — that's the dedicated profile_references
     // system on its own UI surface. Calling comments "References" on umpire
     // profiles makes both surfaces ambiguous.
-    return 'Peer notes from Hockia members.'
+    return t('commentsTab.subtitle.umpire')
   }
-  if (role === 'club') {
-    return 'Notes from players, coaches, and visitors.'
-  }
-  if (role === 'brand') {
-    return 'Notes from the Hockia community.'
-  }
-  return 'Verified testimonials from Hockia members.'
+  if (role === 'club') return t('commentsTab.subtitle.club')
+  if (role === 'brand') return t('commentsTab.subtitle.brand')
+  return t('commentsTab.subtitle.default')
 }
 
 /** Role-aware copy shown on the owner's own Comments tab when they cannot
  * comment on themselves — guides them on whom to ask. */
-function ownerInviteHintFor(role: Profile['role'] | null | undefined): string {
-  if (role === 'umpire') {
-    return "You can't leave a comment on your own profile, but other members can. Ask a colleague, umpire manager, or coach to share one."
-  }
-  if (role === 'club') {
-    return "You can't leave a comment on your own club page, but members can. Ask a player, coach, or visitor to share their experience."
-  }
-  if (role === 'brand') {
-    return "You can't leave a comment on your own brand page, but members can. Ask an ambassador or partner to share their experience."
-  }
-  return "You can't leave a comment on your own profile, but other members can. Ask a teammate or coach to share one."
+function ownerInviteHintFor(t: ProfileT, role: Profile['role'] | null | undefined): string {
+  if (role === 'umpire') return t('commentsTab.ownerHint.umpire')
+  if (role === 'club') return t('commentsTab.ownerHint.club')
+  if (role === 'brand') return t('commentsTab.ownerHint.brand')
+  return t('commentsTab.ownerHint.default')
 }
 
 type CommentRating = Database['public']['Enums']['comment_rating']
@@ -113,35 +94,42 @@ type CommentWithAuthor = CommentRow & {
 const MAX_LENGTH = 1000
 const MIN_LENGTH = 10
 
-const ratingOptions: { value: CommentRating; label: string; description: string; badgeClass: string }[] = [
-  { value: 'positive', label: 'Positive', description: 'Highlight a standout quality or experience.', badgeClass: 'bg-green-100 text-green-700 border-green-200' },
-  { value: 'neutral', label: 'Neutral', description: 'Share balanced, factual feedback.', badgeClass: 'bg-gray-100 text-gray-700 border-gray-200' },
-  { value: 'negative', label: 'Needs Work', description: 'Flag concerns respectfully for moderators.', badgeClass: 'bg-red-100 text-red-700 border-red-200' },
+const ratingOptions: { value: CommentRating; key: 'positive' | 'neutral' | 'negative'; badgeClass: string }[] = [
+  { value: 'positive', key: 'positive', badgeClass: 'bg-green-100 text-green-700 border-green-200' },
+  { value: 'neutral', key: 'neutral', badgeClass: 'bg-gray-100 text-gray-700 border-gray-200' },
+  { value: 'negative', key: 'negative', badgeClass: 'bg-red-100 text-red-700 border-red-200' },
 ]
 
-const COMMENTS_HEADER_INFO = (
-  <div className="space-y-2 text-sm text-gray-100">
-    <p className="font-semibold text-white">About comments</p>
-    <ul className="list-disc space-y-1 pl-4 text-gray-200">
-      <li>Visible to everyone who views this profile.</li>
-      <li>Use clear, professional language and concrete observations.</li>
-      <li>Your rating helps clubs and coaches scan at a glance.</li>
-    </ul>
-  </div>
-)
+function CommentsHeaderInfo() {
+  const t = useProfileT()
+  return (
+    <div className="space-y-2 text-sm text-gray-100">
+      <p className="font-semibold text-white">{t('commentsTab.headerInfo.title')}</p>
+      <ul className="list-disc space-y-1 pl-4 text-gray-200">
+        <li>{t('commentsTab.headerInfo.visible')}</li>
+        <li>{t('commentsTab.headerInfo.language')}</li>
+        <li>{t('commentsTab.headerInfo.rating')}</li>
+      </ul>
+    </div>
+  )
+}
 
-const COMMENT_COMPOSER_INFO = (
-  <div className="space-y-2 text-sm text-gray-100">
-    <p className="font-semibold text-white">Posting tips</p>
-    <ul className="list-disc space-y-1 pl-4 text-gray-200">
-      <li>Stay constructive. Your profile name is shown with every comment.</li>
-      <li>Reference specific games, training moments, or character traits.</li>
-      <li>Respect the minimum length and select a sentiment before submitting.</li>
-    </ul>
-  </div>
-)
+function CommentComposerInfo() {
+  const t = useProfileT()
+  return (
+    <div className="space-y-2 text-sm text-gray-100">
+      <p className="font-semibold text-white">{t('commentsTab.composerInfo.title')}</p>
+      <ul className="list-disc space-y-1 pl-4 text-gray-200">
+        <li>{t('commentsTab.composerInfo.constructive')}</li>
+        <li>{t('commentsTab.composerInfo.specific')}</li>
+        <li>{t('commentsTab.composerInfo.minimum')}</li>
+      </ul>
+    </div>
+  )
+}
 
 export default function CommentsTab({ profileId, highlightedCommentIds, profileRole, forceVisitorMode = false }: CommentsTabProps) {
+  const t = useProfileT()
   const { profile: authProfile, user } = useAuthStore()
   const { addToast } = useToastStore()
 
@@ -220,13 +208,13 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
         feature: 'comments',
         operation: 'fetch_comments'
       })
-      addToast('Failed to load comments. Please try again.', 'error')
+      addToast(t('commentsTab.toasts.loadFailed'), 'error')
     } else {
       setComments((data as CommentWithAuthor[]) ?? [])
     }
 
     setLoading(false)
-  }, [addToast, profileId])
+  }, [addToast, profileId, t])
 
   const fetchFriendIds = useCallback(async () => {
     Sentry.addBreadcrumb({
@@ -289,24 +277,24 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
   const handleCreateComment = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!canComment || !authProfile) {
-      addToast('You need to sign in with a profile to leave a comment.', 'error')
+      addToast(t('commentsTab.toasts.signInRequired'), 'error')
       return
     }
 
     const trimmed = composerContent.trim()
     if (trimmed.length < MIN_LENGTH) {
-      addToast(`Comments must be at least ${MIN_LENGTH} characters.`, 'error')
+      addToast(t('commentsTab.toasts.tooShort', { count: MIN_LENGTH }), 'error')
       return
     }
 
     if (!composerRating) {
-      addToast('Select a sentiment to post your comment.', 'error')
+      addToast(t('commentsTab.toasts.sentimentToPost'), 'error')
       return
     }
 
     const filterResult = checkContent(trimmed)
     if (!filterResult.allowed) {
-      addToast(filterResult.reason || 'Content violates community guidelines.', 'error')
+      addToast(filterResult.reason || t('commentsTab.toasts.contentBlocked'), 'error')
       return
     }
 
@@ -343,14 +331,14 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
       upsertComment(data as CommentWithAuthor)
       setComposerContent('')
       setComposerRating('')
-      addToast('Thanks for sharing feedback!', 'success')
+      addToast(t('commentsTab.toasts.posted'), 'success')
     } catch (error) {
       logger.error('Failed to post comment', error)
       reportSupabaseError('comments.insert', error, { profileId, authorId: authProfile?.id }, {
         feature: 'comments',
         operation: 'create_comment'
       })
-      addToast('Unable to post your comment. Please try again.', 'error')
+      addToast(t('commentsTab.toasts.postFailed'), 'error')
     } finally {
       setCreating(false)
     }
@@ -362,12 +350,12 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
 
     const trimmed = editContent.trim()
     if (trimmed.length < MIN_LENGTH) {
-      addToast(`Comments must be at least ${MIN_LENGTH} characters.`, 'error')
+      addToast(t('commentsTab.toasts.tooShort', { count: MIN_LENGTH }), 'error')
       return
     }
 
     if (!editRating) {
-      addToast('Select a sentiment before saving changes.', 'error')
+      addToast(t('commentsTab.toasts.sentimentToSave'), 'error')
       return
     }
 
@@ -398,14 +386,14 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
       if (error) throw error
       upsertComment(data as CommentWithAuthor)
       setIsEditing(false)
-      addToast('Your comment was updated.', 'success')
+      addToast(t('commentsTab.toasts.updated'), 'success')
     } catch (error) {
       logger.error('Failed to update comment', error)
       reportSupabaseError('comments.update', error, { commentId: existingComment?.id }, {
         feature: 'comments',
         operation: 'update_comment'
       })
-      addToast('Unable to save your changes. Please try again.', 'error')
+      addToast(t('commentsTab.toasts.updateFailed'), 'error')
     } finally {
       setEditing(false)
     }
@@ -435,14 +423,14 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
 
       setComments((prev) => prev.filter((comment) => comment.id !== data.id))
       setDeleteModalOpen(false)
-      addToast('Comment deleted.', 'success')
+      addToast(t('commentsTab.toasts.deleted'), 'success')
     } catch (error) {
       logger.error('Failed to delete comment', error)
       reportSupabaseError('comments.delete', error, { commentId: existingComment?.id }, {
         feature: 'comments',
         operation: 'delete_comment'
       })
-      addToast('Unable to delete your comment. Please try again.', 'error')
+      addToast(t('commentsTab.toasts.deleteFailed'), 'error')
     } finally {
       setDeleteLoading(false)
     }
@@ -460,7 +448,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
     if (!option) return null
     return (
       <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize', option.badgeClass)}>
-        {option.label}
+        {t(`commentsTab.rating.${option.key}.label`)}
       </span>
     )
   }
@@ -471,16 +459,16 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold text-gray-900">Comments</h2>
-              <InfoTooltip label="How comments work" alignment="start">
-                {COMMENTS_HEADER_INFO}
+              <h2 className="text-2xl font-bold text-gray-900">{t('commentsTab.title')}</h2>
+              <InfoTooltip label={t('commentsTab.howItWorks')} alignment="start">
+                <CommentsHeaderInfo />
               </InfoTooltip>
             </div>
-            <p className="text-sm text-gray-600">{commentsSubtitleFor(profileRole)}</p>
+            <p className="text-sm text-gray-600">{commentsSubtitleFor(t, profileRole)}</p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
             <MessageSquare className="h-4 w-4 text-hockia-primary" />
-            {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
+            {t('commentsTab.count', { count: comments.length })}
           </div>
         </div>
       </section>
@@ -494,32 +482,32 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
               </div>
               <div>
                 <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                  <span>Share your experience</span>
-                  <InfoTooltip label="Commenting tips" alignment="start">
-                    {COMMENT_COMPOSER_INFO}
+                  <span>{t('commentsTab.composer.title')}</span>
+                  <InfoTooltip label={t('commentsTab.composer.tipsLabel')} alignment="start">
+                    <CommentComposerInfo />
                   </InfoTooltip>
                 </div>
-                <p className="text-xs text-gray-500">Give thoughtful, professional feedback.</p>
+                <p className="text-xs text-gray-500">{t('commentsTab.composer.subtitle')}</p>
               </div>
             </div>
 
             <form className="space-y-4" onSubmit={handleCreateComment}>
               <div>
                 <label htmlFor="comment-content" className="sr-only">
-                  Comment
+                  {t('commentsTab.composer.fieldLabel')}
                 </label>
                 <textarea
                   id="comment-content"
                   value={composerContent}
                   onChange={(event) => setComposerContent(event.target.value.slice(0, MAX_LENGTH))}
                   rows={4}
-                  placeholder={composerPlaceholderFor(profileRole)}
+                  placeholder={composerPlaceholderFor(t, profileRole)}
                   autoCapitalize="sentences"
                   spellCheck
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-hockia-primary focus-visible:ring-hockia-primary"
                 />
                 <div className="mt-1 flex justify-between text-xs text-gray-500">
-                  <span>Min {MIN_LENGTH} characters</span>
+                  <span>{t('commentsTab.minLength', { count: MIN_LENGTH })}</span>
                   <span>
                     {composerContent.trim().length}/{MAX_LENGTH}
                   </span>
@@ -543,22 +531,22 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                       checked={composerRating === option.value}
                       onChange={() => setComposerRating(option.value)}
                     />
-                    <p className="font-semibold">{option.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
+                    <p className="font-semibold">{t(`commentsTab.rating.${option.key}.label`)}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{t(`commentsTab.rating.${option.key}.description`)}</p>
                   </label>
                 ))}
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-gray-500">
-                  Comments follow community guidelines. Moderators may hide content that violates the code of conduct.
+                  {t('commentsTab.composer.guidelines')}
                 </p>
                 <button
                   type="submit"
                   disabled={creating}
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 transition disabled:opacity-60"
                 >
-                  {creating ? 'Posting...' : 'Post Comment'}
+                  {creating ? t('commentsTab.composer.posting') : t('commentsTab.composer.post')}
                 </button>
               </div>
             </form>
@@ -570,7 +558,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-start gap-3">
                 <ShieldAlert className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                <p>{ownerInviteHintFor(profileRole)}</p>
+                <p>{ownerInviteHintFor(t, profileRole)}</p>
               </div>
               <button
                 type="button"
@@ -578,7 +566,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white px-4 py-2 text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap flex-shrink-0"
               >
                 <Share2 className="h-4 w-4" />
-                Ask for feedback
+                {t('commentsTab.askForFeedback')}
               </button>
             </div>
           ) : forceVisitorMode && authProfile?.id === profileId ? (
@@ -587,13 +575,13 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
             // the owner-only "Ask for feedback" CTA. Neutral preview copy.
             <div className="flex items-center gap-3">
               <ShieldAlert className="h-5 w-5 text-gray-400" />
-              <p>This is how other members see your comments section. Switch back to your dashboard to ask for feedback.</p>
+              <p>{t('commentsTab.visitorPreview')}</p>
             </div>
           ) : (
             <div className="flex items-center gap-3">
               <ShieldAlert className="h-5 w-5 text-gray-400" />
               <p>
-                Sign in with a Hockia profile to leave a public, attributed comment.
+                {t('commentsTab.signInToComment')}
               </p>
             </div>
           )}
@@ -613,7 +601,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
       <section className="space-y-4">
         {existingComment && (
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Your Comment</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('commentsTab.yourComment')}</p>
             <article
               className={cn(
                 'rounded-2xl border border-gray-100 bg-white p-5 shadow-sm',
@@ -625,7 +613,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                   src={existingComment.author?.avatar_url}
                   initials={getInitials(existingComment.author?.full_name ?? existingComment.author?.username ?? null)}
                   size="md"
-                  alt={existingComment.author?.full_name || existingComment.author?.username || 'Hockia member'}
+                  alt={existingComment.author?.full_name || existingComment.author?.username || t('commentsTab.memberFallback')}
                   enablePreview
                   previewTitle={existingComment.author?.full_name || existingComment.author?.username || undefined}
                   role={existingComment.author?.role}
@@ -635,13 +623,13 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-semibold text-gray-900">
-                          {existingComment.author?.full_name || existingComment.author?.username || 'Hockia member'}
+                          {existingComment.author?.full_name || existingComment.author?.username || t('commentsTab.memberFallback')}
                         </p>
                         <RoleBadge role={existingComment.author?.role} />
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                      <span>{formatDistanceToNow(new Date(existingComment.created_at), { addSuffix: true })}</span>
+                      <span>{formatDistanceToNow(new Date(existingComment.created_at), { addSuffix: true, locale: getDateFnsLocale() })}</span>
                       {renderRatingBadge(existingComment.rating)}
                     </div>
                   </div>
@@ -649,7 +637,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                   {isEditing ? (
                     <form className="space-y-4" onSubmit={handleEditComment}>
                       <textarea
-                        aria-label="Edit comment"
+                        aria-label={t('commentsTab.edit.fieldLabel')}
                         value={editContent}
                         onChange={(event) => setEditContent(event.target.value.slice(0, MAX_LENGTH))}
                         rows={4}
@@ -658,7 +646,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                         className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-hockia-primary focus-visible:ring-hockia-primary"
                       />
                       <div className="flex justify-between text-xs text-gray-500">
-                        <span>Min {MIN_LENGTH} characters</span>
+                        <span>{t('commentsTab.minLength', { count: MIN_LENGTH })}</span>
                         <span>{editContent.trim().length}/{MAX_LENGTH}</span>
                       </div>
 
@@ -679,8 +667,8 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                               checked={editRating === option.value}
                               onChange={() => setEditRating(option.value)}
                             />
-                            <p className="font-semibold">{option.label}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
+                            <p className="font-semibold">{t(`commentsTab.rating.${option.key}.label`)}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{t(`commentsTab.rating.${option.key}.description`)}</p>
                           </label>
                         ))}
                       </div>
@@ -691,14 +679,14 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                           onClick={() => setIsEditing(false)}
                           className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                         >
-                          Cancel
+                          {t('commentsTab.edit.cancel')}
                         </button>
                         <button
                           type="submit"
                           disabled={editing}
                           className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2 text-sm font-semibold text-white shadow disabled:opacity-60"
                         >
-                          {editing ? 'Saving…' : 'Save changes'}
+                          {editing ? t('commentsTab.edit.saving') : t('commentsTab.edit.save')}
                         </button>
                       </div>
                     </form>
@@ -713,14 +701,14 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                           onClick={() => setIsEditing(true)}
                           className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                         >
-                          Edit
+                          {t('commentsTab.edit.edit')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeleteModalOpen(true)}
                           className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-600 hover:bg-red-50"
                         >
-                          Delete
+                          {t('commentsTab.edit.delete')}
                         </button>
                       </div>
                     </>
@@ -754,13 +742,13 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
           </div>
         ) : comments.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center text-gray-500">
-            <p className="text-base font-semibold text-gray-900 mb-2">No comments yet</p>
-            <p className="text-sm">{emptyStateCopyFor(profileRole, isOwner)}</p>
+            <p className="text-base font-semibold text-gray-900 mb-2">{t('commentsTab.empty.title')}</p>
+            <p className="text-sm">{emptyStateCopyFor(t, profileRole, isOwner)}</p>
           </div>
         ) : (
           <div className="space-y-4">
             {existingComment && otherComments.length > 0 && (
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Other Comments</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('commentsTab.otherComments')}</p>
             )}
             {otherComments.map((comment) => {
               const authorId = comment.author_profile_id
@@ -781,7 +769,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                       src={comment.author?.avatar_url}
                       initials={getInitials(comment.author?.full_name ?? comment.author?.username ?? null)}
                       size="md"
-                      alt={comment.author?.full_name || comment.author?.username || 'Former Hockia member'}
+                      alt={comment.author?.full_name || comment.author?.username || t('commentsTab.formerMember')}
                       enablePreview
                       previewTitle={comment.author?.full_name || comment.author?.username || undefined}
                       role={comment.author?.role}
@@ -791,7 +779,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-semibold text-gray-900">
-                              {comment.author?.full_name || comment.author?.username || 'Former Hockia member'}
+                              {comment.author?.full_name || comment.author?.username || t('commentsTab.formerMember')}
                             </p>
                             <RoleBadge role={comment.author?.role} />
                           </div>
@@ -800,11 +788,11 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                           {isFriend && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
                               <UserCheck className="h-3.5 w-3.5" />
-                              Friend
+                              {t('commentsTab.friend')}
                             </span>
                           )}
                           <span>
-                            {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: getDateFnsLocale() })}
                           </span>
                           {renderRatingBadge(comment.rating)}
                         </div>
@@ -818,12 +806,12 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                           onClick={() => setReportingComment({
                             id: comment.id,
                             authorId: authorId ?? '',
-                            authorName: comment.author?.full_name || comment.author?.username || 'Unknown',
+                            authorName: comment.author?.full_name || comment.author?.username || t('commentsTab.unknownAuthor'),
                           })}
                           className="mt-2 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors"
                         >
                           <Flag className="w-3 h-3" />
-                          Report
+                          {t('commentsTab.report')}
                         </button>
                       )}
                     </div>
@@ -839,12 +827,12 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleDeleteComment}
-        title="Delete comment?"
-        description="This action cannot be undone."
-        confirmLabel="Delete"
+        title={t('commentsTab.deleteModal.title')}
+        description={t('commentsTab.deleteModal.body')}
+        confirmLabel={t('commentsTab.deleteModal.confirm')}
         confirmTone="danger"
         confirmLoading={deleteLoading}
-        loadingLabel="Deleting..."
+        loadingLabel={t('commentsTab.deleteModal.loading')}
       />
 
       {reportingComment && (

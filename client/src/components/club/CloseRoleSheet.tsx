@@ -10,6 +10,7 @@ import { countWaitingApplicants, fetchTellableApplicants, tellWaitingApplicants,
 import { DECLINE_BODY_MAX, declineGreeting, declineNoteBody, personalDeclineNote } from '@/lib/declineNotes'
 import { roleTitle } from '@/lib/opportunityCopy'
 import { cn } from '@/lib/utils'
+import { useClubT } from '@/i18n/ns/club'
 
 /**
  * Close a role (Figma 05 Club speed · CS6 204:1269): Filled or Not filled,
@@ -35,6 +36,7 @@ interface Props {
 }
 
 export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
+  const t = useClubT()
   const addToast = useToastStore((s) => s.addToast)
   const [busy, setBusy] = useState(false)
   // The same title the applicants list and the player see (position for a player role).
@@ -57,7 +59,6 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
     if (!edited) setBody(declineNoteBody(o === 'filled' ? 'position_filled' : 'role_closed', shownTitle))
   }
   const telling = tell && waiting.length > 0
-  const players = (n: number) => (n === 1 ? '1 player' : `${n} players`)
 
   const close = async (chosen: RoleCloseOutcome) => {
     if (busy) return
@@ -77,7 +78,7 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
       onClosed(chosen)
     } catch (err) {
       logger.error('[CloseRoleSheet] close failed', err)
-      addToast('Could not close the opportunity. Try again.', 'error')
+      addToast(t('closeRole.failed'), 'error')
     } finally {
       setBusy(false)
     }
@@ -85,11 +86,11 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
 
 
   return (
-      <BottomSheet open={open} onClose={onCancel} ariaLabel="Close this opportunity">
+      <BottomSheet open={open} onClose={onCancel} ariaLabel={t('closeRole.sheetAria')}>
         <div className="flex flex-col gap-3.5 px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-2" data-testid="close-role-sheet">
-          <h2 className="text-[22px] font-bold leading-[27px] tracking-[-0.13px] text-ink-1">Close {shownTitle}?</h2>
-          <div className="flex flex-col gap-2.5" role="radiogroup" aria-label="Did you fill it?">
-            {([['filled', 'Filled', 'We found someone'], ['withdrawn', 'Not filled', 'No longer needed']] as const).map(([value, title, sub]) => (
+          <h2 className="text-[22px] font-bold leading-[27px] tracking-[-0.13px] text-ink-1">{t('closeRole.title', { title: shownTitle })}</h2>
+          <div className="flex flex-col gap-2.5" role="radiogroup" aria-label={t('closeRole.outcomeAria')}>
+            {([['filled', t('closeRole.filled'), t('closeRole.filledSub')], ['withdrawn', t('closeRole.notFilled'), t('closeRole.notFilledSub')]] as const).map(([value, title, sub]) => (
               <button
                 key={value}
                 type="button"
@@ -111,8 +112,8 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
           </div>
           {waiting.length > 0 && (
             <SwitchCardRow
-              title={`Tell the ${waiting.length === 1 ? 'player' : `${waiting.length} players`} still waiting`}
-              description={tell ? 'They see “Not this time” with this note' : outcome === 'filled' ? 'They’ll still see the opportunity was filled' : 'They’ll hear when their application closes'}
+              title={t('closeRole.tellTitle', { count: waiting.length })}
+              description={tell ? t('closeRole.tellOn') : outcome === 'filled' ? t('closeRole.tellOffFilled') : t('closeRole.tellOff')}
               checked={tell}
               onChange={() => setTell((v) => !v)}
               testId="close-role-tell"
@@ -127,12 +128,12 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
                   onChange={(e) => { setBody(e.target.value); setEdited(true) }}
                   rows={Math.max(4, Math.ceil(body.length / 38))}
                   maxLength={DECLINE_BODY_MAX}
-                  aria-label="Note to each player"
+                  aria-label={t('closeRole.noteAria')}
                   className="block w-full resize-none bg-transparent text-body text-ink-1 outline-none focus-visible:outline-none"
                 />
               </div>
               {waiting.length > 1 && waiting[0]?.firstName && (
-                <span className="self-start rounded-full bg-surface-muted px-2 py-[3px] text-caption text-ink-2">Preview for {waiting[0].firstName}</span>
+                <span className="self-start rounded-full bg-surface-muted px-2 py-[3px] text-caption text-ink-2">{t('closeRole.previewFor', { name: waiting[0].firstName })}</span>
               )}
             </div>
           )}
@@ -143,9 +144,9 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
             className="flex h-[52px] items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
             data-testid="close-role-confirm"
           >
-            {busy ? 'Closing…' : telling ? `Close opportunity and tell ${players(waiting.length)}` : 'Close opportunity'}
+            {busy ? t('closeRole.closing') : telling ? t('closeRole.confirmAndTell', { count: waiting.length }) : t('closeRole.confirm')}
           </button>
-          <button type="button" onClick={onCancel} className="-mt-1.5 flex h-11 items-center justify-center text-body text-ink-2">Cancel</button>
+          <button type="button" onClick={onCancel} className="-mt-1.5 flex h-11 items-center justify-center text-body text-ink-2">{t('closeRole.cancel')}</button>
         </div>
       </BottomSheet>
   )

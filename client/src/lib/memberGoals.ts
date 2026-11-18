@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { countryInSentence } from '@/lib/brandOffers'
+import { withLazyText } from '@/lib/opportunityLazyText'
+import { tHome } from '@/i18n/ns/home'
+import type enHome from '@/locales/en/home.json'
 
 /**
  * "What's your goal?" v1 on today's Home (founder 2026-10-25; Figma page 02,
@@ -13,39 +16,17 @@ export type GoalRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 export const GOAL_MAX = 3
 export const GOAL_TEXT_MAX = 120
 
-/** Options by role (design defaults; keys mirror goal_option_keys on the server). */
+/** A goal option whose label is read in the interface language on every access. */
+type GoalOptionKey = keyof typeof enHome.goalOptions
+const option = (key: GoalOptionKey): { key: string; label: string } => withLazyText({ key: key as string }, { label: () => tHome(`goalOptions.${key}`) })
+
+/** Options by role (design defaults; keys mirror goal_option_keys on the server). Labels: home catalog `goalOptions.<key>`. */
 export const GOAL_OPTIONS: Record<GoalRole, { key: string; label: string }[]> = {
-  player: [
-    { key: 'play_abroad', label: 'Play abroad' },
-    { key: 'move_up', label: 'Move up a division' },
-    { key: 'club_near_me', label: 'Find a club where I live' },
-    { key: 'get_sponsor', label: 'Get a sponsor' },
-    { key: 'keep_playing', label: 'Keep playing well' },
-  ],
-  coach: [
-    { key: 'coach_abroad', label: 'Coach abroad' },
-    { key: 'coach_higher', label: 'Coach at a higher level' },
-    { key: 'club_near_me', label: 'Find a club where I live' },
-    { key: 'recruit_players', label: 'Recruit players for my team' },
-    { key: 'grow_coach', label: 'Grow as a coach' },
-  ],
-  club: [
-    { key: 'fill_role', label: 'Fill a spot this season' },
-    { key: 'sign_abroad', label: 'Sign players from abroad' },
-    { key: 'find_coach', label: 'Find a coach' },
-    { key: 'find_sponsors', label: 'Find sponsors' },
-    { key: 'grow_club', label: 'Grow our club' },
-  ],
-  brand: [
-    { key: 'find_ambassadors', label: 'Find ambassadors' },
-    { key: 'reach_new_countries', label: 'Reach players in new countries' },
-    { key: 'reach_clubs', label: 'Reach clubs' },
-  ],
-  umpire: [
-    { key: 'umpire_higher', label: 'Umpire at a higher level' },
-    { key: 'umpire_abroad', label: 'Umpire abroad' },
-    { key: 'build_record', label: 'Build my record' },
-  ],
+  player: (['play_abroad', 'move_up', 'club_near_me', 'get_sponsor', 'keep_playing'] as const).map(option),
+  coach: (['coach_abroad', 'coach_higher', 'club_near_me', 'recruit_players', 'grow_coach'] as const).map(option),
+  club: (['fill_role', 'sign_abroad', 'find_coach', 'find_sponsors', 'grow_club'] as const).map(option),
+  brand: (['find_ambassadors', 'reach_new_countries', 'reach_clubs'] as const).map(option),
+  umpire: (['umpire_higher', 'umpire_abroad', 'build_record'] as const).map(option),
 }
 
 export function isGoalRole(role: string | null | undefined): role is GoalRole {
@@ -111,8 +92,10 @@ export interface GoalRow {
   to: string
 }
 
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
-const POSITION_PLURAL: Record<string, string> = { goalkeeper: 'goalkeepers', defender: 'defenders', midfielder: 'midfielders', forward: 'forwards' }
+/** Positions with their own "abroad" line (home catalog `goalRows.abroadFor.<position>`). */
+const POSITIONS_WITH_LINE = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
+type LinePosition = (typeof POSITIONS_WITH_LINE)[number]
+const hasLine = (position: string | null | undefined): position is LinePosition => (POSITIONS_WITH_LINE as readonly (string | null | undefined)[]).includes(position)
 
 /**
  * Up to two rows (Figma G3 / G5). "Get a sponsor" and "Find ambassadors"
@@ -125,22 +108,26 @@ export function goalRows(role: GoalRole, goal: Pick<MyGoal, 'options'>, data: Go
   const home = data.roles_home ?? 0
 
   if ((has('play_abroad') || has('coach_abroad')) && abroad > 0) {
-    const who = role === 'player' && data.position && POSITION_PLURAL[data.position] ? ` for ${POSITION_PLURAL[data.position]}` : ''
-    rows.push({ key: 'abroad', goal: has('play_abroad') ? 'play_abroad' : 'coach_abroad', text: `${abroad} open ${plural(abroad, 'opportunity', 'opportunities')} abroad${who}`, action: 'See', to: '/opportunities' })
+    const position = role === 'player' && hasLine(data.position) ? data.position : null
+    const text = position
+      ? tHome(`goalRows.abroadFor.${position}`, { count: abroad })
+      : tHome('goalRows.abroad', { count: abroad })
+    rows.push({ key: 'abroad', goal: has('play_abroad') ? 'play_abroad' : 'coach_abroad', text, action: tHome('goalRows.see'), to: '/opportunities' })
   }
   if (has('club_near_me') && home > 0 && countryName) {
-    rows.push({ key: 'home', goal: 'club_near_me', text: `${home} open ${plural(home, 'opportunity', 'opportunities')} in ${countryInSentence(countryName)}`, action: 'See', to: '/opportunities' })
+    rows.push({ key: 'home', goal: 'club_near_me', text: tHome('goalRows.inCountry', { count: home, country: countryInSentence(countryName) }), action: tHome('goalRows.see'), to: '/opportunities' })
   }
   if (role === 'club' && has('fill_role')) {
     const open = data.open_roles ?? 0
     const waiting = data.applicants_waiting ?? 0
     if (open > 0) {
-      const parts = [`${open} open ${plural(open, 'opportunity', 'opportunities')}`]
-      if (waiting > 0) parts.push(`${waiting} ${plural(waiting, 'applicant', 'applicants')} waiting`)
-      rows.push({ key: 'review', goal: 'fill_role', text: parts.join(' · '), action: 'Review', to: '/opportunities' })
-      rows.push({ key: 'post', goal: 'fill_role', text: 'Post another opportunity in under a minute', action: 'Post an opportunity', to: '/dashboard/opportunities/new' })
+      // Two separate facts on one row, separated by the interface's middle dot.
+      const parts = [tHome('goalRows.openRoles', { count: open })]
+      if (waiting > 0) parts.push(tHome('goalRows.applicantsWaiting', { count: waiting }))
+      rows.push({ key: 'review', goal: 'fill_role', text: parts.join(' · '), action: tHome('goalRows.review'), to: '/opportunities' })
+      rows.push({ key: 'post', goal: 'fill_role', text: tHome('goalRows.postAnother'), action: tHome('goalRows.postAction'), to: '/dashboard/opportunities/new' })
     } else {
-      rows.push({ key: 'post', goal: 'fill_role', text: 'Post an opportunity in under a minute', action: 'Post an opportunity', to: '/dashboard/opportunities/new' })
+      rows.push({ key: 'post', goal: 'fill_role', text: tHome('goalRows.postFirst'), action: tHome('goalRows.postAction'), to: '/dashboard/opportunities/new' })
     }
   }
   return rows.slice(0, 2)

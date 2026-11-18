@@ -12,19 +12,24 @@ import { profilePath } from '@/lib/profileNavigation'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types/questions'
 import type { Question } from '@/types/questions'
 import { formatDistanceToNow } from 'date-fns'
+import { useCommunityT } from '@/i18n/ns/community'
+import { getDateFnsLocale } from '@/i18n/format'
 
 interface QuestionCardProps {
   question: Question
 }
 
 export function QuestionCard({ question }: QuestionCardProps) {
+  const t = useCommunityT()
   const navigate = useNavigate()
   const categoryColors = CATEGORY_COLORS[question.category]
   const categoryLabel = CATEGORY_LABELS[question.category]
   
-  const timeAgo = formatDistanceToNow(new Date(question.created_at), { addSuffix: true })
-    .replace('about ', '')
-    .replace('less than a minute ago', 'just now')
+  // date-fns prints "less than a minute ago" under 30 seconds: shown as "just now".
+  const createdAt = new Date(question.created_at)
+  const timeAgo = Date.now() - createdAt.getTime() < 30_000
+    ? t('questions.card.justNow')
+    : formatDistanceToNow(createdAt, { addSuffix: true, locale: getDateFnsLocale() }).replace('about ', '')
 
   // Handle author click without navigating to question detail.
   // Route by ROLE — /members/id/:id only resolves player/coach and 404s
@@ -70,7 +75,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
           <div className="flex items-center gap-1.5 text-sm text-gray-500">
             <MessageCircle className="w-4 h-4" />
             <span>
-              {question.answer_count} {question.answer_count === 1 ? 'answer' : 'answers'}
+              {t('questions.card.answerCount', { count: question.answer_count })}
             </span>
           </div>
           <button
@@ -79,7 +84,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-hockia-primary bg-hockia-primary/5 hover:bg-hockia-primary/10 rounded-full transition-colors"
           >
             <PenLine className="w-3.5 h-3.5" />
-            Answer
+            {t('questions.card.answer')}
           </button>
           <span className="text-sm text-gray-400 sm:hidden">{timeAgo}</span>
         </div>
@@ -92,13 +97,13 @@ export function QuestionCard({ question }: QuestionCardProps) {
           <span className="text-sm text-gray-400 hidden sm:inline">{timeAgo}</span>
           <Avatar
             src={question.author.avatar_url}
-            alt={question.author.full_name || 'User'}
+            alt={question.author.full_name || t('questions.card.authorFallbackAlt')}
             size="sm"
             className="w-7 h-7 shrink-0"
             role={question.author.role}
           />
           <span className="text-sm font-medium text-gray-700 truncate max-w-[100px] sm:max-w-[120px]">
-            {question.author.full_name || 'Unknown'}
+            {question.author.full_name || t('questions.card.authorFallbackName')}
           </span>
           <RoleBadge role={question.author.role} className="px-1.5 py-0.5 text-[10px] shrink-0" />
         </button>

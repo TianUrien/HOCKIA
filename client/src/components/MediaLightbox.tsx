@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useMediaT } from '@/i18n/ns/media'
 import NativeVideoPlayer from './media/NativeVideoPlayer'
 
 interface LightboxMedia {
@@ -22,6 +23,7 @@ interface MediaLightboxProps {
 }
 
 export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
+  const t = useMediaT()
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useFocusTrap({ containerRef: dialogRef, isActive: Boolean(media) })
@@ -52,7 +54,7 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Full screen media preview"
+        aria-label={t('lightbox.dialogLabel')}
         tabIndex={-1}
         className="relative h-full w-full max-h-[min(90vh,800px)] max-w-4xl"
         onClick={(event) => event.stopPropagation()}
@@ -60,10 +62,10 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
         <button
           onClick={onClose}
           className="absolute right-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-2 text-sm font-medium text-white transition hover:bg-black"
-          aria-label="Close preview"
+          aria-label={t('lightbox.closeLabel')}
         >
           <X className="h-5 w-5" />
-          <span>Close</span>
+          <span>{t('lightbox.close')}</span>
         </button>
         {media.videoId ? (
           // Gallery video. NativeVideoPlayer is the ONE signed player — it
@@ -77,7 +79,7 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
         ) : (
           <img
             src={media.url ?? undefined}
-            alt={media.alt || 'Media preview'}
+            alt={media.alt || t('lightbox.imageAlt')}
             className="h-full w-full rounded-xl object-contain"
           />
         )}
@@ -92,7 +94,7 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
             {media.alt && (
               <p className="text-sm font-medium text-white">{media.alt}</p>
             )}
-            <p className="mt-0.5 text-xs text-white/60">Tap anywhere to close</p>
+            <p className="mt-0.5 text-xs text-white/60">{t('lightbox.tapToClose')}</p>
           </div>
         )}
       </div>

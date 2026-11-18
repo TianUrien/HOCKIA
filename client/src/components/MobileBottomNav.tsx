@@ -11,6 +11,7 @@ import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
 import { inboxTabDot } from '@/lib/inboxSegmentDots'
 import { useNavChrome } from '@/lib/navChrome'
 import { ANDROID_CHROME } from '@/lib/platformChrome'
+import { useCommonT } from '@/i18n/ns/common'
 
 interface NavItem {
   id: string
@@ -45,6 +46,7 @@ const TAB_FOCUS = 'focus:outline-none focus-visible:outline focus-visible:outlin
  */
 export default function MobileBottomNav() {
   const { user, profile, location, isActive, handleNavigate } = useNavigation()
+  const t = useCommonT()
   const pointerTapRef = useRef(false)
   const inboxDot = inboxTabDot(useInboxSegmentDots())
   const authLoading = useAuthStore((s) => s.loading)
@@ -157,7 +159,7 @@ export default function MobileBottomNav() {
               className={cn('h-6 w-6', ANDROID_CHROME && active && 'text-brand-primary')}
               strokeWidth={ANDROID_CHROME && active ? 2.2 : 1.75}
             />
-            {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-brand-primary ring-2 ring-white" />}
+            {item.dot && <span aria-label={t('bottomNav.unread')} className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-brand-primary ring-2 ring-white" />}
           </>,
           active,
         )}
@@ -187,14 +189,14 @@ export default function MobileBottomNav() {
     if (!onExploreArea) return null
 
     const guestItems: NavItem[] = [
-      { id: 'community', label: 'Community', path: '/community', icon: CommunityIcon },
-      { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: OpportunitiesIcon },
+      { id: 'community', label: t('bottomNav.community'), path: '/community', icon: CommunityIcon },
+      { id: 'opportunities', label: t('bottomNav.opportunities'), path: '/opportunities', icon: OpportunitiesIcon },
     ]
 
     return (
       <>
         <div className="h-20 lg:hidden" aria-hidden="true" />
-        <nav className={barClassName} aria-label="Explore Hockia">
+        <nav className={barClassName} aria-label={t('bottomNav.guestLabel')}>
           <div className={rowClassName}>
             {guestItems.map((item) => renderTab(item, isActive(item.path)))}
             {/* Conversion slot: a filled pill reads as an action, so the two
@@ -207,7 +209,7 @@ export default function MobileBottomNav() {
                 handleNavigate('/signup')
               }}
               className={cn(ANDROID_CHROME ? TAB_ANDROID : TAB_IOS, 'text-hockia-primary active:scale-95')}
-              aria-label="Create a profile"
+              aria-label={t('bottomNav.createProfile')}
             >
               {iconSlot(
                 <span className={cn('flex items-center justify-center rounded-full bg-hockia-primary', ANDROID_CHROME ? 'h-6 w-6' : 'h-[26px] w-[26px]')}>
@@ -215,7 +217,7 @@ export default function MobileBottomNav() {
                 </span>,
                 false,
               )}
-              <span className={cn(labelClassName, 'font-semibold')}>Join</span>
+              <span className={cn(labelClassName, 'font-semibold')}>{t('bottomNav.join')}</span>
             </button>
           </div>
         </nav>
@@ -224,12 +226,12 @@ export default function MobileBottomNav() {
   }
 
   const navItems: NavItem[] = [
-    { id: 'home', label: 'Home', path: '/home', icon: HomeIcon },
-    { id: 'community', label: 'Community', path: '/community', icon: CommunityIcon },
-    { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: OpportunitiesIcon },
+    { id: 'home', label: t('bottomNav.home'), path: '/home', icon: HomeIcon },
+    { id: 'community', label: t('bottomNav.community'), path: '/community', icon: CommunityIcon },
+    { id: 'opportunities', label: t('bottomNav.opportunities'), path: '/opportunities', icon: OpportunitiesIcon },
     // On whenever any Inbox segment (Messages / Requests / Activity) has a
     // dot — the same rule as the segment dots (lib/inboxSegmentDots).
-    { id: 'inbox', label: 'Inbox', path: '/inbox', icon: InboxIcon, dot: inboxDot },
+    { id: 'inbox', label: t('bottomNav.inbox'), path: '/inbox', icon: InboxIcon, dot: inboxDot },
   ]
 
   // A role's applicants and reviews live under /dashboard/opportunities but
@@ -251,7 +253,7 @@ export default function MobileBottomNav() {
       {/* Spacer so content never ends behind the fixed bar */}
       <div className="h-20 lg:hidden" aria-hidden="true" />
 
-      <nav className={barClassName} aria-label="Main">
+      <nav className={barClassName} aria-label={t('bottomNav.mainLabel')}>
         <div className={rowClassName}>
           {navItems.map((item) => renderTab(item, isActive(item.path) || (item.id === 'inbox' && isActive('/messages')) || (item.id === 'opportunities' && onClubRecruiting)))}
 
@@ -261,7 +263,7 @@ export default function MobileBottomNav() {
           <button
             type="button"
             onClick={() => handleNavigate('/dashboard/profile')}
-            aria-label="Profile"
+            aria-label={t('bottomNav.profile')}
             aria-current={onProfile ? 'page' : undefined}
             className={tabClassName(onProfile)}
           >
@@ -279,7 +281,7 @@ export default function MobileBottomNav() {
               />,
               onProfile,
             )}
-            <span className={labelClassName}>Profile</span>
+            <span className={labelClassName}>{t('bottomNav.profile')}</span>
           </button>
         </div>
       </nav>

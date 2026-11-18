@@ -2,6 +2,7 @@
 declare const Deno: { env: { get(key: string): string | undefined } }
 import { escapeHtml } from './html-escape.ts'
 import { EMAIL_LOGO_HTML, emailAvatarHtml } from './email-brand.ts'
+import { type MemberLanguage, FOOTER_ES } from './member-language.ts'
 
 /**
  * Reference Reminder Email Helpers (Phase 3.2)
@@ -42,12 +43,34 @@ export interface ReminderSuggestedFriend {
  * and username are null — the email body still reads naturally
  * ("Hi there,").
  */
-export function recipientFirstName(recipient: Pick<ReminderRecipient, 'full_name' | 'username'>): string {
+export function recipientFirstName(
+  recipient: Pick<ReminderRecipient, 'full_name' | 'username'>,
+  language: MemberLanguage = 'en',
+): string {
   const fromFullName = recipient.full_name?.split(' ')[0]?.trim()
   if (fromFullName) return fromFullName
   const fromUsername = recipient.username?.trim()
   if (fromUsername) return fromUsername
-  return 'there'
+  return language === 'es' ? 'integrante' : 'there'
+}
+
+/** Subject (and heading) of the reminder. */
+export function reminderSubject(language: MemberLanguage = 'en'): string {
+  return language === 'es' ? 'Más confianza para tu perfil de Hockia' : 'Add trust to your Hockia profile'
+}
+
+/** Spanish line about the suggested connection; without a name it never starts with a lower-case fallback. */
+function connectionLineEs(friend: Pick<ReminderSuggestedFriend, 'full_name' | 'username'>, name: string): string {
+  const named = Boolean(friend.full_name?.trim() || friend.username?.trim())
+  return named
+    ? `${name} es una de tus conexiones en Hockia y podría avalar tu juego.`
+    : 'Una de tus conexiones en Hockia podría avalar tu juego.'
+}
+
+/** Spanish greeting: "Hola, Ana" or, with no name, "Hola" (glossary: "Hola:"). */
+function greetingEs(recipient: Pick<ReminderRecipient, 'full_name' | 'username'>): string {
+  const name = recipient.full_name?.split(' ')[0]?.trim() || recipient.username?.trim()
+  return name ? `Hola, ${name}` : 'Hola'
 }
 
 /**
@@ -57,14 +80,20 @@ export function recipientFirstName(recipient: Pick<ReminderRecipient, 'full_name
  * candidate is already filtered to non-orphans at enqueue time, so this
  * is belt-and-braces).
  */
-export function friendDisplayName(friend: Pick<ReminderSuggestedFriend, 'full_name' | 'username'>): string {
+export function friendDisplayName(
+  friend: Pick<ReminderSuggestedFriend, 'full_name' | 'username'>,
+  language: MemberLanguage = 'en',
+): string {
   const cleaned = friend.full_name?.trim() || friend.username?.trim()
-  return cleaned || 'a connection'
+  return cleaned || (language === 'es' ? 'una conexión' : 'a connection')
 }
 
-export function friendFirstName(friend: Pick<ReminderSuggestedFriend, 'full_name' | 'username'>): string {
-  const display = friendDisplayName(friend)
-  if (display === 'a connection') return display
+export function friendFirstName(
+  friend: Pick<ReminderSuggestedFriend, 'full_name' | 'username'>,
+  language: MemberLanguage = 'en',
+): string {
+  const display = friendDisplayName(friend, language)
+  if (!(friend.full_name?.trim() || friend.username?.trim())) return display
   return display.split(' ')[0]?.trim() || display
 }
 
@@ -79,6 +108,11 @@ export function friendFirstName(friend: Pick<ReminderSuggestedFriend, 'full_name
  * — see PlayerDashboard.tsx onAsk handler. Keeping these in lockstep
  * avoids URL drift between in-app and email surfaces.
  */
+const REMINDER_BODY_ES =
+  'Las referencias son avales breves de entrenadores/as, compañeros/as de equipo y clubes con los que te conectaste en Hockia. Aparecen en tu perfil y dan más confianza sobre tu trayectoria a los clubes y cuerpos técnicos que buscan talento en Hockia.'
+const REMINDER_ONE_ES = 'Una sola referencia suele marcar la diferencia, y pedirla te lleva más o menos un minuto.'
+const REMINDER_FOOTER_ES = 'Este email te llega porque tienes activados los avisos por email de referencias en Hockia.'
+
 export function buildReminderCtaUrl(
   baseUrl: string,
   suggestedFriendId: string,
@@ -93,17 +127,19 @@ export function buildReminderCtaUrl(
 export function generateReminderEmailHtml(
   recipient: ReminderRecipient,
   friend: ReminderSuggestedFriend,
+  language: MemberLanguage = 'en',
 ): string {
-  const firstName = recipientFirstName(recipient)
-  const friendName = friendDisplayName(friend)
-  const friendFirst = friendFirstName(friend)
+  const es = language === 'es'
+  const firstName = recipientFirstName(recipient, language)
+  const friendName = friendDisplayName(friend, language)
+  const friendFirst = friendFirstName(friend, language)
   const ctaUrl = buildReminderCtaUrl(HOCKIA_BASE_URL, friend.id)
 
   const avatarHtml = emailAvatarHtml(friend.avatar_url, friendName, friend.role)
 
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -116,8 +152,10 @@ export function generateReminderEmailHtml(
 
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">Add trust to your Hockia profile</h1>
-    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">Hi ${escapeHtml(firstName)}, you're connected with ${escapeHtml(friendFirst)} on Hockia. They could vouch for your hockey.</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${reminderSubject(language)}</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es
+      ? `${escapeHtml(greetingEs(recipient))}. ${escapeHtml(connectionLineEs(friend, friendFirst))}`
+      : `Hi ${escapeHtml(firstName)}, you're connected with ${escapeHtml(friendFirst)} on Hockia. They could vouch for your hockey.`}</p>
 
     <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
       <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -127,24 +165,24 @@ export function generateReminderEmailHtml(
           </td>
           <td style="padding-left: 12px;" valign="middle">
             <p style="color: #0e0b1a; margin: 0 0 4px 0; font-size: 18px; font-weight: 600;">${escapeHtml(friendName)}</p>
-            <p style="color: #6b6878; margin: 0; font-size: 14px;">A Hockia connection</p>
+            <p style="color: #6b6878; margin: 0; font-size: 14px;">${es ? 'Una conexión de Hockia' : 'A Hockia connection'}</p>
           </td>
         </tr>
       </table>
     </div>
 
     <p style="color: #3f3c4d; margin: 0 0 16px 0; font-size: 15px; line-height: 1.6;">
-      References are short vouches from coaches, teammates and clubs you've connected with on Hockia. They appear on your profile and give the clubs and coaches scouting on Hockia more confidence in your background.
+      ${es ? REMINDER_BODY_ES : "References are short vouches from coaches, teammates and clubs you've connected with on Hockia. They appear on your profile and give the clubs and coaches scouting on Hockia more confidence in your background."}
     </p>
 
     <p style="color: #3f3c4d; margin: 0 0 24px 0; font-size: 15px; line-height: 1.6;">
-      One reference is usually enough to make a difference, and asking takes about a minute.
+      ${es ? REMINDER_ONE_ES : 'One reference is usually enough to make a difference, and asking takes about a minute.'}
     </p>
 
     <div style="text-align: center; margin: 32px 0;">
       <a href="${escapeHtml(ctaUrl)}"
          style="display: inline-block; background: #7c3aed; color: white; padding: 14px 28px; border-radius: 999px; text-decoration: none; font-weight: 600; font-size: 15px;">
-        Ask ${escapeHtml(friendFirst)} for a reference
+        ${es ? `Pedirle una referencia a ${escapeHtml(friendFirst)}` : `Ask ${escapeHtml(friendFirst)} for a reference`}
       </a>
     </div>
 
@@ -153,8 +191,8 @@ export function generateReminderEmailHtml(
   <hr style="border: none; border-top: 1px solid #e6e3ee; margin: 32px 0 16px 0;">
 
   <p style="color: #73707c; font-size: 12px; line-height: 1.5; margin: 0 0 8px 0;">
-    You're receiving this because you have email notifications turned on for references on Hockia.
-    <a href="${escapeHtml(UNSUBSCRIBE_URL)}" style="color: #6b6878; text-decoration: underline;">Manage email preferences</a>.
+    ${es ? REMINDER_FOOTER_ES : "You're receiving this because you have email notifications turned on for references on Hockia."}
+    <a href="${escapeHtml(UNSUBSCRIBE_URL)}" style="color: #6b6878; text-decoration: underline;">${es ? FOOTER_ES.settings : 'Manage email preferences'}</a>.
   </p>
 
 </body>
@@ -164,11 +202,34 @@ export function generateReminderEmailHtml(
 export function generateReminderEmailText(
   recipient: ReminderRecipient,
   friend: ReminderSuggestedFriend,
+  language: MemberLanguage = 'en',
 ): string {
-  const firstName = recipientFirstName(recipient)
-  const friendName = friendDisplayName(friend)
-  const friendFirst = friendFirstName(friend)
+  const es = language === 'es'
+  const firstName = recipientFirstName(recipient, language)
+  const friendName = friendDisplayName(friend, language)
+  const friendFirst = friendFirstName(friend, language)
   const ctaUrl = buildReminderCtaUrl(HOCKIA_BASE_URL, friend.id)
+
+  if (es) {
+    return [
+      reminderSubject(language),
+      '',
+      `${greetingEs(recipient)}:`,
+      '',
+      connectionLineEs(friend, friendName),
+      '',
+      REMINDER_BODY_ES,
+      '',
+      REMINDER_ONE_ES,
+      '',
+      `Pedirle una referencia a ${friendFirst}:`,
+      ctaUrl,
+      '',
+      '---',
+      REMINDER_FOOTER_ES,
+      `${FOOTER_ES.manage}${UNSUBSCRIBE_URL}`,
+    ].join('\n')
+  }
 
   return [
     'Add trust to your Hockia profile',

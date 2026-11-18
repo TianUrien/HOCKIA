@@ -8,6 +8,7 @@ import { categoryFamily, genderPill, roleHeadline, CATEGORY_DOT_ON_PHOTO_CLASSES
 import { positionLabel } from '@/lib/identity'
 import { usePressSpring } from '@/hooks/usePressSpring'
 import { useRolePrefetch } from '@/hooks/useRolePrefetch'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 
 export interface RailCardData {
   vacancy: Vacancy
@@ -22,6 +23,7 @@ export interface RailCardData {
  * cover cards. A rail with fewer than two cards never renders (ruling 3).
  */
 export function RoleRail({ title, subtitle, onSeeAll, children, testId }: { title: string; subtitle: string; onSeeAll?: () => void; children: ReactNode; testId?: string }) {
+  const t = useOpportunitiesT()
   return (
     <section className="pt-7" data-testid={testId ?? 'role-rail'}>
       <div className="flex items-end gap-3 px-5">
@@ -30,7 +32,7 @@ export function RoleRail({ title, subtitle, onSeeAll, children, testId }: { titl
           <p className="text-secondary text-ink-2">{subtitle}</p>
         </div>
         {onSeeAll && (
-          <button type="button" onClick={onSeeAll} className="shrink-0 text-[14px] font-semibold leading-[19px] text-brand-primary">See all</button>
+          <button type="button" onClick={onSeeAll} className="shrink-0 text-[14px] font-semibold leading-[19px] text-brand-primary">{t('list.seeAll')}</button>
         )}
       </div>
       <div className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -46,6 +48,7 @@ export function RoleRail({ title, subtitle, onSeeAll, children, testId }: { titl
  * with `fluid`, so they fill their column.
  */
 export function RoleRailDesktop({ title, subtitle, onSeeAll, cards, testId }: { title: string; subtitle: string; onSeeAll?: () => void; cards: ReactNode[]; testId?: string }) {
+  const t = useOpportunitiesT()
   const fourUp = useMediaQuery('(min-width: 1200px)')
   const perPage = fourUp ? 4 : 3
   const [page, setPage] = useState(0)
@@ -62,10 +65,10 @@ export function RoleRailDesktop({ title, subtitle, onSeeAll, cards, testId }: { 
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {onSeeAll && (
-            <button type="button" onClick={onSeeAll} className="mr-1 text-[14px] font-semibold leading-[19px] text-brand-primary hover:underline">See all</button>
+            <button type="button" onClick={onSeeAll} className="mr-1 text-[14px] font-semibold leading-[19px] text-brand-primary hover:underline">{t('list.seeAll')}</button>
           )}
-          <button type="button" onClick={() => setPage(current - 1)} disabled={current === 0} aria-label="Previous opportunities" className={pagerButton}><ChevronLeft className="h-4 w-4" strokeWidth={2.2} /></button>
-          <button type="button" onClick={() => setPage(current + 1)} disabled={current >= pages - 1} aria-label="More opportunities" className={pagerButton}><ChevronRight className="h-4 w-4" strokeWidth={2.2} /></button>
+          <button type="button" onClick={() => setPage(current - 1)} disabled={current === 0} aria-label={t('list.railPrevious')} className={pagerButton}><ChevronLeft className="h-4 w-4" strokeWidth={2.2} /></button>
+          <button type="button" onClick={() => setPage(current + 1)} disabled={current >= pages - 1} aria-label={t('list.railMore')} className={pagerButton}><ChevronRight className="h-4 w-4" strokeWidth={2.2} /></button>
         </div>
       </div>
       <div className="mt-3.5 grid gap-4" style={{ gridTemplateColumns: `repeat(${perPage}, minmax(0, 1fr))` }}>
@@ -76,6 +79,7 @@ export function RoleRailDesktop({ title, subtitle, onSeeAll, cards, testId }: { 
 }
 
 export function RailCard({ data, countryName, onOpen, fluid = false }: { data: RailCardData; countryName: string | null; onOpen: () => void; /** Fill the grid column (desktop) instead of the 272 pt phone width. */ fluid?: boolean }) {
+  const t = useOpportunitiesT()
   const press = usePressSpring<HTMLButtonElement>()
   const prefetch = useRolePrefetch(data.vacancy.id, press.ref)
   const { vacancy, clubName, clubLogo, palette } = data
@@ -91,7 +95,7 @@ export function RailCard({ data, countryName, onOpen, fluid = false }: { data: R
       {...press.handlers}
       {...prefetch.handlers}
       className={`${fluid ? 'group block w-full transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50' : 'shrink-0 snap-start'} text-left [transform-origin:center] [will-change:transform]`}
-      aria-label={`${lead} at ${clubName}`}
+      aria-label={t('list.railCardAria', { title: lead, club: clubName })}
       data-testid="rail-card"
     >
       <RoleCover coverUrl={vacancy.cover_url} crestUrl={clubLogo} palette={palette} scrim="card" className={`h-[200px] rounded-[22px] shadow-[0_8px_20px_rgba(15,15,20,0.1)] ${fluid ? 'w-full transition-shadow duration-200 group-hover:shadow-[0_14px_28px_rgba(15,15,20,0.16)]' : 'w-[272px]'}`}>

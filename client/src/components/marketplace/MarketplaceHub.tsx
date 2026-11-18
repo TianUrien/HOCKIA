@@ -19,6 +19,8 @@ import {
   type MarketItem,
   type Need,
 } from '@/lib/marketplace'
+import { isEnglish } from '@/i18n/format'
+import { useBrandsT } from '@/i18n/ns/brands'
 import { CountryChip, ItemMenuSheet, MarketRow, MarketTile, SuggestBrandSheet } from './MarketParts'
 
 /**
@@ -30,6 +32,7 @@ import { CountryChip, ItemMenuSheet, MarketRow, MarketTile, SuggestBrandSheet } 
  * section or a placeholder.
  */
 export function MarketplaceHub({ onItems }: { onItems?: (items: MarketItem[]) => void }) {
+  const t = useBrandsT()
   const navigate = useNavigate()
   const role = useAuthStore((s) => s.profile?.role ?? null)
   const [countryId, setCountry] = useMarketCountry()
@@ -53,7 +56,7 @@ export function MarketplaceHub({ onItems }: { onItems?: (items: MarketItem[]) =>
   if (role === 'brand' || !data) return null
 
   const country = countryId != null ? names([countryId])[0] ?? null : null
-  const inCountry = country ? countryInSentence(country) : 'your country'
+  const inCountry = country ? (isEnglish() ? countryInSentence(country) : country) : t('hub.yourCountry')
   const offers = items.filter((i) => i.kind === 'offer')
   // Each item shows once on the hub: offers live in "Offers for members",
   // so the need rails and "Near you" only carry what is left.
@@ -69,10 +72,10 @@ export function MarketplaceHub({ onItems }: { onItems?: (items: MarketItem[]) =>
 
   const header = (
     <div className="space-y-3">
-      <CountryChip label="Near you" countryId={countryId} onChange={setCountry} />
+      <CountryChip label={t('hub.nearYouChip')} countryId={countryId} onChange={setCountry} />
       {!low && chips.length > 1 ? (
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="list" aria-label="Needs">
-          <span role="listitem" className={cn('inline-flex h-11 shrink-0 items-center rounded-full px-4 text-row font-semibold', chipTone(true))}>All</span>
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="list" aria-label={t('hub.needsAria')}>
+          <span role="listitem" className={cn('inline-flex h-11 shrink-0 items-center rounded-full px-4 text-row font-semibold', chipTone(true))}>{t('hub.allChip')}</span>
           {chips.map((n) => (
             <button key={n.key} type="button" role="listitem" onClick={() => openNeed(n.key)} className={cn('h-11 shrink-0 rounded-full px-4 text-row', chipTone(false))} data-testid={`market-need-chip-${n.key}`}>
               {n.label}
@@ -85,26 +88,26 @@ export function MarketplaceHub({ onItems }: { onItems?: (items: MarketItem[]) =>
 
   const suggest = (
     <div className="pt-1">
-      <p className="text-row text-ink-2">More brands are joining. Know one that should be here?</p>
-      <button type="button" onClick={() => setSuggestOpen(true)} className="mt-1 flex h-11 items-center text-body font-semibold text-brand-primary" data-testid="market-suggest-brand">Suggest a brand</button>
+      <p className="text-row text-ink-2">{t('hub.suggestPrompt')}</p>
+      <button type="button" onClick={() => setSuggestOpen(true)} className="mt-1 flex h-11 items-center text-body font-semibold text-brand-primary" data-testid="market-suggest-brand">{t('hub.suggestButton')}</button>
     </div>
   )
 
   return (
-    <section className="mb-6 space-y-6" aria-label="Marketplace" data-testid="marketplace-hub">
+    <section className="mb-6 space-y-6" aria-label={t('hub.sectionAria')} data-testid="marketplace-hub">
       {header}
 
       {items.length === 0 ? (
         <div data-testid="market-empty">
-          <h2 className="text-title text-ink-1">Near you</h2>
-          <p className="mt-0.5 text-row text-ink-2">No brands sell in {inCountry} yet.</p>
+          <h2 className="text-title text-ink-1">{t('hub.nearYouTitle')}</h2>
+          <p className="mt-0.5 text-row text-ink-2">{t('hub.emptyBody', { where: inCountry })}</p>
           {suggest}
         </div>
       ) : low ? (
         // MK3: little supply, one honest list.
         <div data-testid="market-low-supply">
-          <h2 className="text-title text-ink-1">Near you</h2>
-          <p className="mt-0.5 text-row text-ink-2">{distinctBrands(items)} {distinctBrands(items) === 1 ? 'brand sells' : 'brands sell'} in {inCountry} so far</p>
+          <h2 className="text-title text-ink-1">{t('hub.nearYouTitle')}</h2>
+          <p className="mt-0.5 text-row text-ink-2">{t('hub.lowSupply', { count: distinctBrands(items), where: inCountry })}</p>
           <div className="mt-3 space-y-3">
             {sortForList(items).map((it) => (
               <MarketRow key={it.id} item={it} surface="marketplace" onOpen={() => void open(it)} onMenu={() => setMenuFor(it)} />
@@ -115,7 +118,7 @@ export function MarketplaceHub({ onItems }: { onItems?: (items: MarketItem[]) =>
       ) : (
         <>
           {offers.length > 0 ? (
-            <Rail title="Offers for members" subtitle={`Only on Hockia · ${country ?? ''}`.replace(/ · $/, '')} testId="market-rail-offers">
+            <Rail title={t('hub.offersTitle')} subtitle={country ? t('hub.offersSubtitle', { country }) : t('hub.offersSubtitleNoCountry')} testId="market-rail-offers">
               {offers.map((it) => <MarketTile key={it.id} item={it} wide surface="marketplace" onOpen={() => void open(it)} onMenu={() => setMenuFor(it)} />)}
             </Rail>
           ) : null}
@@ -134,7 +137,7 @@ export function MarketplaceHub({ onItems }: { onItems?: (items: MarketItem[]) =>
             const singles = order.flatMap((n) => ((byNeed.get(n)?.length ?? 0) < RAIL_MIN ? byNeed.get(n) ?? [] : []))
             return singles.length > 0 ? (
               <div data-testid="market-near-you">
-                <h2 className="text-title text-ink-1">Near you</h2>
+                <h2 className="text-title text-ink-1">{t('hub.nearYouTitle')}</h2>
                 <div className="mt-3 space-y-3">
                   {singles.map((it) => <MarketRow key={it.id} item={it} surface="marketplace" onOpen={() => void open(it)} onMenu={() => setMenuFor(it)} />)}
                 </div>
@@ -144,7 +147,7 @@ export function MarketplaceHub({ onItems }: { onItems?: (items: MarketItem[]) =>
         </>
       )}
 
-      <h2 className="text-title text-ink-1">All brands</h2>
+      <h2 className="text-title text-ink-1">{t('hub.allBrands')}</h2>
       <ItemMenuSheet item={menuFor} surface="marketplace" onClose={() => setMenuFor(null)} onRemoved={remove} />
       <SuggestBrandSheet open={suggestOpen} countryId={countryId} onClose={() => setSuggestOpen(false)} />
     </section>
@@ -152,6 +155,7 @@ export function MarketplaceHub({ onItems }: { onItems?: (items: MarketItem[]) =>
 }
 
 function Rail({ title, subtitle, onSeeAll, testId, children }: { title: string; subtitle: string; onSeeAll?: () => void; testId: string; children: React.ReactNode }) {
+  const t = useBrandsT()
   return (
     <section aria-label={title} data-testid={testId}>
       <div className="flex items-end justify-between gap-3">
@@ -159,7 +163,7 @@ function Rail({ title, subtitle, onSeeAll, testId, children }: { title: string; 
           <h2 className="text-title text-ink-1">{title}</h2>
           <p className="mt-0.5 truncate text-row text-ink-2">{subtitle}</p>
         </div>
-        {onSeeAll ? <button type="button" onClick={onSeeAll} className="flex h-11 shrink-0 items-center text-row font-semibold text-brand-primary">See all</button> : null}
+        {onSeeAll ? <button type="button" onClick={onSeeAll} className="flex h-11 shrink-0 items-center text-row font-semibold text-brand-primary">{t('hub.seeAll')}</button> : null}
       </div>
       {/* scroll-padding keeps snap-start tiles at the 16 pt inset; the spacer
           keeps a 16 pt end inset, which flex overflow drops from padding. */}

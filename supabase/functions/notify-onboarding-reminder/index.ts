@@ -6,6 +6,7 @@ import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail, createLogger } from '../_shared/email-sender.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { escapeHtml } from '../_shared/html-escape.ts'
+import { type MemberLanguage, readMemberLanguage } from '../_shared/member-language.ts'
 
 /**
  * ============================================================================
@@ -66,6 +67,36 @@ const REMINDER_CONTENT: Record<number, ReminderContent> = {
       "We noticed you haven't finished setting up your Hockia profile yet. Complete it to start receiving opportunity notifications and connect with the community.",
     ctaLabel: 'Complete profile',
   },
+}
+
+// Spanish (client/src/locales/glossary.md): tú to the member,
+// infinitive buttons, never promise outcomes.
+const REMINDER_CONTENT_ES: Record<number, ReminderContent> = {
+  1: {
+    subject: 'Falta poco para completar tu perfil de Hockia',
+    heading: 'Tu perfil te espera',
+    bodyText:
+      'Te falta un solo paso para sumarte a la comunidad del hockey sobre césped. Completa tu perfil para descubrir oportunidades, conectarte con la comunidad y mostrar tu juego.',
+    ctaLabel: 'Completar mi perfil',
+  },
+  2: {
+    subject: 'Tu perfil de Hockia está casi listo',
+    heading: 'Retoma tu perfil donde lo dejaste',
+    bodyText:
+      'En toda la comunidad de Hockia ya hay integrantes que se conectan y encuentran oportunidades. Para empezar, solo te falta terminar de configurar tu perfil.',
+    ctaLabel: 'Terminar la configuración',
+  },
+  3: {
+    subject: 'Tu perfil de Hockia sigue incompleto',
+    heading: 'Un recordatorio sobre tu perfil',
+    bodyText:
+      'Tu perfil de Hockia todavía no está completo. Complétalo para empezar a recibir avisos de oportunidades y conectarte con la comunidad.',
+    ctaLabel: 'Completar perfil',
+  },
+}
+
+function reminderContent(reminderNumber: number, language: MemberLanguage): ReminderContent {
+  return (language === 'es' ? REMINDER_CONTENT_ES : REMINDER_CONTENT)[reminderNumber]
 }
 
 // =============================================================================
@@ -215,21 +246,26 @@ Deno.serve(async (req: Request) => {
     // =========================================================================
 
     // These users never completed onboarding so full_name is typically NULL.
-    // Derive a first name from the email address as a fallback.
-    const firstName = recipient.full_name
-      ? recipient.full_name.split(' ')[0].trim()
-      : recipient.email.split('@')[0].trim()
+    // No name yet: the greeting goes without one (never the email's local part).
+    const firstName = recipient.full_name?.trim().split(/\s+/)[0] ?? ''
 
-    const content = REMINDER_CONTENT[reminderNumber]
+    // The recipient's interface language, read on its own (fails to English).
+    const language = await readMemberLanguage(supabase, recipient.id)
+    let content = reminderContent(reminderNumber, language)
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
+    const ctaUrl = `${HOCKIA_BASE_URL}/complete-profile`
 
-    const templateVars = {
-      first_name: firstName,
-      heading: content.heading,
-      body_text: content.bodyText,
-      cta_label: content.ctaLabel,
-      cta_url: `${HOCKIA_BASE_URL}/complete-profile`,
-      settings_url: `${HOCKIA_BASE_URL}/settings`,
+    // Built for the language of the row actually used.
+    const templateVars = (lang: MemberLanguage) => {
+      const c = reminderContent(reminderNumber, lang)
+      return {
+        first_name: firstName,
+        heading: c.heading,
+        body_text: c.bodyText,
+        cta_label: c.ctaLabel,
+        cta_url: ctaUrl,
+        settings_url: `${HOCKIA_BASE_URL}/settings`,
+      }
     }
 
     // Try DB template, fall back to plain text
@@ -237,23 +273,47 @@ Deno.serve(async (req: Request) => {
     let emailHtml: string
     let emailText: string
 
-    const rendered = await renderTemplate(supabase, 'onboarding_reminder', templateVars)
+    const rendered = await renderTemplate(supabase, 'onboarding_reminder', templateVars, language)
     if (rendered) {
-      // Override subject with reminder-specific version
+      // Override subject with reminder-specific version (in the language of
+      // the row actually used)
+      content = reminderContent(reminderNumber, rendered.language)
       subject = content.subject
       emailHtml = rendered.html
       emailText = rendered.text
-      logger.info('Using DB template for onboarding_reminder', { reminderNumber })
+      logger.info('Using DB template for onboarding_reminder', { reminderNumber, language: rendered.language })
+    } else if (language === 'es') {
+      // Fallback: simple plain-text-ish email (Spanish)
+      subject = content.subject
+      emailHtml = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #6c2bd9;">${content.heading}</h1>
+          <p>${firstName ? `Hola, ${escapeHtml(firstName)}:` : 'Hola:'}</p>
+          <p>${content.bodyText}</p>
+          <p style="text-align: center; margin: 30px 0;">
+            <a href="${ctaUrl}"
+               style="background: #7c3aed; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              ${content.ctaLabel}
+            </a>
+          </p>
+          <hr style="border: none; border-top: 1px solid #e6e3ee; margin: 30px 0;">
+          <p style="font-size: 12px; color: #73707c;">
+            Si esta cuenta no es tuya, puedes ignorar este email.
+          </p>
+        </div>
+      `
+      emailText = `${content.heading}\n\n${firstName ? `Hola, ${firstName}:` : 'Hola:'}\n\n${content.bodyText}\n\n${content.ctaLabel}: ${ctaUrl}\n\nSi esta cuenta no es tuya, puedes ignorar este email.`
+      logger.info('Falling back to hardcoded template', { reminderNumber, language })
     } else {
       // Fallback: simple plain-text-ish email
       subject = content.subject
       emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #6c2bd9;">${content.heading}</h1>
-          <p>Hi ${escapeHtml(firstName)},</p>
+          <p>Hi ${escapeHtml(firstName || 'there')},</p>
           <p>${content.bodyText}</p>
           <p style="text-align: center; margin: 30px 0;">
-            <a href="${templateVars.cta_url}"
+            <a href="${ctaUrl}"
                style="background: #7c3aed; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
               ${content.ctaLabel}
             </a>
@@ -264,7 +324,7 @@ Deno.serve(async (req: Request) => {
           </p>
         </div>
       `
-      emailText = `${content.heading}\n\nHi ${firstName},\n\n${content.bodyText}\n\n${content.ctaLabel}: ${templateVars.cta_url}\n\nIf you didn't create this account, you can safely ignore this email.`
+      emailText = `${content.heading}\n\nHi ${firstName || 'there'},\n\n${content.bodyText}\n\n${content.ctaLabel}: ${ctaUrl}\n\nIf you didn't create this account, you can safely ignore this email.`
       logger.info('Falling back to hardcoded template', { reminderNumber })
     }
 

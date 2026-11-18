@@ -4,6 +4,7 @@ import { MascotAvatar } from '@/components/hockiaAi/mascot'
 import type { Applicant } from '@/hooks/useRoleApplicants'
 import { cachedSummary, summariseApplicants } from '@/lib/applicantsSummary'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 /**
  * Hockia AI · summary of the applicants to review (handoff C3, Figma 180:397),
@@ -11,6 +12,7 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
  * "Summarise" (one Hockia AI question) and is kept for the day.
  */
 export function ApplicantsAiSummary({ roleId, pending, expiryDays, className }: { roleId: string; pending: Applicant[]; expiryDays: number; className?: string }) {
+  const t = useHockiaAiT()
   const [text, setText] = useState<string | null>(() => cachedSummary(roleId, pending))
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
@@ -25,7 +27,7 @@ export function ApplicantsAiSummary({ roleId, pending, expiryDays, className }: 
     const res = await summariseApplicants(roleId, pending, expiryDays)
     trackDbEvent('hockia_ai_applicants_summary', 'vacancy', roleId, { applicants: pending.length, ok: res.ok })
     if (res.ok) setText(res.text)
-    else setNote(res.reason === 'cap' ? 'You’ve reached today’s Hockia AI limit. Everything else works as usual.' : 'I couldn’t summarise right now. Try again in a moment.')
+    else setNote(res.reason === 'cap' ? t('summary.cap') : t('summary.error'))
     setBusy(false)
   }
   return (
@@ -33,14 +35,14 @@ export function ApplicantsAiSummary({ roleId, pending, expiryDays, className }: 
       <div className="flex items-start gap-2.5">
         <MascotAvatar size={32} />
         <div className="min-w-0 flex-1">
-          <p className="text-micro font-semibold uppercase tracking-[0.04em] text-brand-primary">Hockia AI · Summary · Beta</p>
+          <p className="text-micro font-semibold uppercase tracking-[0.04em] text-brand-primary">{t('summary.eyebrow')}</p>
           {text ? (
             <p className="mt-1 text-[15px] leading-[21px] text-ink-1" data-testid="applicants-ai-summary-text">{text}</p>
           ) : (
             <>
-              <p className="mt-1 text-[15px] leading-[21px] text-ink-1">I can sum up the {pending.length} applicants to review from what their profiles show.</p>
+              <p className="mt-1 text-[15px] leading-[21px] text-ink-1">{t('summary.intro', { count: pending.length })}</p>
               <button type="button" onClick={() => void run()} disabled={busy} className="mt-2 flex h-9 items-center gap-1.5 rounded-full bg-white px-3.5 text-secondary font-semibold text-brand-primary disabled:opacity-60" data-testid="applicants-ai-summarise">
-                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}{busy ? 'Summarising…' : 'Summarise'}
+                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}{busy ? t('summary.summarising') : t('summary.summarise')}
               </button>
             </>
           )}

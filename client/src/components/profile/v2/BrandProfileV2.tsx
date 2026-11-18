@@ -17,7 +17,7 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { hasAnalyticsConsent } from '@/lib/cookieConsent'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import { GLASS } from '@/lib/communityCard'
-import { positionLabel } from '@/lib/identity'
+import { brandCategoryLabel, positionLabel } from '@/lib/identity'
 import { instagramHandleOf } from '@/lib/brandEdit'
 import { nextStepPart, NEXT_STEP_COPY, type CompletenessPart } from '@/lib/profileV2'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
@@ -39,6 +39,9 @@ import { BackGlyph } from '@/components/ui/BackGlyph'
 import { switchTrackClass } from '@/components/ui/switchClasses'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import RolePlaceholder from '@/components/RolePlaceholder'
+import { useBrandsT } from '@/i18n/ns/brands'
+import { formatNumber, isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Profile v2 — brand, phone (Figma PR9 public 111:446 · PR13 own 116:654 ·
@@ -100,12 +103,8 @@ export interface BrandProfileV2Props {
   onOpenTab?: (tab: 'products' | 'posts' | 'ambassadors' | 'followers') => void
 }
 
-const ANCHORS = [
-  { id: 'products', label: 'Products' },
-  { id: 'ambassadors', label: 'Ambassadors' },
-  { id: 'updates', label: 'Updates' },
-  { id: 'about', label: 'About' },
-]
+// Labels come from the catalog where the anchors render.
+const ANCHORS = ['products', 'ambassadors', 'updates', 'about'] as const
 
 const SCRIM =
   'linear-gradient(180deg, rgba(15,15,20,0) 35%, rgba(15,15,20,0.017) 45.8%, rgba(15,15,20,0.133) 56.7%, rgba(15,15,20,0.45) 67.5%, rgba(15,15,20,0.767) 78.3%, rgba(15,15,20,0.883) 89.2%, rgba(15,15,20,0.9) 100%), linear-gradient(180deg, rgba(15,15,20,0.45) 0%, rgba(15,15,20,0) 22%)'
@@ -114,8 +113,13 @@ const GLASS_BTN = cn('flex h-11 w-11 items-center justify-center rounded-full bo
 
 function categoryLabel(c: string | null | undefined): string | null {
   if (!c) return null
+  // English keeps the capitalised token it always showed; other languages use the shared brand categories.
+  if (!isEnglish()) return brandCategoryLabel(c)
   return c.charAt(0).toUpperCase() + c.slice(1)
 }
+
+/** A count as the interface language writes it; English keeps the plain digits it always showed. */
+const count = (n: number) => (isEnglish() ? String(n) : formatNumber(n))
 
 function hostOf(url: string): string {
   try {
@@ -143,6 +147,7 @@ function DetailRow({ label, value, href }: { label: string; value: string; href?
 
 export default function BrandProfileV2(props: BrandProfileV2Props) {
   const { brand, owner } = props
+  const t = useBrandsT()
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
   const { countries } = useCountries()
@@ -165,7 +170,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   }, [owner, brand.id])
 
   const country = countries.find((c) => c.id === brand.country_id) ?? null
-  const countryName = country ? (country.common_name ?? country.name) : null
+  const countryName = country ? countryLabel(country.common_name || country.name) : null
   const placeLine = countryName ? [country?.flag_emoji, countryName].filter(Boolean).join(' ') : null
   const category = categoryLabel(brand.category)
   const cover = brand.cover_url ?? null
@@ -178,7 +183,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
     try {
       if (navigator.share) { await navigator.share({ title: brand.name, url }); return }
       await navigator.clipboard.writeText(url)
-      addToast('Link copied', 'success')
+      addToast(t('profile.linkCopied'), 'success')
     } catch (err) {
       if (!(err instanceof Error && err.name === 'AbortError')) logger.warn('[BrandProfileV2] share failed', err)
     }
@@ -228,9 +233,9 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   // B0/B0b (founder 2026-10-23): empty blocks and all-zero numbers stay hidden.
   const showInvites = pending.length > 0 || props.ambassadorTotal > 0
   const reach = [
-    { value: vis.visibility?.views_7d ?? 0, label: (vis.visibility?.views_7d ?? 0) === 1 ? 'profile view' : 'profile views' },
-    { value: searches.summary?.total ?? 0, label: 'in searches' },
-    { value: taps.data?.total ?? 0, label: (taps.data?.total ?? 0) === 1 ? 'tap to your store' : 'taps to your store' },
+    { key: 'views', value: vis.visibility?.views_7d ?? 0, label: t('profile.reach.profileViews', { count: vis.visibility?.views_7d ?? 0 }) },
+    { key: 'searches', value: searches.summary?.total ?? 0, label: t('profile.reach.inSearches') },
+    { key: 'taps', value: taps.data?.total ?? 0, label: t('profile.reach.storeTaps', { count: taps.data?.total ?? 0 }) },
   ]
   const showReach = reach.some((r) => r.value > 0)
   // One primary per screen: "Create your first offer" owns it while the brand
@@ -249,9 +254,9 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
   // ── Visitor bar: Follow + Message (brands have no friends) ─────────────
   const followButton: ActionBarButton = props.isFollowing
-    ? { key: 'follow', label: 'Following', icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'done', onClick: props.onFollow, disabled: props.followBusy, testId: 'brand-follow' }
-    : { key: 'follow', label: 'Follow', icon: <UserPlus className="h-5 w-5" strokeWidth={2} />, tone: 'primary', onClick: props.onFollow, disabled: props.followBusy, testId: 'brand-follow' }
-  const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? 'Opening…' : 'Message', icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'secondary', onClick: props.onMessage, disabled: props.sendingMessage, testId: 'brand-message' }
+    ? { key: 'follow', label: t('profile.bar.following'), icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'done', onClick: props.onFollow, disabled: props.followBusy, testId: 'brand-follow' }
+    : { key: 'follow', label: t('profile.bar.follow'), icon: <UserPlus className="h-5 w-5" strokeWidth={2} />, tone: 'primary', onClick: props.onFollow, disabled: props.followBusy, testId: 'brand-follow' }
+  const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? t('profile.bar.opening') : t('profile.bar.message'), icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'secondary', onClick: props.onMessage, disabled: props.sendingMessage, testId: 'brand-message' }
   const buttons: ActionBarButton[] = owner ? [] : props.canMessage ? [followButton, messageButton] : [followButton]
 
 
@@ -270,26 +275,26 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
-                    {pending.length > 0 ? `${pending.length} ${pending.length === 1 ? 'invite' : 'invites'} waiting for a reply` : 'Invite athletes to represent you'}
+                    {pending.length > 0 ? t('profile.invites.waiting', { count: pending.length, n: count(pending.length) }) : t('profile.invites.empty')}
                   </span>
                   <span className="block truncate text-secondary text-ink-2">
-                    {pending.length > 0 ? pending.slice(0, 2).map((p) => p.full_name ?? 'Athlete').join(' · ') : 'They accept from their inbox'}
+                    {pending.length > 0 ? pending.slice(0, 2).map((p) => p.full_name ?? t('profile.invites.athlete')).join(' · ') : t('profile.invites.howAccept')}
                   </span>
                 </span>
               </div>
               <div className="flex gap-2.5">
-                <button type="button" onClick={props.onInvite} className={cn('flex h-11 flex-1 items-center justify-center rounded-full text-[16px] font-semibold', invitesPrimary ? 'bg-hockia-primary text-white' : 'border border-line bg-white text-hockia-primary')}>+ Invite athletes</button>
-                {pending.length > 0 && <button type="button" onClick={props.onViewInvites} className="flex h-11 items-center justify-center rounded-full bg-white px-4 text-[16px] font-semibold text-hockia-primary">View invites</button>}
+                <button type="button" onClick={props.onInvite} className={cn('flex h-11 flex-1 items-center justify-center rounded-full text-[16px] font-semibold', invitesPrimary ? 'bg-hockia-primary text-white' : 'border border-line bg-white text-hockia-primary')}>{t('profile.invites.invite')}</button>
+                {pending.length > 0 && <button type="button" onClick={props.onViewInvites} className="flex h-11 items-center justify-center rounded-full bg-white px-4 text-[16px] font-semibold text-hockia-primary">{t('profile.invites.view')}</button>}
               </div>
               {/* Players who said yes to brand partnerships, where the brand sells (2026-11-07). */}
-              <button type="button" onClick={() => navigate('/dashboard/ambassadors')} className="flex h-11 w-full items-center justify-center text-[15px] font-semibold text-hockia-primary" data-testid="brand-find-candidates">Find candidates ›</button>
+              <button type="button" onClick={() => navigate('/dashboard/ambassadors')} className="flex h-11 w-full items-center justify-center text-[15px] font-semibold text-hockia-primary" data-testid="brand-find-candidates">{t('profile.invites.findCandidates')}</button>
             </div>
   )
   const reachStats = (
             <div className="flex divide-x divide-line rounded-[20px] border border-line bg-white">
               {reach.map((s) => (
-                <div key={s.label} className="flex flex-1 flex-col items-center py-3">
-                  <span className="text-title tabular-nums text-ink-1">{s.value}</span>
+                <div key={s.key} className="flex flex-1 flex-col items-center py-3">
+                  <span className="text-title tabular-nums text-ink-1">{count(s.value)}</span>
                   <span className="text-caption text-ink-2">{s.label}</span>
                 </div>
               ))}
@@ -297,20 +302,20 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
   )
   const seeViewers = (
             <button type="button" onClick={() => { setViewersOpen(true); trackDbEvent('profile_viewers_view', 'profile', brand.id, { source: 'profile' }) }} className="mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3" data-testid="brand-see-viewers">
-              <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> Only you see this · Last 7 days · See who viewed <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
+              <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> {t('profile.reach.seeViewers')} <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
             </button>
   )
   const partnersRow = (
             <div className="flex items-center gap-3 rounded-[20px] bg-surface-subtle px-4 py-3.5">
               <span className="min-w-0 flex-1">
-                <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">Open to partners</span>
-                <span className="block text-secondary text-ink-2">Players and clubs see you’re looking for ambassadors</span>
+                <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">{t('profile.partners.title')}</span>
+                <span className="block text-secondary text-ink-2">{t('profile.partners.body')}</span>
               </span>
               <button
                 type="button"
                 role="switch"
                 aria-checked={partners.value}
-                aria-label="Open to partners"
+                aria-label={t('profile.partners.switchLabel')}
                 onClick={partners.toggle}
                 className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', switchTrackClass(partners.value))}
                 data-testid="brand-partners-switch"
@@ -329,7 +334,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
         </span>
         <span className="w-full truncate text-[14px] font-semibold leading-[19px] text-ink-1">{p.name}</span>
         <span className="w-full truncate text-caption text-ink-2">
-          {owner ? `${n} ${n === 1 ? 'tap' : 'taps'}` : p.external_url ? 'View ↗' : (p.description?.trim() || ' ')}
+          {owner ? t('profile.product.taps', { count: n, n: count(n) }) : p.external_url ? t('profile.product.view') : (p.description?.trim() || ' ')}
         </span>
       </button>
     )
@@ -337,19 +342,19 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
   const moreMenu = (cls: string) => (!owner ? <ProfileActionMenu targetId={brand.profile_id} targetName={brand.name} triggerClassName={cls} iconClassName="h-[22px] w-[22px]" /> : null)
 
-  const anchors = ANCHORS.filter((a) => (
-    a.id === 'products' ? owner || props.products.length > 0
-      : a.id === 'ambassadors' ? owner || props.ambassadorTotal > 0
-        : a.id === 'updates' ? owner || tiles.length > 0
+  const anchors = ANCHORS.filter((id) => (
+    id === 'products' ? owner || props.products.length > 0
+      : id === 'ambassadors' ? owner || props.ambassadorTotal > 0
+        : id === 'updates' ? owner || tiles.length > 0
           : true
-  ))
+  )).map((id) => ({ id, label: t(`profile.anchor.${id}`) }))
 
   const viewersSheet = owner ? (
-    <BottomSheet open={viewersOpen} onClose={() => setViewersOpen(false)} ariaLabel="Profile views">
+    <BottomSheet open={viewersOpen} onClose={() => setViewersOpen(false)} ariaLabel={t('profile.reach.sheetLabel')}>
       <div className="px-1 pb-4">
         {(searches.summary?.total ?? 0) > 0 && (
           <p className="px-3 pb-2 text-secondary text-ink-2" data-testid="brand-viewers-searches">
-            Your brand appeared in {searches.summary?.total} {searches.summary?.total === 1 ? 'search' : 'searches'} in the last 7 days.
+            {t('profile.reach.searches', { count: searches.summary?.total ?? 0, n: count(searches.summary?.total ?? 0) })}
           </p>
         )}
         <ProfileViewersSection />
@@ -369,7 +374,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
           <section className={cn('relative h-[180px] overflow-hidden rounded-[24px]', !cover && 'bg-gradient-to-b from-role-brand-bg to-white')} data-testid="brand-hero">
             {cover && <BlurImage src={getImageUrl(cover, 'lightbox') ?? cover} lqip={getLqipUrl(cover)} eager className="absolute inset-0 h-full w-full" />}
             <button type="button" onClick={props.onEdit} className="absolute right-4 top-4 inline-flex h-11 items-center gap-2 rounded-full bg-white/90 px-4 text-[14px] font-semibold text-ink-1 shadow-sm hover:bg-white" data-testid={cover ? 'brand-edit-cover' : 'brand-hero-add-cover'}>
-              <Camera className="h-4 w-4" strokeWidth={1.8} /> {cover ? 'Change cover' : 'Add a cover'}
+              <Camera className="h-4 w-4" strokeWidth={1.8} /> {cover ? t('profile.hero.changeCover') : t('profile.hero.addCoverDesktop')}
             </button>
           </section>
 
@@ -378,7 +383,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
               <div className={cn('flex h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-[24px]', logo && 'bg-white p-2 ring-1 ring-inset ring-line')}>
                 {logo ? <img src={logo} alt="" className="h-16 w-16 object-contain" decoding="async" /> : <RolePlaceholder role="brand" label="" />}
               </div>
-              <button type="button" onClick={props.onEdit} aria-label="Change logo" className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
+              <button type="button" onClick={props.onEdit} aria-label={t('profile.hero.changeLogo')} className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-hockia-primary text-white"><Camera className="h-3.5 w-3.5" strokeWidth={2} /></span>
               </button>
             </div>
@@ -389,10 +394,10 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
               </div>
               <p className="mt-1 truncate text-[15px] leading-[1.45] text-ink-2">{[category, placeLine].filter(Boolean).join(' · ')}</p>
             </div>
-            <button type="button" onClick={() => void share()} aria-label="Share brand" className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink-1 hover:bg-surface-subtle">
+            <button type="button" onClick={() => void share()} aria-label={t('profile.hero.share')} className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink-1 hover:bg-surface-subtle">
               <Share className="h-5 w-5" strokeWidth={1.8} />
             </button>
-            <OwnerButtons inline onEdit={() => props.onEdit?.()} previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What athletes and clubs see', onSelect: () => props.onViewPublic?.() }]} />
+            <OwnerButtons inline onEdit={() => props.onEdit?.()} previews={[{ key: 'public', label: t('profile.preview.label'), detail: t('profile.preview.detail'), onSelect: () => props.onViewPublic?.() }]} />
           </div>
 
           <div className="mt-6 grid grid-cols-[minmax(0,1fr)_360px] items-start gap-6 min-[1440px]:grid-cols-[minmax(0,1fr)_416px]">
@@ -402,44 +407,44 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
               )}
               {showInvites && invitesCard}
               <div className={card}>
-                <Section id="products" title="Products" action="+ Add product" onAction={props.onAddProduct}>
+                <Section id="products" title={t('profile.section.products')} action={t('profile.section.addProductAction')} onAction={props.onAddProduct}>
                   <div className="grid grid-cols-2 gap-4 px-4 min-[1280px]:grid-cols-3">
                     <button type="button" onClick={props.onAddProduct} className="flex h-[160px] w-full flex-col items-center justify-center gap-1.5 rounded-[20px] border-2 border-dashed border-hockia-primary/50 bg-hockia-soft/40 text-[15px] font-semibold text-hockia-primary" data-testid="brand-add-product">
-                      <Plus className="h-6 w-6" strokeWidth={2.2} /> Add product
+                      <Plus className="h-6 w-6" strokeWidth={2.2} /> {t('profile.section.addProduct')}
                     </button>
                     {productTiles(true)}
                   </div>
                 </Section>
               </div>
               <div className={card}>
-                <Section id="ambassadors" title={props.ambassadorTotal > 0 ? `Ambassadors · ${props.ambassadorTotal}` : 'Ambassadors'} action="+ Invite" onAction={props.onInvite}>
+                <Section id="ambassadors" title={props.ambassadorTotal > 0 ? t('profile.section.ambassadorsCount', { n: count(props.ambassadorTotal) }) : t('profile.section.ambassadors')} action={t('profile.section.inviteAction')} onAction={props.onInvite}>
                   {props.ambassadors.length > 0 ? (
                     <div className="flex flex-wrap gap-4 px-4">
                       {props.ambassadors.map((a) => (
                         <button key={a.player_id} type="button" onClick={() => navigate(a.role === 'coach' ? `/coaches/id/${a.player_id}` : `/players/id/${a.player_id}`)} className="flex w-20 flex-col items-center gap-1" data-testid="brand-ambassador">
                           <FaceCircle url={a.avatar_url} name={a.full_name} role={a.role ?? 'player'} size="avatar-md" initialsClassName="text-[18px]" className="h-16 w-16" />
-                          <span className="w-full truncate text-center text-secondary font-semibold text-ink-1">{(a.full_name ?? 'Athlete').split(/\s+/)[0]}</span>
-                          <span className="w-full truncate text-center text-caption text-ink-3">{positionLabel(a.position) || 'Athlete'}</span>
+                          <span className="w-full truncate text-center text-secondary font-semibold text-ink-1">{(a.full_name ?? t('profile.invites.athlete')).split(/\s+/)[0]}</span>
+                          <span className="w-full truncate text-center text-caption text-ink-3">{positionLabel(a.position) || t('profile.invites.athlete')}</span>
                         </button>
                       ))}
                     </div>
-                  ) : <p className="px-4 text-body text-ink-3">No ambassadors yet.</p>}
+                  ) : <p className="px-4 text-body text-ink-3">{t('profile.section.noAmbassadors')}</p>}
                 </Section>
               </div>
               <div className={card}>
-                <Section id="updates" title="Latest updates" action="+ Post update" onAction={props.onPostUpdate}>
-                  {tiles.length > 0 ? <PostsPhotosGrid tiles={tiles} /> : <p className="px-4 text-body text-ink-3">No updates yet.</p>}
+                <Section id="updates" title={t('profile.section.updates')} action={t('profile.section.postUpdate')} onAction={props.onPostUpdate}>
+                  {tiles.length > 0 ? <PostsPhotosGrid tiles={tiles} /> : <p className="px-4 text-body text-ink-3">{t('profile.section.noUpdates')}</p>}
                 </Section>
               </div>
               <div className={card}>
-                <Section id="about" title="About" action="Edit" onAction={props.onEdit}>
+                <Section id="about" title={t('profile.section.about')} action={t('profile.section.edit')} onAction={props.onEdit}>
                   <div className="flex flex-col items-start gap-1.5 px-4">
-                    {bio ? <p className="whitespace-pre-line text-body text-ink-1">{bio}</p> : <p className="text-body text-ink-3">No description yet</p>}
+                    {bio ? <p className="whitespace-pre-line text-body text-ink-1">{bio}</p> : <p className="text-body text-ink-3">{t('profile.section.noDescription')}</p>}
                     <div className="w-full pt-2">
-                      {category && <DetailRow label="Category" value={category} />}
-                      {countryName && <DetailRow label="Country" value={countryName} />}
-                      {brand.website_url && <DetailRow label="Website" value={hostOf(brand.website_url)} href={/^https?:\/\//i.test(brand.website_url) ? brand.website_url : `https://${brand.website_url}`} />}
-                      {instagram && <DetailRow label="Instagram" value={`@${instagram}`} href={`https://instagram.com/${instagram}`} />}
+                      {category && <DetailRow label={t('profile.detail.category')} value={category} />}
+                      {countryName && <DetailRow label={t('profile.detail.country')} value={countryName} />}
+                      {brand.website_url && <DetailRow label={t('profile.detail.website')} value={hostOf(brand.website_url)} href={/^https?:\/\//i.test(brand.website_url) ? brand.website_url : `https://${brand.website_url}`} />}
+                      {instagram && <DetailRow label={t('profile.detail.instagram')} value={`@${instagram}`} href={`https://instagram.com/${instagram}`} />}
                     </div>
                   </div>
                 </Section>
@@ -451,7 +456,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
               <div className="rounded-[24px] bg-white p-2 ring-1 ring-inset ring-line [&>div]:bg-white">{partnersRow}</div>
               {showReach && (
                 <div className="rounded-[24px] bg-white p-6 ring-1 ring-inset ring-line" data-testid="brand-private-stats">
-                  <h2 className="pb-3 font-display text-[19px] font-bold leading-[1.25] text-ink-1">Reach this week</h2>
+                  <h2 className="pb-3 font-display text-[19px] font-bold leading-[1.25] text-ink-1">{t('profile.reach.title')}</h2>
                   {reachStats}
                   {seeViewers}
                 </div>
@@ -477,19 +482,19 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
             : <img src={pitchHorizontal} alt="" aria-hidden="true" className="absolute inset-x-0 top-[60px] h-[200px] w-full" />}
           {!cover && owner && (
             <button type="button" onClick={props.onEdit} className="absolute left-1/2 top-[38%] z-10 flex h-[104px] w-[104px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1.5 rounded-full border-2 border-dashed border-white/50 bg-white/10 text-[13px] font-semibold text-white" data-testid="brand-hero-add-cover">
-              <Camera className="h-6 w-6" strokeWidth={1.6} /> Add a cover
+              <Camera className="h-6 w-6" strokeWidth={1.6} /> {t('profile.hero.addCover')}
             </button>
           )}
           <div className="pointer-events-none absolute inset-0" style={{ backgroundImage: SCRIM }} aria-hidden="true" />
           <div className="absolute inset-x-4 top-[max(env(safe-area-inset-top),12px)] flex items-center justify-between pt-1">
             {owner
               // With no cover the "Add a cover" circle is the one camera action.
-              ? (cover ? <button type="button" onClick={props.onEdit} aria-label="Edit cover" className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button> : <span />)
-              : <button type="button" onClick={back} aria-label="Back" className={cn(GLASS_BTN, 'lg:invisible')}><BackGlyph className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>}
+              ? (cover ? <button type="button" onClick={props.onEdit} aria-label={t('profile.hero.editCover')} className={GLASS_BTN}><Camera className="h-[22px] w-[22px]" strokeWidth={1.6} /></button> : <span />)
+              : <button type="button" onClick={back} aria-label={t('profile.hero.back')} className={cn(GLASS_BTN, 'lg:invisible')}><BackGlyph className="h-[22px] w-[22px]" strokeWidth={1.8} /></button>}
             <div className="flex items-center gap-2">
-              <button type="button" onClick={() => void share()} aria-label="Share brand" className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
+              <button type="button" onClick={() => void share()} aria-label={t('profile.hero.share')} className={GLASS_BTN}><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
               {owner
-                ? <button type="button" onClick={() => navigate('/settings')} aria-label="Settings" className={GLASS_BTN}><Settings className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
+                ? <button type="button" onClick={() => navigate('/settings')} aria-label={t('profile.hero.settings')} className={GLASS_BTN}><Settings className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
                 : moreMenu(GLASS_BTN)}
             </div>
           </div>
@@ -499,7 +504,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                 {logo ? <img src={logo} alt="" className="h-14 w-14 object-contain" decoding="async" /> : <RolePlaceholder role="brand" label="" />}
               </div>
               {owner && (
-                <button type="button" onClick={props.onEdit} aria-label="Change logo" className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
+                <button type="button" onClick={props.onEdit} aria-label={t('profile.hero.changeLogo')} className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-hockia-primary text-white"><Camera className="h-3.5 w-3.5" strokeWidth={2} /></span>
                 </button>
               )}
@@ -513,7 +518,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
           </div>
           {brand.open_to_partners && (
             <span className={cn('absolute right-4 bottom-[132px] inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] px-2.5 py-[5px] text-caption font-semibold text-white', GLASS)} data-testid="brand-partners-pill">
-              <span className="h-[7px] w-[7px] rounded-full bg-[#4ade80]" aria-hidden="true" /> Looking for ambassadors
+              <span className="h-[7px] w-[7px] rounded-full bg-[#4ade80]" aria-hidden="true" /> {t('profile.partners.pill')}
             </span>
           )}
         </section>
@@ -521,7 +526,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
       {owner && (
         <div className="flex flex-col gap-3">
-          <OwnerButtons onEdit={() => props.onEdit?.()} previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What athletes and clubs see', onSelect: () => props.onViewPublic?.() }]} />
+          <OwnerButtons onEdit={() => props.onEdit?.()} previews={[{ key: 'public', label: t('profile.preview.label'), detail: t('profile.preview.detail'), onSelect: () => props.onViewPublic?.() }]} />
           {/* Offers card first (Figma 08 · Brands B0 / B0b). */}
           {!myOffers.isLoading && (
             <OffersCard
@@ -550,19 +555,19 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
       {/* Public: zero counts are hidden (owners see them in their private stats). */}
       {!owner && (props.followerCount > 0 || props.ambassadorTotal > 0 || brand.is_verified) && (
         <div className="flex gap-4 px-4 pt-3 text-secondary" data-testid="brand-follow-stats">
-          {props.followerCount > 0 && <span className="font-semibold text-ink-1">{props.followerCount} {props.followerCount === 1 ? 'follower' : 'followers'}</span>}
-          {props.ambassadorTotal > 0 && <span className="font-semibold text-ink-1">{props.ambassadorTotal} {props.ambassadorTotal === 1 ? 'ambassador' : 'ambassadors'}</span>}
-          {brand.is_verified && <span className="text-ink-2">✓ Verified brand</span>}
+          {props.followerCount > 0 && <span className="font-semibold text-ink-1">{t('profile.stats.followers', { count: props.followerCount, n: count(props.followerCount) })}</span>}
+          {props.ambassadorTotal > 0 && <span className="font-semibold text-ink-1">{t('profile.stats.ambassadors', { count: props.ambassadorTotal, n: count(props.ambassadorTotal) })}</span>}
+          {brand.is_verified && <span className="text-ink-2">{t('profile.stats.verified')}</span>}
         </div>
       )}
 
       {/* Products */}
       {(owner || props.products.length > 0) && (
-        <Section id="products" title="Products" action={owner ? '+ Add product' : props.onOpenTab && props.products.length > 3 ? `See all ${props.products.length}` : null} onAction={owner ? props.onAddProduct : () => props.onOpenTab?.('products')}>
+        <Section id="products" title={t('profile.section.products')} action={owner ? t('profile.section.addProductAction') : props.onOpenTab && props.products.length > 3 ? t('profile.section.seeAllCount', { n: count(props.products.length) }) : null} onAction={owner ? props.onAddProduct : () => props.onOpenTab?.('products')}>
           <div className="flex gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {owner && (
               <button type="button" onClick={props.onAddProduct} className="flex h-[160px] w-[160px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-[20px] border-2 border-dashed border-hockia-primary/50 bg-hockia-soft/40 text-[15px] font-semibold text-hockia-primary" data-testid="brand-add-product">
-                <Plus className="h-6 w-6" strokeWidth={2.2} /> Add product
+                <Plus className="h-6 w-6" strokeWidth={2.2} /> {t('profile.section.addProduct')}
               </button>
             )}
             {productTiles(false)}
@@ -572,42 +577,42 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
       {/* Ambassadors */}
       {(owner || props.ambassadorTotal > 0) && (
-        <Section id="ambassadors" title={props.ambassadorTotal > 0 ? `Ambassadors · ${props.ambassadorTotal}` : 'Ambassadors'} action={owner ? '+ Invite' : props.onOpenTab && props.ambassadorTotal > props.ambassadors.length ? 'See all' : null} onAction={owner ? props.onInvite : () => props.onOpenTab?.('ambassadors')}>
+        <Section id="ambassadors" title={props.ambassadorTotal > 0 ? t('profile.section.ambassadorsCount', { n: count(props.ambassadorTotal) }) : t('profile.section.ambassadors')} action={owner ? t('profile.section.inviteAction') : props.onOpenTab && props.ambassadorTotal > props.ambassadors.length ? t('profile.section.seeAll') : null} onAction={owner ? props.onInvite : () => props.onOpenTab?.('ambassadors')}>
           {props.ambassadors.length > 0 ? (
             <div className="flex gap-3.5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {props.ambassadors.map((a) => (
                 <button key={a.player_id} type="button" onClick={() => navigate(a.role === 'coach' ? `/coaches/id/${a.player_id}` : `/players/id/${a.player_id}`)} className="flex w-16 shrink-0 flex-col items-center gap-1" data-testid="brand-ambassador">
                   <FaceCircle url={a.avatar_url} name={a.full_name} role={a.role ?? 'player'} size="avatar-md" initialsClassName="text-[18px]" className="h-16 w-16" />
-                  <span className="w-full truncate text-center text-secondary font-semibold text-ink-1">{(a.full_name ?? 'Athlete').split(/\s+/)[0]}</span>
-                  <span className="w-full truncate text-center text-caption text-ink-3">{positionLabel(a.position) || 'Athlete'}</span>
+                  <span className="w-full truncate text-center text-secondary font-semibold text-ink-1">{(a.full_name ?? t('profile.invites.athlete')).split(/\s+/)[0]}</span>
+                  <span className="w-full truncate text-center text-caption text-ink-3">{positionLabel(a.position) || t('profile.invites.athlete')}</span>
                 </button>
               ))}
             </div>
-          ) : <p className="px-4 text-body text-ink-3">No ambassadors yet.</p>}
+          ) : <p className="px-4 text-body text-ink-3">{t('profile.section.noAmbassadors')}</p>}
         </Section>
       )}
 
       {/* Latest updates */}
       {(owner || tiles.length > 0) && (
-        <Section id="updates" title="Latest updates" action={owner ? '+ Post update' : props.onOpenTab && tiles.length > 6 ? 'See all' : null} onAction={owner ? props.onPostUpdate : () => props.onOpenTab?.('posts')}>
-          {tiles.length > 0 ? <PostsPhotosGrid tiles={tiles} /> : <p className="px-4 text-body text-ink-3">No updates yet.</p>}
+        <Section id="updates" title={t('profile.section.updates')} action={owner ? t('profile.section.postUpdate') : props.onOpenTab && tiles.length > 6 ? t('profile.section.seeAll') : null} onAction={owner ? props.onPostUpdate : () => props.onOpenTab?.('posts')}>
+          {tiles.length > 0 ? <PostsPhotosGrid tiles={tiles} /> : <p className="px-4 text-body text-ink-3">{t('profile.section.noUpdates')}</p>}
         </Section>
       )}
 
       {/* About */}
-      <Section id="about" title="About" action={owner ? 'Edit' : null} onAction={props.onEdit}>
+      <Section id="about" title={t('profile.section.about')} action={owner ? t('profile.section.edit') : null} onAction={props.onEdit}>
         <div className="flex flex-col items-start gap-1.5 px-4">
           {bio ? (
             <>
               <p className={cn('whitespace-pre-line text-body text-ink-1', !bioOpen && 'line-clamp-3')}>{bio}</p>
-              {!bioOpen && bio.length > 140 && <button type="button" onClick={() => setBioOpen(true)} className="min-h-[32px] text-secondary font-semibold text-hockia-primary">More</button>}
+              {!bioOpen && bio.length > 140 && <button type="button" onClick={() => setBioOpen(true)} className="min-h-[32px] text-secondary font-semibold text-hockia-primary">{t('profile.section.more')}</button>}
             </>
-          ) : owner ? <p className="text-body text-ink-3">No description yet</p> : null}
+          ) : owner ? <p className="text-body text-ink-3">{t('profile.section.noDescription')}</p> : null}
           <div className="w-full pt-2">
-            {category && <DetailRow label="Category" value={category} />}
-            {countryName && <DetailRow label="Country" value={countryName} />}
-            {brand.website_url && <DetailRow label="Website" value={hostOf(brand.website_url)} href={/^https?:\/\//i.test(brand.website_url) ? brand.website_url : `https://${brand.website_url}`} />}
-            {instagram && <DetailRow label="Instagram" value={`@${instagram}`} href={`https://instagram.com/${instagram}`} />}
+            {category && <DetailRow label={t('profile.detail.category')} value={category} />}
+            {countryName && <DetailRow label={t('profile.detail.country')} value={countryName} />}
+            {brand.website_url && <DetailRow label={t('profile.detail.website')} value={hostOf(brand.website_url)} href={/^https?:\/\//i.test(brand.website_url) ? brand.website_url : `https://${brand.website_url}`} />}
+            {instagram && <DetailRow label={t('profile.detail.instagram')} value={`@${instagram}`} href={`https://instagram.com/${instagram}`} />}
           </div>
         </div>
       </Section>

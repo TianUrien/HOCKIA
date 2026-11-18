@@ -44,6 +44,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Json } from '../_shared/database.types.ts'
 import { targetIsInvisible } from '../_shared/profile-visibility.ts'
 import { captureException, setSentryUser } from '../_shared/sentry.ts'
+import { resolveAiLanguage, withOutputLanguage, type MemberLanguage } from '../_shared/ai-language.ts'
 
 // ── Prompt version + constants ──────────────────────────────────────
 // Bump PROMPT_VERSION when the system prompt or output schema changes
@@ -73,6 +74,32 @@ const BANNED_WORDS = [
   'exceptional',
   'genius',
 ]
+
+// Spanish verdicts (Stage 3): the same closed vocabulary in Spanish, checked
+// only on Spanish answers. Each entry matches at a word start, so stems
+// ("dotad", "asombros") cover the gendered forms.
+const BANNED_WORDS_ES = [
+  'élite',
+  'elite',
+  'estrella',
+  'generacional',
+  'talentoso',
+  'talentosa',
+  'dotad',
+  'asombros',
+  'increíble',
+  'de clase mundial',
+  'fenomenal',
+  'excepcional',
+  'genio',
+]
+
+// Spanish prompt = the English one + the output-language rule; English unchanged.
+const SPANISH_OPINION_RULE = '- Rules 3 and 6 apply in Spanish too: no "élite", "estrella", "talentoso/a", "increíble", "excepcional", "fenomenal", "de clase mundial"; humanize values into natural Spanish (high_performance → "alto rendimiento", unpaid_development → "un rol de desarrollo"). verdict_short and every "claim" are in Spanish; "field" keys stay exactly as in the input; "value" stays as given.'
+
+function opinionSystemPrompt(lang: MemberLanguage): string {
+  return lang === 'es' ? `${withOutputLanguage(SYSTEM_PROMPT, 'es')}\n${SPANISH_OPINION_RULE}` : SYSTEM_PROMPT
+}
 
 // ── Types ───────────────────────────────────────────────────────────
 interface Citation {
@@ -693,7 +720,7 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<Opi
 }
 
 // ── Content filter: enforce closed vocabulary ───────────────────────
-function passesContentFilter(payload: OpinionPayload): { ok: boolean; reason?: string } {
+function passesContentFilter(payload: OpinionPayload, lang: MemberLanguage = 'en'): { ok: boolean; reason?: string } {
   const haystack = [
     payload.verdict_short,
     ...payload.citations.map((c) => c.claim),
@@ -701,6 +728,11 @@ function passesContentFilter(payload: OpinionPayload): { ok: boolean; reason?: s
   for (const banned of BANNED_WORDS) {
     if (new RegExp(`\\b${banned}\\b`, 'i').test(haystack)) {
       return { ok: false, reason: `banned vocabulary: ${banned}` }
+    }
+  }
+  if (lang === 'es') {
+    for (const banned of BANNED_WORDS_ES) {
+      if (new RegExp(`(^|[^\\p{L}])${banned}`, 'iu').test(haystack)) return { ok: false, reason: `banned vocabulary: ${banned}` }
     }
   }
   return { ok: true }
@@ -864,8 +896,10 @@ serve(async (req: Request) => {
   //    daily generations.
   let playerId: string
   let force = false
+  let rawBody: unknown = null
   try {
-    const body = await req.json() as { player_id?: string; force?: boolean }
+    const body = await req.json() as { player_id?: string; force?: boolean; locale?: string }
+    rawBody = body
     if (!body.player_id || typeof body.player_id !== 'string' || !UUID_RE.test(body.player_id)) throw new Error()
     playerId = body.player_id
     force = body.force === true
@@ -976,7 +1010,11 @@ serve(async (req: Request) => {
   //    the cache lookup entirely so the user gets a fresh LLM call.
   //    Quota still gates further down, so abusive Regenerate clicking
   //    still hits the 50/day soft cap.
-  const contextHash = await computeContextHash(viewerId, playerId, fit)
+  // The verdict is cached per language: a Spanish reader gets its own row
+  // (English keys are unchanged, so cached English verdicts stay valid).
+  const lang = await resolveAiLanguage(supabase, viewerId, rawBody)
+  const baseHash = await computeContextHash(viewerId, playerId, fit)
+  const contextHash = lang === 'es' ? await sha256(`${baseHash}|es`) : baseHash
   if (!force) {
     const { data: cached } = await supabase
       .from('ai_opinions')
@@ -1030,7 +1068,7 @@ serve(async (req: Request) => {
   const userPrompt = buildUserPrompt(viewer, player, fit)
   let payload: OpinionPayload
   try {
-    payload = await callClaude(SYSTEM_PROMPT, userPrompt)
+    payload = await callClaude(opinionSystemPrompt(lang), userPrompt)
   } catch (err) {
     console.error('[ai-opinion] LLM call failed', err)
     captureException(err, { functionName: 'ai-opinion', tags: { stage: 'llm' } })
@@ -1040,7 +1078,7 @@ serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
-  const filter = passesContentFilter(payload)
+  const filter = passesContentFilter(payload, lang)
   if (!filter.ok) {
     console.error('[ai-opinion] content filter rejected', filter.reason, payload.verdict_short)
     await releaseQuotaSlot(supabase, viewerId, today)

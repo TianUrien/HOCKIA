@@ -18,6 +18,7 @@ import { useNotificationStore } from '@/lib/notifications'
 import { cn, formatRelationshipType } from '@/lib/utils'
 import { trackReferenceModalOpen } from '@/lib/analytics'
 import type { Profile } from '@/lib/supabase'
+import { useMediaT } from '@/i18n/ns/media'
 
 interface TrustedReferencesSectionProps {
   profileId: string
@@ -41,17 +42,20 @@ type ConfirmState = {
   description: string
 }
 
-const TRUSTED_REFERENCES_GUIDE = (
-  <div className="space-y-2 text-sm text-gray-100">
-    <p className="font-semibold text-white">How trusted references work</p>
-    <ul className="list-disc space-y-1 pl-4 text-gray-200">
-      <li>Choose up to five trusted people from your connections.</li>
-      <li>References must accept your request before they appear.</li>
-      <li>Each reference can add an endorsement to your profile.</li>
-      <li>Clubs and coaches can contact them in one click.</li>
-    </ul>
-  </div>
-)
+function TrustedReferencesGuide() {
+  const t = useMediaT()
+  return (
+    <div className="space-y-2 text-sm text-gray-100">
+      <p className="font-semibold text-white">{t('references.section.guide.title')}</p>
+      <ul className="list-disc space-y-1 pl-4 text-gray-200">
+        <li>{t('references.section.guide.choose')}</li>
+        <li>{t('references.section.guide.accept')}</li>
+        <li>{t('references.section.guide.endorse')}</li>
+        <li>{t('references.section.guide.contact')}</li>
+      </ul>
+    </div>
+  )
+}
 
 export default function TrustedReferencesSection({
   profileId,
@@ -61,6 +65,7 @@ export default function TrustedReferencesSection({
   openAddReferenceForFriendId = null,
   onAddReferenceConsumed,
 }: TrustedReferencesSectionProps) {
+  const t = useMediaT()
   const {
     loading,
     isOwner: isActualOwner,
@@ -144,7 +149,7 @@ export default function TrustedReferencesSection({
   const handleMessage = async (targetId: string | null) => {
     if (!targetId) return
     if (!user) {
-      addToast('Sign in to message references.', 'info')
+      addToast(t('references.section.signInToMessage'), 'info')
       navigate('/')
       return
     }
@@ -172,7 +177,7 @@ export default function TrustedReferencesSection({
       }
     } catch (error) {
       logger.error('Failed to open messages', error)
-      addToast('Unable to start conversation. Please try again.', 'error')
+      addToast(t('references.section.messageFailed'), 'error')
     } finally {
       setMessageTarget(null)
     }
@@ -212,8 +217,8 @@ export default function TrustedReferencesSection({
     setConfirmState({
       mode: 'remove',
       referenceId,
-      headline: 'Remove trusted reference',
-      description: `This will remove ${referenceName} from your trusted references. You can always invite them again later.`,
+      headline: t('references.section.removeTitle'),
+      description: t('references.section.removeBody', { name: referenceName }),
     })
   }
 
@@ -230,8 +235,8 @@ export default function TrustedReferencesSection({
     setConfirmState({
       mode: 'withdraw',
       referenceId,
-      headline: 'Withdraw your endorsement',
-      description: `This reference will disappear from ${referenceName}'s profile immediately.`,
+      headline: t('references.section.withdrawTitle'),
+      description: t('references.section.withdrawBody', { name: referenceName }),
     })
   }
 
@@ -256,18 +261,18 @@ export default function TrustedReferencesSection({
       <section className="space-y-5 rounded-3xl border border-gray-100 bg-white/80 p-6 shadow-sm shadow-gray-100">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gold">Trusted References</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gold">{t('references.section.kicker')}</p>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold text-gray-900">Key people who vouch for this profile</h2>
-              <InfoTooltip label="How trusted references work" alignment="start">
-                {TRUSTED_REFERENCES_GUIDE}
+              <h2 className="text-2xl font-bold text-gray-900">{t('references.section.publicTitle')}</h2>
+              <InfoTooltip label={t('references.section.guideLabel')} alignment="start">
+                <TrustedReferencesGuide />
               </InfoTooltip>
             </div>
-            <p className="text-sm text-gray-600">Message anyone to learn more.</p>
+            <p className="text-sm text-gray-600">{t('references.section.publicSubtitle')}</p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
             <ShieldCheck className="h-4 w-4 text-gold" />
-            {acceptedReferences.length}/{maxReferences} selected
+            {t('references.section.publicSelected', { count: acceptedReferences.length, max: maxReferences })}
           </span>
         </header>
 
@@ -289,14 +294,12 @@ export default function TrustedReferencesSection({
                 away with a mental model of the feature even on profiles
                 that don't yet have it. Role-aware so the copy matches the
                 profile being viewed (was hardcoded "player"). */}
-            <p className="text-sm font-medium text-gray-700">No vouches yet</p>
+            <p className="text-sm font-medium text-gray-700">{t('references.section.publicEmptyTitle')}</p>
             <p className="mt-1 text-xs text-gray-500">
-              Trusted references are how coaches, teammates, and clubs vouch for {
-                profileRole === 'coach' ? 'a coach' :
-                profileRole === 'umpire' ? 'an umpire' :
-                profileRole === 'player' ? 'a player' :
-                'Hockia members'
-              } on Hockia.
+              {profileRole === 'coach' ? t('references.section.publicEmptyCoach') :
+                profileRole === 'umpire' ? t('references.section.publicEmptyUmpire') :
+                profileRole === 'player' ? t('references.section.publicEmptyPlayer') :
+                t('references.section.publicEmptyMember')}
             </p>
           </div>
         ) : (
@@ -313,7 +316,7 @@ export default function TrustedReferencesSection({
                   onMessage={handleMessage}
                   messageLoading={messageTarget === reference.profile?.id}
                   layout="carousel"
-                  endorsementFallback="No written endorsement yet."
+                  endorsementFallback={t('references.section.publicNoEndorsement')}
                   onOpenProfile={handleOpenReferenceProfile}
                   className="snap-center"
                 />
@@ -325,7 +328,7 @@ export default function TrustedReferencesSection({
                   <button
                     key={idx}
                     type="button"
-                    aria-label={`Go to reference ${idx + 1}`}
+                    aria-label={t('references.section.publicGoTo', { index: idx + 1 })}
                     onClick={() => {
                       const container = scrollRef.current
                       const card = container?.children[idx] as HTMLElement | undefined
@@ -353,17 +356,17 @@ export default function TrustedReferencesSection({
     <section className="space-y-6 rounded-3xl border border-gray-100 bg-white/80 p-6 shadow-sm shadow-gray-100">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gold">Trusted References</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gold">{t('references.section.ownKicker')}</p>
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold text-gray-900">Key people who vouch for you</h2>
-            <InfoTooltip label="How trusted references work" alignment="start">
-              {TRUSTED_REFERENCES_GUIDE}
+            <h2 className="text-2xl font-bold text-gray-900">{t('references.section.ownTitle')}</h2>
+            <InfoTooltip label={t('references.section.ownGuideLabel')} alignment="start">
+              <TrustedReferencesGuide />
             </InfoTooltip>
           </div>
           {canCollectReferences ? (
-            <p className="text-sm text-gray-600">{acceptedCount}/{maxReferences} references selected</p>
+            <p className="text-sm text-gray-600">{t('references.section.ownSelected', { count: acceptedCount, max: maxReferences })}</p>
           ) : (
-            <p className="text-sm text-gray-600">This role can respond to requests but cannot send new ones.</p>
+            <p className="text-sm text-gray-600">{t('references.section.cannotRequest')}</p>
           )}
         </div>
         {canCollectReferences && canAddMore && (
@@ -376,7 +379,7 @@ export default function TrustedReferencesSection({
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-primary px-5 py-2.5 text-sm font-semibold text-white"
           >
             <Plus className="h-4 w-4" />
-            Add Reference
+            {t('references.section.addHeader')}
           </button>
         )}
       </header>
@@ -389,9 +392,7 @@ export default function TrustedReferencesSection({
           <div className="flex items-center gap-2 text-gray-700">
             <UserPlus className="h-4 w-4" />
             <p className="text-sm font-semibold">
-              {pendingReferences.length === 1
-                ? '1 reference request waiting for approval'
-                : `${pendingReferences.length} reference requests waiting for approval`}
+              {t('references.section.pendingTitle', { count: pendingReferences.length })}
             </p>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -400,12 +401,12 @@ export default function TrustedReferencesSection({
                 <Avatar
                   src={pending.profile?.avatarUrl}
                   initials={pending.profile?.fullName?.slice(0, 2) ?? '?'}
-                  alt={pending.profile?.fullName ?? 'Reference'}
+                  alt={pending.profile?.fullName ?? t('references.section.pendingAvatarAlt')}
                   size="sm"
                   role={pending.profile?.role}
                 />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">{pending.profile?.fullName ?? 'Hockia Member'}</p>
+                  <p className="text-sm font-semibold text-gray-900">{pending.profile?.fullName ?? t('references.section.fallbackName')}</p>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                     <RoleBadge role={pending.profile?.role ?? undefined} />
                     <span>{formatRelationshipType(pending.relationshipType)}</span>
@@ -419,7 +420,7 @@ export default function TrustedReferencesSection({
                 </div>
                 <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
                   <Check className="h-3 w-3" aria-hidden="true" />
-                  Requested
+                  {t('references.section.requested')}
                 </span>
               </div>
             ))}
@@ -429,8 +430,8 @@ export default function TrustedReferencesSection({
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Trusted contacts ({acceptedCount}/{maxReferences})</h3>
-          {!isOwner && <p className="text-sm text-gray-500">Message anyone to learn more.</p>}
+          <h3 className="text-lg font-semibold text-gray-900">{t('references.section.contactsTitle', { count: acceptedCount, max: maxReferences })}</h3>
+          {!isOwner && <p className="text-sm text-gray-500">{t('references.section.contactsHint')}</p>}
         </div>
         <div
           ref={scrollRef}
@@ -457,7 +458,7 @@ export default function TrustedReferencesSection({
                 if (!canCollectReferences) {
                   return (
                     <p className="text-sm text-gray-600">
-                      You do not have any trusted references selected.
+                      {t('references.section.emptyCannotRequest')}
                     </p>
                   )
                 }
@@ -472,10 +473,10 @@ export default function TrustedReferencesSection({
                     <div className="space-y-3">
                       <ShieldCheck className="mx-auto h-8 w-8 text-gold" aria-hidden="true" />
                       <p className="text-sm font-semibold text-gray-900">
-                        References are how clubs verify your hockey background
+                        {t('references.section.noFriendsTitle')}
                       </p>
                       <p className="text-sm text-gray-600">
-                        Coaches, teammates, and clubs can vouch for you on Hockia — but you need to be connected with them first.
+                        {t('references.section.noFriendsBody')}
                       </p>
                       <button
                         type="button"
@@ -483,7 +484,7 @@ export default function TrustedReferencesSection({
                         className="inline-flex items-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2 text-sm font-semibold text-white hover:bg-hockia-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
                       >
                         <UserPlus className="h-4 w-4" aria-hidden="true" />
-                        Find people on Hockia
+                        {t('references.section.findPeople')}
                       </button>
                     </div>
                   )
@@ -497,10 +498,10 @@ export default function TrustedReferencesSection({
                     <div className="space-y-3">
                       <ShieldCheck className="mx-auto h-8 w-8 text-gold" aria-hidden="true" />
                       <p className="text-sm font-semibold text-gray-900">
-                        You've asked everyone in your network
+                        {t('references.section.allAskedTitle')}
                       </p>
                       <p className="text-sm text-gray-600">
-                        Pending requests will appear here once accepted. Add more friends on Hockia to expand your trust circle.
+                        {t('references.section.allAskedBody')}
                       </p>
                       <button
                         type="button"
@@ -508,7 +509,7 @@ export default function TrustedReferencesSection({
                         className="inline-flex items-center gap-1.5 rounded-full border border-gold-line/40 bg-white px-4 py-2 text-sm font-semibold text-gold hover:bg-gold-soft transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-line"
                       >
                         <UserPlus className="h-4 w-4" aria-hidden="true" />
-                        Find more people
+                        {t('references.section.findMore')}
                       </button>
                     </div>
                   )
@@ -517,11 +518,8 @@ export default function TrustedReferencesSection({
                 // Default: has friends, has eligible options. Standard "ask
                 // someone to vouch" empty state with strong value prop.
                 const headlineCopy = profileRole === 'umpire'
-                  ? 'References are how peers and assigners verify your officiating'
-                  : 'References are how clubs verify your hockey background'
-                const subCopyTrailing = profileRole === 'umpire'
-                  ? 'Assigners and clubs see your references on your profile.'
-                  : 'Clubs scouting on Hockia see your references on your profile.'
+                  ? t('references.section.emptyTitleUmpire')
+                  : t('references.section.emptyTitle')
                 return (
                   <div className="space-y-3">
                     <ShieldCheck className="mx-auto h-8 w-8 text-gold" aria-hidden="true" />
@@ -529,9 +527,9 @@ export default function TrustedReferencesSection({
                       {headlineCopy}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {friendOptions.length === 1
-                        ? `Ask your connection to vouch for you. ${subCopyTrailing}`
-                        : `Ask 1–2 of your ${friendOptions.length} connections to vouch for you. ${subCopyTrailing}`}
+                      {profileRole === 'umpire'
+                        ? t('references.section.emptyAskUmpire', { count: friendOptions.length })
+                        : t('references.section.emptyAsk', { count: friendOptions.length })}
                     </p>
                     <button
                       type="button"
@@ -541,7 +539,7 @@ export default function TrustedReferencesSection({
                       }}
                       className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-line"
                     >
-                      Choose a connection
+                      {t('references.section.chooseConnection')}
                       <ArrowRight className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
@@ -557,16 +555,16 @@ export default function TrustedReferencesSection({
                   onMessage={handleMessage}
                   messageLoading={messageTarget === reference.profile?.id}
                   layout="carousel"
-                  endorsementFallback="No endorsement added yet."
+                  endorsementFallback={t('references.section.ownNoEndorsement')}
                   onOpenProfile={handleOpenReferenceProfile}
                   className="snap-center"
                   secondaryAction={(
                     <button
                       type="button"
-                      onClick={() => openRemoveConfirm(reference.id, reference.profile?.fullName ?? 'this reference')}
+                      onClick={() => openRemoveConfirm(reference.id, reference.profile?.fullName ?? t('references.section.thisReference'))}
                       className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
                     >
-                      Remove
+                      {t('references.section.remove')}
                     </button>
                   )}
                 />
@@ -581,13 +579,13 @@ export default function TrustedReferencesSection({
                   className="min-w-[260px] flex-shrink-0 snap-center rounded-3xl border-2 border-dashed border-gold-line/40 bg-gold-soft p-5 text-center text-gold"
                 >
                   <Plus className="mx-auto mb-2 h-6 w-6" />
-                  <p className="font-semibold">Add reference</p>
-                  <p className="mt-1 text-sm">{maxReferences - acceptedCount} of {maxReferences} spots left</p>
+                  <p className="font-semibold">{t('references.section.addCard')}</p>
+                  <p className="mt-1 text-sm">{t('references.section.spotsLeft', { count: maxReferences - acceptedCount, max: maxReferences })}</p>
                   {/* One-line "why" so a partial-profile owner sees the
                       motivation alongside the count, not just an
                       unexplained "X spots left" number. */}
                   <p className="mt-2 text-xs text-gold leading-relaxed">
-                    Vouches from coaches, teammates, and clubs make your profile recruitable.
+                    {t('references.section.addCardWhy')}
                   </p>
                 </button>
               )}
@@ -600,7 +598,7 @@ export default function TrustedReferencesSection({
               <button
                 key={idx}
                 type="button"
-                aria-label={`Go to reference ${idx + 1}`}
+                aria-label={t('references.section.ownGoTo', { index: idx + 1 })}
                 onClick={() => {
                   const container = scrollRef.current
                   const card = container?.children[idx] as HTMLElement | undefined
@@ -624,11 +622,11 @@ export default function TrustedReferencesSection({
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="rounded-3xl border border-gray-100 bg-gray-50/60 p-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Reference requests</h3>
-              <span className="text-sm text-gray-500">{incomingRequests.length} pending</span>
+              <h3 className="text-lg font-semibold text-gray-900">{t('references.section.requestsTitle')}</h3>
+              <span className="text-sm text-gray-500">{t('references.section.requestsPending', { count: incomingRequests.length })}</span>
             </div>
             {incomingRequests.length === 0 ? (
-              <p className="mt-4 text-sm text-gray-500">No new requests right now.</p>
+              <p className="mt-4 text-sm text-gray-500">{t('references.section.requestsEmpty')}</p>
             ) : (
               <div className="mt-4 space-y-3">
                 {incomingRequests.map((request) => (
@@ -637,12 +635,12 @@ export default function TrustedReferencesSection({
                       <Avatar
                         src={request.requesterProfile?.avatarUrl}
                         initials={request.requesterProfile?.fullName?.slice(0, 2) ?? '?'}
-                        alt={request.requesterProfile?.fullName ?? 'Player'}
+                        alt={request.requesterProfile?.fullName ?? t('references.section.requesterAvatarAlt')}
                         size="sm"
                         role={request.requesterProfile?.role}
                       />
                       <div>
-                        <p className="font-semibold text-gray-900">{request.requesterProfile?.fullName ?? 'Hockia Member'}</p>
+                        <p className="font-semibold text-gray-900">{request.requesterProfile?.fullName ?? t('references.section.fallbackName')}</p>
                         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                           <RoleBadge role={request.requesterProfile?.role ?? undefined} />
                           <span>{formatRelationshipType(request.relationshipType)}</span>
@@ -650,7 +648,7 @@ export default function TrustedReferencesSection({
                       </div>
                     </div>
                     {request.requestNote && (
-                      <p className="mt-3 rounded-2xl bg-gray-50 p-3 text-sm text-gray-600">“{request.requestNote}”</p>
+                      <p className="mt-3 rounded-2xl bg-gray-50 p-3 text-sm text-gray-600">{t('references.section.quote', { text: request.requestNote })}</p>
                     )}
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
@@ -659,7 +657,7 @@ export default function TrustedReferencesSection({
                         className="flex-1 rounded-2xl bg-brand-primary px-4 py-2 text-sm font-semibold text-white"
                         disabled={isMutating('respond', request.id)}
                       >
-                        {isMutating('respond', request.id) && endorsementRequest?.id === request.id ? 'Processing…' : 'Accept & endorse'}
+                        {isMutating('respond', request.id) && endorsementRequest?.id === request.id ? t('references.section.processing') : t('references.section.acceptEndorse')}
                       </button>
                       <button
                         type="button"
@@ -667,7 +665,7 @@ export default function TrustedReferencesSection({
                         disabled={isMutating('respond', request.id)}
                         className="flex-1 rounded-2xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-60"
                       >
-                        Decline
+                        {t('references.section.decline')}
                       </button>
                     </div>
                   </div>
@@ -678,7 +676,7 @@ export default function TrustedReferencesSection({
 
           <section className="rounded-3xl border border-gray-100 bg-gray-50/60 p-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">References you gave</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('references.section.givenTitle')}</h3>
               <span className="text-sm text-gray-500">{givenReferences.length}</span>
             </div>
             {/* Disambiguate the "you gave" count from the headline X/5
@@ -686,10 +684,10 @@ export default function TrustedReferencesSection({
                 profiles, not yours. QA flagged that "1 received + 1
                 given" could be read as "2 references on my profile". */}
             <p className="mt-1 text-xs text-gray-500">
-              These endorsements appear on other members' profiles, not yours.
+              {t('references.section.givenNote')}
             </p>
             {givenReferences.length === 0 ? (
-              <p className="mt-4 text-sm text-gray-500">You haven’t endorsed anyone yet.</p>
+              <p className="mt-4 text-sm text-gray-500">{t('references.section.givenEmpty')}</p>
             ) : (
               <div className="mt-4 space-y-3">
                 {givenReferences.map((reference) => (
@@ -698,17 +696,17 @@ export default function TrustedReferencesSection({
                       <Avatar
                         src={reference.requesterProfile?.avatarUrl}
                         initials={reference.requesterProfile?.fullName?.slice(0, 2) ?? '?'}
-                        alt={reference.requesterProfile?.fullName ?? 'Player'}
+                        alt={reference.requesterProfile?.fullName ?? t('references.section.givenAvatarAlt')}
                         size="sm"
                         role={reference.requesterProfile?.role}
                       />
                       <div>
-                        <p className="font-semibold text-gray-900">{reference.requesterProfile?.fullName ?? 'Hockia Member'}</p>
+                        <p className="font-semibold text-gray-900">{reference.requesterProfile?.fullName ?? t('references.section.fallbackName')}</p>
                         <p className="text-xs text-gray-500">{formatRelationshipType(reference.relationshipType)}</p>
                       </div>
                     </div>
                     {reference.endorsementText && (
-                      <p className="mt-3 text-sm text-gray-600">“{reference.endorsementText}”</p>
+                      <p className="mt-3 text-sm text-gray-600">{t('references.section.quote', { text: reference.endorsementText })}</p>
                     )}
                     <div className="mt-4 flex justify-end gap-2">
                       <button
@@ -717,15 +715,15 @@ export default function TrustedReferencesSection({
                         className="rounded-2xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
                         disabled={isMutating('edit', reference.id)}
                       >
-                        {reference.endorsementText ? 'Edit' : 'Add endorsement'}
+                        {reference.endorsementText ? t('references.section.edit') : t('references.section.addEndorsement')}
                       </button>
                       <button
                         type="button"
-                        onClick={() => openWithdrawConfirm(reference.id, reference.requesterProfile?.fullName ?? 'this player')}
+                        onClick={() => openWithdrawConfirm(reference.id, reference.requesterProfile?.fullName ?? t('references.section.thisPlayer'))}
                         className="rounded-2xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
                         disabled={isMutating('withdraw', reference.id)}
                       >
-                        {isMutating('withdraw', reference.id) ? 'Withdrawing…' : 'Withdraw'}
+                        {isMutating('withdraw', reference.id) ? t('references.section.withdrawing') : t('references.section.withdraw')}
                       </button>
                     </div>
                   </div>
@@ -760,7 +758,7 @@ export default function TrustedReferencesSection({
         onClose={() => setEndorsementRequest(null)}
         onSubmit={handleAcceptRequest}
         loading={endorsementRequest ? isMutating('respond', endorsementRequest.id) : false}
-        requesterName={endorsementRequest?.requesterProfile?.fullName ?? 'this member'}
+        requesterName={endorsementRequest?.requesterProfile?.fullName ?? t('references.section.thisMember')}
         relationshipType={endorsementRequest?.relationshipType ?? ''}
         requestNote={endorsementRequest?.requestNote}
       />
@@ -770,7 +768,7 @@ export default function TrustedReferencesSection({
         onClose={() => setEditingReference(null)}
         onSubmit={handleEditEndorsement}
         loading={editingReference ? isMutating('edit', editingReference.id) : false}
-        requesterName={editingReference?.requesterProfile?.fullName ?? 'this member'}
+        requesterName={editingReference?.requesterProfile?.fullName ?? t('references.section.thisMember')}
         relationshipType={editingReference?.relationshipType ?? ''}
         existingEndorsement={editingReference?.endorsementText}
         mode="edit"
@@ -782,10 +780,10 @@ export default function TrustedReferencesSection({
         onConfirm={executeConfirm}
         title={confirmState?.headline ?? ''}
         description={confirmState?.description}
-        confirmLabel={confirmState?.mode === 'remove' ? 'Remove reference' : 'Withdraw endorsement'}
+        confirmLabel={confirmState?.mode === 'remove' ? t('references.section.confirmRemove') : t('references.section.confirmWithdraw')}
         confirmTone={confirmState?.mode === 'remove' ? 'danger' : 'primary'}
         confirmLoading={confirmLoading}
-        loadingLabel="Working..."
+        loadingLabel={t('references.section.working')}
       />
     </section>
   )

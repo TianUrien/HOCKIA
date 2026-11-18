@@ -12,6 +12,8 @@ import { countryForCode, fetchConnectionCountryCode } from '@/lib/connectionCoun
 import { Button } from '@/components/ui/Button'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { fieldInput } from '@/components/ui/fieldClasses'
+import { useHomeT } from '@/i18n/ns/home'
+import { countryLabel, placeText } from '@/i18n/countryNames'
 
 const SNOOZE_DAYS = 14
 const snoozeKey = (id: string) => `hockia-country-confirm-snooze-${id}`
@@ -34,6 +36,7 @@ function snoozed(id: string): boolean {
  * (founder ruling 2026-11-07).
  */
 export function CountryConfirmCard() {
+  const t = useHomeT()
   const profile = useAuthStore((s) => s.profile)
   const refreshProfile = useAuthStore((s) => s.refreshProfile)
   const { countries } = useCountries()
@@ -78,7 +81,7 @@ export function CountryConfirmCard() {
     try { localStorage.setItem(snoozeKey(profile.id), String(Date.now() + SNOOZE_DAYS * 86_400_000)) } catch { /* private mode: hide for this visit only */ }
     setHidden(true)
   }
-  const place = profile.base_location?.trim()
+  const place = placeText(profile.base_location?.trim())
 
   return (
     <section className="mx-4 mt-3 rounded-[20px] border border-line bg-white p-4" aria-labelledby="country-confirm-title" data-testid="country-confirm">
@@ -87,38 +90,38 @@ export function CountryConfirmCard() {
           <MapPin className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 id="country-confirm-title" className="text-body font-semibold text-ink-1">Which country are you based in?</h2>
+          <h2 id="country-confirm-title" className="text-body font-semibold text-ink-1">{t('countryConfirm.title')}</h2>
           <p className="mt-0.5 text-row text-ink-2">
-            {place ? `Your profile says ${place}. ` : connectionGuess ? `It looks like you’re in ${connectionGuess.common_name || connectionGuess.name}. ` : ''}Add your country so opportunities, clubs and offers near you can find you.
+            {place ? t('countryConfirm.bodyWithPlace', { place }) : connectionGuess ? t('countryConfirm.bodyWithGuess', { country: countryLabel(connectionGuess.common_name || connectionGuess.name) }) : t('countryConfirm.body')}
           </p>
         </div>
       </div>
-      {failed ? <p className="mt-3 text-row text-ink-2" role="alert">That didn’t save. Check your connection and try again.</p> : null}
+      {failed ? <p className="mt-3 text-row text-ink-2" role="alert">{t('countryConfirm.saveFailed')}</p> : null}
       <div className="mt-3 flex flex-wrap gap-2">
         {guess ? (
           <Button size="small" loading={saving && !picking} onClick={() => void save(guess.id)} data-testid="country-confirm-yes">
-            Yes, {guess.common_name || guess.name}
+            {t('countryConfirm.yes', { country: countryLabel(guess.common_name || guess.name) })}
           </Button>
         ) : null}
         <Button size="small" variant={guess ? 'secondary' : 'primary'} onClick={() => setPicking(true)} data-testid="country-confirm-choose">
-          {guess ? 'Choose another' : 'Choose your country'}
+          {guess ? t('countryConfirm.chooseAnother') : t('countryConfirm.choose')}
         </Button>
-        <Button size="small" variant="tertiary" onClick={later} data-testid="country-confirm-later">Not now</Button>
+        <Button size="small" variant="tertiary" onClick={later} data-testid="country-confirm-later">{t('countryConfirm.notNow')}</Button>
       </div>
 
-      <BottomSheet open={picking} onClose={() => { setPicking(false); setQ('') }} ariaLabel="Choose your country">
+      <BottomSheet open={picking} onClose={() => { setPicking(false); setQ('') }} ariaLabel={t('countryConfirm.sheetTitle')}>
         <div className="px-5 pb-3 pt-1">
-          <h2 className="text-title text-ink-1">Choose your country</h2>
+          <h2 className="text-title text-ink-1">{t('countryConfirm.sheetTitle')}</h2>
           <div className="relative mt-3">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
-            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search countries" aria-label="Search countries" className={cn(fieldInput, 'pl-10')} />
+            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('countryConfirm.search')} aria-label={t('countryConfirm.search')} className={cn(fieldInput, 'pl-10')} />
           </div>
         </div>
         <ul className="max-h-[50dvh] overflow-y-auto px-2 pb-3">
           {results.map((c) => (
             <li key={c.id}>
               <button type="button" disabled={saving} onClick={() => void save(c.id)} className="flex h-12 w-full items-center rounded-[12px] px-3 text-left text-body text-ink-1 active:bg-surface-muted">
-                {c.common_name || c.name}
+                {countryLabel(c.common_name || c.name)}
               </button>
             </li>
           ))}

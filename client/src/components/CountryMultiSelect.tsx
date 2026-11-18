@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils'
 import { useCountries } from '@/hooks/useCountries'
 import { searchCountries } from '@/lib/countrySearch'
 import Flag from '@/components/Flag'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface CountryMultiSelectProps {
   label?: string
@@ -29,11 +31,12 @@ export default function CountryMultiSelect({
   label,
   value,
   onChange,
-  placeholder = 'Add countries',
+  placeholder,
   excludeIds = [],
   disabled = false,
   className,
 }: CountryMultiSelectProps) {
+  const t = useProfileEditT()
   const { countries, getCountryById } = useCountries()
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -80,12 +83,12 @@ export default function CountryMultiSelect({
               className="inline-flex items-center gap-1 rounded-full bg-hockia-primary/10 text-[#5b16b8] text-xs font-medium pl-1.5 pr-1 py-0.5"
             >
               <Flag code={c.code} countryName={c.name} size="sm" />
-              {c.name}
+              {countryLabel(c.name)}
               <button
                 type="button"
                 onClick={() => remove(c.id)}
                 disabled={disabled}
-                aria-label={`Remove ${c.name}`}
+                aria-label={t('countryMulti.remove', { country: c.name })}
                 className="ml-0.5 rounded-full hover:bg-hockia-primary/20 p-0.5"
               >
                 <X className="w-3 h-3" />
@@ -108,7 +111,7 @@ export default function CountryMultiSelect({
             disabled && 'opacity-50 cursor-not-allowed',
           )}
         >
-          <span className="text-gray-500">{placeholder}</span>
+          <span className="text-gray-500">{placeholder ?? t('countryMulti.placeholder')}</span>
           <ChevronDown className={cn('w-4 h-4 text-gray-400 transition-transform', isOpen && 'rotate-180')} />
         </button>
 
@@ -121,13 +124,13 @@ export default function CountryMultiSelect({
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search countries…"
+                placeholder={t('countryMulti.search')}
                 className="w-full text-sm outline-none placeholder:text-gray-400"
               />
             </div>
             <ul className="max-h-56 overflow-y-auto py-1">
               {filtered.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-gray-400">No countries found</li>
+                <li className="px-3 py-2 text-sm text-gray-400">{t('countryMulti.empty')}</li>
               ) : (
                 filtered.slice(0, 60).map((c) => (
                   <li key={c.id}>
@@ -137,7 +140,7 @@ export default function CountryMultiSelect({
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50"
                     >
                       <Flag code={c.code} countryName={c.name} size="sm" />
-                      <span className="flex-1 text-gray-800">{c.name}</span>
+                      <span className="flex-1 text-gray-800">{countryLabel(c.name)}</span>
                       <Check className="w-4 h-4 text-transparent" />
                     </button>
                   </li>

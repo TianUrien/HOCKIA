@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/lib/database.types'
+import { tCommunity } from '@/i18n/ns/community'
 
 export type PulseItem = Database['public']['Tables']['user_pulse_items']['Row']
 
@@ -72,7 +73,7 @@ export function useMyPulse(): UseMyPulseResult {
       const message =
         (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string')
           ? err.message
-          : 'Failed to load pulse items'
+          : tCommunity('pulse.errors.loadItems')
       logger.error('[useMyPulse] fetch failed', err)
       setError(message)
     } finally {

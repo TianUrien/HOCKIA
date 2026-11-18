@@ -14,7 +14,6 @@ import { SettingsSwitch } from '@/components/settings/settingsUi'
 import { PlayerLeagueField } from './PlayerLeagueField'
 import { leagueSideFor } from '@/lib/profileD2'
 import { usePlayerLeague } from '@/hooks/usePlayerLeague'
-import { SELF_REPORTED_LABEL } from '@/lib/keyFacts'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { supabase } from '@/lib/supabase'
 import type { Profile } from '@/lib/supabase'
@@ -35,6 +34,10 @@ import { categoryToDisplay, playingCategoryToLegacyGender, type PlayingCategory 
 import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
 import { DURATION_LABEL, RELOCATION_LABEL } from '@/lib/candidateIntent'
 import { cleanSocialLinks, validateSocialLinks, type SocialLinks } from '@/lib/socialLinks'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
+import { intlLocale, isEnglish } from '@/i18n/format'
+import { dayFirst } from '@/lib/dayFirst'
+import { placeText } from '@/i18n/countryNames'
 
 /**
  * Edit profile (Figma 101:585): everything the profile shows, as one grouped
@@ -63,14 +66,25 @@ const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
 const NAME_MAX = 80
 const BIO_MAX = 1500
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const monthYear = (iso: string | null | undefined) => { const m = iso ? /^(\d{4})-(\d{2})/.exec(iso) : null; return m ? `${MONTH[Number(m[2]) - 1]} ${m[1]}` : null }
-const longDate = (iso: string | null | undefined) => { const m = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null; return m ? `${Number(m[3])} ${MONTH[Number(m[2]) - 1]} ${m[1]}` : null }
+/** "Oct 2026" in English; the interface language's short month and year otherwise. */
+const monthYear = (iso: string | null | undefined) => {
+  const m = iso ? /^(\d{4})-(\d{2})/.exec(iso) : null
+  if (!m) return null
+  if (isEnglish()) return `${MONTH[Number(m[2]) - 1]} ${m[1]}`
+  return new Intl.DateTimeFormat(intlLocale(), { month: 'short', year: 'numeric' }).format(new Date(Number(m[1]), Number(m[2]) - 1, 1)).replace(/\./g, '')
+}
+/** "3 Oct 2026" (day first, always with the year). */
+const longDate = (iso: string | null | undefined) => {
+  const m = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null
+  return m ? dayFirst(`${m[1]}-${m[2]}-${m[3]}`, { year: 'always' }) : null
+}
 
 const input = fieldInput
 
 /** Detail row with a chevron (Figma 101:585): label left, value right. */
-function Row({ label, value, onClick, locked, placeholder = 'Add' }: { label: string; value: string | null; onClick?: () => void; locked?: boolean; placeholder?: string }) {
-  return <DetailRowItem label={label} value={value} placeholder={placeholder} onClick={onClick} locked={locked} />
+function Row({ label, value, onClick, locked, placeholder }: { label: string; value: string | null; onClick?: () => void; locked?: boolean; placeholder?: string }) {
+  const t = useProfileEditT()
+  return <DetailRowItem label={label} value={value} placeholder={placeholder ?? t('mobileEdit.rows.placeholder')} onClick={onClick} locked={locked} />
 }
 
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
@@ -83,6 +97,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export default function EditProfileScreen({ field = null, onDone, onOpenPassports, onOpenToPlay }: EditProfileScreenProps) {
+  const t = useProfileEditT()
   const { user, profile, refreshProfile } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const { countries, getCountryById } = useCountries()
@@ -148,7 +163,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
       return true
     } catch (err) {
       logger.error('[EditProfileScreen] save failed', err)
-      setError('Could not save that. Please try again.')
+      setError(t('mobileEdit.errors.saveFailed'))
       return false
     } finally {
       setSaving(false)
@@ -159,14 +174,14 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
     switch (editing) {
       case 'name': {
         const name = d<string>('full_name').trim()
-        if (!name) return setError('Your name is required.')
-        if (name.length > NAME_MAX) return setError(`Keep your name under ${NAME_MAX} characters.`)
+        if (!name) return setError(t('mobileEdit.errors.nameRequired'))
+        if (name.length > NAME_MAX) return setError(t('mobileEdit.errors.nameTooLong', { max: NAME_MAX }))
         return persist({ full_name: name })
       }
       case 'position': {
         const position = d<string>('position') || null
         const secondary = d<string>('secondary_position') || null
-        if (secondary && secondary === position) return setError('Primary and secondary positions must be different.')
+        if (secondary && secondary === position) return setError(t('mobileEdit.errors.positionsSame'))
         // GK-only skill tags must not survive a move out of goal.
         return persist({ position, secondary_position: secondary, specialist_skills: pruneSpecialistSkillsForPosition(profile.specialist_skills ?? [], position ?? '') })
       }
@@ -176,27 +191,27 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
       }
       case 'dob': {
         const dob = d<string>('date_of_birth')
-        if (!dob) return setError('Choose your date of birth.')
+        if (!dob) return setError(t('mobileEdit.errors.dobRequired'))
         setSaving(true)
         const { data, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: dob })
         setSaving(false)
         const outcome = (data as { outcome?: string } | null)?.outcome
-        if (dobError || outcome === 'invalid_dob') return setError('That date of birth doesn’t look right. Please check it.')
-        if (outcome === 'already_set') return setError('Your date of birth is locked. Contact Hockia support to change it.')
+        if (dobError || outcome === 'invalid_dob') return setError(t('mobileEdit.errors.dobInvalid'))
+        if (outcome === 'already_set') return setError(t('mobileEdit.errors.dobLocked'))
         await refreshProfile()
         return setEditing(null)
       }
       case 'passports': {
         const first = d<number | null>('nationality_country_id')
         let second = d<number | null>('nationality2_country_id')
-        if (!first) return setError('Choose your first passport.')
+        if (!first) return setError(t('mobileEdit.errors.passportRequired'))
         if (second === first) second = null
         return persist({ nationality_country_id: first, nationality2_country_id: second, nationality: getCountryById(first)?.nationality_name ?? profile.nationality ?? '' })
       }
       case 'base': {
-        if (!d<string>('base_location').trim()) return setError('Location is required.')
+        if (!d<string>('base_location').trim()) return setError(t('mobileEdit.errors.locationRequired'))
         // Without a country members miss opportunities and offers picked by place (2026-11-07).
-        if (!d<number | null>('base_country_id')) return setError('Choose your location from the list so we know your country.')
+        if (!d<number | null>('base_country_id')) return setError(t('mobileEdit.errors.locationCountry'))
         return persist({ base_location: d<string>('base_location'), base_city: d<string>('base_city') || null, base_country_id: d<number | null>('base_country_id') || null })
       }
       case 'club': {
@@ -215,7 +230,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
         return persist({ specialist_skills: pruneSpecialistSkillsForPosition(d<string[]>('specialist_skills'), profile.position ?? '') })
       case 'about': {
         const bio = d<string>('bio').trim()
-        if (bio.length > BIO_MAX) return setError(`Keep it under ${BIO_MAX} characters.`)
+        if (bio.length > BIO_MAX) return setError(t('mobileEdit.errors.bioTooLong', { max: BIO_MAX }))
         return persist({ bio: bio || null })
       }
       case 'availability':
@@ -226,13 +241,13 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
       }
       case 'contact': {
         const email = d<string>('contact_email').trim()
-        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError('That email doesn’t look right.')
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError(t('mobileEdit.errors.emailInvalid'))
         return persist({ contact_email: email || null })
       }
       case 'links': {
         const links = cleanSocialLinks(d<SocialLinks>('social_links'))
         const check = validateSocialLinks(links)
-        if (!check.valid) return setError(check.error ?? 'One of those links doesn’t look right.')
+        if (!check.valid) return setError(check.error ?? t('mobileEdit.errors.linksInvalid'))
         return persist({ social_links: Object.keys(links).length > 0 ? links : {} })
       }
       default:
@@ -243,7 +258,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
   const uploadPhoto = async (file: File | undefined) => {
     if (!file) return
     const check = validateImage(file, { maxFileSizeMB: 5 })
-    if (!check.valid) { addToast(check.error ?? 'Invalid image', 'error'); return }
+    if (!check.valid) { addToast(check.error ?? t('mobileEdit.errors.invalidImage'), 'error'); return }
     setUploading(true)
     try {
       const urls = await uploadProfilePhoto(user.id, file)
@@ -260,14 +275,14 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
       await refreshProfile()
     } catch (err) {
       logger.error('[EditProfileScreen] photo upload failed', err)
-      addToast('We couldn’t upload this image. Please use PNG or JPG up to 5MB.', 'error')
+      addToast(t('mobileEdit.errors.uploadFailed'), 'error')
     } finally {
       setUploading(false)
     }
   }
   const pickPhoto = async () => {
     if (isNativePlatform()) {
-      try { const result = await pickImageNative('prompt', { crop: false }); if (result) await uploadPhoto(result.file) } catch (err) { logger.error('[EditProfileScreen] native picker failed', err); addToast('Could not access camera or photos. Please check app permissions.', 'error') }
+      try { const result = await pickImageNative('prompt', { crop: false }); if (result) await uploadPhoto(result.file) } catch (err) { logger.error('[EditProfileScreen] native picker failed', err); addToast(t('mobileEdit.errors.pickerFailed'), 'error') }
       return
     }
     fileRef.current?.click()
@@ -276,98 +291,98 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
   const held = [profile.nationality_country_id, profile.nationality2_country_id].map((id) => (typeof id === 'number' ? countries.find((c) => c.id === id) : undefined)).filter((c): c is NonNullable<typeof c> => Boolean(c))
   const passports = nationalityLine(held, { label: 'demonym' }) ?? (profile.nationality?.trim() || null)
   const positions = [profile.position, profile.secondary_position].filter(Boolean).map((p) => humanizeToken(p)).join(' · ') || null
-  const leagueLine = league ? (league.source === 'self_reported' ? `${league.name} · ${SELF_REPORTED_LABEL}` : league.name) : null
+  const leagueLine = league ? (league.source === 'self_reported' ? t('mobileEdit.rows.leagueSelfReported', { league: league.name }) : league.name) : null
   const available = [profile.available_from ? monthYear(profile.available_from) : null, profile.availability_duration ? DURATION_LABEL[profile.availability_duration] ?? null : null].filter(Boolean).join(' · ') || null
   const links = Object.keys((profile.social_links ?? {}) as Record<string, string>).filter((k) => ((profile.social_links ?? {}) as Record<string, string>)[k])
-  const name = profile.full_name?.trim() || 'Your profile'
+  const name = profile.full_name?.trim() || t('mobileEdit.screen.yourProfile')
   const dobLocked = Boolean(profile.date_of_birth)
   const p = profile as Profile
 
   const TITLE: Record<EditField, string> = {
-    name: 'Name', position: 'Position', category: 'Category', dob: 'Date of birth', passports: 'Passports', base: 'Base location', club: p.role === 'player' ? 'Club & league' : 'Current club',
-    skills: 'Skills', about: 'About', availability: 'Available from', relocation: 'Relocation', contact: 'Contact email', links: 'Social links',
+    name: t('mobileEdit.titles.name'), position: t('mobileEdit.titles.position'), category: t('mobileEdit.titles.category'), dob: t('mobileEdit.titles.dob'), passports: t('mobileEdit.titles.passports'), base: t('mobileEdit.titles.base'), club: p.role === 'player' ? t('mobileEdit.titles.clubLeague') : t('mobileEdit.titles.currentClub'),
+    skills: t('mobileEdit.titles.skills'), about: t('mobileEdit.titles.about'), availability: t('mobileEdit.titles.availability'), relocation: t('mobileEdit.titles.relocation'), contact: t('mobileEdit.titles.contact'), links: t('mobileEdit.titles.links'),
   }
 
   return (
     <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="edit-profile-screen">
       <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
-        <DetailNavBar parent="Profile" title="Edit profile" onBack={onDone} trailing={<button type="button" onClick={onDone} className="h-11 px-3 text-row font-semibold text-hockia-primary">Done</button>} />
+        <DetailNavBar parent={t('mobileEdit.screen.parent')} title={t('mobileEdit.screen.title')} onBack={onDone} trailing={<button type="button" onClick={onDone} className="h-11 px-3 text-row font-semibold text-hockia-primary">{t('mobileEdit.screen.done')}</button>} />
       </div>
 
       <div className="px-5">
         <div className="flex items-center gap-4 pt-2">
           <EntityAvatar src={p.avatar_url ? getImageUrl(p.avatar_url, 'avatar-lg') ?? p.avatar_url : null} name={name} role={p.role} size={56} />
           <div>
-            <p className="text-row font-semibold text-ink-1">Profile photo</p>
-            <button type="button" onClick={() => void pickPhoto()} disabled={uploading} className="-my-1 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary disabled:opacity-60" data-testid="edit-profile-change-photo">{uploading ? 'Uploading…' : p.avatar_url ? 'Change photo' : 'Add a photo'}</button>
+            <p className="text-row font-semibold text-ink-1">{t('mobileEdit.screen.photo')}</p>
+            <button type="button" onClick={() => void pickPhoto()} disabled={uploading} className="-my-1 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary disabled:opacity-60" data-testid="edit-profile-change-photo">{uploading ? t('mobileEdit.screen.uploading') : p.avatar_url ? t('mobileEdit.screen.changePhoto') : t('mobileEdit.screen.addPhoto')}</button>
           </div>
           <input ref={fileRef} type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => { void uploadPhoto(e.target.files?.[0]); e.target.value = '' }} />
         </div>
 
-        <Group label="Identity">
-          <Row label="Name" value={p.full_name?.trim() || null} onClick={() => setEditing('name')} />
-          <Row label="Role" value={roleLabel(p.role)} locked />
-          <Row label="Position" value={positions} onClick={() => setEditing('position')} />
-          <Row label="Category" value={categoryToDisplay(p.playing_category) || null} onClick={() => setEditing('category')} />
-          <Row label="Date of birth" value={longDate(p.date_of_birth)} locked={dobLocked} onClick={dobLocked ? undefined : () => setEditing('dob')} />
+        <Group label={t('mobileEdit.screen.identity')}>
+          <Row label={t('mobileEdit.rows.name')} value={p.full_name?.trim() || null} onClick={() => setEditing('name')} />
+          <Row label={t('mobileEdit.rows.role')} value={roleLabel(p.role)} locked />
+          <Row label={t('mobileEdit.rows.position')} value={positions} onClick={() => setEditing('position')} />
+          <Row label={t('mobileEdit.rows.category')} value={categoryToDisplay(p.playing_category) || null} onClick={() => setEditing('category')} />
+          <Row label={t('mobileEdit.rows.dob')} value={longDate(p.date_of_birth)} locked={dobLocked} onClick={dobLocked ? undefined : () => setEditing('dob')} />
         </Group>
 
-        <Group label="Passports & base">
-          <Row label="Passports" value={passports ? (held.length === 1 ? `${passports} · Add second` : passports) : null} onClick={onOpenPassports ?? (() => setEditing('passports'))} />
-          <Row label="Base location" value={p.base_location?.trim() || null} onClick={() => setEditing('base')} />
+        <Group label={t('mobileEdit.screen.passportsBase')}>
+          <Row label={t('mobileEdit.rows.passports')} value={passports ? (held.length === 1 ? t('mobileEdit.rows.addSecond', { passports }) : passports) : null} onClick={onOpenPassports ?? (() => setEditing('passports'))} />
+          <Row label={t('mobileEdit.rows.base')} value={placeText(p.base_location?.trim()) || null} onClick={() => setEditing('base')} />
         </Group>
 
-        <Group label="Hockey">
-          <Row label="Current club" value={p.current_club?.trim() || null} onClick={() => setEditing('club')} />
+        <Group label={t('mobileEdit.screen.hockey')}>
+          <Row label={t('mobileEdit.rows.currentClub')} value={p.current_club?.trim() || null} onClick={() => setEditing('club')} />
           {p.role === 'player'
-            ? <Row label="League" value={leagueLine} locked={league?.source === 'club'} onClick={() => setEditing('club')} />
+            ? <Row label={t('mobileEdit.rows.league')} value={leagueLine} locked={league?.source === 'club'} onClick={() => setEditing('club')} />
             : null}
-          <Row label="Skills" value={(p.specialist_skills ?? []).map((sk) => humanizeToken(sk)).join(' · ') || null} onClick={() => setEditing('skills')} />
-          <Row label="About" value={p.bio?.trim() || null} onClick={() => setEditing('about')} />
+          <Row label={t('mobileEdit.rows.skills')} value={(p.specialist_skills ?? []).map((sk) => humanizeToken(sk)).join(' · ') || null} onClick={() => setEditing('skills')} />
+          <Row label={t('mobileEdit.rows.about')} value={p.bio?.trim() || null} onClick={() => setEditing('about')} />
         </Group>
 
-        <Group label="Availability">
+        <Group label={t('mobileEdit.screen.availability')}>
           {onOpenToPlay ? (
             <>
               {/* D2.4: Open to play is set on its own screen (switch + when + consent). */}
-              <Row label="Open to play" value={p.open_to_play ? 'On' : 'Off'} onClick={onOpenToPlay} />
-              <Row label="Available from" value={available} onClick={onOpenToPlay} />
+              <Row label={t('mobileEdit.rows.openToPlay')} value={p.open_to_play ? t('mobileEdit.rows.on') : t('mobileEdit.rows.off')} onClick={onOpenToPlay} />
+              <Row label={t('mobileEdit.rows.availableFrom')} value={available} onClick={onOpenToPlay} />
             </>
           ) : (
             <>
               <div className="flex min-h-[48px] items-center gap-3 py-2.5">
-                <span className="shrink-0 text-row text-ink-2">Open to play</span>
-                <span className="min-w-0 flex-1 text-right text-row font-semibold text-ink-1">{p.open_to_play ? 'On' : 'Off'}</span>
-                <SettingsSwitch label="Open to play" checked={Boolean(p.open_to_play)} disabled={saving} onChange={() => void persist({ open_to_play: !p.open_to_play })} />
+                <span className="shrink-0 text-row text-ink-2">{t('mobileEdit.rows.openToPlay')}</span>
+                <span className="min-w-0 flex-1 text-right text-row font-semibold text-ink-1">{p.open_to_play ? t('mobileEdit.rows.on') : t('mobileEdit.rows.off')}</span>
+                <SettingsSwitch label={t('mobileEdit.rows.openToPlay')} checked={Boolean(p.open_to_play)} disabled={saving} onChange={() => void persist({ open_to_play: !p.open_to_play })} />
               </div>
-              <Row label="Available from" value={available} onClick={() => setEditing('availability')} />
+              <Row label={t('mobileEdit.rows.availableFrom')} value={available} onClick={() => setEditing('availability')} />
             </>
           )}
-          <Row label="Relocation" value={p.relocation_willingness ? RELOCATION_LABEL[p.relocation_willingness] ?? null : null} onClick={() => setEditing('relocation')} />
+          <Row label={t('mobileEdit.rows.relocation')} value={p.relocation_willingness ? RELOCATION_LABEL[p.relocation_willingness] ?? null : null} onClick={() => setEditing('relocation')} />
         </Group>
 
-        <Group label="Contact & links">
-          <Row label="Contact email" value={p.contact_email?.trim() || null} onClick={() => setEditing('contact')} />
-          <Row label="Social links" value={links.length ? links.map((k) => humanizeToken(k)).join(' · ') : null} onClick={() => setEditing('links')} />
+        <Group label={t('mobileEdit.screen.contactLinks')}>
+          <Row label={t('mobileEdit.rows.contact')} value={p.contact_email?.trim() || null} onClick={() => setEditing('contact')} />
+          <Row label={t('mobileEdit.rows.links')} value={links.length ? links.map((k) => humanizeToken(k)).join(' · ') : null} onClick={() => setEditing('links')} />
         </Group>
       </div>
 
-      <BottomSheet open={editing !== null} onClose={() => { if (!saving) setEditing(null) }} ariaLabel={editing ? TITLE[editing] : 'Edit'}>
+      <BottomSheet open={editing !== null} onClose={() => { if (!saving) setEditing(null) }} ariaLabel={editing ? TITLE[editing] : t('mobileEdit.titles.fallback')}>
         {editing && (
           <div className="px-5 pb-3 pt-1">
             <h2 className="text-title text-ink-1">{TITLE[editing]}</h2>
             <div className="mt-3 flex flex-col gap-4">
-              {editing === 'name' && <input autoFocus value={d<string>('full_name') ?? ''} maxLength={NAME_MAX} onChange={(e) => set({ full_name: e.target.value })} aria-label="Name" className={input} />}
+              {editing === 'name' && <input autoFocus value={d<string>('full_name') ?? ''} maxLength={NAME_MAX} onChange={(e) => set({ full_name: e.target.value })} aria-label={t('mobileEdit.titles.name')} className={input} />}
 
               {editing === 'position' && (
                 <>
-                  <div><label htmlFor="edit-position" className={fieldLabel}>Primary</label>
+                  <div><label htmlFor="edit-position" className={fieldLabel}>{t('mobileEdit.sheet.primary')}</label>
                     <select id="edit-position" value={d<string>('position') ?? ''} onChange={(e) => set({ position: e.target.value })} className={fieldSelect}>
-                      <option value="">Choose a position</option>{POSITIONS.map((o) => <option key={o} value={o}>{humanizeToken(o)}</option>)}
+                      <option value="">{t('mobileEdit.sheet.choosePosition')}</option>{POSITIONS.map((o) => <option key={o} value={o}>{humanizeToken(o)}</option>)}
                     </select></div>
-                  <div><label htmlFor="edit-position-2" className={fieldLabel}>Secondary (optional)</label>
+                  <div><label htmlFor="edit-position-2" className={fieldLabel}>{t('mobileEdit.sheet.secondary')}</label>
                     <select id="edit-position-2" value={d<string>('secondary_position') ?? ''} onChange={(e) => set({ secondary_position: e.target.value })} className={fieldSelect}>
-                      <option value="">None</option>{POSITIONS.map((o) => <option key={o} value={o}>{humanizeToken(o)}</option>)}
+                      <option value="">{t('mobileEdit.sheet.none')}</option>{POSITIONS.map((o) => <option key={o} value={o}>{humanizeToken(o)}</option>)}
                     </select></div>
                 </>
               )}
@@ -377,21 +392,21 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
               {editing === 'dob' && (
                 <>
                   <DateOfBirthPicker value={d<string>('date_of_birth') ?? ''} onChange={(next) => set({ date_of_birth: next })} />
-                  <p className="text-caption text-ink-3">Only used to keep Hockia 16+. It never shows on your profile, and it locks once saved.</p>
+                  <p className="text-caption text-ink-3">{t('mobileEdit.sheet.dobHint')}</p>
                 </>
               )}
 
               {editing === 'passports' && (
                 <>
-                  <CountrySelect appearance="field" label="First passport" showNationality value={d<number | null>('nationality_country_id') ?? null} onChange={(id) => set({ nationality_country_id: id })} />
-                  <CountrySelect appearance="field" label="Second passport (optional)" showNationality value={d<number | null>('nationality2_country_id') ?? null} onChange={(id) => set({ nationality2_country_id: id })} />
-                  <p className="text-caption text-ink-3">Clubs filter opportunities by passport. An EU passport opens EU-only opportunities.</p>
+                  <CountrySelect appearance="field" label={t('mobileEdit.sheet.firstPassport')} showNationality value={d<number | null>('nationality_country_id') ?? null} onChange={(id) => set({ nationality_country_id: id })} />
+                  <CountrySelect appearance="field" label={t('mobileEdit.sheet.secondPassport')} showNationality value={d<number | null>('nationality2_country_id') ?? null} onChange={(id) => set({ nationality2_country_id: id })} />
+                  <p className="text-caption text-ink-3">{t('mobileEdit.sheet.passportsHint')}</p>
                 </>
               )}
 
               {editing === 'base' && (
                 <LocationAutocomplete
-                  label="Where you are based"
+                  label={t('mobileEdit.sheet.baseLabel')}
                   value={d<string>('base_location') ?? ''}
                   isSelected={Boolean(d<boolean>('location_selected'))}
                   onChange={(value) => set({ base_location: value, location_selected: false })}
@@ -405,8 +420,8 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
                   id="edit-club"
                   appearance="field"
                   crestUrl={clubCrest}
-                  label="Current club"
-                  placeholder="Search your club"
+                  label={t('mobileEdit.sheet.clubLabel')}
+                  placeholder={t('mobileEdit.sheet.clubPlaceholder')}
                   value={d<string>('current_club') ?? ''}
                   selectedClubId={d<string | null>('current_world_club_id') ?? null}
                   onChange={(value) => set({ current_club: value })}
@@ -429,25 +444,25 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
 
               {editing === 'about' && (
                 <>
-                  <textarea autoFocus value={d<string>('bio') ?? ''} maxLength={BIO_MAX} rows={7} onChange={(e) => set({ bio: e.target.value })} aria-label="About" className="w-full rounded-[12px] bg-surface-muted p-3.5 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-hockia-primary" placeholder="A few lines about you and your hockey." />
+                  <textarea autoFocus value={d<string>('bio') ?? ''} maxLength={BIO_MAX} rows={7} onChange={(e) => set({ bio: e.target.value })} aria-label={t('mobileEdit.titles.about')} className="w-full rounded-[12px] bg-surface-muted p-3.5 text-[16px] leading-[22px] text-ink-1 placeholder:text-ink-3 focus:bg-white focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-hockia-primary" placeholder={t('mobileEdit.sheet.aboutPlaceholder')} />
                   {BIO_MAX - (d<string>('bio') ?? '').length <= 50 && <p className="text-right text-caption text-ink-3">{BIO_MAX - (d<string>('bio') ?? '').length}</p>}
                 </>
               )}
 
               {editing === 'availability' && (
                 <>
-                  <div><label htmlFor="edit-available-from" className={fieldLabel}>Available from</label>
+                  <div><label htmlFor="edit-available-from" className={fieldLabel}>{t('mobileEdit.sheet.availableFrom')}</label>
                     <input id="edit-available-from" type="date" value={d<string>('available_from') ?? ''} onChange={(e) => set({ available_from: e.target.value })} className={input} /></div>
-                  <div><label htmlFor="edit-duration" className={fieldLabel}>For how long</label>
+                  <div><label htmlFor="edit-duration" className={fieldLabel}>{t('mobileEdit.sheet.forHowLong')}</label>
                     <select id="edit-duration" value={d<string>('availability_duration') ?? ''} onChange={(e) => set({ availability_duration: e.target.value })} className={fieldSelect}>
-                      <option value="">Not set</option>{Object.entries(DURATION_LABEL).map(([value, text]) => <option key={value} value={value}>{text}</option>)}
+                      <option value="">{t('mobileEdit.sheet.notSet')}</option>{Object.entries(DURATION_LABEL).map(([value, text]) => <option key={value} value={value}>{text}</option>)}
                     </select></div>
                 </>
               )}
 
               {editing === 'relocation' && (
                 <>
-                  <div className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped" role="radiogroup" aria-label="Relocation">
+                  <div className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped" role="radiogroup" aria-label={t('mobileEdit.titles.relocation')}>
                     {Object.entries(RELOCATION_LABEL).map(([value, text]) => (
                       <button key={value} type="button" role="radio" aria-checked={d<string>('relocation_willingness') === value} onClick={() => set({ relocation_willingness: value })} className="flex h-[50px] w-full items-center justify-between px-4 text-left text-body text-ink-1">
                         {text}
@@ -456,22 +471,22 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
                     ))}
                   </div>
                   {d<string>('relocation_willingness') && d<string>('relocation_willingness') !== 'home_only' && (
-                    <CountryMultiSelect label="Countries you would move to (optional)" value={d<number[]>('relocation_countries_open') ?? []} onChange={(ids) => set({ relocation_countries_open: ids })} />
+                    <CountryMultiSelect label={t('mobileEdit.sheet.relocationCountries')} value={d<number[]>('relocation_countries_open') ?? []} onChange={(ids) => set({ relocation_countries_open: ids })} />
                   )}
                 </>
               )}
 
               {editing === 'contact' && (
                 <>
-                  <input autoFocus type="email" inputMode="email" autoCapitalize="none" value={d<string>('contact_email') ?? ''} onChange={(e) => set({ contact_email: e.target.value })} placeholder="name@email.com" aria-label="Contact email" className={input} />
-                  <p className="text-caption text-ink-3">Clubs see it once they reply to your application. Settings › Privacy decides whether it also shows on your profile.</p>
+                  <input autoFocus type="email" inputMode="email" autoCapitalize="none" value={d<string>('contact_email') ?? ''} onChange={(e) => set({ contact_email: e.target.value })} placeholder={t('mobileEdit.sheet.emailPlaceholder')} aria-label={t('mobileEdit.titles.contact')} className={input} />
+                  <p className="text-caption text-ink-3">{t('mobileEdit.sheet.contactHint')}</p>
                 </>
               )}
 
               {editing === 'links' && <SocialLinksInput value={d<SocialLinks>('social_links') ?? {}} onChange={(value) => set({ social_links: value })} />}
 
               {error && <p role="alert" className="text-secondary text-red-600">{error}</p>}
-              <button type="button" onClick={() => void save()} disabled={saving} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })}>{saving ? 'Saving…' : 'Save'}</button>
+              <button type="button" onClick={() => void save()} disabled={saving} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', block: true })}>{saving ? t('mobileEdit.screen.saving') : t('mobileEdit.screen.save')}</button>
             </div>
           </div>
         )}

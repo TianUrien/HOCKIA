@@ -3,6 +3,7 @@ import type { Profile } from '@/lib/supabase'
 import type { Country } from '@/hooks/useCountries'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { closesLabel, deadlineDaysLeft, isPaid } from '@/lib/opportunityCopy'
+import { tOpportunities } from '@/i18n/ns/opportunities'
 
 /**
  * Opportunities v2 list structure (founder ruling 3 + 16 Oct 2026 answers):
@@ -48,7 +49,7 @@ export function roleStatus(v: Pick<Vacancy, 'created_at' | 'application_deadline
   if (days !== null && days >= 0 && label) {
     return { label, tone: days <= 5 ? 'amber' : 'ink' }
   }
-  if (isNewRole(v, now)) return { label: 'New', tone: 'brand' }
+  if (isNewRole(v, now)) return { label: tOpportunities('list.newTag'), tone: 'brand' }
   return null
 }
 
@@ -95,9 +96,9 @@ const MAX_RAIL_CARDS = 8
 export function buildRails(list: Vacancy[], ctx: RelevanceContext, featuredId: string | null, now = new Date()): RoleRail[] {
   const pool = featuredId ? list.filter((v) => v.id !== featuredId) : list
   const rails: RoleRail[] = [
-    { key: 'for-you', title: 'Opportunities for you', subtitle: 'Match your position, team and passport', roles: pool.filter((v) => isRelevantForViewer(v, ctx)).sort(newestFirst) },
-    { key: 'paid-housing', title: 'Paid, with housing', subtitle: 'Contracts that include a place to live', roles: pool.filter((v) => isPaid(v) && (v.benefits ?? []).some((b) => b.toLowerCase() === 'housing')).sort(newestFirst) },
-    { key: 'closing-soon', title: 'Closing soon', subtitle: `Apply in the next ${CLOSING_SOON_DAYS} days`, roles: pool.filter((v) => { const d = daysUntil(v.application_deadline, now); return d !== null && d >= 0 && d <= CLOSING_SOON_DAYS }).sort(soonestFirst) },
+    { key: 'for-you', title: tOpportunities('list.rails.forYouTitle'), subtitle: tOpportunities('list.rails.forYouSubtitle'), roles: pool.filter((v) => isRelevantForViewer(v, ctx)).sort(newestFirst) },
+    { key: 'paid-housing', title: tOpportunities('list.rails.paidHousingTitle'), subtitle: tOpportunities('list.rails.paidHousingSubtitle'), roles: pool.filter((v) => isPaid(v) && (v.benefits ?? []).some((b) => b.toLowerCase() === 'housing')).sort(newestFirst) },
+    { key: 'closing-soon', title: tOpportunities('list.rails.closingSoonTitle'), subtitle: tOpportunities('list.rails.closingSoonSubtitle', { count: CLOSING_SOON_DAYS }), roles: pool.filter((v) => { const d = daysUntil(v.application_deadline, now); return d !== null && d >= 0 && d <= CLOSING_SOON_DAYS }).sort(soonestFirst) },
   ]
   return rails.filter((r) => r.roles.length >= MIN_RAIL_CARDS).map((r) => ({ ...r, roles: r.roles.slice(0, MAX_RAIL_CARDS) }))
 }

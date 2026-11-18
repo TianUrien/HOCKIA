@@ -25,6 +25,7 @@ import { DigestCard, OpenToPlayWeekCard } from './cards/DigestCard'
 import { RolesRail } from './RolesRail'
 import { EndOfFeed } from './EndOfFeed'
 import { CommentsSheet } from './CommentsSheet'
+import { useHomeT } from '@/i18n/ns/home'
 
 const MemberFullPreview = lazy(() => import('@/components/community/photo/MemberFullPreview'))
 
@@ -58,6 +59,7 @@ export function HomeV1Feed({ prependItemRef, header }: {
   /** Next step + people row — kept on screen when the feed fails (H12b). */
   header: ReactNode
 }) {
+  const t = useHomeT()
   const feed = useHomeFeed({ v2: true })
   const { items, isLoading, isFetchingNextPage, error, refetch, hasMore, loadMore, updateItemLike, removeItem, prependItem, patchItem, newCount, showNewItems } = feed
   const addToast = useToastStore((s) => s.addToast)
@@ -121,9 +123,9 @@ export function HomeV1Feed({ prependItemRef, header }: {
       })
       .catch((err) => {
         logger.error('[HomeV1Feed] deck profiles failed', err)
-        addToast('Could not open these profiles', 'error')
+        addToast(t('feedV1.deckFailed'), 'error')
       })
-  }, [addToast])
+  }, [addToast, t])
 
   const ctx = useMemo<HomeV1ContextValue>(() => ({
     patchItem,
@@ -148,7 +150,7 @@ export function HomeV1Feed({ prependItemRef, header }: {
               onClick={() => { void showNewItems().then(() => topRef.current?.scrollIntoView({ behavior: 'smooth' })) }}
               className="inline-flex h-9 animate-slideDown items-center gap-1.5 rounded-full bg-hockia-primary px-4 text-secondary font-semibold text-white shadow-lg"
             >
-              <ArrowUp className="h-4 w-4" /> {newCount === 1 ? '1 new post' : `${newCount > 99 ? '99+' : newCount} new posts`}
+              <ArrowUp className="h-4 w-4" /> {newCount > 99 ? t('feedV1.newPostsOverflow') : t('feedV1.newPosts', { count: newCount })}
             </button>
           </div>
         )}
@@ -158,10 +160,10 @@ export function HomeV1Feed({ prependItemRef, header }: {
         {error && items.length === 0 && (
           // H12b: the header + Next step + people stay; the feed says so inline.
           <div className="flex flex-col items-center gap-1 px-8 py-12 text-center" role="alert" data-testid="home-feed-error">
-            <h2 className="text-body font-semibold text-ink-1">Couldn’t load the feed</h2>
-            <p className="text-secondary text-ink-2">Pull down or try again.</p>
+            <h2 className="text-body font-semibold text-ink-1">{t('feedV1.errorTitle')}</h2>
+            <p className="text-secondary text-ink-2">{t('feedV1.errorBody')}</p>
             <button type="button" onClick={() => void refetch()} className="mt-4 flex h-11 items-center rounded-full border border-line bg-white px-5 text-[15px] font-semibold text-ink-1 shadow-[0_1px_2px_rgba(15,15,20,0.06)]">
-              Try again
+              {t('feedV1.retry')}
             </button>
           </div>
         )}
@@ -188,7 +190,7 @@ export function HomeV1Feed({ prependItemRef, header }: {
 
         {hasMore && <div ref={sentinelRef} />}
         {isFetchingNextPage && (
-          <div className="flex justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-hockia-primary" aria-label="Loading more" /></div>
+          <div className="flex justify-center py-6"><Loader2 className="h-6 w-6 animate-spin text-hockia-primary" aria-label={t('feedV1.loadingMore')} /></div>
         )}
 
         {!firstLoad && !hasMore && !error && (

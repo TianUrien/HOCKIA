@@ -19,6 +19,7 @@
  * nothing rather than a discouraging empty state); the nudge to add
  * video/references belongs on the candidate's own profile, not here.
  */
+import { tRecruiting } from '@/i18n/ns/recruiting'
 
 export type EvidenceLevel = 'strong' | 'moderate' | 'limited'
 
@@ -116,14 +117,14 @@ export function computeEvidence(
       score += W_FULL_MATCH
       items.push({
         key: 'video',
-        label: 'Match video',
-        detail: fullMatch > 1 ? `Full match footage (${fullMatch})` : 'Full match footage',
+        label: tRecruiting('evidence.items.matchVideo'),
+        detail: fullMatch > 1 ? tRecruiting('evidence.items.fullMatchCount', { count: fullMatch }) : tRecruiting('evidence.items.fullMatch'),
       })
-      reasons.push(fullMatch > 1 ? `Full match footage available (${fullMatch} games).` : 'Full match footage available.')
+      reasons.push(fullMatch > 1 ? tRecruiting('evidence.reasons.fullMatchCount', { count: fullMatch }) : tRecruiting('evidence.reasons.fullMatch'))
     } else if (candidate.highlight_video_url) {
       score += W_HIGHLIGHT
-      items.push({ key: 'video', label: 'Highlight reel', detail: 'Highlight reel available' })
-      reasons.push('Highlight reel available.')
+      items.push({ key: 'video', label: tRecruiting('evidence.items.highlight'), detail: tRecruiting('evidence.items.highlightDetail') })
+      reasons.push(tRecruiting('evidence.reasons.highlight'))
     }
   }
 
@@ -133,17 +134,17 @@ export function computeEvidence(
     score += (isCoach ? W_COACH_REFERENCES_MAX : W_REFERENCES_MAX) * (Math.min(refs, REF_CAP) / REF_CAP)
     items.push({
       key: 'references',
-      label: refs > 1 ? `${refs} references` : '1 reference',
-      detail: refs > 1 ? `${refs} accepted references` : '1 accepted reference',
+      label: tRecruiting('evidence.items.references', { count: refs }),
+      detail: tRecruiting('evidence.items.referencesDetail', { count: refs }),
     })
-    reasons.push(refs > 1 ? `${refs} accepted references.` : '1 accepted reference.')
+    reasons.push(tRecruiting('evidence.reasons.references', { count: refs }))
   }
 
   // ── Verified badge ──
   if (candidate.is_verified) {
     score += isCoach ? W_COACH_VERIFIED : W_VERIFIED
-    items.push({ key: 'verified', label: 'Verified', detail: 'Verified profile' })
-    reasons.push('Admin-verified profile.')
+    items.push({ key: 'verified', label: tRecruiting('evidence.items.verified'), detail: tRecruiting('evidence.items.verifiedDetail') })
+    reasons.push(tRecruiting('evidence.reasons.verified'))
   }
 
   // ── Provable level (linked club → league) ──
@@ -151,14 +152,10 @@ export function computeEvidence(
     score += isCoach ? W_COACH_LEVEL : W_LEVEL
     items.push({
       key: 'level',
-      label: 'Proven level',
-      detail: isCoach ? 'Coaches at a listed club & league' : 'Plays at a listed club & league',
+      label: tRecruiting('evidence.items.provenLevel'),
+      detail: isCoach ? tRecruiting('evidence.items.levelCoach') : tRecruiting('evidence.items.levelPlayer'),
     })
-    reasons.push(
-      isCoach
-        ? 'Coaches at a listed club & league (provable level).'
-        : 'Plays at a listed club & league (provable level).',
-    )
+    reasons.push(isCoach ? tRecruiting('evidence.reasons.levelCoach') : tRecruiting('evidence.reasons.levelPlayer'))
   }
 
   if (items.length === 0) return none
@@ -207,23 +204,23 @@ export function evidenceChecklist(
   const rows: EvidenceChecklistRow[] = []
 
   if (!isCoach) {
-    rows.push({ key: 'full_match', label: 'Full match footage', present: (candidate.full_game_video_count ?? 0) > 0 })
-    rows.push({ key: 'highlight', label: 'Highlight video', present: Boolean(candidate.highlight_video_url) })
+    rows.push({ key: 'full_match', label: tRecruiting('evidence.checklist.fullMatch'), present: (candidate.full_game_video_count ?? 0) > 0 })
+    rows.push({ key: 'highlight', label: tRecruiting('evidence.checklist.highlight'), present: Boolean(candidate.highlight_video_url) })
   }
   rows.push({
     key: 'references',
-    label: refs > 0 ? `${refs} reference${refs === 1 ? '' : 's'}` : 'References',
+    label: refs > 0 ? tRecruiting('evidence.checklist.referencesCount', { count: refs }) : tRecruiting('evidence.checklist.references'),
     present: refs > 0,
   })
-  rows.push({ key: 'club', label: 'Current club', present: Boolean(candidate.current_world_club_id || candidate.current_club?.trim()) })
-  rows.push({ key: 'league', label: 'League on record', present: candidate.competition_level_band != null })
+  rows.push({ key: 'club', label: tRecruiting('evidence.checklist.club'), present: Boolean(candidate.current_world_club_id || candidate.current_club?.trim()) })
+  rows.push({ key: 'league', label: tRecruiting('evidence.checklist.league'), present: candidate.competition_level_band != null })
   // Labelled "Career history" — the recruiter-facing product language used
   // across HOCKIA (matches the data: career_history / career_entry_count).
   // The row KEY stays 'career'; only the display label is user-facing.
-  rows.push({ key: 'career', label: 'Career history', present: (candidate.career_entry_count ?? 0) > 0 })
+  rows.push({ key: 'career', label: tRecruiting('evidence.checklist.career'), present: (candidate.career_entry_count ?? 0) > 0 })
   rows.push({
     key: 'open',
-    label: isCoach ? 'Open to coach' : 'Open to play',
+    label: isCoach ? tRecruiting('evidence.checklist.openToCoach') : tRecruiting('evidence.checklist.openToPlay'),
     present: Boolean(isCoach ? candidate.open_to_coach : candidate.open_to_play),
   })
   return rows
@@ -233,11 +230,11 @@ export function evidenceChecklist(
 export function evidenceLevelLabel(level: EvidenceLevel): string {
   switch (level) {
     case 'strong':
-      return 'Strong evidence'
+      return tRecruiting('evidence.level.strong')
     case 'moderate':
-      return 'Enough evidence'
+      return tRecruiting('evidence.level.moderate')
     case 'limited':
-      return 'Limited evidence'
+      return tRecruiting('evidence.level.limited')
   }
 }
 
@@ -245,18 +242,19 @@ export function evidenceLevelLabel(level: EvidenceLevel): string {
  *  for a player/coach with no signals yet (isApplicable=false). Never hidden:
  *  measures how much there is to review, NOT skill. */
 export function evidenceDisplayLabel(result: EvidenceResult): string {
-  return result.isApplicable ? evidenceLevelLabel(result.level) : 'Minimal evidence'
+  return result.isApplicable ? evidenceLevelLabel(result.level) : tRecruiting('evidence.level.minimal')
 }
 
 /** Non-rating tooltip copy — the guardrail that keeps the pill read as
  *  information-completeness, not a public quality score. */
-export const EVIDENCE_TOOLTIP =
-  'Evidence Level reflects how much verifiable information this profile provides for evaluation: video, references, a provable level. It does not rate skill or talent.'
+export function evidenceTooltip(): string {
+  return tRecruiting('evidence.tooltip')
+}
 
 /** What the profile is missing, as a plain list (audit A2: no completeness
  *  percentage or completeness tier word in recruiter views). */
 export function missingLine(rows: { label: string; present: boolean }[]): string | null {
   const missing = rows.filter((r) => !r.present).map((r) => r.label)
   if (missing.length === 0) return null
-  return `Missing: ${missing.map((m, i) => (i === 0 ? m : m.charAt(0).toLowerCase() + m.slice(1))).join(', ')}`
+  return tRecruiting('evidence.missing', { items: missing.map((m, i) => (i === 0 ? m : m.charAt(0).toLowerCase() + m.slice(1))).join(', ') })
 }

@@ -1,0 +1,101 @@
+{
+  "role": {
+    "player": "Jugador/a",
+    "coach": "Entrenador/a",
+    "club": "Club",
+    "umpire": "Árbitro/a",
+    "brand": "Marca",
+    "member": "Integrante"
+  },
+  "position": {
+    "goalkeeper": "Arquero/a",
+    "defender": "Defensor/a",
+    "midfielder": "Volante",
+    "forward": "Delantero/a"
+  },
+  "coachSpecialization": {
+    "head_coach": "Entrenador/a principal",
+    "assistant_coach": "Entrenador/a asistente",
+    "youth_coach": "Entrenador/a de juveniles",
+    "goalkeeper_coach": "Entrenador/a de arqueros/as",
+    "strength_conditioning": "Preparación física",
+    "performance_analyst": "Analista de rendimiento",
+    "sports_scientist": "Especialista en ciencias del deporte",
+    "other_coach": "Entrenador/a"
+  },
+  "category": {
+    "adult_women": "Damas",
+    "adult_men": "Caballeros",
+    "girls": "Juveniles damas",
+    "boys": "Juveniles caballeros",
+    "mixed": "Mixto",
+    "any": "Cualquier categoría"
+  },
+  "teamCategory": {
+    "adult_women": "Equipo de damas",
+    "adult_men": "Equipo de caballeros",
+    "girls": "Equipo juvenil de damas",
+    "boys": "Equipo juvenil de caballeros",
+    "mixed": "Equipo mixto"
+  },
+  "brandCategory": {
+    "equipment": "Equipamiento",
+    "apparel": "Indumentaria",
+    "accessories": "Accesorios",
+    "nutrition": "Nutrición",
+    "technology": "Tecnología",
+    "coaching": "Entrenamiento y formación",
+    "recruiting": "Reclutamiento",
+    "media": "Medios",
+    "services": "Servicios",
+    "other": "Otros"
+  },
+  "coachRoles": {
+    "openLine_one": "Oportunidades para entrenar · {{count}} abierta",
+    "openLine_many": "Oportunidades para entrenar · {{count}} abiertas",
+    "openLine_other": "Oportunidades para entrenar · {{count}} abiertas",
+    "postedLine_one": "Este año se publicó {{count}} oportunidad para entrenar en Hockia",
+    "postedLine_many": "Este año se publicaron {{count}} oportunidades para entrenar en Hockia",
+    "postedLine_other": "Este año se publicaron {{count}} oportunidades para entrenar en Hockia",
+    "closedOn": "Cerrada el {{date}}",
+    "recruitingFor": "Búsqueda para {{clubName}}",
+    "homeMine": "Mis oportunidades",
+    "homeAll": "Oportunidades",
+    "signingNeedsClub": "Para marcar una incorporación, agrega tu club a tu perfil."
+  },
+  "coachSpecializationOption": {
+    "head_coach": {
+      "label": "Entrenador/a principal",
+      "description": "Conducción del equipo, táctica y gestión"
+    },
+    "assistant_coach": {
+      "label": "Entrenador/a asistente",
+      "description": "Apoyo al cuerpo técnico principal, conducción de entrenamientos"
+    },
+    "goalkeeper_coach": {
+      "label": "Entrenador/a de arqueros/as",
+      "description": "Entrenamiento y desarrollo específico de arqueros/as"
+    },
+    "youth_coach": {
+      "label": "Entrenador/a de juveniles o formativas",
+      "description": "Categorías formativas, desarrollo de talentos"
+    },
+    "strength_conditioning": {
+      "label": "Preparador/a físico/a",
+      "description": "Preparación física, prevención de lesiones"
+    },
+    "performance_analyst": {
+      "label": "Analista de rendimiento",
+      "description": "Análisis de video, datos y estadísticas de partido"
+    },
+    "sports_scientist": {
+      "label": "Especialista en ciencias del deporte",
+      "description": "Fisiología, control de cargas, recuperación"
+    },
+    "other": {
+      "label": "Otro",
+      "description": "Otro rol técnico o de staff"
+    },
+    "fallback": "Entrenador/a"
+  }
+}

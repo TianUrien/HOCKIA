@@ -22,6 +22,8 @@ import {
   trackGoal,
   type GoalRole,
 } from '@/lib/memberGoals'
+import { useHomeT } from '@/i18n/ns/home'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * "What's your goal?" at the top of today's Home (Figma page 02, YG: G1–G5;
@@ -56,18 +58,19 @@ export function GoalCard() {
   if (!isSet) return null
 
   const c = profile?.base_country_id != null ? getCountryById(profile.base_country_id) : undefined
-  const rows = goalRows(role, goal, actions.data ?? {}, c ? (c.common_name || c.name) : null)
+  const rows = goalRows(role, goal, actions.data ?? {}, c ? countryLabel(c.common_name || c.name) : null)
   return <SetCard role={role} title={goalTitle(role, goal)} rows={rows} onChange={() => setEditing(true)} />
 }
 
 function SetCard({ role, title, rows, onChange }: { role: GoalRole; title: string; rows: ReturnType<typeof goalRows>; onChange: () => void }) {
+  const t = useHomeT()
   const navigate = useNavigate()
   return (
-    <section className="px-4 pb-3 pt-2" aria-label="Your goal" data-testid="home-goal-set">
+    <section className="px-4 pb-3 pt-2" aria-label={t('goal.set.ariaLabel')} data-testid="home-goal-set">
       <div className="rounded-[24px] bg-brand-soft p-4">
         <div className="flex items-center justify-between">
-          <p className="text-caption font-semibold uppercase tracking-[0.06em] text-brand-primary">Your goal</p>
-          <button type="button" onClick={onChange} className="-my-2 flex h-11 items-center text-row font-semibold text-brand-primary" data-testid="home-goal-change">Change</button>
+          <p className="text-caption font-semibold uppercase tracking-[0.06em] text-brand-primary">{t('goal.set.eyebrow')}</p>
+          <button type="button" onClick={onChange} className="-my-2 flex h-11 items-center text-row font-semibold text-brand-primary" data-testid="home-goal-change">{t('goal.set.change')}</button>
         </div>
         {/* Two lines, so the goals just chosen read in full (design review 2026-10-25). */}
         <p className="mt-1 line-clamp-2 text-title text-ink-1">{title}</p>
@@ -102,6 +105,7 @@ interface AskCardProps {
 }
 
 function AskCard({ role, initial, changing, onDone, onLater, onCancel }: AskCardProps) {
+  const t = useHomeT()
   const addToast = useToastStore((s) => s.addToast)
   const [picked, setPicked] = useState<string[]>(initial.options)
   const [other, setOther] = useState<string | null>(initial.other)
@@ -130,7 +134,7 @@ function AskCard({ role, initial, changing, onDone, onLater, onCancel }: AskCard
       onDone()
     } catch (err) {
       logger.error('[GoalCard] save failed', err)
-      addToast('Could not save your goal. Please try again.', 'error')
+      addToast(t('goal.ask.saveFailed'), 'error')
     } finally {
       setSaving(false)
     }
@@ -150,11 +154,11 @@ function AskCard({ role, initial, changing, onDone, onLater, onCancel }: AskCard
     cn('h-11 rounded-full border px-4 text-row', selected ? 'border-brand-primary bg-brand-soft font-semibold text-brand-primary' : 'border-line bg-white text-ink-2')
 
   return (
-    <section className="px-4 pb-3 pt-2" aria-label="What's your goal?" data-testid="home-goal-ask">
+    <section className="px-4 pb-3 pt-2" aria-label={t('goal.ask.ariaLabel')} data-testid="home-goal-ask">
       <div className="rounded-[24px] border border-line bg-white p-4 shadow-[0_1px_2px_rgba(15,15,20,0.04)]">
-        <p className="text-caption font-semibold uppercase tracking-[0.06em] text-brand-primary">Your goal</p>
-        <h2 className="mt-1 text-title text-ink-1">What&rsquo;s your goal?</h2>
-        <p className="mt-1 text-row text-ink-2">Pick up to three, or say it in your words. We use it to show you what helps. Only you see it.</p>
+        <p className="text-caption font-semibold uppercase tracking-[0.06em] text-brand-primary">{t('goal.ask.eyebrow')}</p>
+        <h2 className="mt-1 text-title text-ink-1">{t('goal.ask.title')}</h2>
+        <p className="mt-1 text-row text-ink-2">{t('goal.ask.body')}</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {GOAL_OPTIONS[role].map((o) => (
             <button key={o.key} type="button" aria-pressed={picked.includes(o.key)} onClick={() => toggle(o.key)} className={chip(picked.includes(o.key))} data-testid={`goal-option-${o.key}`}>
@@ -168,20 +172,20 @@ function AskCard({ role, initial, changing, onDone, onLater, onCancel }: AskCard
             className={cn(chip(Boolean(other)), 'max-w-full truncate')}
             data-testid="goal-option-other"
           >
-            {other ?? 'Other…'}
+            {other ?? t('goal.ask.other')}
           </button>
         </div>
         <div className={cn('flex items-center gap-3', count > 0 ? 'mt-4' : '-mb-2 mt-1')}>
           {count > 0 ? (
             <Button className="flex-1 rounded-full" loading={saving} onClick={() => void save()} data-testid="goal-save">
-              That&rsquo;s my goal · {count} of {GOAL_MAX}
+              {t('goal.ask.save', { picked: count, max: GOAL_MAX })}
             </Button>
           ) : null}
           {changing ? (
-            <button type="button" onClick={onCancel} className={cn('flex h-12 items-center px-2 text-body text-ink-2', count === 0 && 'ml-auto')}>Cancel</button>
+            <button type="button" onClick={onCancel} className={cn('flex h-12 items-center px-2 text-body text-ink-2', count === 0 && 'ml-auto')}>{t('goal.ask.cancel')}</button>
           ) : (
             <button type="button" onClick={() => void later()} className={cn('flex h-12 items-center px-2 text-body text-ink-2', count === 0 && 'ml-auto')} data-testid="goal-later">
-              Later
+              {t('goal.ask.later')}
             </button>
           )}
         </div>
@@ -198,28 +202,29 @@ function AskCard({ role, initial, changing, onDone, onLater, onCancel }: AskCard
 
 /** G2: the member's own words; counts as one of the three picks. */
 function OtherSheet({ open, initial, onClose, onSave }: { open: boolean; initial: string; onClose: () => void; onSave: (text: string) => void }) {
+  const t = useHomeT()
   const [text, setText] = useState(initial)
   useEffect(() => { if (open) setText(initial) }, [open, initial])
   return (
-    <BottomSheet open={open} onClose={onClose} ariaLabel="Your goal, in your words">
+    <BottomSheet open={open} onClose={onClose} ariaLabel={t('goal.other.title')}>
       <div className="px-5 pb-3" data-testid="goal-other-sheet">
-        <h2 className="text-title text-ink-1">Your goal, in your words</h2>
+        <h2 className="text-title text-ink-1">{t('goal.other.title')}</h2>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value.slice(0, GOAL_TEXT_MAX))}
           rows={3}
           autoFocus
-          aria-label="Your goal, in your words"
-          placeholder="Play in Germany next season while I finish my degree"
+          aria-label={t('goal.other.title')}
+          placeholder={t('goal.other.placeholder')}
           className={cn(fieldInput, 'mt-3 h-auto resize-none py-3')}
           data-testid="goal-other-text"
         />
         <div className="mt-1.5 flex justify-between text-caption text-ink-3">
-          <span>Only you see this.</span>
+          <span>{t('goal.other.privacy')}</span>
           <span>{text.length}/{GOAL_TEXT_MAX}</span>
         </div>
         <Button block className="mt-4 rounded-full" onClick={() => onSave(text.trim())} disabled={!text.trim() && !initial} data-testid="goal-other-add">
-          {text.trim() || !initial ? 'Add to my goal' : 'Remove from my goal'}
+          {text.trim() || !initial ? t('goal.other.add') : t('goal.other.remove')}
         </Button>
       </div>
     </BottomSheet>

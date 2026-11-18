@@ -29,6 +29,7 @@ import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { currentLanguage } from '@/i18n'
 import { useClubFit } from './useClubFit'
 import { useCoachFit } from './useCoachFit'
 import type { FitCandidateFields } from '@/lib/clubFit'
@@ -162,7 +163,7 @@ export function useAIOpinion(
       // server-side cache so a manual refresh always re-runs the LLM (F8).
       try {
         const { data, error } = await supabase.functions.invoke('ai-opinion', {
-          body: { player_id: candidateId, force: forceRefresh },
+          body: { player_id: candidateId, force: forceRefresh, locale: currentLanguage() },
         })
         if (seq !== requestSeq.current) return
         if (error) {

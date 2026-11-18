@@ -19,6 +19,8 @@ import { cn } from '@/lib/utils'
 import { CLUB_NAME_MAX, foundedYears } from '@/lib/clubEdit'
 import { clubSetupReady, type ClubSetupDraft } from '@/lib/clubSetup'
 import { SetupSignOut } from '@/components/onboarding/SetupSignOut'
+import { useClubT } from '@/i18n/ns/club'
+import { countryLabel as countryLabelText } from '@/i18n/countryNames'
 
 const LinkClubScreen = lazy(() => import('@/components/profile/mobile/LinkClubScreen'))
 
@@ -45,6 +47,7 @@ const field = 'flex h-[50px] w-full items-center rounded-[12px] bg-surface-group
 const label = 'mb-1.5 block text-secondary font-semibold text-ink-2'
 
 export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
+  const t = useClubT()
   const { user, profile, fetchProfile } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const { getCountryById } = useCountries()
@@ -71,7 +74,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
 
   if (!user) return null
   const country = draft.countryId ? getCountryById(draft.countryId) : undefined
-  const countryLabel = country ? [country.flag_emoji, country.common_name || country.name].filter(Boolean).join(' ') : null
+  const countryLabel = country ? [country.flag_emoji, countryLabelText(country.common_name || country.name)].filter(Boolean).join(' ') : null
   const cityLabel = draft.city || draft.location || null
   const ready = clubSetupReady(draft)
   const crest = profile?.avatar_url ? getImageUrl(profile.avatar_url, 'avatar-lg') ?? profile.avatar_url : null
@@ -79,7 +82,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
   const uploadCrest = async (file: File | undefined) => {
     if (!file) return
     const check = validateImage(file, { maxFileSizeMB: 5 })
-    if (!check.valid) { addToast(check.error ?? 'Invalid image', 'error'); return }
+    if (!check.valid) { addToast(check.error ?? t('clubSetup.crest.invalidImage'), 'error'); return }
     setUploading(true)
     try {
       const optimized = await optimizeAvatarImage(file)
@@ -99,14 +102,14 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
       await fetchProfile(user.id, { force: true })
     } catch (err) {
       logger.error('[ClubSetup] crest upload failed', err)
-      addToast('We couldn’t upload this image. Please use PNG or JPG up to 5MB.', 'error')
+      addToast(t('clubSetup.crest.uploadFailed'), 'error')
     } finally {
       setUploading(false)
     }
   }
   const pickCrest = async () => {
     if (isNativePlatform()) {
-      try { const result = await pickImageNative('prompt'); if (result) await uploadCrest(result.file) } catch (err) { logger.error('[ClubSetup] native picker failed', err); addToast('Could not access camera or photos. Please check app permissions.', 'error') }
+      try { const result = await pickImageNative('prompt'); if (result) await uploadCrest(result.file) } catch (err) { logger.error('[ClubSetup] native picker failed', err); addToast(t('clubSetup.crest.pickerFailed'), 'error') }
       return
     }
     fileRef.current?.click()
@@ -149,7 +152,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
       setStep(2)
     } catch (err) {
       logger.error('[ClubSetup] save failed', err)
-      setError('Could not save your club. Please try again.')
+      setError(t('clubSetup.errors.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -165,7 +168,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
       await onFinished()
     } catch (err) {
       logger.error('[ClubSetup] finish failed', err)
-      addToast('Could not finish setting up. Please try again.', 'error')
+      addToast(t('clubSetup.errors.finishFailed'), 'error')
       setFinishing(false)
     }
   }
@@ -186,47 +189,47 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 pb-32 pt-6">
-        <h1 className="text-title-xl text-ink-1">About your club</h1>
-        <p className="mt-1.5 text-[15px] leading-[21px] text-ink-2">Step 1 of 2 · what players see next to every opportunity.</p>
+        <h1 className="text-title-xl text-ink-1">{t('clubSetup.title')}</h1>
+        <p className="mt-1.5 text-[15px] leading-[21px] text-ink-2">{t('clubSetup.subtitle')}</p>
 
         <div className="mt-5 flex items-center gap-3.5">
-          <button type="button" onClick={() => void pickCrest()} disabled={uploading} aria-label={crest ? 'Change crest' : 'Add your crest'} className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-grouped text-ink-2">
+          <button type="button" onClick={() => void pickCrest()} disabled={uploading} aria-label={crest ? t('clubSetup.crest.change') : t('clubSetup.crest.add')} className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-grouped text-ink-2">
             {uploading ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" /> : crest ? <img src={crest} alt="" className="h-full w-full object-cover" /> : <Camera className="h-6 w-6" strokeWidth={1.8} />}
           </button>
           <div className="min-w-0">
-            <button type="button" onClick={() => void pickCrest()} disabled={uploading} className="text-row font-semibold text-hockia-primary">{crest ? 'Change crest' : 'Add your crest'}</button>
-            <p className="text-secondary text-ink-2">A square crest reads best at small sizes.</p>
+            <button type="button" onClick={() => void pickCrest()} disabled={uploading} className="text-row font-semibold text-hockia-primary">{crest ? t('clubSetup.crest.change') : t('clubSetup.crest.add')}</button>
+            <p className="text-secondary text-ink-2">{t('clubSetup.crest.hint')}</p>
           </div>
           <input ref={fileRef} type="file" accept="image/png,image/jpeg" className="hidden" data-testid="club-setup-crest-input" onChange={(e) => { void uploadCrest(e.target.files?.[0]); e.target.value = '' }} />
         </div>
 
         <div className="mt-5">
-          <label htmlFor="club-setup-name" className={label}>Club name</label>
-          <input id="club-setup-name" value={draft.name} maxLength={CLUB_NAME_MAX} onChange={(e) => set({ name: e.target.value })} placeholder="Your club’s name" className={cn(field, 'placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30')} />
+          <label htmlFor="club-setup-name" className={label}>{t('clubSetup.fields.name')}</label>
+          <input id="club-setup-name" value={draft.name} maxLength={CLUB_NAME_MAX} onChange={(e) => set({ name: e.target.value })} placeholder={t('clubSetup.fields.namePlaceholder')} className={cn(field, 'placeholder:text-ink-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30')} />
         </div>
 
         <div className="mt-5 flex gap-3">
           <div className="min-w-0 flex-1">
-            <span className={label}>Country</span>
-            <button type="button" onClick={() => setSheet('country')} aria-label={`Country: ${countryLabel ?? 'choose'}`} className={field}>
-              <span className={cn('min-w-0 flex-1 truncate', !countryLabel && 'text-ink-3')}>{countryLabel ?? 'Choose'}</span>
+            <span className={label}>{t('clubSetup.fields.country')}</span>
+            <button type="button" onClick={() => setSheet('country')} aria-label={countryLabel ? t('clubSetup.fields.countryAria', { value: countryLabel }) : t('clubSetup.fields.countryAriaEmpty')} className={field}>
+              <span className={cn('min-w-0 flex-1 truncate', !countryLabel && 'text-ink-3')}>{countryLabel ?? t('clubSetup.fields.choose')}</span>
               <ChevronDown className="h-[18px] w-[18px] shrink-0 text-ink-3" strokeWidth={2} />
             </button>
           </div>
           <div className="min-w-0 flex-1">
-            <span className={label}>City</span>
-            <button type="button" onClick={() => setSheet('city')} aria-label={`City: ${cityLabel ?? 'choose'}`} className={field}>
-              <span className={cn('min-w-0 flex-1 truncate', !cityLabel && 'text-ink-3')}>{cityLabel ?? 'Choose'}</span>
+            <span className={label}>{t('clubSetup.fields.city')}</span>
+            <button type="button" onClick={() => setSheet('city')} aria-label={cityLabel ? t('clubSetup.fields.cityAria', { value: cityLabel }) : t('clubSetup.fields.cityAriaEmpty')} className={field}>
+              <span className={cn('min-w-0 flex-1 truncate', !cityLabel && 'text-ink-3')}>{cityLabel ?? t('clubSetup.fields.choose')}</span>
               <ChevronDown className="h-[18px] w-[18px] shrink-0 text-ink-3" strokeWidth={2} />
             </button>
           </div>
         </div>
 
         <div className="mt-5">
-          <label htmlFor="club-setup-year" className={label}>Year founded · optional</label>
+          <label htmlFor="club-setup-year" className={label}>{t('clubSetup.fields.year')}</label>
           <div className="relative">
             <select id="club-setup-year" value={draft.yearFounded} onChange={(e) => set({ yearFounded: e.target.value })} className={cn(field, 'appearance-none pr-10', !draft.yearFounded && 'text-ink-3')}>
-              <option value="">Not set</option>
+              <option value="">{t('clubSetup.fields.yearNotSet')}</option>
               {foundedYears().map((y) => <option key={y} value={String(y)}>{y}</option>)}
             </select>
             <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-ink-3" strokeWidth={2} />
@@ -237,7 +240,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
           <span className={cn('mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px]', draft.attested ? 'bg-hockia-primary text-white' : 'border-[1.5px] border-ink-4')}>
             {draft.attested && <Check className="h-4 w-4" strokeWidth={3} />}
           </span>
-          <span className="text-[15px] leading-5 text-ink-2">I’m 18 or over and I’m allowed to recruit for this club.</span>
+          <span className="text-[15px] leading-5 text-ink-2">{t('clubSetup.attest')}</span>
         </button>
 
         {error && <p role="alert" className="mt-4 text-secondary text-status-danger">{error}</p>}
@@ -245,27 +248,27 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
 
       <div className="fixed inset-x-0 bottom-0 bg-white px-6 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2">
         <button type="button" onClick={() => void saveAbout()} disabled={!ready || saving} className="flex h-[52px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40">
-          {saving ? 'Saving…' : 'Continue'}
+          {saving ? t('clubSetup.saving') : t('clubSetup.continue')}
         </button>
       </div>
 
       {/* Tall sheet (onboarding QA 2026-10-04): the picker used to be a
           dropdown inside a ~144 px sheet, so its list opened below the screen
           edge. Now the search is pinned and the list scrolls in the sheet. */}
-      <BottomSheet open={sheet === 'country'} onClose={() => setSheet(null)} ariaLabel="Country" className="h-[85dvh]">
+      <BottomSheet open={sheet === 'country'} onClose={() => setSheet(null)} ariaLabel={t('clubSetup.sheets.country')} className="h-[85dvh]">
         <div className="px-5 pb-6 pt-2">
-          <h2 className="mb-1 text-[20px] font-bold leading-[25px] text-ink-1">Country</h2>
+          <h2 className="mb-1 text-[20px] font-bold leading-[25px] text-ink-1">{t('clubSetup.sheets.country')}</h2>
           <CountrySelect presentation="list" appearance="field" value={draft.countryId} onChange={(id) => { set({ countryId: id }); setSheet(null) }} />
         </div>
       </BottomSheet>
 
-      <BottomSheet open={sheet === 'city'} onClose={() => setSheet(null)} ariaLabel="City">
+      <BottomSheet open={sheet === 'city'} onClose={() => setSheet(null)} ariaLabel={t('clubSetup.sheets.city')}>
         <div className="px-5 pb-6 pt-2">
-          <h2 className="mb-3 text-[20px] font-bold leading-[25px] text-ink-1">City</h2>
+          <h2 className="mb-3 text-[20px] font-bold leading-[25px] text-ink-1">{t('clubSetup.sheets.city')}</h2>
           <LocationAutocomplete
             value={draft.location}
             isSelected={draft.locationSelected}
-            placeholder="Where the club plays"
+            placeholder={t('clubSetup.sheets.cityPlaceholder')}
             // In the flow, not floating: the sheet's scroll container clipped
             // the floating list after the second result (QA 2026-10-04).
             suggestionsPlacement="inline"
@@ -277,7 +280,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
             }}
             onLocationClear={() => set({ location: '', city: '', baseCountryId: null, locationSelected: false })}
           />
-          <button type="button" onClick={() => setSheet(null)} className="mt-4 flex h-[50px] w-full items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1">Done</button>
+          <button type="button" onClick={() => setSheet(null)} className="mt-4 flex h-[50px] w-full items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1">{t('clubSetup.sheets.done')}</button>
         </div>
       </BottomSheet>
     </div>

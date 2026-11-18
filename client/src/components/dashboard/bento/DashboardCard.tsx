@@ -1,6 +1,7 @@
 import { type ReactNode, type MouseEvent, type KeyboardEvent, type PointerEvent, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * DashboardCard — base wrapper for every card in the Dashboard Bento Grid.
@@ -64,6 +65,7 @@ export default function DashboardCard({
   testId,
   fullWidth = false,
 }: DashboardCardProps) {
+  const t = useHomeT()
   // No CTA label => no visible affordance => not tappable (don't navigate from a
   // card that gives the user no cue it's a link).
   const interactive = Boolean(onCtaClick && ctaLabel)
@@ -109,7 +111,7 @@ export default function DashboardCard({
         onPointerLeave: clearPressed,
         role: 'button' as const,
         tabIndex: 0,
-        'aria-label': `${title} · ${ctaLabel}`,
+        'aria-label': t('dashboardCard.ariaLabel', { title, cta: ctaLabel }),
       }
     : {}
 

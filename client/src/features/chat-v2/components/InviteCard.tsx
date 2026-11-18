@@ -7,9 +7,10 @@ import { supabase, type Vacancy } from '@/lib/supabase'
 import { useToastStore } from '@/lib/toast'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { compensationText, whenLine } from '@/lib/opportunityCopy'
-import { firstNameOf, inviteCardState, inviteRoleLabel } from '@/lib/invites'
+import { benefitLabel, firstNameOf, inviteCardState, inviteRoleLabel } from '@/lib/invites'
 import { INVITES_KEY, inviteCardKey, useDeclineInvite, useInviteCard, type InviteCardData } from '@/hooks/useInvites'
 import { cn } from '@/lib/utils'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 // The normal Apply sheet (readiness check included), loaded only when Apply is tapped.
 const ApplyToOpportunityModal = lazy(() => import('@/components/ApplyToOpportunityModal'))
@@ -43,11 +44,12 @@ function leagueFor(club: InviteCardData['club'], gender: string | null): string 
 }
 
 function packageLine(benefits: string[] | null): string | null {
-  const labels = (benefits ?? []).map((b) => b.trim()).filter(Boolean).map((b) => b.charAt(0).toUpperCase() + b.slice(1).toLowerCase())
+  const labels = (benefits ?? []).map((b) => b.trim()).filter(Boolean).map((b) => benefitLabel(b) ?? b.charAt(0).toUpperCase() + b.slice(1).toLowerCase())
   return labels.length ? [...new Set(labels)].join(' · ') : null
 }
 
 export default function InviteCard({ inviteId, opportunityId, isMine, fallbackText }: Props) {
+  const t = useInboxT()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const addToast = useToastStore((s) => s.addToast)
@@ -75,16 +77,16 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
     status: invite.status,
     expiresAt: invite.expires_at,
     roleOpen: role.status === 'open',
-    playerFirstName: firstNameOf(data.playerName, 'The player'),
+    playerFirstName: firstNameOf(data.playerName, t('chat.inviteCard.playerFallback')),
   })
-  const when = role.start_date ? `From ${whenLine(role)}` : whenLine(role)
+  const when = role.start_date ? t('chat.inviteCard.from', { when: whenLine(role) }) : whenLine(role)
   const league = leagueFor(club, role.gender)
   const pkg = packageLine(role.benefits)
   const facts: [string, string | null][] = [
-    ['When', when],
-    ['Pay', compensationText(role)],
-    ['Package', pkg],
-    ['League', league],
+    [t('chat.inviteCard.facts.when'), when],
+    [t('chat.inviteCard.facts.pay'), compensationText(role)],
+    [t('chat.inviteCard.facts.package'), pkg],
+    [t('chat.inviteCard.facts.league'), league],
   ]
 
   const viewRole = () => navigate(`/opportunities/${role.id}`, navState('inbox'))
@@ -94,7 +96,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
       const { data: vacancy, error } = await supabase.from('opportunities').select('*').eq('id', role.id).maybeSingle()
       if (error || !vacancy) {
         if (error) reportSupabaseError('InviteCard.openApply', error)
-        addToast('Couldn’t open the opportunity. Please try again.', 'error')
+        addToast(t('chat.inviteCard.openFailed'), 'error')
         return
       }
       setApplyVacancy(vacancy as Vacancy)
@@ -114,7 +116,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
       data-testid="invite-card"
       data-state={invite.status}
     >
-      <p className={cn('text-[14px] font-semibold leading-5', state.muted ? 'text-ink-3' : 'text-hockia-primary')}>Invitation to apply</p>
+      <p className={cn('text-[14px] font-semibold leading-5', state.muted ? 'text-ink-3' : 'text-hockia-primary')}>{t('chat.inviteCard.title')}</p>
       <h3 className={cn('pt-1 text-xl font-bold leading-6 tracking-[-0.2px]', state.muted ? 'text-ink-3' : 'text-ink-1')}>{inviteRoleLabel(role)}</h3>
       <dl className="mt-2.5 flex flex-col gap-2">
         {facts.filter(([, v]) => !!v).map(([label, value]) => (
@@ -134,14 +136,14 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
         <>
           <div className="mt-3.5 flex gap-2.5">
             <button type="button" onClick={viewRole} className="flex h-11 flex-1 items-center justify-center rounded-full border border-line bg-white text-[16px] font-semibold text-ink-1" data-testid="invite-view-role">
-              View opportunity
+              {t('chat.inviteCard.viewOpportunity')}
             </button>
             <button type="button" onClick={() => void apply()} disabled={opening} className="flex h-11 flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="invite-apply">
-              {opening ? 'Opening…' : 'Apply'}
+              {opening ? t('chat.inviteCard.opening') : t('chat.inviteCard.apply')}
             </button>
           </div>
           <button type="button" onClick={() => setConfirmPass(true)} disabled={busy} className="mt-1 flex min-h-11 w-full items-center justify-center text-[15px] font-semibold text-ink-2 disabled:opacity-60" data-testid="invite-not-interested">
-            Not interested
+            {t('chat.inviteCard.notInterested')}
           </button>
         </>
       ) : (
@@ -155,7 +157,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
               {state.line}
             </span>
           )}
-          <button type="button" onClick={viewRole} className="-my-1.5 inline-flex min-h-11 shrink-0 items-center text-[15px] font-semibold text-hockia-primary">View opportunity</button>
+          <button type="button" onClick={viewRole} className="-my-1.5 inline-flex min-h-11 shrink-0 items-center text-[15px] font-semibold text-hockia-primary">{t('chat.inviteCard.viewOpportunityClub')}</button>
         </div>
       )}
 
@@ -164,11 +166,11 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
         open={confirmPass}
         onClose={() => setConfirmPass(false)}
         onConfirm={async () => { await decline(invite.id) }}
-        title="Not interested in this opportunity?"
-        message={`${club.full_name?.trim() || 'The club'} will see that you passed. You can still message them.`}
-        confirmLabel="Not interested"
+        title={t('chat.inviteCard.passConfirm.title')}
+        message={t('chat.inviteCard.passConfirm.message', { club: club.full_name?.trim() || t('chat.inviteCard.passConfirm.clubFallback') })}
+        confirmLabel={t('chat.inviteCard.passConfirm.confirm')}
         tone="primary"
-        busyLabel="Sending…"
+        busyLabel={t('chat.inviteCard.passConfirm.busy')}
         testId="invite-pass-confirm"
       />
       {applyVacancy && (

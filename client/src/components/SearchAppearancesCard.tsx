@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { Eye } from 'lucide-react'
+import { Trans } from 'react-i18next'
 import type { SearchAppearancesDay } from '@/lib/searchAppearances'
+import { useProfileT } from '@/i18n/ns/profile'
 
 interface SearchAppearancesCardProps {
   /** Last-N-days daily buckets, oldest → newest. */
@@ -25,6 +27,7 @@ export default function SearchAppearancesCard({
   total,
   windowDays,
 }: SearchAppearancesCardProps) {
+  const t = useProfileT()
   const peak = useMemo(() => Math.max(1, ...days.map((d) => d.appearances)), [days])
 
   // Render nothing when the profile hasn't surfaced yet — no value in a zero card.
@@ -38,20 +41,23 @@ export default function SearchAppearancesCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-3 mb-0.5">
-            Search appearances
+            {t('searchAppearancesCard.title')}
           </p>
           <p className="text-sm text-gray-800 leading-relaxed">
-            You appeared in{' '}
-            <span className="font-semibold text-gray-900">{total}</span>{' '}
-            active search{total === 1 ? '' : 'es'} in the last{' '}
-            <span className="font-semibold text-gray-900">{windowDays} days</span>.
+            <Trans
+              t={t}
+              i18nKey="searchAppearancesCard.summary"
+              count={total}
+              values={{ count: total, windowDays }}
+              components={{ count: <span className="font-semibold text-gray-900" />, days: <span className="font-semibold text-gray-900" /> }}
+            />
           </p>
 
           {days.length > 0 && (
             <div
               className="mt-3 flex items-end gap-1 h-10"
               role="img"
-              aria-label={`Daily appearances over the last ${windowDays} days`}
+              aria-label={t('searchAppearancesCard.chartLabel', { windowDays })}
             >
               {days.map((d) => {
                 const heightPct = Math.round((d.appearances / peak) * 100)

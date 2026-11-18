@@ -4,8 +4,9 @@ import { Check, Minus } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { useToastStore } from '@/lib/toast'
 import { useOwnOfferMade, useSigningActions } from '@/hooks/useSigning'
-import { WITHDRAW_TITLE, canWithdraw, playerRoadHint, playerRoadSteps, withdrawBody } from '@/lib/signing'
+import { withdrawTitle, canWithdraw, playerRoadHint, playerRoadSteps, withdrawBody } from '@/lib/signing'
 import { cn } from '@/lib/utils'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 
 /**
  * The applicant's own application on a role page (phone and desktop): the
@@ -27,10 +28,11 @@ interface Props {
 }
 
 export function PlayerRoadSteps({ status, offerMade = null, className }: { status: string; offerMade?: boolean | null; className?: string }) {
+  const t = useOpportunitiesT()
   const steps = playerRoadSteps(status, offerMade)
   if (!steps) return null
   return (
-    <ol className={cn('flex items-center gap-1.5', className)} aria-label="Your application" data-testid="player-road-steps">
+    <ol className={cn('flex items-center gap-1.5', className)} aria-label={t('road.yourApplication')} data-testid="player-road-steps">
       {steps.map((s, i) => (
         <li key={s.label} className="flex items-center gap-1.5">
           {i > 0 && <span className={cn('h-px w-4', s.done ? 'bg-positive' : 'bg-line')} aria-hidden="true" />}
@@ -45,7 +47,7 @@ export function PlayerRoadSteps({ status, offerMade = null, className }: { statu
               : s.skipped
                 ? <Minus className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
                 : <span className={cn('h-2.5 w-2.5 rounded-full border-[1.5px]', s.current ? 'border-hockia-primary' : 'border-ink-4')} aria-hidden="true" />}
-            {s.label}{s.skipped ? ' · skipped' : ''}
+            {s.skipped ? t('road.skippedStep', { label: s.label }) : s.label}
           </span>
         </li>
       ))}
@@ -54,6 +56,7 @@ export function PlayerRoadSteps({ status, offerMade = null, className }: { statu
 }
 
 export default function OwnApplicationRoad({ applicationId, status, onMessage, onSeeOffer, onChanged, className }: Props) {
+  const t = useOpportunitiesT()
   const { withdrawApplication } = useSigningActions()
   const [confirming, setConfirming] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
@@ -71,7 +74,7 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
     const res = await withdrawApplication(applicationId)
     setWithdrawing(false)
     if (!res.ok) {
-      addToast(res.error || 'Couldn’t withdraw. Please try again.', 'error')
+      addToast(res.error || t('road.withdrawFailed'), 'error')
       return
     }
     setConfirming(false)
@@ -82,7 +85,7 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
     <section className={cn('rounded-card border border-line bg-white p-3.5', className)} data-testid="own-application-road">
       {steps && (
         <>
-          <p className="text-secondary font-semibold text-ink-2">Your application</p>
+          <p className="text-secondary font-semibold text-ink-2">{t('road.yourApplication')}</p>
           <PlayerRoadSteps status={status} offerMade={offerMade} className="mt-2" />
           {hint && <p className="mt-2 text-secondary leading-[18px] text-ink-2">{hint}</p>}
           {status === 'signed_pending_confirmation' && (
@@ -91,12 +94,12 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
               className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-row font-semibold text-white"
               data-testid="own-application-confirm-signing"
             >
-              Confirm signing
+              {t('road.confirmSigning')}
             </Link>
           )}
           {status === 'offered' && seeOffer && (
             <button type="button" onClick={seeOffer} className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-row font-semibold text-white" data-testid="own-application-see-offer">
-              See the offer
+              {t('road.seeOffer')}
             </button>
           )}
         </>
@@ -112,18 +115,18 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
           className={cn('inline-flex min-h-11 items-center text-secondary font-semibold text-ink-2 underline-offset-2 [@media(hover:hover)]:hover:underline', steps ? 'mt-1' : '-my-2')}
           data-testid="withdraw-application"
         >
-          Withdraw application
+          {t('road.withdrawApplication')}
         </button>
       )}
-      <BottomSheet open={confirming} onClose={() => setConfirming(false)} ariaLabel={WITHDRAW_TITLE}>
+      <BottomSheet open={confirming} onClose={() => setConfirming(false)} ariaLabel={withdrawTitle()}>
         <div className="px-5 pb-2 pt-2 text-center" data-testid="withdraw-application-confirm">
-          <h2 className="text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">{WITHDRAW_TITLE}</h2>
+          <h2 className="text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">{withdrawTitle()}</h2>
           <p className="mt-2 text-[15px] leading-[21px] text-ink-2">{withdrawBody(status)}</p>
           <button type="button" onClick={() => void withdraw()} disabled={withdrawing} className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-status-danger text-[16px] font-semibold text-white active:bg-status-danger-strong disabled:opacity-60" data-testid="withdraw-application-yes">
-            {withdrawing ? 'Withdrawing…' : 'Withdraw'}
+            {withdrawing ? t('road.withdrawing') : t('road.withdraw')}
           </button>
           <button type="button" onClick={() => setConfirming(false)} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1">
-            Keep it
+            {t('road.keepIt')}
           </button>
         </div>
       </BottomSheet>

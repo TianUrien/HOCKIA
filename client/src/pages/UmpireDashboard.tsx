@@ -75,6 +75,8 @@ import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
 import { getUmpireActivity } from '@/lib/umpireActivity'
 import { trackReferenceBadgeClick } from '@/lib/analytics'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
+import { useProfileT } from '@/i18n/ns/profile'
+import { placeText } from '@/i18n/countryNames'
 
 export type UmpireProfileShape =
   Partial<Profile> &
@@ -112,9 +114,11 @@ function isTabType(value: string | null): value is TabType {
   return !!value && (TAB_IDS as string[]).includes(value)
 }
 
-function specializationLabel(value: string | null | undefined): string | null {
+function specializationLabel(value: string | null | undefined, t: ReturnType<typeof useProfileT>): string | null {
   if (!value) return null
-  if (value === 'both') return 'Outdoor & Indoor'
+  if (value === 'both') return t('umpireDashboard.specialization.both')
+  if (value === 'outdoor') return t('umpireDashboard.specialization.outdoor')
+  if (value === 'indoor') return t('umpireDashboard.specialization.indoor')
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
@@ -127,6 +131,7 @@ export default function UmpireDashboard({
   const profile = (profileData ?? authProfile) as UmpireProfileShape | null
   const navigate = useNavigate()
   const { addToast } = useToastStore()
+  const t = useProfileT()
   const isPhone = useMediaQuery('(max-width: 1023px)')
   const [searchParams, setSearchParams] = useSearchParams()
   const [showEditModal, setShowEditModal] = useState(false)
@@ -197,7 +202,7 @@ export default function UmpireDashboard({
     }
     if (!profile) return
     if (user.id === profile.id) {
-      addToast('You cannot message yourself.', 'error')
+      addToast(t('umpireDashboard.errors.messageSelf'), 'error')
       return
     }
 
@@ -220,7 +225,7 @@ export default function UmpireDashboard({
       }
     } catch (error) {
       logger.error('Error starting conversation:', error)
-      addToast('Failed to start conversation. Please try again.', 'error')
+      addToast(t('umpireDashboard.errors.startConversation'), 'error')
     } finally {
       setSendingMessage(false)
     }
@@ -258,9 +263,9 @@ export default function UmpireDashboard({
 
   useEffect(() => {
     document.title = profile?.full_name
-      ? `${profile.full_name} · Umpire | Hockia`
-      : 'Umpire | Hockia'
-  }, [profile?.full_name])
+      ? t('umpireDashboard.documentTitle.named', { name: profile.full_name })
+      : t('umpireDashboard.documentTitle.anonymous')
+  }, [profile?.full_name, t])
 
   if (!profile) return null
 
@@ -272,20 +277,20 @@ export default function UmpireDashboard({
   // owner-only by construction (only profiles_self carries date_of_birth).
   const age = profile.server_age ?? (profile.date_of_birth ? calculateAge(profile.date_of_birth) : null)
   const dobDisplay = profile.date_of_birth ? formatDateOfBirth(profile.date_of_birth) : null
-  const specLabel = specializationLabel(profile.officiating_specialization)
+  const specLabel = specializationLabel(profile.officiating_specialization, t)
   const hasCertification =
     profile.umpire_level || profile.federation || profile.umpire_since || specLabel
   const hasLanguages = profile.languages && profile.languages.length > 0
   const hasBio = Boolean(profile.bio?.trim())
 
   const tabs: { id: TabType; label: string }[] = [
-    { id: 'profile', label: 'Profile' },
-    { id: 'officiating', label: 'Career history' },
-    { id: 'gallery', label: 'Gallery' },
-    { id: 'references', label: 'References' },
-    { id: 'friends', label: 'Friends' },
-    { id: 'comments', label: 'Comments' },
-    { id: 'posts', label: 'Posts' },
+    { id: 'profile', label: t('umpireDashboard.tabs.profile') },
+    { id: 'officiating', label: t('umpireDashboard.tabs.officiating') },
+    { id: 'gallery', label: t('umpireDashboard.tabs.gallery') },
+    { id: 'references', label: t('umpireDashboard.tabs.references') },
+    { id: 'friends', label: t('umpireDashboard.tabs.friends') },
+    { id: 'comments', label: t('umpireDashboard.tabs.comments') },
+    { id: 'posts', label: t('umpireDashboard.tabs.posts') },
   ]
 
   return (
@@ -317,7 +322,7 @@ export default function UmpireDashboard({
             className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            {t('umpireDashboard.back')}
           </button>
         )}
 
@@ -333,7 +338,7 @@ export default function UmpireDashboard({
           <div className="flex flex-col md:flex-row md:items-center gap-5 md:gap-6">
             <Avatar
               src={profile.avatar_url}
-              alt={profile.full_name ?? 'Umpire'}
+              alt={profile.full_name ?? t('umpireDashboard.avatarAlt')}
               initials={initials}
               size="xl"
               // Above-the-fold LCP element on /umpires/id/:id
@@ -360,11 +365,11 @@ export default function UmpireDashboard({
                       size="sm"
                       onClick={() => navigate(`/umpires/id/${profile.id}?view=public`)}
                       className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
-                      title="See how your profile looks to other Hockia members"
+                      title={t('umpireDashboard.networkView.hint')}
                     >
                       <Eye className="w-4 h-4 flex-shrink-0" />
-                      <span className="hidden xs:inline">Network View</span>
-                      <span className="xs:hidden">View</span>
+                      <span className="hidden xs:inline">{t('umpireDashboard.networkView.label')}</span>
+                      <span className="xs:hidden">{t('umpireDashboard.networkView.short')}</span>
                     </Button>
                     <Button
                       variant="primary"
@@ -373,8 +378,8 @@ export default function UmpireDashboard({
                       className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
                     >
                       <Edit2 className="w-4 h-4 flex-shrink-0" />
-                      <span className="hidden xs:inline">Edit Profile</span>
-                      <span className="xs:hidden">Edit</span>
+                      <span className="hidden xs:inline">{t('umpireDashboard.edit.label')}</span>
+                      <span className="xs:hidden">{t('umpireDashboard.edit.short')}</span>
                     </Button>
                   </div>
                 ) : isOwnProfile ? (
@@ -394,19 +399,19 @@ export default function UmpireDashboard({
                         {sendingMessage ? (
                           <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Sending...
+                            {t('umpireDashboard.message.sending')}
                           </>
                         ) : (
                           <>
                             <MessageCircle className="w-4 h-4" />
-                            Message
+                            {t('umpireDashboard.message.send')}
                           </>
                         )}
                       </button>
                     )}
                     <ProfileActionMenu
                       targetId={profile.id}
-                      targetName={profile.full_name ?? 'this umpire'}
+                      targetName={profile.full_name ?? t('umpireDashboard.thisUmpire')}
                     />
                   </div>
                 ) : null}
@@ -489,14 +494,14 @@ export default function UmpireDashboard({
                 {profile.base_location && (
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-gray-400" />
-                    {profile.base_location}
+                    {placeText(profile.base_location)}
                   </span>
                 )}
                 {dobDisplay && (
                   <span className="inline-flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 text-gray-400" />
                     {dobDisplay}
-                    {age !== null && <span className="text-gray-400">· {age}y</span>}
+                    {age !== null && <span className="text-gray-400">· {t('umpireDashboard.ageShort', { age })}</span>}
                   </span>
                 )}
               </div>
@@ -532,11 +537,10 @@ export default function UmpireDashboard({
                   </div>
                   <div className="flex-1">
                     <h3 className="text-base font-semibold text-gray-900 mb-1">
-                      Add your officiating credentials
+                      {t('umpireDashboard.credentials.title')}
                     </h3>
                     <p className="text-sm text-gray-700 mb-3">
-                      Your level and federation are what clubs and fellow umpires look for first.
-                      Take a minute now. You can always refine it later.
+                      {t('umpireDashboard.credentials.body')}
                     </p>
                     <button
                       type="button"
@@ -544,7 +548,7 @@ export default function UmpireDashboard({
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
-                      Add credentials
+                      {t('umpireDashboard.credentials.add')}
                     </button>
                   </div>
                 </div>
@@ -634,30 +638,30 @@ export default function UmpireDashboard({
                   <section>
                     <h2 className="text-2xl font-bold text-gray-900 mb-5 inline-flex items-center gap-2">
                       <Shield className="w-6 h-6 text-ink-2" />
-                      Certification &amp; Level
+                      {t('umpireDashboard.certification.title')}
                     </h2>
                     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       {profile.umpire_level && (
                         <div>
-                          <dt className="text-sm font-medium text-gray-500 mb-1">Level</dt>
+                          <dt className="text-sm font-medium text-gray-500 mb-1">{t('umpireDashboard.certification.level')}</dt>
                           <dd className="text-gray-900 font-medium">{profile.umpire_level}</dd>
                         </div>
                       )}
                       {profile.federation && (
                         <div>
-                          <dt className="text-sm font-medium text-gray-500 mb-1">Federation</dt>
+                          <dt className="text-sm font-medium text-gray-500 mb-1">{t('umpireDashboard.certification.federation')}</dt>
                           <dd className="text-gray-900 font-medium">{profile.federation}</dd>
                         </div>
                       )}
                       {profile.umpire_since && (
                         <div>
-                          <dt className="text-sm font-medium text-gray-500 mb-1">Umpiring since</dt>
+                          <dt className="text-sm font-medium text-gray-500 mb-1">{t('umpireDashboard.certification.since')}</dt>
                           <dd className="text-gray-900 font-medium">{profile.umpire_since}</dd>
                         </div>
                       )}
                       {specLabel && (
                         <div>
-                          <dt className="text-sm font-medium text-gray-500 mb-1">Specialization</dt>
+                          <dt className="text-sm font-medium text-gray-500 mb-1">{t('umpireDashboard.certification.specialization')}</dt>
                           <dd className="text-gray-900 font-medium">{specLabel}</dd>
                         </div>
                       )}
@@ -665,7 +669,7 @@ export default function UmpireDashboard({
                   </section>
                 ) : (
                   <section className="text-sm text-gray-500">
-                    No certification details yet.
+                    {t('umpireDashboard.certification.empty')}
                   </section>
                 )}
 
@@ -686,7 +690,7 @@ export default function UmpireDashboard({
 
                 {hasBio && (
                   <section>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">About</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('umpireDashboard.about')}</h2>
                     <p className="text-gray-700 leading-relaxed whitespace-pre-line">{profile.bio}</p>
                   </section>
                 )}
@@ -695,7 +699,7 @@ export default function UmpireDashboard({
                   <section>
                     <h2 className="text-2xl font-bold text-gray-900 mb-4 inline-flex items-center gap-2">
                       <LanguagesIcon className="w-6 h-6 text-gray-500" />
-                      Languages
+                      {t('umpireDashboard.languages')}
                     </h2>
                     <div className="flex flex-wrap gap-2">
                       {profile.languages!.map((lang) => (
@@ -727,7 +731,7 @@ export default function UmpireDashboard({
                 {/* Posts inline on public view — matches Player readOnly pattern. */}
                 {readOnly && (
                   <section className="pt-6 border-t border-gray-200">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Posts</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('umpireDashboard.posts')}</h2>
                     <ProfilePostsTab profileId={profile.id} readOnly />
                   </section>
                 )}
@@ -833,8 +837,8 @@ export default function UmpireDashboard({
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
-        title="Sign in to message"
-        message="Sign in to message this umpire and see more about their profile."
+        title={t('umpireDashboard.signInPrompt.title')}
+        message={t('umpireDashboard.signInPrompt.message')}
       />
     </div>
   )

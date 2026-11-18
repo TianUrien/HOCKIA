@@ -6,6 +6,8 @@
  * (admin review of reports) provides the second layer.
  */
 
+import { tCommon } from '@/i18n/ns/common'
+
 // Common slurs and extreme hate speech patterns (case-insensitive)
 // This is intentionally a minimal list targeting the most severe violations.
 // Moderate content is handled via user reporting + admin review.
@@ -39,7 +41,7 @@ export function checkContent(text: string): ContentFilterResult {
     if (pattern.test(text)) {
       return {
         allowed: false,
-        reason: 'Your message contains language that violates our community guidelines. Please revise and try again.',
+        reason: tCommon('errors.contentBlocked'),
       }
     }
   }

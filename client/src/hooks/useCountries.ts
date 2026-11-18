@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { countryLabel, nationalityLabel } from '@/i18n/countryNames'
 
 // EU member state country codes (ISO 3166-1 alpha-2)
 export const EU_COUNTRY_CODES = new Set([
@@ -70,7 +71,7 @@ let inflightRequest: Promise<Country[]> | null = null
  * when many components mount simultaneously (e.g. Community page cards).
  */
 export function useCountries(): UseCountriesResult {
-  const [countries, setCountries] = useState<Country[]>(cachedCountries ?? [])
+  const [loaded, setCountries] = useState<Country[]>(cachedCountries ?? [])
   const [loading, setLoading] = useState(!cachedCountries)
   const [error, setError] = useState<Error | null>(null)
 
@@ -111,6 +112,14 @@ export function useCountries(): UseCountriesResult {
       })
   }, [])
 
+  // The table comes ordered by English name. In another language the list
+  // is shown by its translated names, so order it by those ("Alemania"
+  // before "Brasil"); in English this is the same list.
+  const countries = useMemo(() => {
+    if (countryLabel('Germany') === 'Germany') return loaded
+    return [...loaded].sort((a, b) => countryLabel(a.name).localeCompare(countryLabel(b.name), 'es'))
+  }, [loaded])
+
   const getCountryById = (id: number | null): Country | undefined => {
     if (id === null) return undefined
     return countries.find((c) => c.id === id)
@@ -143,7 +152,7 @@ export function useCountries(): UseCountriesResult {
 export function formatCountryDisplay(country: Country | undefined): string {
   if (!country) return ''
   const flag = country.flag_emoji ?? ''
-  return `${flag} ${country.name}`.trim()
+  return `${flag} ${countryLabel(country.name)}`.trim()
 }
 
 /**
@@ -152,5 +161,5 @@ export function formatCountryDisplay(country: Country | undefined): string {
 export function formatNationalityDisplay(country: Country | undefined): string {
   if (!country) return ''
   const flag = country.flag_emoji ?? ''
-  return `${flag} ${country.nationality_name}`.trim()
+  return `${flag} ${nationalityLabel(country.nationality_name)}`.trim()
 }

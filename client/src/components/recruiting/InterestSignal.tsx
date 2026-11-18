@@ -12,6 +12,7 @@
 
 import { Handshake } from 'lucide-react'
 import { interestLevelLabel, type InterestResult } from '@/lib/interestFit'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 interface InterestSignalProps {
   result: InterestResult
@@ -21,16 +22,17 @@ interface InterestSignalProps {
 }
 
 export default function InterestSignal({ result, variant = 'full', className = '' }: InterestSignalProps) {
+  const t = useRecruitingT()
   if (!result.isApplicable) return null
   const label = interestLevelLabel(result.level)
-  const tooltip = result.reasons.length > 0 ? `${label} — ${result.reasons.join(' · ')}` : label
+  const tooltip = result.reasons.length > 0 ? t('interestSignal.tooltip', { label, reasons: result.reasons.join(' · ') }) : label
 
   return (
     <div className={['flex flex-col gap-1', className].join(' ')}>
       <span
         className="inline-flex items-center gap-1 self-start rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"
         title={tooltip}
-        aria-label={`Interest: ${label}. ${result.reasons.join('. ')}`}
+        aria-label={t('interestSignal.aria', { label, reasons: result.reasons.join('. ') })}
       >
         <Handshake className="w-3 h-3" aria-hidden="true" />
         {label}

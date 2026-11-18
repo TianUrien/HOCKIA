@@ -1,5 +1,6 @@
 import { clubLeadLeague } from '@/lib/clubProfileCopy'
 import { contactEmailSubtitle } from '@/lib/clubSettingsCopy'
+import { tClub } from '@/i18n/ns/club'
 
 /**
  * Rules for Edit club profile (Figma 04 Club D1.27, DEV NOTE 368:1103) and the
@@ -24,7 +25,7 @@ export function yearFoundedError(value: string, now: Date = new Date()): string 
   if (!text) return null
   const year = Number(text)
   const max = now.getFullYear()
-  if (!Number.isInteger(year) || year < CLUB_YEAR_MIN || year > max) return `Choose a year between ${CLUB_YEAR_MIN} and ${max}.`
+  if (!Number.isInteger(year) || year < CLUB_YEAR_MIN || year > max) return tClub('clubEditLib.yearRange', { min: CLUB_YEAR_MIN, max })
   return null
 }
 
@@ -55,13 +56,13 @@ export function websiteLabel(value: string | null | undefined): string | null {
 export function clubLeagueRowValue(linked: boolean, men: string | null | undefined, women: string | null | undefined): string | null {
   if (!linked) return null
   const league = clubLeadLeague(men, women)
-  return league ? `Linked · ${league}` : 'Linked'
+  return league ? tClub('clubEditLib.linkedLeague', { league }) : tClub('clubEditLib.linked')
 }
 
 /** Photos row: "2 photos" / "1 photo"; null (reads "Add") when there are none. */
 export function photosRowValue(count: number | null): string | null {
   if (count === null || count <= 0) return null
-  return `${count} photo${count === 1 ? '' : 's'}`
+  return tClub('clubEditLib.photos', { count })
 }
 
 /** Contact email row: "Private · club@x.com" / "Shown on your profile · club@x.com"; empty → null ("Add"). */

@@ -15,6 +15,9 @@
  * Pure, no Deno globals — unit-tested in display-labels.test.ts.
  */
 
+import { currentAiLanguage, type MemberLanguage } from './ai-language.ts'
+import { spanishPositionLabel } from './member-language.ts'
+
 const LABELS: Record<string, string> = {
   // Hockey categories (playing / coaching / target)
   adult_men: "Men's",
@@ -57,6 +60,37 @@ const LABELS: Record<string, string> = {
   needs_more_info: 'Needs more info',
 }
 
+/** Spanish labels (Stage 3, client/src/locales/glossary.md). Same keys as LABELS. */
+const LABELS_ES: Record<string, string> = {
+  adult_men: 'Caballeros',
+  adult_women: 'Damas',
+  girls: 'Juveniles damas',
+  boys: 'Juveniles caballeros',
+  mixed: 'Mixto',
+  any: 'Cualquier categoría',
+  open_to_play: 'Disponible para jugar',
+  open_to_coach: 'Disponible para entrenar',
+  open_to_opportunities: 'Disponible para oportunidades',
+  goalkeeper: 'Arquero/a',
+  defender: 'Defensor/a',
+  midfielder: 'Volante',
+  forward: 'Delantero/a',
+  head_coach: 'Entrenador/a principal',
+  assistant_coach: 'Entrenador/a asistente',
+  youth_coach: 'Entrenador/a de juveniles',
+  goalkeeper_coach: 'Entrenador/a de arqueros/as',
+  strength_conditioning: 'Preparador/a físico/a',
+  performance_analyst: 'Analista de rendimiento',
+  sports_scientist: 'Especialista en ciencias del deporte',
+  other_coach: 'Entrenador/a',
+  unpaid_development: 'Desarrollo (no pago)',
+  paid_contract: 'Contrato pago',
+  eu_passport: 'Pasaporte de la UE',
+  strong_match: 'Encaje alto',
+  possible_match: 'Encaje posible',
+  needs_more_info: 'Falta información',
+}
+
 /** Snake-case tokens only — single words like "girls" are left to context. */
 const SNAKE_KEYS = Object.keys(LABELS).filter(k => k.includes('_'))
 
@@ -64,10 +98,11 @@ const SNAKE_KEYS = Object.keys(LABELS).filter(k => k.includes('_'))
  * Readable label for an internal value. Unknown snake_case values fall back
  * to "Words like this"; anything else is returned unchanged.
  */
-export function labelFor(value: string | null | undefined): string {
+export function labelFor(value: string | null | undefined, lang: MemberLanguage = currentAiLanguage()): string {
   if (!value) return ''
   const v = String(value).trim()
-  const hit = LABELS[v] ?? LABELS[v.toLowerCase()]
+  const table = lang === 'es' ? LABELS_ES : LABELS
+  const hit = table[v] ?? table[v.toLowerCase()]
   if (hit) return hit
   if (/^[a-z0-9]+(_[a-z0-9]+)+$/i.test(v)) {
     const words = v.toLowerCase().replace(/_/g, ' ')
@@ -77,8 +112,8 @@ export function labelFor(value: string | null | undefined): string {
 }
 
 /** Lower-case label for use mid-sentence ("men's", "open to play"). */
-export function labelForInline(value: string | null | undefined): string {
-  const l = labelFor(value)
+export function labelForInline(value: string | null | undefined, lang: MemberLanguage = currentAiLanguage()): string {
+  const l = labelFor(value, lang)
   // Keep proper nouns / acronyms ("EU passport") intact.
   return /^EU\b/.test(l) ? l : l.charAt(0).toLowerCase() + l.slice(1)
 }
@@ -91,12 +126,12 @@ export function labelForInline(value: string | null | undefined): string {
  * where it is clearly an identifier the user might need verbatim: a
  * @handle, a path or URL segment, or an e-mail address.
  */
-export function scrubInternalValues(text: string | null | undefined): string {
+export function scrubInternalValues(text: string | null | undefined, lang: MemberLanguage = currentAiLanguage()): string {
   if (!text) return text ?? ''
   let out = text
   for (const key of SNAKE_KEYS) {
     const re = new RegExp(`(^|[^\\w@/.:-])${key}(?![\\w/])`, 'gi')
-    out = out.replace(re, (_m, pre: string) => `${pre}${labelForInline(key)}`)
+    out = out.replace(re, (_m, pre: string) => `${pre}${labelForInline(key, lang)}`)
   }
   // Generic fallback for tokens we have no label for yet.
   out = out.replace(
@@ -128,9 +163,13 @@ export const POSITION_LABELS: Record<string, string> = {
   other_coach: 'Coach',
 }
 
-export function positionLabel(value: string | null | undefined): string | null {
+export function positionLabel(value: string | null | undefined, lang: MemberLanguage = currentAiLanguage()): string | null {
   if (!value || !String(value).trim()) return null
   const v = String(value).trim()
+  if (lang === 'es') {
+    const es = spanishPositionLabel(v)
+    if (es) return es
+  }
   const hit = POSITION_LABELS[v.toLowerCase()]
   if (hit) return hit
   const words = v.replace(/_/g, ' ').replace(/\s+/g, ' ').toLowerCase()

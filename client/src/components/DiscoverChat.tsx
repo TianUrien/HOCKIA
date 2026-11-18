@@ -20,7 +20,7 @@ export default function DiscoverChat({ messages, assistantAvatar, afterAnswer }:
   return (
     <div className="flex flex-col gap-4">
       {messages.map(msg => {
-        if (msg.role === 'user') return <UserBubble key={msg.id} text={msg.content} />
+        if (msg.role === 'user') return <UserBubble key={msg.id} text={msg.shown ?? msg.content} />
         const after = afterAnswer?.(msg)
         if (!assistantAvatar) return <div key={msg.id}><AssistantMessage msg={msg} />{after}</div>
         // Answers with result cards keep the full width (the cards are dense):

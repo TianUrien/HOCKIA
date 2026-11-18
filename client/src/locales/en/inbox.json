@@ -1,0 +1,674 @@
+{
+  "chat": {
+    "loadingEarlier": "Loading earlier messages...",
+    "bubble": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "dayLabel": "{{weekday}}, {{date}}",
+      "copied": "Copied",
+      "copyFailed": "Could not copy the message.",
+      "sheet": {
+        "copy": "Copy",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "menu": {
+        "copy": "Copy",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "newMarker": "New",
+      "deleted": "Message deleted",
+      "editLabel": "Edit message",
+      "editCancel": "Cancel",
+      "editSave": "Save",
+      "options": "Message options",
+      "edited": "edited",
+      "retry": "Retry sending message",
+      "deleteFailed": "Delete failed message",
+      "deleteConfirm": {
+        "label": "Delete this message?",
+        "title": "Delete this message?",
+        "bodyBoth": "\"Delete for everyone\" removes it for both of you. \"Delete for me\" removes it only from your chat.",
+        "bodyEveryone": "This removes the message for both of you. This can't be undone.",
+        "bodyMe": "This removes the message only from your chat. The other person still has it.",
+        "deleting": "Deleting…",
+        "deletingMine": "Deleting…",
+        "forEveryone": "Delete for everyone",
+        "delete": "Delete",
+        "forMe": "Delete for me",
+        "cancel": "Cancel"
+      }
+    },
+    "newMessagesToast_one": "{{label}} new message",
+    "newMessagesToast_other": "{{label}} new messages",
+    "empty": "No messages yet. Say hello.",
+    "header": {
+      "backDefault": "Inbox",
+      "memberFallback": "Hockia Member",
+      "viewProfile": "View profile",
+      "markUnread": "Mark as unread",
+      "block": "Block {{name}}",
+      "deleteConversation": "Delete conversation",
+      "options": "Chat options",
+      "activeToday": "active today",
+      "backTo": "Back to {{label}}",
+      "backToConversations": "Back to conversations",
+      "viewNamedProfile": "View {{name}} profile"
+    },
+    "composer": {
+      "label": "Message",
+      "placeholder": "Message",
+      "send": "Send message"
+    },
+    "inviteCard": {
+      "playerFallback": "The player",
+      "from": "From {{when}}",
+      "facts": {
+        "when": "When",
+        "pay": "Pay",
+        "package": "Package",
+        "league": "League"
+      },
+      "openFailed": "Couldn’t open the opportunity. Please try again.",
+      "title": "Invitation to apply",
+      "viewOpportunity": "View opportunity",
+      "viewOpportunityClub": "View opportunity",
+      "opening": "Opening…",
+      "apply": "Apply",
+      "notInterested": "Not interested",
+      "passConfirm": {
+        "title": "Not interested in this opportunity?",
+        "message": "{{club}} will see that you passed. You can still message them.",
+        "clubFallback": "The club",
+        "confirm": "Not interested",
+        "busy": "Sending…"
+      }
+    },
+    "offerCard": {
+      "playerFallback": "The player",
+      "facts": {
+        "start": "Start",
+        "pay": "Pay",
+        "package": "Package"
+      },
+      "title": "Offer",
+      "decline": "Decline",
+      "accept": "Accept",
+      "questions": "Questions? Reply here before you decide.",
+      "declineSheet": {
+        "label": "Decline the offer",
+        "title": "Decline this offer?",
+        "body": "The club will be told. You can say why (it’s optional).",
+        "placeholder": "Add a reason (optional)",
+        "reasonLabel": "Reason (optional)",
+        "confirm": "Decline offer",
+        "keep": "Keep the offer"
+      }
+    },
+    "sharedPost": {
+      "unknownAuthor": "Unknown",
+      "view": "View post"
+    },
+    "errors": {
+      "empty": "Message cannot be empty.",
+      "tooLong_one": "Message is too long. Maximum {{count}} character.",
+      "tooLong_other": "Message is too long. Maximum {{count}} characters.",
+      "editFailed": "Failed to edit message. Please try again.",
+      "deleteFailed": "Failed to delete message. Please try again.",
+      "hideFailed": "Could not delete the message. Try again.",
+      "failedStatus": "Failed to send",
+      "sendFailed": "Failed to send message. Please try again.",
+      "createConversationFailed": "Failed to create conversation"
+    }
+  },
+  "signing": {
+    "prompt": {
+      "confirm": "Confirm signing"
+    },
+    "offer": {
+      "immediately": "Immediately",
+      "openUntilMissing": "Choose until when the offer is open.",
+      "openUntilPast": "Open until can’t be in the past.",
+      "openUntilTooFar_one": "Open until can be at most {{count}} day ahead.",
+      "openUntilTooFar_other": "Open until can be at most {{count}} days ahead.",
+      "contractNoteClub": "An offer on Hockia sets out what you’re offering. The contract itself is between your club and the player.",
+      "contractNoteOrg": "An offer on Hockia sets out what you’re offering. The contract itself is between {{org}} and the player.",
+      "contractNoteFallback": "An offer on Hockia sets out what you’re offering. The contract itself is between the club and the player."
+    },
+    "card": {
+      "playerFallback": "The player",
+      "deadline": "Open until {{day}}",
+      "deadlineNoDay": "Open until",
+      "waitingAnswer": "Waiting for {{name}}’s answer",
+      "acceptedPlayer": "You accepted this offer",
+      "acceptedClub": "{{name}} accepted",
+      "declinedPlayer": "You declined this offer",
+      "declinedClub": "{{name}} declined",
+      "declinedClubReason": "{{name}} declined: {{reason}}",
+      "superseded": "Updated. See the newer offer below",
+      "withdrawnPlayer": "The club withdrew this offer",
+      "withdrawnClub": "You withdrew this offer",
+      "expired": "This offer has expired",
+      "closed": "This offer is closed"
+    },
+    "road": {
+      "declinedNote": "{{name}} declined your offer.",
+      "declinedNoteReason": "{{name}} declined your offer: “{{reason}}”",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "done": "Done",
+      "offerAccepted": "{{name}} accepted",
+      "offerAcceptedOn": "{{name}} accepted · {{day}}",
+      "offerSkipped": "Skipped",
+      "offerSent": "Sent · open until {{day}}",
+      "offerTerms": "Terms you’re offering",
+      "signedThroughHockia": "Signed through Hockia",
+      "signedOn": "Signed through Hockia · {{day}}",
+      "waitingConfirm": "Waiting for {{name}} to confirm",
+      "confirmsToo": "{{name}} confirms it too",
+      "talkedDetail": "When you’ve both written",
+      "optional": "Optional",
+      "steps": {
+        "shortlisted": "Shortlisted",
+        "talked": "Talked",
+        "trial": "Trial or video call",
+        "offer": "Offer",
+        "signed": "Signed"
+      },
+      "header": {
+        "shortlisted": "Shortlisted",
+        "shortlistedToday": "Shortlisted today",
+        "shortlistedYesterday": "Shortlisted yesterday",
+        "shortlistedOn": "Shortlisted {{day}}",
+        "applied": "applied {{day}}"
+      },
+      "waitingLine": "Waiting for {{name}} to confirm",
+      "signedLine": "Signed through Hockia"
+    },
+    "clubNote": {
+      "offered": "You sent {{name}} an offer.",
+      "accepted": "{{name}} accepted your offer.",
+      "pending": "Waiting for {{name}} to confirm the signing.",
+      "signed": "{{name}} confirmed the signing. Signed through Hockia."
+    },
+    "markSigned": {
+      "bodyClub": "{{name}} will be asked to confirm. Then they join your squad on Hockia and the signing goes on their career.",
+      "bodyOrg": "{{name}} will be asked to confirm. Then the signing with {{org}} goes on their career.",
+      "body": "{{name}} will be asked to confirm. Then the signing goes on their career.",
+      "closeRoleNone": "No one else is waiting on this opportunity.",
+      "closeRoleWaiting_one": "The {{count}} player still waiting gets a kind note that the opportunity is filled.",
+      "closeRoleWaiting_other": "The {{count}} players still waiting get a kind note that the opportunity is filled."
+    },
+    "confirm": {
+      "title": "{{club}} marked you as signed",
+      "hideTitle": "Stop showing me to other clubs",
+      "hideDetailPlayer": "Turns off Open to play. You can switch it back any time.",
+      "hideDetailCoach": "Turns off Open to coach. You can switch it back any time."
+    },
+    "signed": {
+      "titlePlayerA": "You’re a {{club}} player",
+      "titlePlayerAn": "You’re an {{club}} player",
+      "titleCoachA": "You’re a {{club}} coach",
+      "titleCoachAn": "You’re an {{club}} coach",
+      "shareText": "I signed with {{club}} through Hockia."
+    },
+    "playerSteps": {
+      "shortlisted": "Shortlisted",
+      "offer": "Offer",
+      "signed": "Signed"
+    },
+    "lines": {
+      "playerFallback": "the player",
+      "markedSigned": "You marked {{name}} as signed. Waiting for them to confirm.",
+      "markedSignedFor": "You marked {{name}} as signed for {{role}}. Waiting for them to confirm.",
+      "offerSent": "You sent an offer for {{role}}, open until {{day}}.",
+      "offerUpdated": "You updated your offer for {{role}}, open until {{day}}.",
+      "invited": "You invited {{name}} to apply for {{role}}."
+    },
+    "errors": {
+      "roleNotOpen": "This opportunity is not open.",
+      "shortlistedOnly": "Offers can be made to shortlisted applicants only.",
+      "cannotReceive": "This player can’t receive an offer.",
+      "openUntilRange": "Open until must be a date from today up to 90 days ahead.",
+      "fieldsTooLong": "Offer fields are too long.",
+      "offerNotOpen": "This offer is no longer open.",
+      "offerExpired": "This offer has expired.",
+      "reasonTooLong": "The reason can be up to 500 characters.",
+      "withdrawOnlyLive": "Only an offer still waiting for an answer can be withdrawn.",
+      "markSignedOnly": "Only a shortlisted applicant or an accepted offer can be marked as signed.",
+      "undoOnlyPending": "Only a signing still waiting for the player can be undone.",
+      "noPendingSigning": "There is no signing waiting for your confirmation.",
+      "signingExpired": "This signing request has expired.",
+      "confirmedFinal": "A confirmed signing can’t be withdrawn.",
+      "applicationClosed": "This application is already closed.",
+      "trialShortlistedOnly": "A trial can be recorded for shortlisted applicants only.",
+      "withdrawnFinal": "A withdrawn application cannot be changed.",
+      "addClub": "Add your club to your profile to mark a signing.",
+      "notConfirmable": "This signing can’t be confirmed yet."
+    },
+    "tags": {
+      "offerSent": "Offer sent",
+      "offerAccepted": "Offer accepted",
+      "waitingConfirm": "Waiting to confirm",
+      "signed": "Signed",
+      "withdrawn": "Withdrawn",
+      "filled": "Opportunity filled"
+    },
+    "withdraw": {
+      "title": "Withdraw your application?",
+      "body": "The club will see it as withdrawn. This can’t be undone.",
+      "bodyOffered": "Any offer waiting for you is cancelled. The club will see it as withdrawn. This can’t be undone.",
+      "bodySigning": "The signing won’t go ahead. The club will see it as withdrawn. This can’t be undone."
+    },
+    "playerHint": {
+      "offered": "The club sent you an offer. Answer it in your chat with the club.",
+      "accepted": "You accepted the offer. The club will mark the signing next.",
+      "pending": "The club marked you as signed. Confirm it to add it to your career.",
+      "signed": "Signed through Hockia. It’s on your career."
+    },
+    "actionErrors": {
+      "sendOffer": "Couldn’t send the offer. Please try again.",
+      "withdrawOffer": "Couldn’t withdraw the offer. Please try again.",
+      "respondOffer": "Couldn’t send your answer. Please try again.",
+      "markSigned": "Couldn’t mark the signing. Please try again.",
+      "undoSigning": "Couldn’t undo the signing. Please try again.",
+      "confirmSigning": "Couldn’t confirm the signing. Please try again.",
+      "setTrial": "Couldn’t save the trial. Please try again.",
+      "withdrawApplication": "Couldn’t withdraw the application. Please try again."
+    },
+    "confirmPage": {
+      "documentTitle": "Signing",
+      "unavailable": "This signing isn’t available.",
+      "myApplications": "My applications",
+      "myApplicationsNotWaiting": "My applications",
+      "clubFallback": "The club",
+      "copied": "Copied. Paste it anywhere",
+      "shareFailed": "Couldn’t share. Please try again.",
+      "signedBody": "It’s on your career now. Clubs will see where you signed and that it happened through Hockia.",
+      "roleSeason": "{{role}} · {{season}}",
+      "share": "Share the news",
+      "done": "Done",
+      "expired": "This signing request has expired.",
+      "notWaiting": "There’s no signing waiting for your confirmation.",
+      "messageClub": "You can message the club if something isn’t right.",
+      "rows": {
+        "club": "Club",
+        "role": "Role",
+        "league": "League",
+        "from": "From"
+      },
+      "confirmBody": "Confirm it and it goes on your career, with “Signed through Hockia”.",
+      "clubMissing": "This signing can’t be confirmed yet: the club’s details are incomplete. Message the club, then try again.",
+      "confirm": "Yes, I signed",
+      "confirming": "Confirming…",
+      "notYet": "Not yet"
+    },
+    "serverLines": {
+      "inviteFirstLine": "{{name}} invited you to apply for {{role}}.",
+      "markedYou": "{{name}} marked you as signed for {{role}}. Confirm it on Hockia to add the signing to your career.",
+      "offerSent": "{{name}} sent you an offer for {{role}}, open until {{day}}. Open Hockia to see the terms and answer.",
+      "offerUpdated": "{{name}} updated its offer for {{role}}, open until {{day}}. Open Hockia to see the terms and answer.",
+      "applied": "{{name}} applied for {{role}}.",
+      "passedOn": "{{name}} passed on {{role}}.",
+      "offerWithdrawn": "{{name}} withdrew its offer for {{role}}.",
+      "applicationWithdrawn": "{{name}} withdrew their application for {{role}}.",
+      "offerAccepted": "{{name}} accepted the offer for {{role}}.",
+      "offerDeclined": "{{name}} declined the offer for {{role}}.",
+      "signingUndone": "{{name}} undid the signing for {{role}}.",
+      "signingConfirmed": "{{name}} confirmed the signing for {{role}}. Signed through Hockia.",
+      "yourRole": "your role"
+    },
+    "serverLinesNoName": {
+      "inviteFirstLine": "You were invited to apply for {{role}}.",
+      "markedYou": "You were marked as signed for {{role}}. Confirm it on Hockia to add the signing to your career.",
+      "offerSent": "You received an offer for {{role}}, open until {{day}}. Open Hockia to see the terms and answer.",
+      "offerUpdated": "Your offer for {{role}} was updated, open until {{day}}. Open Hockia to see the terms and answer.",
+      "applied": "A new application for {{role}}.",
+      "passedOn": "The invite for {{role}} was declined.",
+      "offerWithdrawn": "The offer for {{role}} was withdrawn.",
+      "applicationWithdrawn": "The application for {{role}} was withdrawn.",
+      "offerAccepted": "The offer for {{role}} was accepted.",
+      "offerDeclined": "The offer for {{role}} was declined.",
+      "signingUndone": "The signing for {{role}} was undone.",
+      "signingConfirmed": "The signing for {{role}} was confirmed. Signed through Hockia."
+    }
+  },
+  "invites": {
+    "limitReason_one": "You’ve sent {{count}} invite today, the daily limit. You can invite again tomorrow.",
+    "limitReason_other": "You’ve sent {{count}} invites today, the daily limit. You can invite again tomorrow.",
+    "sheetFooter": "{{name}} sees the opportunity and your note in Inbox. If they apply, they go straight to To review, marked Invited.",
+    "thisPlayer": "this player",
+    "roleFallback": "Role",
+    "offerLine": {
+      "paid": "Paid",
+      "housing": "Housing",
+      "flights": "Flights",
+      "insurance": "Insurance",
+      "job": "Job",
+      "bonuses": "Bonuses",
+      "visa": "Visa",
+      "car": "Car",
+      "equipment": "Equipment",
+      "meals": "Meals",
+      "education": "Education"
+    },
+    "note": {
+      "clubFallback": "our club",
+      "clubTeam": "{{club}}’s {{team}} team",
+      "team": {
+        "men": "Men’s",
+        "women": "Women’s",
+        "mixed": "Mixed",
+        "boys": "Boys",
+        "girls": "Girls"
+      },
+      "greetingPositionA": "Hi {{firstName}}, we’re recruiting a {{position}} for {{where}}, and your profile stood out.",
+      "greetingPositionAn": "Hi {{firstName}}, we’re recruiting an {{position}} for {{where}}, and your profile stood out.",
+      "greetingRole": "Hi {{firstName}}, {{where}} is recruiting for {{title}}, and your profile stood out.",
+      "titleFallback": "an opportunity",
+      "includes": "The opportunity includes {{list}}.",
+      "question": "Would you like to apply?",
+      "benefits": {
+        "pay": "pay",
+        "housing": "housing",
+        "flights": "flights",
+        "insurance": "insurance",
+        "job": "a job",
+        "bonuses": "bonuses",
+        "visa": "visa support",
+        "car": "a car",
+        "equipment": "equipment",
+        "meals": "meals",
+        "education": "education"
+      }
+    },
+    "errors": {
+      "passed": "This player passed on this opportunity.",
+      "cannotInvite": "This player can’t be invited to this opportunity.",
+      "alreadyApplied": "This player has already applied to one of your opportunities.",
+      "alreadyInvited": "This player already has an open invite from you.",
+      "roleNotOpen": "This opportunity is not open.",
+      "noteTooLong": "The note can be up to 500 characters.",
+      "ownRolesOnly": "You can only invite players to your own opportunities.",
+      "generic": "Couldn’t send the invite. Please try again."
+    },
+    "respondErrors": {
+      "expired": "This invitation has expired.",
+      "answered": "You’ve already answered this invitation.",
+      "generic": "Couldn’t update the invitation. Please try again."
+    },
+    "card": {
+      "playerFallback": "The player",
+      "appliedPlayer": "Applied",
+      "appliedClub": "{{name}} applied",
+      "passedPlayer": "You passed on this opportunity",
+      "passedClub": "{{name}} passed on this opportunity",
+      "closed": "This opportunity is closed",
+      "expired": "This invitation has expired",
+      "pending": "Invitation pending"
+    },
+    "sentToast": "Invite sent to {{name}}",
+    "sentToastFallback": "the player"
+  },
+  "list": {
+    "contactFallback": "Contact",
+    "previewMine": "You: {{text}}",
+    "sayHello": "Say hello",
+    "memberFallback": "Hockia member"
+  },
+  "actions": {
+    "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "block": "Block {{name}}",
+    "delete": "Delete conversation",
+    "deleteConfirm": {
+      "title": "Delete this conversation?",
+      "message": "It's removed from your inbox and the messages are cleared for you. {{name}} still has the conversation, and if they write again it comes back with only the new messages.",
+      "confirm": "Delete",
+      "busy": "Deleting…"
+    },
+    "toasts": {
+      "markUnreadFailed": "Could not mark as unread. Try again.",
+      "markReadFailed": "Could not mark as read. Try again.",
+      "deleted": "Conversation deleted",
+      "deleteFailed": "Could not delete the conversation. Try again."
+    }
+  },
+  "row": {
+    "waiting": "Waiting for your first reply",
+    "unread": "Unread",
+    "swipeRead": "Read",
+    "swipeUnread": "Unread",
+    "swipeDelete": "Delete"
+  },
+  "activity": {
+    "label": "Activity",
+    "markAllRead": "Mark all as read",
+    "empty": "Nothing new yet. Profile views, club replies and references land here.",
+    "memberFallback": "Hockia member",
+    "requestFailed": "Could not update the request. Please try again.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "groups": {
+      "today": "Today",
+      "thisWeek": "This week",
+      "earlier": "Earlier"
+    }
+  },
+  "messages": {
+    "label": "Messages",
+    "searchPlaceholder": "Search",
+    "searchLabel": "Search conversations",
+    "clearSearch": "Clear search",
+    "loadFailed": "Could not load your messages",
+    "retry": "Try again",
+    "noMatch": "No conversations match",
+    "emptyTitle": "No messages yet",
+    "noMatchHint": "Try another name.",
+    "emptyBodyClub": "Messages from players, coaches and clubs show up here.",
+    "emptyBody": "Messages with clubs, players and coaches show up here.",
+    "newMessage": "New message",
+    "memberFallback": "Hockia member",
+    "previewMine": "You: {{text}}",
+    "sayHello": "Say hello"
+  },
+  "requests": {
+    "label": "Requests",
+    "explainer": "Friends can message you, see your full media and write you a reference.",
+    "clubInvitationsLabel": "Club invitations",
+    "empty": "No requests right now.",
+    "memberFallback": "Hockia member",
+    "sentMemberFallback": "Hockia member",
+    "acceptedDetail": "You can now message and reference each other",
+    "declined": "Declined",
+    "friends": "Friends",
+    "accepting": "Accepting",
+    "accept": "Accept",
+    "declineLabel": "Decline {{name}}",
+    "sentTitle": "Sent",
+    "sentMeta": "{{identity}} · sent {{age}}",
+    "waiting": "Waiting",
+    "noMutualFriends": "No mutual friends yet",
+    "mutualFriends_one": "{{count}} mutual friend",
+    "mutualFriends_other": "{{count}} mutual friends",
+    "clubFallback": "A club",
+    "clubInviteMeta": "Invited you to join their club",
+    "clubInviteDetail": "Club invitation · {{age}}",
+    "clubAccepting": "Accepting",
+    "clubAccept": "Accept",
+    "clubDeclineLabel": "Decline {{name}}'s invitation"
+  },
+  "messagesPage": {
+    "back": {
+      "inbox": "Inbox",
+      "profile": "Profile",
+      "opportunity": "Opportunity",
+      "opportunities": "Opportunities",
+      "community": "Community",
+      "home": "Home",
+      "fallback": "Back"
+    },
+    "loadFailed": "Failed to load conversations. Please try again.",
+    "documentTitleThread": "{{name}} • Messages",
+    "documentTitleMessages": "Messages",
+    "documentTitleInbox": "Inbox",
+    "titleMessages": "Messages",
+    "titleInbox": "Inbox",
+    "newMessage": "New message",
+    "searchPlaceholder": "Search",
+    "searchLabel": "Search conversations",
+    "clearSearch": "Clear search",
+    "errorTitle": "Something went wrong",
+    "retry": "Try again",
+    "emptyTitle": "No messages yet",
+    "emptyBody": "Start a conversation with someone in the community",
+    "emptyNewMessage": "New message",
+    "loadingMore": "Loading...",
+    "loadMore": "Load more",
+    "memberFallback": "Hockia member",
+    "thisMember": "this member",
+    "selectTitle": "Select a conversation",
+    "selectBody": "Your conversations open here.",
+    "selectBodyOther": "Open Messages to read a conversation."
+  },
+  "page": {
+    "documentTitle": "Inbox",
+    "newMessage": "New message",
+    "title": "Inbox"
+  },
+  "newMessage": {
+    "recentFailed": "Could not load recent contacts. You can still search by name.",
+    "title": "New message",
+    "subtitle": "Start a conversation",
+    "searchPlaceholder": "Search by name or club...",
+    "searchResults": "Search results",
+    "recent": "Recent conversations",
+    "noResults": "No users found matching \"{{term}}\"",
+    "startTyping": "Start typing to search for users",
+    "help": "Select a person to start a conversation"
+  },
+  "safety": {
+    "removedAccount": {
+      "notice": "An account that messaged you has been removed for spam. Hockia will never ask you for money. Don't send money, crypto or personal details to people you haven't met, and be careful if someone asks to move to WhatsApp or another app. If something feels off, tap Report."
+    },
+    "blockedList": {
+      "unblocked": "{{name}} has been unblocked",
+      "unblockFailed": "Failed to unblock. Please try again.",
+      "empty": "No blocked accounts",
+      "unknownName": "Unknown",
+      "unblock": "Unblock",
+      "unblocking": "Unblocking..."
+    },
+    "block": {
+      "blocked": "{{name}} has been blocked",
+      "failed": "Could not block. Please try again.",
+      "title": "Block {{name}}?",
+      "titleNoName": "Block",
+      "message": "They can't message you or see your profile and posts, and you won't see theirs. Your conversation leaves your inbox. They aren't told. You can unblock them in Settings.",
+      "confirm": "Block",
+      "busy": "Blocking…"
+    },
+    "moreMenu": {
+      "label": "More actions",
+      "cancel": "Cancel"
+    },
+    "report": {
+      "menuLabel": "Report",
+      "thanks": "Thanks. We'll review it.",
+      "reasons": {
+        "spam": "Spam or scam",
+        "impersonation": "Fake account or impersonation",
+        "harassment": "Harassment or bullying",
+        "inappropriateContent": "Inappropriate content",
+        "hateSpeech": "Hate speech",
+        "violence": "Violence or threats",
+        "misinformation": "False information",
+        "other": "Something else"
+      },
+      "titles": {
+        "profile": "Report this profile",
+        "post": "Report this post",
+        "comment": "Report this comment",
+        "chat": "Report this chat",
+        "role": "Report this opportunity",
+        "feedItem": "Report this post",
+        "feedItemComment": "Report this comment",
+        "video": "Report this video",
+        "offer": "Report this offer"
+      },
+      "rateLimited": "You've sent a lot of reports today. Try again tomorrow.",
+      "failed": "Could not send the report. Please try again.",
+      "blockOffer": {
+        "label": "Block {{name}}?",
+        "title": "Report sent",
+        "body": "We'll review it. Do you also want to block {{name}}? They won't be able to message you, and they aren't told.",
+        "block": "Block {{name}}",
+        "notNow": "Not now"
+      },
+      "intro": "Pick a reason. We won't tell them you reported this.",
+      "reasonLabel": "Reason",
+      "noteLabel": "Anything else? (optional)",
+      "notePlaceholder": "Add details that help us review it",
+      "send": "Send report",
+      "sending": "Sending…",
+      "cancel": "Cancel"
+    }
+  },
+  "contact": {
+    "title": "Contact us",
+    "close": "Close",
+    "body": "Questions before joining Hockia? We're happy to help — reach the team at:",
+    "copyLabel": "Copy email address",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Couldn't copy automatically — tap the address above to select it.",
+    "openEmailApp": "Open email app"
+  },
+  "newConversationLimit": {
+    "message": "You've started a lot of new conversations today. You can start more tomorrow."
+  },
+  "segments": {
+    "messages": "Messages",
+    "requests": "Requests",
+    "activity": "Activity",
+    "ariaLabel": "Inbox sections"
+  },
+  "clubInbox": {
+    "week": {
+      "toReview": "to review",
+      "views_one": "profile view",
+      "views_other": "profile views",
+      "openRoles_one": "open opportunity",
+      "openRoles_other": "open opportunities"
+    },
+    "applied": "Applied",
+    "roleLineApplied": "{{base}} · {{applied}}",
+    "waitingTitle_one": "{{count}} person waiting for a first reply",
+    "waitingTitle_other": "{{count}} people waiting for a first reply",
+    "waitingSubOne": "They applied to your opportunities.",
+    "waitingSubAll": "All of them applied to your opportunities.",
+    "waitingSubSome": "{{count}} of them applied to your opportunities.",
+    "cardTitle": "Applied to {{role}}",
+    "cardTitleNone": "Applied to one of your opportunities",
+    "status": {
+      "shortlisted": "shortlisted",
+      "maybe": "marked maybe",
+      "rejected": "not a fit",
+      "withdrawn": "withdrawn by the player",
+      "offered": "offer sent",
+      "accepted": "offer accepted",
+      "signed_pending_confirmation": "signing to confirm",
+      "signed": "signed",
+      "offer_declined": "offer declined",
+      "filled": "opportunity filled"
+    },
+    "closesToday": "closes today",
+    "daysLeft_one": "{{count}} day left to reply",
+    "daysLeft_other": "{{count}} days left to reply",
+    "closedOn": "closed without a reply on {{day}}",
+    "closed": "closed without a reply",
+    "emptyTitle": "No messages yet",
+    "emptyBody": "A short hello goes a long way. Most applicants never hear back."
+  }
+}

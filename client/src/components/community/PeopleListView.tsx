@@ -11,7 +11,7 @@ import { useNavigationType } from 'react-router-dom'
 import { useOpenRoleCounts } from '@/hooks/useOpenRoleCounts'
 import { logger } from '@/lib/logger'
 import { isAuthExpiredError, isNetworkFailureError } from '@/lib/sentryHelpers'
-import { NETWORK_ERROR_COPY, couldntLoadTitle } from '@/lib/networkCopy'
+import { networkErrorCopy, couldntLoadTitle } from '@/lib/networkCopy'
 import { CommunitySkeletons } from './CommunitySkeletons'
 import { skeletonKindFor } from '@/lib/communitySkeleton'
 import { isOpenToAny } from '@/lib/hockeyCategories'
@@ -58,6 +58,7 @@ import { fitStateFromVerdict } from '@/lib/recruiterVerdict'
 import type { FitState } from '@/lib/clubRecruiting'
 import { MemberPhotoGrid } from './photo/MemberPhotoGrid'
 import { PROFILES_SELECT } from '@/lib/communitySelect'
+import { useCommunityT } from '@/i18n/ns/community'
 
 export interface Profile {
   id: string
@@ -203,6 +204,7 @@ const EMPTY_CATEGORIES: PlayingCategory[] = []
 const EMPTY_IDS: number[] = []
 
 export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, onEuCountChange, scopeReshaping = false, clubView = false }: PeopleListViewProps) {
+  const t = useCommunityT()
   const navigationType = useNavigationType()
   // `loading` flips false once the auth session + profile resolve.
   // Gating the fetch on it prevents the historical double-fire:
@@ -1338,12 +1340,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   }, [clubView, clubFit.fit, matchById, coachMatchById])
 
   // The deck's top label (Figma P18): what this list is · how it's sorted.
-  const ROLE_TITLE = { player: 'Players', coach: 'Coaches', club: 'Clubs', brand: 'Brands', umpire: 'Umpires' } as const
-  const SORT_LABEL = { newest: 'Newest', completeness: 'Most complete', evidence: 'Strongest evidence' } as const
-  const deckContextLabel = [
-    isNarrowed ? 'Matching members' : roleFilter ? ROLE_TITLE[roleFilter] : 'All members',
-    clubView && sort === 'newest' ? 'Best fit' : SORT_LABEL[sort as keyof typeof SORT_LABEL] ?? 'Newest',
-  ].join(' · ')
+  const SORT_KEYS = ['newest', 'completeness', 'evidence'] as const
+  const sortKey = (SORT_KEYS as readonly string[]).includes(sort) ? (sort as typeof SORT_KEYS[number]) : 'newest'
+  const deckContextLabel = t('people.deckLabel', {
+    list: isNarrowed ? t('people.deckList.matching') : roleFilter ? t(`people.deckList.${roleFilter}`) : t('people.deckList.all'),
+    sort: clubView && sort === 'newest' ? t('people.deckSort.bestFit') : t(`people.deckSort.${sortKey}`),
+  })
 
   const isBusy = isLoading || isSearching || authLoading
   // A brand never lists itself, so on the Brands tab "No members yet" reads as broken (iOS audit 2026-11-06).
@@ -1360,7 +1362,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         <div className="pointer-events-none fixed left-1/2 top-20 z-30 -translate-x-1/2 animate-fade-in">
           <span className="inline-flex items-center gap-2 rounded-full border border-hockia-primary/20 bg-white/95 px-4 py-2 text-xs font-medium text-gray-700 shadow-lg backdrop-blur">
             <Loader2 className="h-3.5 w-3.5 animate-spin text-hockia-primary" />
-            Updating matches…
+            {t('people.updating')}
           </span>
         </div>
       )}
@@ -1372,9 +1374,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             <Users className="h-7 w-7" strokeWidth={1.8} aria-hidden="true" />
           </span>
           <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{couldntLoadTitle(roleFilter)}</h3>
-          <p className="mt-2 text-row text-ink-2">{NETWORK_ERROR_COPY}</p>
+          <p className="mt-2 text-row text-ink-2">{networkErrorCopy()}</p>
           <button type="button" onClick={() => void fetchMembers()} className="mt-5 inline-flex h-11 items-center rounded-full bg-hockia-primary px-6 text-body font-semibold text-white">
-            Try again
+            {t('people.retry')}
           </button>
         </div>
       ) : (!isBusy && displayedMembers.length === 0) ? (
@@ -1382,16 +1384,16 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
             <Search className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
           </span>
-          <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{isNarrowed || scopeHasNarrowing ? 'No members match' : brandSeesOnlyItself ? 'No other brands yet' : 'No members yet'}</h3>
+          <h3 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{isNarrowed || scopeHasNarrowing ? t('people.emptyMatchTitle') : brandSeesOnlyItself ? t('people.emptyBrandsTitle') : t('people.emptyTitle')}</h3>
           <p className="mt-2 text-row text-ink-2">
             {scopeHasNarrowing
-              ? 'No players match your recruiting context yet. Tap “Show everyone” to widen, or change the context.'
-              : isNarrowed ? 'Try a different search or fewer filters. New members join every week.'
-              : brandSeesOnlyItself ? 'Other brands show up here when they join Hockia.' : 'New members join every week.'}
+              ? t('people.emptyScopeBody')
+              : isNarrowed ? t('people.emptyMatchBody')
+              : brandSeesOnlyItself ? t('people.emptyBrandsBody') : t('people.emptyBody')}
           </p>
           {isNarrowed && (
             <button type="button" onClick={clearFilters} className="mt-5 inline-flex h-11 items-center rounded-full border-[1.5px] border-line bg-white px-6 text-row font-semibold text-ink-1">
-              Clear filters
+              {t('people.clearFilters')}
             </button>
           )}
         </div>

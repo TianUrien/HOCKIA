@@ -7,7 +7,8 @@
  * suggest the profile to clubs; off stops it (brief 403:2).
  */
 import type { LeagueInput, PassportInput } from '@/lib/keyFacts'
-import { SELF_REPORTED_LABEL } from '@/lib/keyFacts'
+import { tProfileEdit } from '@/i18n/ns/profileEdit'
+import { isEnglish } from '@/i18n/format'
 
 export type ChecklistKey = 'passport' | 'video' | 'league'
 
@@ -18,10 +19,6 @@ export interface ChecklistRow {
   detail: string
 }
 
-function plural(n: number, one: string, many: string) {
-  return `${n} ${n === 1 ? one : many}`
-}
-
 export function openToPlayChecklist(input: {
   passports: PassportInput[]
   fullMatches: number
@@ -30,40 +27,50 @@ export function openToPlayChecklist(input: {
 }): ChecklistRow[] {
   const passports = input.passports.filter((p) => p.name.trim())
   const video = [
-    input.fullMatches > 0 ? plural(input.fullMatches, 'full match', 'full matches') : null,
-    input.highlights > 0 ? plural(input.highlights, 'highlight', 'highlights') : null,
+    input.fullMatches > 0 ? tProfileEdit('openToPlay.checklist.fullMatches', { count: input.fullMatches }) : null,
+    input.highlights > 0 ? tProfileEdit('openToPlay.checklist.highlights', { count: input.highlights }) : null,
   ].filter(Boolean).join(' · ')
   const leagueName = input.league?.name?.trim() || null
+  const notSet = tProfileEdit('openToPlay.checklist.notSet')
   return [
     {
       key: 'passport',
-      label: 'Passport',
+      label: tProfileEdit('openToPlay.checklist.passport'),
       done: passports.length > 0,
-      detail: passports.length > 0 ? passports.map((p) => (p.flag ? `${p.flag} ${p.name}` : p.name)).join(' · ') : 'Not set',
+      detail: passports.length > 0 ? passports.map((p) => (p.flag ? `${p.flag} ${p.name}` : p.name)).join(' · ') : notSet,
     },
-    { key: 'video', label: 'Match video', done: video.length > 0, detail: video || 'Not set' },
+    { key: 'video', label: tProfileEdit('openToPlay.checklist.video'), done: video.length > 0, detail: video || notSet },
     {
       key: 'league',
-      label: 'League',
+      label: tProfileEdit('openToPlay.checklist.league'),
       done: leagueName !== null,
-      detail: leagueName ? (input.league?.source === 'self_reported' ? `${leagueName} · ${SELF_REPORTED_LABEL}` : leagueName) : 'Not set',
+      detail: leagueName ? (input.league?.source === 'self_reported' ? tProfileEdit('openToPlay.checklist.leagueSelfReported', { league: leagueName }) : leagueName) : notSet,
     },
   ]
 }
 
-/** "midfielder" from 'midfielder' / 'Midfielder'; "player" when unknown. */
+const KNOWN_POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
+type KnownPosition = (typeof KNOWN_POSITIONS)[number]
+
+/** "a midfielder" from 'midfielder' / 'Midfielder'; "a player" when unknown. */
 function roleNoun(position: string | null | undefined): string {
   const p = position?.trim().toLowerCase().replace(/_/g, ' ')
-  return p || 'player'
+  if (!p) return tProfileEdit('openToPlay.consent.player')
+  if ((KNOWN_POSITIONS as readonly string[]).includes(p)) return tProfileEdit(`openToPlay.consent.${p as KnownPosition}`)
+  // A position outside the four: English names it as stored; other languages say "player".
+  if (!isEnglish()) return tProfileEdit('openToPlay.consent.player')
+  return `${/^[aeiou]/.test(p) ? 'an' : 'a'} ${p}`
 }
 
 export function openToPlayConsent(open: boolean, position: string | null | undefined): string {
-  const who = roleNoun(position)
-  const article = /^[aeiou]/.test(who) ? 'an' : 'a'
-  return open
-    ? `While you’re open to play, Hockia can suggest your profile to clubs looking for ${article} ${who}. Turn this off and you stop being suggested.`
-    : `Turn this on and Hockia can suggest your profile to clubs looking for ${article} ${who}. While it’s off, you aren’t suggested.`
+  const role = roleNoun(position)
+  return open ? tProfileEdit('openToPlay.consent.on', { role }) : tProfileEdit('openToPlay.consent.off', { role })
 }
 
-export const UNDER_18_COPY = 'Open to play is for players 18 and over. Until then clubs aren’t suggested your profile. You can still keep it up to date.'
-export const DOB_REQUIRED_COPY = 'Open to play is for players 18 and over. Add your date of birth to turn it on. It never shows on your profile.'
+export function getUnder18Copy(): string {
+  return tProfileEdit('openToPlay.copy.under18')
+}
+
+export function getDobRequiredCopy(): string {
+  return tProfileEdit('openToPlay.copy.dobRequired')
+}

@@ -10,6 +10,7 @@
 
 import { supabase } from './supabase'
 import { logger } from './logger'
+import { tAuth } from '@/i18n/ns/auth'
 
 export interface RateLimitResult {
   allowed: boolean
@@ -143,11 +144,11 @@ export const formatRateLimitError = (result: RateLimitResult): string => {
   const diffMinutes = Math.ceil(diffMs / 60000)
 
   if (diffMinutes <= 1) {
-    return 'Too many attempts. Please try again in a minute.'
+    return tAuth('rateLimit.oneMinute')
   } else if (diffMinutes < 60) {
-    return `Too many attempts. Please try again in ${diffMinutes} minutes.`
+    return tAuth('rateLimit.minutes', { count: diffMinutes })
   } else {
     const diffHours = Math.ceil(diffMinutes / 60)
-    return `Too many attempts. Please try again in ${diffHours} hour${diffHours > 1 ? 's' : ''}.`
+    return tAuth('rateLimit.hours', { count: diffHours })
   }
 }

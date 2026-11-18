@@ -6,6 +6,10 @@
  */
 import { brandCategoryLabel, coachSpecialtyLabel, positionLabel } from '@/lib/identity'
 import { getInitials } from '@/lib/utils'
+import { tCommunity } from '@/i18n/ns/community'
+import { tEnums } from '@/i18n/ns/enums'
+import { intlLocale, isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 export type CommunityRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -36,16 +40,17 @@ export interface CardMember {
 }
 
 /** The team a player plays in, as the card says it ("Men’s", "Women’s"). */
-const TEAM_LABEL: Record<string, string> = {
-  adult_men: 'Men’s',
-  adult_women: 'Women’s',
-  mixed: 'Mixed',
-  girls: 'Girls',
-  boys: 'Boys',
-}
+const TEAM_KEYS = ['adult_men', 'adult_women', 'mixed', 'girls', 'boys'] as const
+type TeamKey = (typeof TEAM_KEYS)[number]
 
 export function teamLabel(category: string | null | undefined): string | null {
-  return category ? TEAM_LABEL[category] ?? null : null
+  if (!category || !(TEAM_KEYS as readonly string[]).includes(category)) return null
+  return tCommunity(`card.team.${category as TeamKey}`)
+}
+
+/** Month names for card dates: en-GB in English (unchanged copy), the interface language otherwise. */
+function cardDateLocale(): string {
+  return isEnglish() ? 'en-GB' : intlLocale()
 }
 
 /**
@@ -55,21 +60,23 @@ export function teamLabel(category: string | null | undefined): string | null {
 export function cardRoleLine(m: CardMember): string {
   switch (m.role) {
     case 'player': {
-      const parts = [positionLabel(m.position) ?? 'Player', teamLabel(m.playing_category)].filter(Boolean)
-      return parts.join(' · ')
+      const position = positionLabel(m.position) ?? tEnums('role.player')
+      const team = teamLabel(m.playing_category)
+      return team ? tCommunity('card.roleLine.player', { position, team }) : position
     }
     case 'coach': {
       const spec = coachSpecialtyLabel(m.coach_specialization ?? null, m.coach_specialization_custom ?? null)
-      return spec && spec !== 'Coach' ? `Coach · ${spec}` : 'Coach'
+      const plain = tEnums('role.coach')
+      return spec && spec !== plain && spec !== tEnums('coachSpecialization.other_coach') ? tCommunity('card.roleLine.coach', { specialty: spec }) : plain
     }
     case 'umpire':
-      return m.umpire_level?.trim() ? `Umpire · ${m.umpire_level.trim()}` : 'Umpire'
+      return m.umpire_level?.trim() ? tCommunity('card.roleLine.umpire', { level: m.umpire_level.trim() }) : tEnums('role.umpire')
     case 'brand': {
       const cat = brandCategoryLabel(m.brand_category ?? null)
-      return cat ? `Brand · ${cat}` : 'Brand'
+      return cat ? tCommunity('card.roleLine.brand', { category: cat }) : tEnums('role.brand')
     }
     default:
-      return 'Club'
+      return tEnums('role.club')
   }
 }
 
@@ -118,7 +125,7 @@ export function displayPlace(location: string | null | undefined, countryId: num
     // "kisumu" → "Kisumu": only a city typed all lowercase is touched.
     if (city && city === city.toLowerCase()) city = city.replace(/(^|[\s-])(\p{L})/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase())
   }
-  return { city, country: country ? country.common_name || country.name : null, flag: country?.flag_emoji ?? null }
+  return { city, country: country ? countryLabel(country.common_name || country.name) : null, flag: country?.flag_emoji ?? null }
 }
 
 /** "🇮🇹 Rome" — or "🇮🇹 Italy" with no city; null when nothing is known. */
@@ -219,11 +226,11 @@ export function clubMetaLine(opts: {
   place: string | null
 }): string {
   if (opts.recruiting) {
-    const roles = opts.positions.map((p) => (p === 'coach' ? 'Coach' : positionLabel(p) ?? p)).filter(Boolean)
+    const roles = opts.positions.map((p) => (p === 'coach' ? tEnums('role.coach') : positionLabel(p) ?? p)).filter(Boolean)
     const unique = [...new Set(roles)]
-    return unique.length > 0 ? `Recruiting · ${unique.join(', ')}` : 'Recruiting'
+    return unique.length > 0 ? tCommunity('card.recruitingFor', { positions: unique.join(', ') }) : tCommunity('card.recruiting')
   }
-  return [opts.league, opts.place].filter(Boolean).join(' · ') || 'Club'
+  return [opts.league, opts.place].filter(Boolean).join(' · ') || tEnums('role.club')
 }
 
 /**
@@ -236,10 +243,10 @@ export function availableLabel(m: CardMember, now = new Date()): string | null {
   const open = m.role === 'coach' ? m.open_to_coach : m.open_to_play
   if (!open) return null
   const from = m.available_from ? new Date(m.available_from) : null
-  if (!from || Number.isNaN(from.getTime()) || from <= now) return 'Now'
-  const month = from.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' })
+  if (!from || Number.isNaN(from.getTime()) || from <= now) return tCommunity('card.availableNow')
+  const month = from.toLocaleDateString(cardDateLocale(), { month: 'short', timeZone: 'UTC' })
   const withinYear = from.getTime() - now.getTime() < 330 * 24 * 3600 * 1000
-  return withinYear ? `From ${month}` : `From ${month} ${from.getUTCFullYear()}`
+  return withinYear ? tCommunity('card.availableFrom', { month }) : tCommunity('card.availableFromYear', { month, year: from.getUTCFullYear() })
 }
 
 /** "Friends since Sep 2026". */
@@ -247,19 +254,19 @@ export function friendsSinceLabel(acceptedAt: string | null | undefined): string
   if (!acceptedAt) return null
   const d = new Date(acceptedAt)
   if (Number.isNaN(d.getTime())) return null
-  return `Friends since ${d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`
+  return tCommunity('card.friendsSince', { date: d.toLocaleDateString(cardDateLocale(), { month: 'short', year: 'numeric', timeZone: 'UTC' }) })
 }
 
 /** "3 friends in common" / "1 friend in common". */
 export function inCommonCountLabel(n: number): string | null {
   if (n <= 0) return null
-  return n === 1 ? '1 friend in common' : `${n} friends in common`
+  return tCommunity('card.inCommon', { count: n })
 }
 
 /** "3 of your friends play here" / "1 of your friends plays here". */
 export function friendsHereLabel(n: number): string | null {
   if (n <= 0) return null
-  return n === 1 ? '1 of your friends plays here' : `${n} of your friends play here`
+  return tCommunity('card.friendsHere', { count: n })
 }
 
 /**

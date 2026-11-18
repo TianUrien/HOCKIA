@@ -34,7 +34,8 @@ type ApplicationStatus = Database['public']['Enums']['application_status']
 const COMPONENTS_DIR = resolve(__dirname, '..', 'components')
 const PAGES_DIR = resolve(__dirname, '..', 'pages')
 const TAB_SOURCE = readFileSync(resolve(COMPONENTS_DIR, 'OpportunitiesTab.tsx'), 'utf-8')
-const DELETE_MODAL_SOURCE = readFileSync(resolve(COMPONENTS_DIR, 'DeleteOpportunityModal.tsx'), 'utf-8')
+// The modal's words live in the club catalog since the Spanish localization.
+const DELETE_MODAL_SOURCE = readFileSync(resolve(COMPONENTS_DIR, 'DeleteOpportunityModal.tsx'), 'utf-8') + readFileSync(resolve(__dirname, '..', 'locales', 'en', 'club.json'), 'utf-8')
 const APPLICANTS_LIST_SOURCE = readFileSync(resolve(PAGES_DIR, 'ApplicantsList.tsx'), 'utf-8')
 
 vi.mock('react-router-dom', async () => {
@@ -197,8 +198,11 @@ describe('ApplicantCard — tier pill dropdown', () => {
 describe('Opportunities source — delete draft menu', () => {
   it('delete menu item is available for draft AND closed statuses', () => {
     expect(TAB_SOURCE).toContain("vacancy.status === 'closed' || vacancy.status === 'draft'")
-    expect(TAB_SOURCE).toContain("'Delete draft'")
-    expect(TAB_SOURCE).toContain("'Delete permanently'")
+    // The words live in the opportunities catalog since the Spanish localization.
+    const catalog = readFileSync(resolve(__dirname, '..', 'locales', 'en', 'opportunities.json'), 'utf-8')
+    expect(TAB_SOURCE).toContain("t('manage.menu.deleteDraft')")
+    expect(catalog).toContain('"deleteDraft": "Delete draft"')
+    expect(catalog).toContain('"deletePermanently": "Delete permanently"')
   })
 
   it('DeleteOpportunityModal has isDraft prop with draft-specific messaging', () => {
@@ -261,10 +265,10 @@ describe('ApplicantCard — reference trust signal', () => {
 
 describe('ApplicantsList source — tier grouping', () => {
   it('defines all 4 tier groups in correct order', () => {
-    const unsortedIdx = APPLICANTS_LIST_SOURCE.indexOf("label: 'Unsorted'")
-    const shortlistedIdx = APPLICANTS_LIST_SOURCE.indexOf("label: 'Top pick'")
-    const maybeIdx = APPLICANTS_LIST_SOURCE.indexOf("label: 'Maybe'")
-    const notAFitIdx = APPLICANTS_LIST_SOURCE.indexOf("label: 'Not a fit'")
+    const unsortedIdx = APPLICANTS_LIST_SOURCE.indexOf("tRecruiting('applicantsList.tiers.unsorted')")
+    const shortlistedIdx = APPLICANTS_LIST_SOURCE.indexOf("tRecruiting('applicantsList.tiers.topPick')")
+    const maybeIdx = APPLICANTS_LIST_SOURCE.indexOf("tRecruiting('applicantsList.tiers.maybe')")
+    const notAFitIdx = APPLICANTS_LIST_SOURCE.indexOf("tRecruiting('applicantsList.tiers.notAFit')")
 
     expect(unsortedIdx).toBeGreaterThan(-1)
     expect(shortlistedIdx).toBeGreaterThan(unsortedIdx)
@@ -279,6 +283,6 @@ describe('ApplicantsList source — tier grouping', () => {
   it('uses optimistic status update with error rollback', () => {
     expect(APPLICANTS_LIST_SOURCE).toContain('Optimistic update')
     expect(APPLICANTS_LIST_SOURCE).toContain("update({ status: newStatus, metadata: nextMeta })")
-    expect(APPLICANTS_LIST_SOURCE).toContain("Failed to update status")
+    expect(APPLICANTS_LIST_SOURCE).toContain("t('applicantsList.errors.updateFailed')")
   })
 })

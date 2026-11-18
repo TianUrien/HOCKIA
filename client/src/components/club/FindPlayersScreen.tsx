@@ -27,6 +27,7 @@ import {
   type ScoutRow,
 } from '@/lib/findPlayers'
 import { cn } from '@/lib/utils'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 // The invite sheet (D3.2) is its own chunk: opened on demand.
 const InviteSheet = lazy(() => import('./InviteSheet'))
@@ -40,6 +41,7 @@ const InviteSheet = lazy(() => import('./InviteSheet'))
  * 18+ only (server). Clubs and recruiting coaches; phone only.
  */
 export default function FindPlayersScreen() {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const location = useLocation()
   const [params, setParams] = useSearchParams()
@@ -120,23 +122,23 @@ export default function FindPlayersScreen() {
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="find-players-screen">
       <DetailNavBar
-        parent="Opportunities"
+        parent={t('findPlayersScreen.backOpportunities')}
         fallbackPath="/opportunities"
         trailing={(
-          <button type="button" onClick={() => navigate('/dashboard/shortlist', { state: { from: location.pathname, parent: 'Find players' } })} className="flex h-11 items-center gap-1.5 px-2 text-body text-hockia-primary" data-testid="find-players-shortlist-link">
+          <button type="button" onClick={() => navigate('/dashboard/shortlist', { state: { from: location.pathname, parent: t('findPlayersScreen.title') } })} className="flex h-11 items-center gap-1.5 px-2 text-body text-hockia-primary" data-testid="find-players-shortlist-link">
             <Star className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
-            <span>Shortlist{shortlist.loading ? '' : ` · ${count}`}</span>
+            <span>{shortlist.loading ? t('findPlayersScreen.shortlistLink') : t('findPlayersScreen.shortlistLinkCount', { count })}</span>
           </button>
         )}
       />
       <div className="px-5 pb-3 pt-0.5">
-        <h1 className="text-[30px] font-bold leading-9 tracking-[-0.36px] text-ink-1">Find players</h1>
+        <h1 className="text-[30px] font-bold leading-9 tracking-[-0.36px] text-ink-1">{t('findPlayersScreen.title')}</h1>
         <div className="flex items-center gap-2 pt-1">
           <RankedForPill label={contextPillLabel(ctx)} onClick={() => setSheet(true)} />
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Filters">
+      <div className="flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label={t('findPlayersScreen.filtersLabel')}>
         {chips.map((c) => {
           const on = filters.has(c.id)
           return (
@@ -153,8 +155,8 @@ export default function FindPlayersScreen() {
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
             <p className="text-secondary leading-[18px] text-ink-2">
               {levelUnknown
-                ? `${ownLeague?.name} has no level on Hockia yet, so fit can’t compare levels. Players are ranked by full matches, highlights and career.`
-                : 'No opportunity picked. Players are ranked by full matches, highlights and career. Pick an opportunity to see fit.'}
+                ? t('findPlayersScreen.levelUnknown', { league: ownLeague?.name ?? '' })
+                : t('findPlayersScreen.noContext')}
             </p>
           </div>
         </div>
@@ -162,9 +164,9 @@ export default function FindPlayersScreen() {
 
       {limitReason && rows.length > 0 && <InviteLimitNotice reason={limitReason} />}
       {data.error && <p className="px-5 py-3 text-row text-ink-2">{data.error}</p>}
-      {data.loading && <p className="px-5 py-4 text-row text-ink-3" aria-live="polite">Finding players…</p>}
+      {data.loading && <p className="px-5 py-4 text-row text-ink-3" aria-live="polite">{t('findPlayersScreen.loading')}</p>}
       {!data.loading && !data.error && rows.length === 0 && (
-        <p className="px-5 py-4 text-row text-ink-3">{filters.size ? 'No players match these filters.' : 'No players to show yet.'}</p>
+        <p className="px-5 py-4 text-row text-ink-3">{filters.size ? t('findPlayersScreen.emptyFiltered') : t('findPlayersScreen.empty')}</p>
       )}
 
       <div className="pt-1.5">
@@ -173,17 +175,17 @@ export default function FindPlayersScreen() {
           const saved = writes.inList(r.id)
           const shortlistToggle = saved
             ? (
-              <button type="button" onClick={() => void writes.remove(r.id)} aria-label={`Remove ${r.full_name ?? 'player'} from the shortlist`} aria-pressed="true" className="relative before:absolute before:-inset-1 before:content-[''] flex h-9 w-9 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
+              <button type="button" onClick={() => void writes.remove(r.id)} aria-label={r.full_name != null ? t('findPlayersScreen.removeNamed', { name: r.full_name }) : t('findPlayersScreen.removePlayer')} aria-pressed="true" className="relative before:absolute before:-inset-1 before:content-[''] flex h-9 w-9 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
                 <Check className="h-[18px] w-[18px]" strokeWidth={2.4} />
               </button>
             )
             : (
-              <button type="button" onClick={() => void writes.add(r.id)} aria-label={`Shortlist ${r.full_name ?? 'player'}`} aria-pressed="false" className="relative before:absolute before:-inset-1 before:content-[''] flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
+              <button type="button" onClick={() => void writes.add(r.id)} aria-label={r.full_name != null ? t('findPlayersScreen.shortlistNamed', { name: r.full_name }) : t('findPlayersScreen.shortlistPlayer')} aria-pressed="false" className="relative before:absolute before:-inset-1 before:content-[''] flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
                 <Plus className="h-[18px] w-[18px]" strokeWidth={2.2} />
               </button>
             )
           const trailing = r.applicationId
-            ? <button type="button" onClick={() => openApplied(r)} className="relative rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2 before:absolute before:-inset-2 before:content-['']">Applied</button>
+            ? <button type="button" onClick={() => openApplied(r)} className="relative rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2 before:absolute before:-inset-2 before:content-['']">{t('findPlayersScreen.applied')}</button>
             : (
               <span className="flex items-center gap-2">
                 <InviteAction pill={inviteStatuses.pillFor(r.id)} invitable={isInvitablePlayer(r)} limitReason={limitReason} onInvite={() => setInviteFor(r)} />

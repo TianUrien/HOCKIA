@@ -33,6 +33,9 @@ import StorageImage from './StorageImage'
 import WorldClubSearch, { type WorldClubSearchResult } from './WorldClubSearch'
 import CountrySelect from './CountrySelect'
 import { useCountries } from '@/hooks/useCountries'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
+import { monthLong, monthShort } from '@/lib/careerCopy'
+import { countryLabel } from '@/i18n/countryNames'
 
 type EditableJourneyEntry = Omit<
   CareerHistory,
@@ -52,7 +55,8 @@ type EditableJourneyEntry = Omit<
 type JourneyType = CareerHistory['entry_type']
 
 type EntryTypeMeta = {
-  label: string
+  /** Catalog key under journey.type, translated where rendered. */
+  labelKey: 'club' | 'nationalTeam' | 'achievement' | 'tournament' | 'milestone' | 'academy' | 'other'
   dotClass: string
   badgeClass: string
   icon: ComponentType<{ className?: string }>
@@ -66,43 +70,43 @@ const getJourneyDraftKey = (context: JourneyDraftContext, userId: string) =>
 
 const entryTypeMeta: Record<JourneyType, EntryTypeMeta> = {
   club: {
-    label: 'Club',
+    labelKey: 'club',
     dotClass: 'bg-role-club-ink/95 text-white',
     badgeClass: 'bg-role-club-bg text-role-club-ink',
     icon: Building2,
   },
   national_team: {
-    label: 'Representative Team',
+    labelKey: 'nationalTeam',
     dotClass: 'bg-emerald-500/95 text-white',
     badgeClass: 'bg-emerald-50 text-emerald-700',
     icon: Globe2,
   },
   achievement: {
-    label: 'Achievement / Award',
+    labelKey: 'achievement',
     dotClass: 'bg-hockia-primary/95 text-white',
     badgeClass: 'bg-hockia-soft text-hockia-primary',
     icon: Trophy,
   },
   tournament: {
-    label: 'Tournament',
+    labelKey: 'tournament',
     dotClass: 'bg-indigo-500/95 text-white',
     badgeClass: 'bg-indigo-50 text-indigo-700',
     icon: Flag,
   },
   milestone: {
-    label: 'Milestone',
+    labelKey: 'milestone',
     dotClass: 'bg-pink-500/95 text-white',
     badgeClass: 'bg-pink-50 text-pink-700',
     icon: Star,
   },
   academy: {
-    label: 'Academy',
+    labelKey: 'academy',
     dotClass: 'bg-sky-500/95 text-white',
     badgeClass: 'bg-sky-50 text-sky-700',
     icon: GraduationCap,
   },
   other: {
-    label: 'Other',
+    labelKey: 'other',
     dotClass: 'bg-slate-500/95 text-white',
     badgeClass: 'bg-gray-100 text-gray-700',
     icon: Sparkles,
@@ -113,27 +117,10 @@ const entryTypeMeta: Record<JourneyType, EntryTypeMeta> = {
 // missing here even though the dashboard's JourneyCard counts and
 // renders it, so users were told a category existed they couldn't
 // create. Adding it closes the loop.
-const ENTRY_TYPES: { id: JourneyType; label: string }[] = [
-  { id: 'club', label: entryTypeMeta.club.label },
-  { id: 'national_team', label: entryTypeMeta.national_team.label },
-  { id: 'achievement', label: entryTypeMeta.achievement.label },
-  { id: 'milestone', label: entryTypeMeta.milestone.label },
-]
+const ENTRY_TYPES: JourneyType[] = ['club', 'national_team', 'achievement', 'milestone']
 
-const MONTH_OPTIONS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-].map((label, index) => ({ label, value: String(index) }))
+// Month names come from the interface language each render (monthLong).
+const MONTH_VALUES = Array.from({ length: 12 }, (_, index) => index)
 
 const CURRENT_YEAR = new Date().getUTCFullYear()
 
@@ -212,8 +199,9 @@ export default function JourneyTab({
   profileId,
   readOnly = false,
   variant = 'tab',
-  title = 'Career history',
+  title,
 }: JourneyTabProps) {
+  const t = useProfileEditT()
   const { getCountryById } = useCountries()
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
@@ -377,11 +365,11 @@ export default function JourneyTab({
       setJourney(normalized)
     } catch (error) {
       logger.error('Error fetching journey entries:', error)
-      addToast('Failed to load career history.', 'error')
+      addToast(t('journey.toast.loadFailed'), 'error')
     } finally {
       setIsLoading(false)
     }
-  }, [targetUserId, addToast])
+  }, [targetUserId, addToast, t])
 
   useEffect(() => {
     if (targetUserId) {
@@ -413,12 +401,12 @@ export default function JourneyTab({
       setActiveEntryDraft(parsedDraft)
       setActiveDraftContext(parsedContext)
       journeyDraftRestoredRef.current = true
-      addToast('Draft restored.', 'info')
+      addToast(t('journey.toast.draftRestored'), 'info')
     } catch (error) {
       logger.error('Failed to restore journey draft', error)
       window.localStorage.removeItem(contextKey)
     }
-  }, [activeEntryDraft, activeFormType, addToast, canManage, user])
+  }, [activeEntryDraft, activeFormType, addToast, canManage, user, t])
 
   useEffect(() => {
     if (!canManage || !user) return
@@ -447,7 +435,7 @@ export default function JourneyTab({
 
   const startNewEntryForm = () => {
     if (!canManage || !user) {
-      addToast('Please sign in to manage your career history.', 'info')
+      addToast(t('journey.toast.signInToManage'), 'info')
       return
     }
 
@@ -568,7 +556,7 @@ export default function JourneyTab({
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!user) {
-      addToast('Please sign in to upload images.', 'info')
+      addToast(t('journey.toast.signInToUpload'), 'info')
       return
     }
     if (!activeEntryDraft) return
@@ -582,7 +570,7 @@ export default function JourneyTab({
     const file = files[0]
     const validation = validateImage(file, { maxFileSizeMB: 5 })
     if (!validation.valid) {
-      addToast(validation.error ?? 'Invalid image file.', 'error')
+      addToast(validation.error ?? t('journey.toast.invalidImage'), 'error')
       input.value = ''
       return
     }
@@ -636,10 +624,10 @@ export default function JourneyTab({
       }
       pendingCleanup.unqueue(data.publicUrl)
 
-      addToast('Image uploaded successfully.', 'success')
+      addToast(t('journey.toast.imageUploaded'), 'success')
     } catch (error) {
       logger.error('Error uploading journey image:', error)
-      addToast('We couldn’t upload this image. Please use PNG or JPG up to 5MB.', 'error')
+      addToast(t('journey.toast.imageUploadFailed'), 'error')
     } finally {
       setUploadingImageId(null)
       input.value = ''
@@ -668,10 +656,10 @@ export default function JourneyTab({
       }
 
       updateField('image_url', null as EditableJourneyEntry['image_url'])
-      addToast('Image removed.', 'success')
+      addToast(t('journey.toast.imageRemoved'), 'success')
     } catch (error) {
       logger.error('Error removing journey image:', error)
-      addToast('Failed to remove image. Please try again.', 'error')
+      addToast(t('journey.toast.imageRemoveFailed'), 'error')
     } finally {
       setUploadingImageId(null)
     }
@@ -681,13 +669,13 @@ export default function JourneyTab({
     const nextErrors: Record<string, string> = {}
 
     if (!entry.club_name.trim()) {
-      nextErrors.club_name = 'Title is required'
+      nextErrors.club_name = t('journey.error.titleRequired')
     }
     if (!entry.start_date) {
-      nextErrors.start_date = 'Start month and year are required'
+      nextErrors.start_date = t('journey.error.startRequired')
     }
     if (!entry.entry_type) {
-      nextErrors.entry_type = 'Category is required'
+      nextErrors.entry_type = t('journey.error.categoryRequired')
     }
 
     setFormErrors(nextErrors)
@@ -761,10 +749,10 @@ export default function JourneyTab({
       // Row now references the new image — safe to drop what it replaced.
       await pendingCleanup.flush()
       resetFormState()
-      addToast('Entry saved.', 'success')
+      addToast(t('journey.toast.saved'), 'success')
     } catch (error) {
       logger.error('Error saving journey entry:', error)
-      addToast('Failed to save. Please try again.', 'error')
+      addToast(t('journey.toast.saveFailed'), 'error')
     } finally {
       setSavingEntryId(null)
     }
@@ -792,10 +780,10 @@ export default function JourneyTab({
       clearJourneyDraftStorage({ type: 'edit', entryId })
       await fetchJourney()
       resetFormState()
-      addToast('Entry removed.', 'success')
+      addToast(t('journey.toast.removed'), 'success')
     } catch (error) {
       logger.error('Error deleting journey entry:', error)
-      addToast('Failed to delete entry. Please try again.', 'error')
+      addToast(t('journey.toast.deleteFailed'), 'error')
     } finally {
       setSavingEntryId(null)
     }
@@ -816,6 +804,17 @@ export default function JourneyTab({
     return `${MONTH_NAMES_SHORT[monthIndex]} ${match[1]}`
   }
 
+  // Same parsing as formatMonthLabel, in the interface language (display
+  // only; the persisted `years` text above stays as it always was).
+  const displayMonthLabel = (value: string | null) => {
+    if (!value) return null
+    const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(value)
+    if (!match) return null
+    const monthIndex = Number(match[2]) - 1
+    if (monthIndex < 0 || monthIndex > 11) return null
+    return `${monthShort(monthIndex)} ${match[1]}`
+  }
+
   const formatDuration = (start: string | null, end: string | null) => {
     if (!start) return null
     const startDate = new Date(start)
@@ -825,14 +824,10 @@ export default function JourneyTab({
     if (totalMonths < 0) return null
     const years = Math.floor(totalMonths / 12)
     const months = totalMonths % 12
-    const parts: string[] = []
-    if (years > 0) {
-      parts.push(years > 1 ? `${years} years` : '1 year')
-    }
-    if (months > 0) {
-      parts.push(`${months}m`)
-    }
-    return parts.length ? parts.join(' ') : 'Less than a month'
+    if (years > 0 && months > 0) return t('journey.duration.yearsMonths', { count: years, months })
+    if (years > 0) return t('journey.duration.years', { count: years })
+    if (months > 0) return t('journey.duration.months', { count: months })
+    return t('journey.duration.lessThanMonth')
   }
 
   const renderEntryForm = (entry: EditableJourneyEntry, mode: 'new' | 'edit') => {
@@ -858,15 +853,15 @@ export default function JourneyTab({
                 }}
                 onClubClear={() => updateField('world_club_id', null as unknown as EditableJourneyEntry['world_club_id'])}
                 selectedClubId={entry.world_club_id ?? null}
-                label="Club Name"
+                label={t('journey.form.clubName')}
                 required
                 error={formErrors.club_name}
-                placeholder="Amsterdam Hockey Club"
+                placeholder={t('journey.form.clubPlaceholder')}
               />
             ) : (
               <>
                 <label htmlFor={`journey-title-${entry.id}`} className="text-sm font-medium text-gray-700">
-                  Title<span className="text-red-500">*</span>
+                  {t('journey.form.title')}<span className="text-red-500">*</span>
                 </label>
                 <input
                   id={`journey-title-${entry.id}`}
@@ -874,7 +869,7 @@ export default function JourneyTab({
                   value={entry.club_name}
                   onChange={event => updateField('club_name', event.target.value)}
                   className={`mt-1 w-full rounded-lg border px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary ${formErrors.club_name ? 'border-red-400' : 'border-gray-300'}`}
-                  placeholder="Amsterdam Hockey Club"
+                  placeholder={t('journey.form.clubPlaceholder')}
                 />
                 {formErrors.club_name && <p className="mt-1 text-sm text-red-600">{formErrors.club_name}</p>}
               </>
@@ -883,7 +878,7 @@ export default function JourneyTab({
 
           <div>
             <label htmlFor={`journey-category-${entry.id}`} className="text-sm font-medium text-gray-700">
-              Category<span className="text-red-500">*</span>
+              {t('journey.form.category')}<span className="text-red-500">*</span>
             </label>
             <select
               id={`journey-category-${entry.id}`}
@@ -892,11 +887,11 @@ export default function JourneyTab({
               className={`mt-1 w-full rounded-lg border bg-white px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary ${formErrors.entry_type ? 'border-red-400' : 'border-gray-300'}`}
             >
               <option value="" disabled>
-                Select category...
+                {t('journey.form.categoryPlaceholder')}
               </option>
               {ENTRY_TYPES.map(option => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
+                <option key={option} value={option}>
+                  {t(`journey.type.${entryTypeMeta[option].labelKey}`)}
                 </option>
               ))}
             </select>
@@ -905,7 +900,7 @@ export default function JourneyTab({
 
           <div>
             <label htmlFor={`journey-role-${entry.id}`} className="text-sm font-medium text-gray-700">
-              Role
+              {t('journey.form.role')}
             </label>
             <input
               id={`journey-role-${entry.id}`}
@@ -913,13 +908,13 @@ export default function JourneyTab({
               value={entry.position_role}
               onChange={event => updateField('position_role', event.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
-              placeholder="Team captain"
+              placeholder={t('journey.form.rolePlaceholder')}
             />
           </div>
 
           <div>
             <label htmlFor={`journey-context-${entry.id}`} className="text-sm font-medium text-gray-700">
-              Competition / Context
+              {t('journey.form.context')}
             </label>
             <input
               id={`journey-context-${entry.id}`}
@@ -927,7 +922,7 @@ export default function JourneyTab({
               value={entry.division_league}
               onChange={event => updateField('division_league', event.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
-              placeholder="Hoofdklasse"
+              placeholder={t('journey.form.contextPlaceholder')}
             />
           </div>
 
@@ -938,20 +933,20 @@ export default function JourneyTab({
           {entry.entry_type === 'national_team' && (
             <div className="rounded-xl border border-line bg-surface-subtle p-4 space-y-3">
               <p className="text-sm font-medium text-gray-800">
-                Country represented
+                {t('journey.form.countryRepresented')}
                 <span className="ml-2 text-xs font-normal text-gray-600">
-                  Makes this entry verifiable in search
+                  {t('journey.form.countryRepresentedHint')}
                 </span>
               </p>
               <CountrySelect
                 value={entry.represented_country_id}
                 onChange={(id) => updateField('represented_country_id', id)}
-                placeholder="Select the country you represented"
+                placeholder={t('journey.form.countryRepresentedPlaceholder')}
               />
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor={`journey-level-${entry.id}`} className="text-sm font-medium text-gray-700">
-                    Level
+                    {t('journey.form.level')}
                   </label>
                   <select
                     id={`journey-level-${entry.id}`}
@@ -959,15 +954,15 @@ export default function JourneyTab({
                     onChange={(event) => updateField('represented_level', event.target.value || null)}
                     className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
                   >
-                    <option value="">Not specified</option>
-                    <option value="senior">Senior</option>
-                    <option value="junior">Junior (U14–U23)</option>
-                    <option value="masters">Masters</option>
+                    <option value="">{t('journey.level.notSpecified')}</option>
+                    <option value="senior">{t('journey.level.senior')}</option>
+                    <option value="junior">{t('journey.level.junior')}</option>
+                    <option value="masters">{t('journey.level.masters')}</option>
                   </select>
                 </div>
                 <div>
                   <label htmlFor={`journey-caps-${entry.id}`} className="text-sm font-medium text-gray-700">
-                    Caps <span className="font-normal text-gray-600">(optional)</span>
+                    {t('journey.form.caps')} <span className="font-normal text-gray-600">{t('journey.form.optional')}</span>
                   </label>
                   <input
                     id={`journey-caps-${entry.id}`}
@@ -988,7 +983,7 @@ export default function JourneyTab({
 
           <div>
             <label htmlFor={`journey-city-${entry.id}`} className="text-sm font-medium text-gray-700">
-              City
+              {t('journey.form.city')}
             </label>
             <input
               id={`journey-city-${entry.id}`}
@@ -996,13 +991,13 @@ export default function JourneyTab({
               value={entry.location_city || ''}
               onChange={event => updateField('location_city', event.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
-              placeholder="Amsterdam"
+              placeholder={t('journey.form.cityPlaceholder')}
             />
           </div>
 
           <div>
             <label htmlFor={`journey-country-${entry.id}`} className="text-sm font-medium text-gray-700">
-              Country
+              {t('journey.form.country')}
             </label>
             <input
               id={`journey-country-${entry.id}`}
@@ -1010,33 +1005,33 @@ export default function JourneyTab({
               value={entry.location_country || ''}
               onChange={event => updateField('location_country', event.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
-              placeholder="Netherlands"
+              placeholder={t('journey.form.countryPlaceholder')}
             />
           </div>
 
           <div>
-            <span className="text-sm font-medium text-gray-700">Start date<span className="text-red-500">*</span></span>
+            <span className="text-sm font-medium text-gray-700">{t('journey.form.startDate')}<span className="text-red-500">*</span></span>
             <div className="mt-1 grid grid-cols-2 gap-2">
               <select
-                aria-label="Start month"
+                aria-label={t('journey.form.startMonth')}
                 value={entry.startMonthDraft ?? ''}
                 onChange={event => updateDraftDate('start', 'month', event.target.value)}
                 className={`rounded-lg border px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary ${formErrors.start_date ? 'border-red-400' : 'border-gray-300'}`}
               >
-                <option value="">Month</option>
-                {MONTH_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+                <option value="">{t('journey.form.month')}</option>
+                {MONTH_VALUES.map(month => (
+                  <option key={month} value={String(month)}>
+                    {monthLong(month)}
                   </option>
                 ))}
               </select>
               <select
-                aria-label="Start year"
+                aria-label={t('journey.form.startYear')}
                 value={entry.startYearDraft ?? ''}
                 onChange={event => updateDraftDate('start', 'year', event.target.value)}
                 className={`rounded-lg border px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary ${formErrors.start_date ? 'border-red-400' : 'border-gray-300'}`}
               >
-                <option value="">Year</option>
+                <option value="">{t('journey.form.year')}</option>
                 {YEAR_OPTIONS.map(year => (
                   <option key={year} value={year}>
                     {year}
@@ -1049,7 +1044,7 @@ export default function JourneyTab({
 
           <div>
             <div className="flex items-center justify-between text-sm font-medium text-gray-700">
-              <span>End date</span>
+              <span>{t('journey.form.endDate')}</span>
               <label className="inline-flex items-center gap-2 text-xs font-medium text-gray-500">
                 <input
                   type="checkbox"
@@ -1057,32 +1052,32 @@ export default function JourneyTab({
                   onChange={event => togglePresent(event.target.checked)}
                   className="h-4 w-4 rounded border-gray-300 text-brand-primary focus-visible:ring-brand-primary"
                 />
-                Present
+                {t('journey.form.present')}
               </label>
             </div>
             <div className="mt-1 grid grid-cols-2 gap-2">
               <select
-                aria-label="End month"
+                aria-label={t('journey.form.endMonth')}
                 value={entry.endMonthDraft ?? ''}
                 onChange={event => updateDraftDate('end', 'month', event.target.value)}
                 className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
                 disabled={entry.isCurrent}
               >
-                <option value="">Month</option>
-                {MONTH_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+                <option value="">{t('journey.form.month')}</option>
+                {MONTH_VALUES.map(month => (
+                  <option key={month} value={String(month)}>
+                    {monthLong(month)}
                   </option>
                 ))}
               </select>
               <select
-                aria-label="End year"
+                aria-label={t('journey.form.endYear')}
                 value={entry.endYearDraft ?? ''}
                 onChange={event => updateDraftDate('end', 'year', event.target.value)}
                 className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
                 disabled={entry.isCurrent}
               >
-                <option value="">Year</option>
+                <option value="">{t('journey.form.year')}</option>
                 {YEAR_OPTIONS.map(year => (
                   <option key={year} value={year}>
                     {year}
@@ -1090,12 +1085,12 @@ export default function JourneyTab({
                 ))}
               </select>
             </div>
-            {!entry.isCurrent && <p className="mt-1 text-xs text-gray-500">Leave empty to keep it marked as Present.</p>}
+            {!entry.isCurrent && <p className="mt-1 text-xs text-gray-500">{t('journey.form.endHint')}</p>}
           </div>
 
           <div className="md:col-span-2">
             <label htmlFor={`journey-description-${entry.id}`} className="text-sm font-medium text-gray-700">
-              Description
+              {t('journey.form.description')}
             </label>
             <textarea
               id={`journey-description-${entry.id}`}
@@ -1103,17 +1098,17 @@ export default function JourneyTab({
               onChange={event => updateField('description', event.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
               rows={3}
-              placeholder="Professional player in the Hoofdklasse"
+              placeholder={t('journey.form.descriptionPlaceholder')}
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm font-medium text-gray-700">Logo / Image</label>
+            <label className="text-sm font-medium text-gray-700">{t('journey.form.image')}</label>
             <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-start">
               <StorageImage
                 src={entry.image_url}
                 imageSize="card-thumb"
-                alt="Entry logo preview"
+                alt={t('journey.form.imagePreviewAlt')}
                 className="h-full w-full object-cover"
                 containerClassName="h-20 w-20 rounded-xl"
                 fallbackClassName="h-20 w-20 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50"
@@ -1127,12 +1122,12 @@ export default function JourneyTab({
                   {uploadingImageId === entry.id ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Uploading…
+                      {t('journey.form.uploading')}
                     </>
                   ) : (
                     <>
                       <Upload className="h-4 w-4" />
-                      {entry.image_url ? 'Replace image' : 'Upload image'}
+                      {entry.image_url ? t('journey.form.replaceImage') : t('journey.form.uploadImage')}
                     </>
                   )}
                   <input
@@ -1151,17 +1146,17 @@ export default function JourneyTab({
                     disabled={uploadingImageId === entry.id}
                   >
                     <X className="h-4 w-4" />
-                    Remove image
+                    {t('journey.form.removeImage')}
                   </button>
                 )}
-                <p className="text-xs text-gray-500">PNG or JPG, up to 5MB.</p>
+                <p className="text-xs text-gray-500">{t('journey.form.imageHint')}</p>
               </div>
             </div>
           </div>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700">Highlights</label>
+          <label className="text-sm font-medium text-gray-700">{t('journey.form.highlights')}</label>
           <div className="mt-2 space-y-2">
             {entry.highlights.map((highlight, highlightIdx) => (
               <div key={highlightIdx} className="flex gap-2">
@@ -1170,14 +1165,14 @@ export default function JourneyTab({
                   value={highlight}
                   onChange={event => handleHighlightChange(highlightIdx, event.target.value)}
                   className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 focus:border-transparent focus-visible:ring-2 focus-visible:ring-brand-primary"
-                  placeholder="Top scorer 2023 season"
+                  placeholder={t('journey.form.highlightPlaceholder')}
                 />
                 <button
                   type="button"
                   onClick={() => removeHighlight(highlightIdx)}
                   className="rounded-lg border border-gray-200 px-3 text-gray-500 hover:bg-gray-50"
-                  aria-label="Remove highlight"
-                  title="Remove highlight"
+                  aria-label={t('journey.form.removeHighlight')}
+                  title={t('journey.form.removeHighlight')}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -1189,7 +1184,7 @@ export default function JourneyTab({
               className="inline-flex items-center gap-2 text-sm font-medium text-brand-text hover:opacity-80"
             >
               <Plus className="h-4 w-4" />
-              Add highlight
+              {t('journey.form.addHighlight')}
             </button>
           </div>
         </div>
@@ -1201,11 +1196,11 @@ export default function JourneyTab({
             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             <X className="h-4 w-4" />
-            Cancel
+            {t('journey.form.cancel')}
           </button>
           <Button onClick={handleSaveActiveEntry} disabled={isSaving} className="inline-flex items-center gap-2">
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit2 className="h-4 w-4" />}
-            {isSaving ? 'Saving…' : mode === 'new' ? 'Save entry' : 'Save changes'}
+            {isSaving ? t('journey.form.saving') : mode === 'new' ? t('journey.form.saveEntry') : t('journey.form.saveChanges')}
           </Button>
         </div>
       </div>
@@ -1261,9 +1256,9 @@ export default function JourneyTab({
               <div className="space-y-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-brand-text">New career history entry</p>
-                    <h3 className="text-xl font-semibold text-gray-900">Share a new milestone</h3>
-                    <p className="text-sm text-gray-500">Fill out the form below to add it to your career history.</p>
+                    <p className="text-sm font-semibold text-brand-text">{t('journey.panel.newEyebrow')}</p>
+                    <h3 className="text-xl font-semibold text-gray-900">{t('journey.panel.newTitle')}</h3>
+                    <p className="text-sm text-gray-500">{t('journey.panel.newBody')}</p>
                   </div>
                   <button
                     type="button"
@@ -1271,7 +1266,7 @@ export default function JourneyTab({
                     className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700"
                   >
                     <X className="h-4 w-4" />
-                    Cancel
+                    {t('journey.panel.cancel')}
                   </button>
                 </div>
                 {renderEntryForm(activeEntryDraft, 'new')}
@@ -1280,9 +1275,9 @@ export default function JourneyTab({
               <>
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-brand-text">Career history</p>
-                    <h3 className="text-xl font-semibold text-gray-900">Add a new entry</h3>
-                    <p className="text-sm text-gray-500">Highlight a club, tournament, camp, or other milestone.</p>
+                    <p className="text-sm font-semibold text-brand-text">{t('journey.panel.eyebrow')}</p>
+                    <h3 className="text-xl font-semibold text-gray-900">{t('journey.panel.addTitle')}</h3>
+                    <p className="text-sm text-gray-500">{t('journey.panel.addBody')}</p>
                   </div>
                   <Button
                     onClick={startNewEntryForm}
@@ -1290,11 +1285,11 @@ export default function JourneyTab({
                     className="inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Plus className="h-4 w-4" />
-                    Add entry
+                    {t('journey.panel.addEntry')}
                   </Button>
                 </div>
                 {isEditingExistingEntry && (
-                  <p className="mt-2 text-xs text-gray-500">Finish editing your current entry to add another.</p>
+                  <p className="mt-2 text-xs text-gray-500">{t('journey.panel.finishEditing')}</p>
                 )}
               </>
             )}
@@ -1306,16 +1301,16 @@ export default function JourneyTab({
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
               <Sparkles className="h-7 w-7" />
             </div>
-            <h3 className="mb-2 text-xl font-semibold text-gray-900">No career history yet</h3>
+            <h3 className="mb-2 text-xl font-semibold text-gray-900">{t('journey.empty.title')}</h3>
             <p className="mb-6 text-gray-600">
               {readOnly
-                ? 'This profile has not shared any career history yet.'
-                : 'Capture your biggest milestones so clubs and coaches can understand your path.'}
+                ? t('journey.empty.bodyPublic')
+                : t('journey.empty.bodyOwn')}
             </p>
             {!readOnly && (
               <Button onClick={startNewEntryForm} className="inline-flex items-center gap-2">
                 <Plus className="h-4 w-4" />
-                Add entry
+                {t('journey.empty.addEntry')}
               </Button>
             )}
           </div>
@@ -1328,12 +1323,12 @@ export default function JourneyTab({
               {ordered.map((entry, entryIndex) => {
                 const meta = entry.entry_type ? entryTypeMeta[entry.entry_type] : entryTypeMeta.club
                 const Icon = meta.icon
-                const startLabel = formatMonthLabel(entry.start_date)
-                const endLabel = entry.end_date ? formatMonthLabel(entry.end_date) : 'Present'
+                const startLabel = displayMonthLabel(entry.start_date)
+                const endLabel = entry.end_date ? displayMonthLabel(entry.end_date) : t('journey.entry.present')
                 const durationLabel = formatDuration(entry.start_date, entry.end_date)
                 // world_club comes from the Supabase join and isn't in the base type
                 const worldClub = (entry as Record<string, unknown>).world_club as { avatar_url?: string | null } | null | undefined
-                const location = [entry.location_city, entry.location_country]
+                const location = [entry.location_city, countryLabel(entry.location_country)]
                   .filter(Boolean)
                   .join(', ')
                 const isEditingEntry = activeFormType === entry.id && Boolean(activeEntryDraft)
@@ -1364,7 +1359,7 @@ export default function JourneyTab({
                                 type="button"
                                 onClick={() => startEditEntry(entry)}
                                 className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                                title="Edit entry"
+                                title={t('journey.entry.edit')}
                               >
                                 <Edit2 className="h-3.5 w-3.5" />
                               </button>
@@ -1372,8 +1367,8 @@ export default function JourneyTab({
                                 type="button"
                                 onClick={() => setEntryToDelete(entry)}
                                 className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
-                                title="Delete entry"
-                                aria-label="Delete entry"
+                                title={t('journey.entry.delete')}
+                                aria-label={t('journey.entry.delete')}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -1393,7 +1388,7 @@ export default function JourneyTab({
                               }
                               imageSize="card-thumb"
                               fallbackSrc={entry.image_url}
-                              alt="Entry logo"
+                              alt={t('journey.entry.logoAlt')}
                               className="h-full w-full object-cover rounded-xl"
                               containerClassName="h-10 w-10 min-w-[2.5rem] rounded-xl sm:h-12 sm:w-12 sm:min-w-[3rem]"
                               fallbackClassName="h-10 w-10 rounded-xl bg-gray-50 sm:h-12 sm:w-12"
@@ -1419,19 +1414,19 @@ export default function JourneyTab({
                                 const c = getCountryById(entry.represented_country_id)
                                 if (!c) return null
                                 const levelLabel = entry.represented_level === 'junior'
-                                  ? 'Junior' : entry.represented_level === 'masters' ? 'Masters'
-                                  : entry.represented_level === 'senior' ? 'Senior' : null
+                                  ? t('journey.level.juniorBadge') : entry.represented_level === 'masters' ? t('journey.level.mastersBadge')
+                                  : entry.represented_level === 'senior' ? t('journey.level.seniorBadge') : null
                                 return (
                                   <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm leading-normal text-gray-600">
                                     <span aria-hidden="true">{c.flag_emoji}</span>
-                                    <span>{c.name}</span>
+                                    <span>{countryLabel(c.name)}</span>
                                     {levelLabel && (
                                       <span className="inline-flex items-center rounded-full bg-surface-muted px-1.5 py-0.5 text-[11px] font-semibold text-ink-2">
                                         {levelLabel}
                                       </span>
                                     )}
                                     {entry.caps != null && entry.caps > 0 && (
-                                      <span className="text-xs text-gray-500">{entry.caps} caps</span>
+                                      <span className="text-xs text-gray-500">{t('journey.entry.caps', { count: entry.caps })}</span>
                                     )}
                                   </p>
                                 )
@@ -1442,15 +1437,14 @@ export default function JourneyTab({
                           {/* Meta row: Badge + Dates + Duration */}
                           <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 sm:mt-3 sm:gap-2">
                             <span className={`inline-flex items-center rounded-full px-2 py-0.5 font-medium ${meta.badgeClass}`}>
-                              {meta.label}
+                              {t(`journey.type.${meta.labelKey}`)}
                             </span>
                             {(startLabel || entry.years) && (
                               <>
                                 <span className="text-gray-500">·</span>
                                 <span className="inline-flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
-                                  {startLabel || entry.years}
-                                  {startLabel && ` – ${endLabel}`}
+                                  {startLabel ? t('journey.entry.dateRange', { start: startLabel, end: endLabel }) : entry.years}
                                 </span>
                               </>
                             )}
@@ -1465,7 +1459,7 @@ export default function JourneyTab({
                                 <span className="text-gray-500">·</span>
                                 <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-ink-2">
                                   <Globe2 className="h-3 w-3" />
-                                  Directory
+                                  {t('journey.entry.directory')}
                                 </span>
                               </>
                             )}
@@ -1506,8 +1500,8 @@ export default function JourneyTab({
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-hockia-primary hover:underline"
             >
               {timelineExpanded
-                ? 'Show fewer entries'
-                : `Show all ${orderedAll.length} entries`}
+                ? t('journey.entry.showFewer')
+                : t('journey.entry.showAll', { count: orderedAll.length })}
             </button>
           </div>
         )}
@@ -1520,7 +1514,7 @@ export default function JourneyTab({
               className="inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Plus className="h-4 w-4" />
-              Add entry
+              {t('journey.entry.addEntry')}
             </Button>
           </div>
         )}
@@ -1542,13 +1536,13 @@ export default function JourneyTab({
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{title ?? t('journey.header.defaultTitle')}</h2>
           {variant === 'tab' && (
-            <p className="text-sm text-gray-600">Showcase the clubs, teams, and milestones that shaped your path.</p>
+            <p className="text-sm text-gray-600">{t('journey.header.description')}</p>
           )}
         </div>
         {!readOnly && (
-          <p className="text-sm text-gray-500">Updates save automatically.</p>
+          <p className="text-sm text-gray-500">{t('journey.header.autosave')}</p>
         )}
       </div>
 
@@ -1561,13 +1555,13 @@ export default function JourneyTab({
           if (!entryToDelete) return
           await handleDeleteEntry(entryToDelete.id)
         }}
-        title="Delete this entry?"
+        title={t('journey.deleteDialog.title')}
         message={
           entryToDelete
-            ? `"${entryToDelete.club_name || 'Untitled entry'}" will be removed from your career history. This can't be undone.`
+            ? t('journey.deleteDialog.message', { title: entryToDelete.club_name || t('journey.deleteDialog.untitled') })
             : ''
         }
-        confirmLabel="Delete entry"
+        confirmLabel={t('journey.deleteDialog.confirm')}
         variant="danger"
         testId="journey-delete-confirm"
       />

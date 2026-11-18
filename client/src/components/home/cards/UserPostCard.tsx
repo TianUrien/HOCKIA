@@ -13,13 +13,14 @@ import { PostComposerModal } from '../PostComposerModal'
 import { FeedCard, FeedCardBody, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import { Avatar } from '@/components'
 import ReportUserModal from '@/components/ReportUserModal'
-import { MENU_ICON_CLASS, REPORT_MENU_LABEL } from '@/lib/report'
+import { MENU_ICON_CLASS, reportMenuLabel } from '@/lib/report'
 import { MoreMenu, type MoreMenuItem } from '@/components/safety/MoreMenu'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { identityLine } from '@/lib/identity'
 import { getShareOrigin } from '@/lib/profileShare'
 import { useToastStore } from '@/lib/toast'
 import type { UserPostFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 // Signed Cloudflare player (mints a playback token from video_id). Lazy so its
 // HLS path stays off the entry bundle.
@@ -41,6 +42,7 @@ interface UserPostCardProps {
  * comments are labelled "Answers".
  */
 export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: UserPostCardProps) {
+  const t = useHomeT()
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
@@ -144,22 +146,22 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
         return
       }
       await navigator.clipboard.writeText(url)
-      addToast('Link copied to clipboard', 'success')
+      addToast(t('cards.post.linkCopied'), 'success')
     } catch (err) {
-      if (!(err instanceof Error && err.name === 'AbortError')) addToast('Could not share this post', 'error')
+      if (!(err instanceof Error && err.name === 'AbortError')) addToast(t('cards.post.shareFailed'), 'error')
     }
-  }, [detailPath, item.author_name, addToast])
+  }, [detailPath, item.author_name, addToast, t])
 
   // Figma "…" (phones: the shared action sheet; desktop: popover) — same
   // component as profiles, chats and roles.
   const menuItems: MoreMenuItem[] = isOwner
     ? [
-        { key: 'edit', label: isQuestion ? 'Edit question' : 'Edit post', icon: <Pencil className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setIsEditing(true) },
-        { key: 'delete', label: isQuestion ? 'Delete question' : 'Delete post', icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, destructive: true, onSelect: handleDeleteClick },
+        { key: 'edit', label: isQuestion ? t('cards.post.editQuestion') : t('cards.post.editPost'), icon: <Pencil className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setIsEditing(true) },
+        { key: 'delete', label: isQuestion ? t('cards.post.deleteQuestion') : t('cards.post.deletePost'), icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, destructive: true, onSelect: handleDeleteClick },
       ]
-    : [{ key: 'report', label: REPORT_MENU_LABEL, icon: <Flag className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setShowReport(true) }]
+    : [{ key: 'report', label: reportMenuLabel(), icon: <Flag className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setShowReport(true) }]
   const menu = user ? (
-    <MoreMenu items={menuItems} label="Post options" title={item.author_name ?? undefined} triggerClassName="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-4 transition-colors hover:bg-surface-muted hover:text-ink-1" testId="post-more-menu" />
+    <MoreMenu items={menuItems} label={t('cards.post.menuLabel')} title={item.author_name ?? undefined} triggerClassName="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-4 transition-colors hover:bg-surface-muted hover:text-ink-1" testId="post-more-menu" />
   ) : null
 
   const body = item.content.trim() ? (
@@ -171,7 +173,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
           onClick={() => setIsExpanded(true)}
           className="mt-1 text-[14px] font-medium text-ink-2 hover:text-ink-1"
         >
-          See more
+          {t('cards.post.seeMore')}
         </button>
       )}
     </FeedCardBody>
@@ -194,13 +196,13 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
           <div className="px-5 pb-2.5">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-hockia-soft px-2.5 py-[3px] text-caption font-semibold text-hockia-primary">
               <CircleHelp className="h-[13px] w-[13px]" strokeWidth={2} />
-              Question
+              {t('cards.post.questionBadge')}
             </span>
           </div>
         )}
 
         {isQuestion && !detail ? (
-          <button type="button" onClick={openConversation} className="block w-full text-left" aria-label="Open question">
+          <button type="button" onClick={openConversation} className="block w-full text-left" aria-label={t('cards.post.openQuestion')}>
             {body}
           </button>
         ) : (
@@ -222,7 +224,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
           <FeedCardMedia>
             <FeedMediaGrid
               media={sortedImages}
-              altPrefix={item.author_name ? `Post by ${item.author_name}` : 'Post image'}
+              altPrefix={item.author_name ? t('cards.post.altBy', { name: item.author_name }) : t('cards.post.alt')}
               onImageClick={handleMediaClick}
             />
           </FeedCardMedia>
@@ -234,7 +236,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
               type="button"
               onClick={openConversation}
               className="block w-full rounded-[10px] bg-surface-grouped px-3 py-2 text-left"
-              aria-label="See all answers"
+              aria-label={t('cards.post.seeAllAnswers')}
             >
               <span className="flex items-center gap-1.5 text-secondary">
                 <Avatar
@@ -244,8 +246,8 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
                   className="!h-5 !w-5"
                   role={topAnswer.author_role}
                 />
-                <span className="truncate font-semibold text-ink-1">{topAnswer.author_name || 'Member'}</span>
-                <span className="shrink-0 text-ink-2">· {identityLine(topAnswer.author_role)} · Top answer</span>
+                <span className="truncate font-semibold text-ink-1">{topAnswer.author_name || t('cards.post.unnamedMember')}</span>
+                <span className="shrink-0 text-ink-2">{t('cards.post.topAnswerMeta', { identity: identityLine(topAnswer.author_role) })}</span>
               </span>
               <span className="mt-1 line-clamp-3 block text-[14px] leading-[19px] text-ink-1">{topAnswer.content}</span>
             </button>
@@ -324,7 +326,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
       {showReport && (
         <ReportUserModal
           targetId={item.author_id}
-          targetName={item.author_name || 'Unknown'}
+          targetName={item.author_name || t('cards.post.unknownAuthor')}
           contentType="post"
           contentId={item.post_id}
           onClose={() => setShowReport(false)}
@@ -335,9 +337,9 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title={isQuestion ? 'Delete this question?' : 'Delete this post?'}
-        message={isQuestion ? 'The question and its answers will be removed permanently. This can\'t be undone.' : 'The post and its comments and likes will be removed permanently. This can\'t be undone.'}
-        confirmLabel={isQuestion ? 'Delete question' : 'Delete post'}
+        title={isQuestion ? t('cards.post.deleteQuestionTitle') : t('cards.post.deletePostTitle')}
+        message={isQuestion ? t('cards.post.deleteQuestionBody') : t('cards.post.deletePostBody')}
+        confirmLabel={isQuestion ? t('cards.post.deleteQuestionConfirm') : t('cards.post.deletePostConfirm')}
         variant="danger"
         testId="user-post-delete-confirm"
       />

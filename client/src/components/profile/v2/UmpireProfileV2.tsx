@@ -36,6 +36,10 @@ import { OwnerButtons, PrimaryCard, PrivateStats } from './OwnerArea'
 import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
+import { useProfileT } from '@/i18n/ns/profile'
+import { useEnumsT } from '@/i18n/ns/enums'
+import { intlLocale, isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Profile v2 — umpire, phone (Figma PR23 137:1000 · PR25 empty 141:1056).
@@ -55,17 +59,13 @@ export interface UmpireProfileV2Props {
   onOpenSection: (section: 'officiating' | 'gallery' | 'references' | 'friends' | 'posts') => void
 }
 
-const ANCHORS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'appointments', label: 'Matches' },
-  { id: 'references', label: 'References' },
-  { id: 'posts', label: 'Posts' },
-  { id: 'about', label: 'About' },
-]
+const ANCHORS = ['overview', 'appointments', 'references', 'posts', 'about'] as const
 
-function specializationLabel(value: string | null | undefined): string | null {
+function specializationLabel(value: string | null | undefined, t: ReturnType<typeof useProfileT>): string | null {
   if (!value) return null
-  if (value === 'both') return 'Outdoor & Indoor'
+  if (value === 'both') return t('umpireProfileV2.spec.both')
+  if (value === 'outdoor') return t('umpireProfileV2.spec.outdoor')
+  if (value === 'indoor') return t('umpireProfileV2.spec.indoor')
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
@@ -73,11 +73,12 @@ function monthYear(date: string | null): string | null {
   if (!date) return null
   const d = new Date(`${date.slice(0, 10)}T00:00:00Z`)
   if (Number.isNaN(d.getTime())) return null
-  return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' })
+  // English keeps its en-GB month names ("Sept"); other languages read their own.
+  return d.toLocaleDateString(isEnglish() ? 'en-GB' : intlLocale(), { month: 'short', year: 'numeric', timeZone: 'UTC' })
 }
 
 function AppointmentRow({ a, flag }: { a: UmpireAppointment; flag: string | null }) {
-  const where = [flag, a.location_city?.trim() || a.location_country?.trim() || null].filter(Boolean).join(' ')
+  const where = [flag, a.location_city?.trim() || countryLabel(a.location_country?.trim()) || null].filter(Boolean).join(' ')
   const sub = [a.organizer?.trim() || null, where || null].filter(Boolean).join(' · ')
   const tags = [a.match_level ? humanizeToken(a.match_level) : null, a.match_format ? humanizeToken(a.match_format) : null].filter(Boolean).join(' · ')
   return (
@@ -95,6 +96,8 @@ function AppointmentRow({ a, flag }: { a: UmpireAppointment; flag: string | null
 
 export default function UmpireProfileV2(props: UmpireProfileV2Props) {
   const { profile, readOnly, isOwnProfile } = props
+  const t = useProfileT()
+  const tEnum = useEnumsT()
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
   const signedIn = useAuthStore((s) => Boolean(s.user))
@@ -116,12 +119,12 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
   const [photoIndex, setPhotoIndex] = useState<number | null>(null)
 
   // ── Identity ────────────────────────────────────────────────────────────
-  const name = profile.full_name?.trim() || 'Hockia umpire'
+  const name = profile.full_name?.trim() || t('umpireProfileV2.nameFallback')
   const age = (profile as { server_age?: number | null }).server_age ?? (profile.date_of_birth ? calculateAge(profile.date_of_birth) : null)
   const level = profile.umpire_level?.trim() || null
-  const spec = specializationLabel(profile.officiating_specialization)
+  const spec = specializationLabel(profile.officiating_specialization, t)
   // Same lead as the Community card and preview ("Umpire · Regional"), then the format.
-  const roleLine = ['Umpire', level, spec].filter(Boolean).join(' · ')
+  const roleLine = [tEnum('role.umpire'), level, spec].filter(Boolean).join(' · ')
   const place = useMemo(() => basedInLine(displayPlace(profile.base_location ?? null, (profile as { base_country_id?: number | null }).base_country_id ?? null, countries)), [profile, countries])
   const nationalities = useMemo(() => nationalityCountries([profile.nationality_country_id, profile.nationality2_country_id], countries), [profile.nationality_country_id, profile.nationality2_country_id, countries])
   const photos = useMemo(() => {
@@ -145,7 +148,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
     try {
       if (navigator.share) { await navigator.share({ title: name, url }); return }
       await navigator.clipboard.writeText(url)
-      addToast('Link copied', 'success')
+      addToast(t('umpireProfileV2.linkCopied'), 'success')
     } catch (err) {
       if (!(err instanceof Error && err.name === 'AbortError')) logger.warn('[UmpireProfileV2] share failed', err)
     }
@@ -174,9 +177,9 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
   const vis = useWeeklyVisibility(owner, false)
   const searches = useSearchAppearances({ profileId: owner ? profileId : null })
   const stats = owner ? [
-    { value: vis.visibility?.views_7d ?? 0, label: (vis.visibility?.views_7d ?? 0) === 1 ? 'profile view' : 'profile views' },
-    { value: vis.visibility?.viewers_by_role?.club ?? 0, label: (vis.visibility?.viewers_by_role?.club ?? 0) === 1 ? 'club viewed' : 'clubs viewed' },
-    { value: searches.summary?.total ?? 0, label: 'in searches' },
+    { value: vis.visibility?.views_7d ?? 0, label: t('umpireProfileV2.stats.views', { count: vis.visibility?.views_7d ?? 0 }) },
+    { value: vis.visibility?.viewers_by_role?.club ?? 0, label: t('umpireProfileV2.stats.clubs', { count: vis.visibility?.viewers_by_role?.club ?? 0 }) },
+    { value: searches.summary?.total ?? 0, label: t('umpireProfileV2.stats.searches') },
   ] : []
 
   // ── Posts & photos ──────────────────────────────────────────────────────
@@ -204,8 +207,8 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
     },
   })
   const friendText = visitor && inCommon.count > 0
-    ? `${friendCount} ${friendCount === 1 ? 'friend' : 'friends'} · ${inCommon.count} in common with you`
-    : `${friendCount} ${friendCount === 1 ? 'friend' : 'friends'}`
+    ? t('umpireProfileV2.friendsInCommon', { count: friendCount, common: inCommon.count })
+    : t('umpireProfileV2.friends', { count: friendCount })
   const faces = visitor && inCommon.count > 0
     ? inCommon.people.map((p) => ({ id: p.id, full_name: p.fullName, avatar_url: p.avatarUrl, role: p.role }))
     : friendsPreview.data ?? []
@@ -217,24 +220,24 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
     else if (!friendship.isFriend && !friendship.isOutgoingRequest) void friendship.sendRequest()
   }
   const friendButton: ActionBarButton = friendship.isFriend
-    ? { key: 'friend', label: 'Friends', icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'done', disabled: true }
+    ? { key: 'friend', label: t('umpireProfileV2.action.friends'), icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'done', disabled: true }
     : friendship.isOutgoingRequest
-      ? { key: 'friend', label: 'Requested', icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'secondary', disabled: true }
-      : { key: 'friend', label: friendship.isIncomingRequest ? 'Accept' : 'Add friend', icon: <UserPlus className="h-5 w-5" strokeWidth={2} />, tone: 'primary', onClick: addFriend, disabled: friendship.mutating, testId: 'profile-add-friend' }
-  const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? 'Opening…' : 'Message', icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'secondary', onClick: signedIn ? props.onMessage : () => setSignIn(true), disabled: props.sendingMessage, testId: 'profile-message' }
+      ? { key: 'friend', label: t('umpireProfileV2.action.requested'), icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'secondary', disabled: true }
+      : { key: 'friend', label: friendship.isIncomingRequest ? t('umpireProfileV2.action.accept') : t('umpireProfileV2.action.addFriend'), icon: <UserPlus className="h-5 w-5" strokeWidth={2} />, tone: 'primary', onClick: addFriend, disabled: friendship.mutating, testId: 'profile-add-friend' }
+  const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? t('umpireProfileV2.action.opening') : t('umpireProfileV2.action.message'), icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'secondary', onClick: signedIn ? props.onMessage : () => setSignIn(true), disabled: props.sendingMessage, testId: 'profile-message' }
   const buttons: ActionBarButton[] = !visitor ? [] : viewerIsBrand ? [{ ...messageButton, tone: 'primary' }] : [friendButton, messageButton]
 
   const moreMenu = (triggerClassName: string) => (visitor ? (
     <ProfileActionMenu targetId={profileId} targetName={name} actionName={name.split(/\s+/)[0]} triggerClassName={triggerClassName} iconClassName="h-[22px] w-[22px]" />
   ) : null)
 
-  const anchors = ANCHORS.filter((a) => (
-    a.id === 'appointments' ? owner || apptCount > 0
-      : a.id === 'references' ? owner || referenceCount > 0
-      : a.id === 'about' ? owner || Boolean(bio) || languages.length > 0
-      : a.id === 'posts' ? owner || tiles.length > 0
+  const anchors = ANCHORS.filter((id) => (
+    id === 'appointments' ? owner || apptCount > 0
+      : id === 'references' ? owner || referenceCount > 0
+      : id === 'about' ? owner || Boolean(bio) || languages.length > 0
+      : id === 'posts' ? owner || tiles.length > 0
         : true
-  ))
+  )).map((id) => ({ id, label: t(`umpireProfileV2.anchors.${id}`) }))
 
   return (
     <div className="bg-white pb-8" data-testid="umpire-profile-v2">
@@ -245,7 +248,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
           photos={photos}
           name={name}
           age={age}
-          roleLine={owner && !level ? 'Add your umpire level' : roleLine}
+          roleLine={owner && !level ? t('umpireProfileV2.addLevelLine') : roleLine}
           roleLineAction={owner && !level ? props.onEdit : null}
           place={place}
           nationalities={nationalities}
@@ -261,9 +264,9 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
 
       {owner && (
         <>
-          <OwnerButtons onEdit={props.onEdit} previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What players, clubs and leagues see', onSelect: props.onViewPublic }]} />
+          <OwnerButtons onEdit={props.onEdit} previews={[{ key: 'public', label: t('umpireProfileV2.previewPublic'), detail: t('umpireProfileV2.previewPublicDetail'), onSelect: props.onViewPublic }]} />
           {stepCopy && step && <PrimaryCard role="umpire" stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />}
-          <PrivateStats stats={stats} emptyText="Your stats appear here once people start viewing you" />
+          <PrivateStats stats={stats} emptyText={t('umpireProfileV2.statsEmpty')} />
         </>
       )}
 
@@ -274,39 +277,39 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
         {(federation || owner) && (
           <FactTile
             full
-            label="Federation"
-            value={federation ?? 'Add your federation'}
-            detail={federation ? 'Affiliated federation' : null}
+            label={t('umpireProfileV2.federation.label')}
+            value={federation ?? t('umpireProfileV2.federation.add')}
+            detail={federation ? t('umpireProfileV2.federation.detail') : null}
             tone={federation ? undefined : 'muted'}
             leading={<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary"><Shield className="h-5 w-5" strokeWidth={1.8} /></span>}
             onClick={!federation && owner ? props.onEdit : undefined}
           />
         )}
         <div className="flex gap-2.5">
-          <FactTile label="Level" value={level ?? (owner ? 'Add level' : 'Not set')} detail={level && since ? `Since ${since}` : null} tone={level ? undefined : 'muted'} />
-          <FactTile label="Available" value={available ? 'Open to umpire' : 'Not right now'} detail={available ? 'Tournaments and leagues' : null} tone={available ? 'positive' : 'muted'} />
+          <FactTile label={t('umpireProfileV2.level.label')} value={level ?? (owner ? t('umpireProfileV2.level.add') : t('umpireProfileV2.level.notSet'))} detail={level && since ? t('umpireProfileV2.level.since', { year: since }) : null} tone={level ? undefined : 'muted'} />
+          <FactTile label={t('umpireProfileV2.available.label')} value={available ? t('umpireProfileV2.available.open') : t('umpireProfileV2.available.notNow')} detail={available ? t('umpireProfileV2.available.detail') : null} tone={available ? 'positive' : 'muted'} />
         </div>
         {friendCount > 0 && <FacesRow people={faces} text={friendText} onClick={() => props.onOpenSection('friends')} />}
       </section>
 
       {/* Matches officiated (the record; never "appointments", founder 2026-10-03) */}
       {(owner || apptCount > 0) && (
-        <Section id="appointments" title={apptCount > 0 ? `Matches officiated · ${apptCount}` : 'Matches officiated'} action={owner ? '+ Add' : apptCount > 3 ? 'See all' : null} onAction={() => props.onOpenSection('officiating')}>
+        <Section id="appointments" title={apptCount > 0 ? t('umpireProfileV2.matches.titleCount', { count: apptCount }) : t('umpireProfileV2.matches.title')} action={owner ? t('umpireProfileV2.matches.add') : apptCount > 3 ? t('umpireProfileV2.matches.seeAll') : null} onAction={() => props.onOpenSection('officiating')}>
           <div className="flex flex-col px-4">
             {appts.appointments.slice(0, 3).map((a) => <AppointmentRow key={a.id} a={a} flag={flagForCountryName(countries, a.location_country)} />)}
-            {apptCount === 0 && !appts.loading && <p className="text-body text-ink-3">No matches yet. Add the tournaments and finals you’ve officiated.</p>}
+            {apptCount === 0 && !appts.loading && <p className="text-body text-ink-3">{t('umpireProfileV2.matches.empty')}</p>}
           </div>
         </Section>
       )}
 
       {/* References (gold = trust) */}
       {(owner || referenceCount > 0) && (
-      <Section id="references" title="References" action={referenceCount > 0 ? `See all ${referenceCount}` : owner ? 'Ask for one' : null} onAction={() => props.onOpenSection('references')}>
-        {referenceCount === 0 && !refsLoading && <p className="px-4 text-row leading-[21px] text-ink-2">No references yet. Players, coaches and clubs who are friends on Hockia can write one.</p>}
+      <Section id="references" title={t('umpireProfileV2.references.title')} action={referenceCount > 0 ? t('umpireProfileV2.references.seeAll', { count: referenceCount }) : owner ? t('umpireProfileV2.references.ask') : null} onAction={() => props.onOpenSection('references')}>
+        {referenceCount === 0 && !refsLoading && <p className="px-4 text-row leading-[21px] text-ink-2">{t('umpireProfileV2.references.empty')}</p>}
         <div className="flex flex-col gap-3 px-4">
           {acceptedReferences.slice(0, 1).map((r) => {
             const p = r.profile
-            const who = [p?.fullName?.trim() || 'Hockia member', humanizeToken(r.relationshipType)].filter(Boolean).join(' · ')
+            const who = [p?.fullName?.trim() || t('umpireProfileV2.references.memberFallback'), humanizeToken(r.relationshipType)].filter(Boolean).join(' · ')
             return (
               <button key={r.id} type="button" onClick={() => props.onOpenSection('references')} className="w-full text-left" data-testid="profile-reference">
                 <SquircleBox className="flex flex-col gap-3 bg-gold-soft px-[18px] py-4 shadow-[inset_0_0_0_0.5px_rgba(15,15,20,0.06)]">
@@ -315,7 +318,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
                     <EntityAvatar src={p?.avatarUrl ?? null} name={p?.fullName ?? null} role={p?.role} size={32} />
                     <span className="min-w-0">
                       <span className="block truncate text-[14px] font-semibold leading-[19px] text-ink-1">{who}</span>
-                      <span className="block truncate text-caption text-ink-2">✓ Verified on Hockia{r.acceptedAt ? ` · ${dayFirst(r.acceptedAt, { year: 'always' })}` : ''}</span>
+                      <span className="block truncate text-caption text-ink-2">{r.acceptedAt ? t('umpireProfileV2.references.verifiedOn', { date: dayFirst(r.acceptedAt, { year: 'always' }) }) : t('umpireProfileV2.references.verified')}</span>
                     </span>
                   </span>
                 </SquircleBox>
@@ -329,8 +332,8 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
 
       {/* Posts & photos */}
       {(owner || tiles.length > 0) && (
-        <Section id="posts" title="Posts & photos" action={owner ? '+ Add' : gridTotal > 6 ? `See all ${gridTotal}` : null} onAction={() => props.onOpenSection(owner ? 'gallery' : 'posts')}>
-          {tiles.length > 0 ? <PostsPhotosGrid tiles={tiles} /> : !data.loading && <p className="px-4 text-body text-ink-3">No posts or photos yet.</p>}
+        <Section id="posts" title={t('umpireProfileV2.posts.title')} action={owner ? t('umpireProfileV2.posts.add') : gridTotal > 6 ? t('umpireProfileV2.posts.seeAll', { count: gridTotal }) : null} onAction={() => props.onOpenSection(owner ? 'gallery' : 'posts')}>
+          {tiles.length > 0 ? <PostsPhotosGrid tiles={tiles} /> : !data.loading && <p className="px-4 text-body text-ink-3">{t('umpireProfileV2.posts.empty')}</p>}
         </Section>
       )}
 
@@ -338,17 +341,17 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
 
       {/* About */}
       {(owner || bio || languages.length > 0) && (
-        <Section id="about" title="About" action={owner ? 'Edit' : null} onAction={props.onEdit}>
+        <Section id="about" title={t('umpireProfileV2.about.title')} action={owner ? t('umpireProfileV2.about.edit') : null} onAction={props.onEdit}>
           <div className="px-4">
             {bio ? (
               <>
                 <p className={cn('whitespace-pre-line text-body text-ink-1', !bioOpen && 'line-clamp-3')}>{bio}</p>
-                {!bioOpen && bio.length > 140 && <button type="button" onClick={() => setBioOpen(true)} className="min-h-[32px] text-secondary font-semibold text-hockia-primary">More</button>}
+                {!bioOpen && bio.length > 140 && <button type="button" onClick={() => setBioOpen(true)} className="min-h-[32px] text-secondary font-semibold text-hockia-primary">{t('umpireProfileV2.about.more')}</button>}
               </>
-            ) : owner ? <p className="text-body text-ink-3">No bio yet</p> : null}
+            ) : owner ? <p className="text-body text-ink-3">{t('umpireProfileV2.about.noBio')}</p> : null}
             {languages.length > 0 && (
               <div className="mt-2 flex items-center justify-between gap-3 border-b border-line py-3">
-                <span className="text-[14px] text-ink-2">Languages</span>
+                <span className="text-[14px] text-ink-2">{t('umpireProfileV2.about.languages')}</span>
                 <span className="min-w-0 truncate text-right text-[14px] font-semibold text-ink-1">{languages.join(' · ')}</span>
               </div>
             )}
@@ -357,7 +360,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
       )}
 
       </ProfileLayout>
-      <SignInPromptModal isOpen={signIn} onClose={() => setSignIn(false)} title="Sign in to connect" action="connect" />
+      <SignInPromptModal isOpen={signIn} onClose={() => setSignIn(false)} title={t('umpireProfileV2.signInTitle')} action="connect" />
       {photoIndex !== null && (
         <MediaLightbox
           images={data.photos.map((p, i) => ({ url: p.url, media_type: 'image', order: i }))}

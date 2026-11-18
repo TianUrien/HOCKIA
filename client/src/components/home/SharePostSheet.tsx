@@ -18,6 +18,7 @@ import { identityLine } from '@/lib/identity'
 import { logger } from '@/lib/logger'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import type { SharedPostMetadata } from '@/types/chat'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface ContactResult {
   id: string
@@ -51,6 +52,7 @@ export function SharePostSheet({
   content,
   thumbnailUrl,
 }: SharePostSheetProps) {
+  const t = useHomeT()
   const { user, profile } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
 
@@ -63,7 +65,7 @@ export function SharePostSheet({
   // Phone: the shared item reads as List item / Role result (Figma 115:727 — 48 leading, two lines).
   const isPhone = useMediaQuery('(max-width: 1023px)')
   const url = `${getShareOrigin()}/post/${postId}`
-  const shareText = content ? content.slice(0, 120) : `${authorName ?? 'A member'} on Hockia`
+  const shareText = content ? content.slice(0, 120) : t('shareSheet.shareText', { name: authorName ?? t('shareSheet.unnamedAuthor') })
 
   // The people you already talk to (same list as Inbox › Messages).
   useEffect(() => {
@@ -112,17 +114,17 @@ export function SharePostSheet({
         const result = await sendSharedPostMessage(user.id, contact.id, postData)
         if (result.success) {
           setSentTo((prev) => new Set(prev).add(contact.id))
-          addToast(`Sent to ${contact.full_name}`, 'success')
+          addToast(t('shareSheet.sentToast', { name: contact.full_name }), 'success')
         } else {
-          addToast(result.error || 'Failed to send post', result.notice ? 'info' : 'error')
+          addToast(result.error || t('shareSheet.sendFailed'), result.notice ? 'info' : 'error')
         }
       } catch (error) {
-        addToast(extractErrorMessage(error, 'Failed to share post. Please try again.'), 'error')
+        addToast(extractErrorMessage(error, t('shareSheet.shareFailed')), 'error')
       } finally {
         setSendingTo(null)
       }
     },
-    [user?.id, sendingTo, sentTo, postId, authorId, authorName, authorAvatar, authorRole, content, thumbnailUrl, addToast],
+    [user?.id, sendingTo, sentTo, postId, authorId, authorName, authorAvatar, authorRole, content, thumbnailUrl, addToast, t],
   )
 
   const handleCopyLink = useCallback(async () => {
@@ -136,8 +138,8 @@ export function SharePostSheet({
       document.execCommand('copy')
       document.body.removeChild(input)
     }
-    addToast('Link copied', 'success')
-  }, [url, addToast])
+    addToast(t('shareSheet.linkCopied'), 'success')
+  }, [url, addToast, t])
 
   const handleSystemShare = useCallback(async () => {
     try {
@@ -147,9 +149,9 @@ export function SharePostSheet({
         await handleCopyLink()
       }
     } catch (err) {
-      if (!(err instanceof Error && err.name === 'AbortError')) addToast('Could not open the share menu', 'error')
+      if (!(err instanceof Error && err.name === 'AbortError')) addToast(t('shareSheet.systemShareFailed'), 'error')
     }
-  }, [shareText, url, handleCopyLink, addToast])
+  }, [shareText, url, handleCopyLink, addToast, t])
 
   const handleWhatsApp = useCallback(() => {
     window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText}\n${url}`)}`, '_blank', 'noopener')
@@ -170,22 +172,22 @@ export function SharePostSheet({
   )
 
   return (
-    <BottomSheet open={isOpen} onClose={handleClose} ariaLabel="Share this post">
+    <BottomSheet open={isOpen} onClose={handleClose} ariaLabel={t('shareSheet.title')}>
       <div className="flex flex-col gap-4 px-5 pb-3 pt-1">
-        <h2 className="text-title text-ink-1">Share this post</h2>
+        <h2 className="text-title text-ink-1">{t('shareSheet.title')}</h2>
 
         {/* What is being shared */}
         <div className={isPhone ? 'flex min-h-[64px] items-center gap-3 rounded-card bg-surface-grouped px-3 py-2' : 'flex items-center gap-3 rounded-card bg-surface-grouped px-3 py-2.5'} data-testid="share-item-row">
           <EntityAvatar src={authorAvatar} name={authorName} role={authorRole} size={isPhone ? 48 : 40} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-row font-semibold text-ink-1">{authorName ?? 'Hockia member'}</p>
+            <p className="truncate text-row font-semibold text-ink-1">{authorName ?? t('shareSheet.unnamedMember')}</p>
             <p className="truncate text-secondary text-ink-2">{content ? content : identityLine(authorRole)}</p>
           </div>
         </div>
 
         {!isBrand && (recentContacts.length > 0 || isLoadingRecent) && (
           <div>
-            <p className="pb-2 text-secondary font-semibold text-ink-2">Send to a friend</p>
+            <p className="pb-2 text-secondary font-semibold text-ink-2">{t('shareSheet.sendToFriend')}</p>
             <div className="-mx-5 flex gap-4 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
               {isLoadingRecent
                 ? [0, 1, 2, 3, 4].map((i) => <div key={i} className="h-[52px] w-[52px] shrink-0 animate-pulse rounded-full bg-surface-grouped" />)
@@ -198,7 +200,7 @@ export function SharePostSheet({
                         type="button"
                         onClick={() => void handleSendTo(contact)}
                         disabled={sending || sent}
-                        aria-label={sent ? `Sent to ${contact.full_name}` : `Send to ${contact.full_name}`}
+                        aria-label={sent ? t('shareSheet.sentAria', { name: contact.full_name }) : t('shareSheet.sendAria', { name: contact.full_name })}
                         className="flex w-[52px] shrink-0 flex-col items-center gap-1.5"
                       >
                         <span className="relative">
@@ -218,10 +220,10 @@ export function SharePostSheet({
         <div className="border-t border-line" />
 
         <div className="flex gap-3 pb-1">
-          {systemOption('Copy link', <Link2 className="h-5 w-5" strokeWidth={1.8} />, () => void handleCopyLink())}
+          {systemOption(t('shareSheet.copyLink'), <Link2 className="h-5 w-5" strokeWidth={1.8} />, () => void handleCopyLink())}
           {systemOption('WhatsApp', <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, handleWhatsApp)}
           {canSystemShare && systemOption('Instagram', <Instagram className="h-5 w-5" strokeWidth={1.8} />, () => void handleSystemShare())}
-          {canSystemShare && systemOption('More', <Share className="h-5 w-5" strokeWidth={1.8} />, () => void handleSystemShare())}
+          {canSystemShare && systemOption(t('shareSheet.more'), <Share className="h-5 w-5" strokeWidth={1.8} />, () => void handleSystemShare())}
         </div>
       </div>
     </BottomSheet>

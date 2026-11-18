@@ -2,7 +2,8 @@ import { useState, useCallback, useRef } from 'react'
 import { Upload } from 'tus-js-client'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { VIDEO_UPLOAD_LIMIT_MESSAGE } from '@/lib/uploadManager'
+import { videoUploadLimitMessage } from '@/lib/uploadManager'
+import { tCommon } from '@/i18n/ns/common'
 
 /**
  * useNativeVideoUpload — drives a native player-video upload to Cloudflare
@@ -67,12 +68,12 @@ export function useNativeVideoUpload() {
 
     // ── Client-side guardrails (the edge fn + Cloudflare enforce too) ──
     if (!ALLOWED.includes(file.type)) {
-      setError('Please upload an MP4, MOV, WebM or M4V video.')
+      setError(tCommon('upload.errors.nativeType'))
       setPhase('error')
       return null
     }
     if (file.size > MAX_BYTES) {
-      setError('Video is larger than 1 GB. Please trim or compress it first.')
+      setError(tCommon('upload.errors.nativeTooLarge'))
       setPhase('error')
       return null
     }
@@ -96,7 +97,7 @@ export function useNativeVideoUpload() {
     } catch (err) {
       logger.error('[useNativeVideoUpload] create-upload failed', err)
       const status = (err as { context?: { status?: number } } | null)?.context?.status
-      setError(status === 429 ? VIDEO_UPLOAD_LIMIT_MESSAGE : 'Could not start the upload. Please try again.')
+      setError(status === 429 ? videoUploadLimitMessage() : tCommon('upload.errors.couldNotStart'))
       setPhase('error')
       return null
     }
@@ -128,7 +129,7 @@ export function useNativeVideoUpload() {
     uploadRef.current = null
     if (cancelRef.current) { setPhase('idle'); return null }
     if (!uploadOk) {
-      setError('The upload was interrupted. Please try again.')
+      setError(tCommon('upload.errors.interrupted'))
       setPhase('error')
       return null
     }
@@ -140,7 +141,7 @@ export function useNativeVideoUpload() {
     while (!cancelRef.current) {
       if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
         // Not an error per se — processing can finish later; tell the user.
-        setError('Still processing. Check back in a few minutes.')
+        setError(tCommon('upload.errors.stillProcessing'))
         setPhase('error')
         return createData.videoId
       }
@@ -156,7 +157,7 @@ export function useNativeVideoUpload() {
         return createData.videoId
       }
       if (status === 'errored') {
-        setError('Cloudflare could not process this video. Try a different file.')
+        setError(tCommon('upload.errors.processingFailed'))
         setPhase('error')
         return createData.videoId
       }

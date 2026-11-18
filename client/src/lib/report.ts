@@ -9,11 +9,25 @@
  * publisher) as 'user' and carries what was reported in the reason text.
  */
 
+import { tInbox } from '@/i18n/ns/inbox'
+
+/** English menu label. Screens should prefer reportMenuLabel(), which follows the interface language. */
 export const REPORT_MENU_LABEL = 'Report'
+/** The "…" menu item, in the interface language. */
+export function reportMenuLabel(): string {
+  return tInbox('safety.report.menuLabel')
+}
 /** Icon size/colour shared by every "…" item so all menus read the same. */
 export const MENU_ICON_CLASS = 'h-[18px] w-[18px] shrink-0 text-ink-2'
+/** English thank-you toast. Screens should prefer reportThanks(). */
 export const REPORT_THANKS = "Thanks. We'll review it."
+/** The thank-you toast after a report, in the interface language. */
+export function reportThanks(): string {
+  return tInbox('safety.report.thanks')
+}
 
+/** `label` is the English text stored with the report for admins (buildReportPayload);
+ *  the sheet shows reportReasonLabel(value) instead. */
 export const REPORT_REASONS = [
   { value: 'spam', label: 'Spam or scam' },
   { value: 'impersonation', label: 'Fake account or impersonation' },
@@ -26,6 +40,20 @@ export const REPORT_REASONS = [
 ] as const
 
 export type ReportReason = (typeof REPORT_REASONS)[number]['value']
+
+/** A reason as the member reads it, in the interface language. */
+export function reportReasonLabel(reason: ReportReason): string {
+  switch (reason) {
+    case 'spam': return tInbox('safety.report.reasons.spam')
+    case 'impersonation': return tInbox('safety.report.reasons.impersonation')
+    case 'harassment': return tInbox('safety.report.reasons.harassment')
+    case 'inappropriate_content': return tInbox('safety.report.reasons.inappropriateContent')
+    case 'hate_speech': return tInbox('safety.report.reasons.hateSpeech')
+    case 'violence': return tInbox('safety.report.reasons.violence')
+    case 'misinformation': return tInbox('safety.report.reasons.misinformation')
+    default: return tInbox('safety.report.reasons.other')
+  }
+}
 
 export type ReportSubject = 'profile' | 'post' | 'comment' | 'chat' | 'role' | 'feed_item' | 'feed_item_comment' | 'video' | 'offer'
 

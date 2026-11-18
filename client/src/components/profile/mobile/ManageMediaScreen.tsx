@@ -23,6 +23,7 @@ import { formatVideoDuration } from '@/lib/videoCopy'
 import { invalidateProfile } from '@/lib/profile'
 import { fullMatchVisibilityOf } from '@/lib/recruiter'
 import { VideoLockBadge } from './VideoLockBadge'
+import { useMediaT } from '@/i18n/ns/media'
 
 /**
  * Manage media (Figma 145:758): everything that shows on the profile,
@@ -44,20 +45,22 @@ type Pending =
   | { kind: 'photo'; photo: GalleryPhoto }
 
 function VideoCard({ video, onPlay, onVisibility, onDelete }: { video: ProfileVideo; onPlay: () => void; onVisibility: () => void; onDelete: () => void }) {
+  const t = useMediaT()
   const locked = video.visibility === 'recruiters'
+  const duration = formatVideoDuration(video.durationSeconds)
   return (
     <div className="flex gap-3">
       <ProfileVideoTile video={video} locked={locked} compact eager size={{ width: 120, height: 72 }} onOpen={onPlay} className="h-[72px] w-[120px] shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-row font-semibold text-ink-1">{video.title}</p>
-        <p className="text-secondary text-ink-2">{[formatVideoDuration(video.durationSeconds), 'ready'].filter(Boolean).join(' · ')}</p>
+        <p className="text-secondary text-ink-2">{duration ? t('manageMedia.readyWithDuration', { duration }) : t('manageMedia.ready')}</p>
         <button type="button" onClick={onVisibility} className="mt-1.5 inline-flex h-[26px] max-w-full items-center gap-1 whitespace-nowrap rounded-full bg-surface-grouped px-2.5 text-caption font-semibold text-ink-2">
           {locked ? <Lock className="h-3 w-3" strokeWidth={2.2} /> : null}
-          {locked ? 'Clubs & coaches only' : 'Everyone on Hockia'}
+          {locked ? t('manageMedia.chipRecruiters') : t('manageMedia.chipEveryone')}
           <ChevronDown className="h-3 w-3" strokeWidth={2.2} />
         </button>
       </div>
-      <button type="button" onClick={onDelete} aria-label={`Delete ${video.title}`} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3"><Trash2 className="h-4 w-4" strokeWidth={1.8} /></button>
+      <button type="button" onClick={onDelete} aria-label={t('manageMedia.deleteVideo', { title: video.title })} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3"><Trash2 className="h-4 w-4" strokeWidth={1.8} /></button>
     </div>
   )
 }
@@ -78,9 +81,10 @@ function Section({ title, action, onAction, secondary, onSecondary, children }: 
 }
 
 export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScreenProps) {
+  const t = useMediaT()
   const { profile, refreshProfile } = useAuthStore()
   const navigate = useNavigate()
-  const fullMatchAudience = fullMatchVisibilityOf(profile) === 'public' ? 'Everyone on Hockia' : 'Clubs & coaches'
+  const fullMatchAudience = fullMatchVisibilityOf(profile) === 'public' ? t('manageMedia.audienceEveryone') : t('manageMedia.audienceRecruiters')
   const addToast = useToastStore((s) => s.addToast)
   const videos = useProfileVideos(profileId)
   const fullGames = useFullGameVideos(profileId)
@@ -114,7 +118,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
     if (video.visibility === visibility) return
     setLocalVideos((m) => ({ ...m, [video.id]: { ...(m[video.id] ?? {}), visibility } }))
     const { error } = await supabase.from('player_videos').update({ visibility }).eq('id', video.id).select('id')
-    if (error) { logger.error('[ManageMedia] visibility failed', error); addToast('Could not change who can watch that.', 'error'); setLocalVideos((m) => ({ ...m, [video.id]: { ...(m[video.id] ?? {}), visibility: video.visibility ?? 'public' } })); return }
+    if (error) { logger.error('[ManageMedia] visibility failed', error); addToast(t('manageMedia.toasts.visibilityFailed'), 'error'); setLocalVideos((m) => ({ ...m, [video.id]: { ...(m[video.id] ?? {}), visibility: video.visibility ?? 'public' } })); return }
     clearProfileScrollCache(profileId)
   }
 
@@ -137,11 +141,11 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
         await refreshProfile()
       } else if (!(await gallery.remove(pending.photo))) throw new Error('delete refused')
       clearProfileScrollCache(profileId)
-      addToast('Removed.', 'success')
+      addToast(t('manageMedia.toasts.removed'), 'success')
       setPending(null)
     } catch (err) {
       logger.error('[ManageMedia] delete failed', err)
-      addToast('Could not remove that. Please try again.', 'error')
+      addToast(t('manageMedia.toasts.removeFailed'), 'error')
     } finally {
       setDeleting(false)
     }
@@ -150,7 +154,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return
     const { added, failed } = await gallery.add(Array.from(files))
-    if (added) addToast(added === 1 ? 'Photo added.' : `${added} photos added.`, 'success')
+    if (added) addToast(t('manageMedia.toasts.photosAdded', { count: added }), 'success')
     for (const f of failed) addToast(f, 'error')
   }
 
@@ -173,22 +177,26 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
     let failed = 0
     for (const p of removed) { if (!(await gallery.remove(p))) failed += 1 }
     if (removed.length) clearProfileScrollCache(profileId)
-    if (order.length > 1) { const ok = await gallery.reorder(order); if (!ok) addToast('Could not save the new order.', 'error') }
-    if (failed) addToast(failed === 1 ? 'One photo could not be removed.' : `${failed} photos could not be removed.`, 'error')
-    else if (removed.length) addToast(removed.length === 1 ? 'Photo removed.' : `${removed.length} photos removed.`, 'success')
+    if (order.length > 1) { const ok = await gallery.reorder(order); if (!ok) addToast(t('manageMedia.toasts.reorderFailed'), 'error') }
+    if (failed) addToast(t('manageMedia.toasts.photosRemoveFailed', { count: failed }), 'error')
+    else if (removed.length) addToast(t('manageMedia.toasts.photosRemoved', { count: removed.length }), 'success')
   }
   const finishReorder = () => { if (stagedDeletes.size) setConfirmStaged(true); else void applyReorder() }
 
-  const pendingLabel = pending?.kind === 'video' ? pending.video.title : pending?.kind === 'link' ? pending.link.match_title || 'this full match' : pending?.kind === 'legacy' ? 'the linked highlight' : 'this photo'
+  const pendingTitle = pending?.kind === 'video'
+    ? t('manageMedia.removeTitleNamed', { name: pending.video.title })
+    : pending?.kind === 'link'
+      ? (pending.link.match_title ? t('manageMedia.removeTitleNamed', { name: pending.link.match_title }) : t('manageMedia.removeTitleFullMatch'))
+      : pending?.kind === 'legacy' ? t('manageMedia.removeTitleLinked') : t('manageMedia.removeTitlePhoto')
 
   return (
     <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="manage-media-screen">
       <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
-        <DetailNavBar parent="Profile" title="Media" onBack={onBack} />
+        <DetailNavBar parent={t('manageMedia.parent')} title={t('manageMedia.title')} onBack={onBack} />
       </div>
 
       <div className="flex flex-col gap-7 px-5 pt-2">
-        <Section title="Highlight video" action={highlights.length || legacyHighlight ? 'Add' : undefined} onAction={() => setUploadKind('highlight')}>
+        <Section title={t('manageMedia.highlightSection')} action={highlights.length || legacyHighlight ? t('manageMedia.highlightAdd') : undefined} onAction={() => setUploadKind('highlight')}>
           {videos.loading ? (
             <div className="h-[72px] animate-pulse rounded-card bg-surface-grouped" />
           ) : (
@@ -197,26 +205,26 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
               {legacyHighlight && (
                 <div className="flex items-center gap-3">
                   <a href={legacyHighlight} target="_blank" rel="noopener noreferrer" className="flex h-[72px] w-[120px] shrink-0 items-center justify-center rounded-card bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-5 w-5" /></a>
-                  <div className="min-w-0 flex-1"><p className="text-row font-semibold text-ink-1">Linked highlight</p><p className="truncate text-secondary text-ink-2">{legacyHighlight.replace(/^https?:\/\//, '')}</p></div>
-                  <button type="button" onClick={() => setPending({ kind: 'legacy' })} aria-label="Remove the linked highlight" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3"><Trash2 className="h-4 w-4" strokeWidth={1.8} /></button>
+                  <div className="min-w-0 flex-1"><p className="text-row font-semibold text-ink-1">{t('manageMedia.linkedHighlight')}</p><p className="truncate text-secondary text-ink-2">{legacyHighlight.replace(/^https?:\/\//, '')}</p></div>
+                  <button type="button" onClick={() => setPending({ kind: 'legacy' })} aria-label={t('manageMedia.removeLinked')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3"><Trash2 className="h-4 w-4" strokeWidth={1.8} /></button>
                 </div>
               )}
               {!highlights.length && !legacyHighlight && (
                 <button type="button" onClick={() => setUploadKind('highlight')} className="flex items-center gap-3.5 rounded-card border border-dashed border-line p-4 text-left">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-grouped text-ink-2"><Film className="h-5 w-5" strokeWidth={1.8} /></span>
-                  <span className="min-w-0"><span className="block text-row font-semibold text-ink-1">Upload a highlight</span><span className="block text-secondary text-ink-2">2–4 minutes of your best moments. The first thing on your profile.</span></span>
+                  <span className="min-w-0"><span className="block text-row font-semibold text-ink-1">{t('manageMedia.uploadHighlight')}</span><span className="block text-secondary text-ink-2">{t('manageMedia.uploadHighlightHint')}</span></span>
                 </button>
               )}
             </>
           )}
         </Section>
 
-        <Section title="Full match video" action={fullMatches.length || fullGames.videos.length ? 'Add' : undefined} onAction={() => setFullMatchChoice(true)}>
+        <Section title={t('manageMedia.fullMatchSection')} action={fullMatches.length || fullGames.videos.length ? t('manageMedia.fullMatchAdd') : undefined} onAction={() => setFullMatchChoice(true)}>
           {/* The player's master switch (profiles.full_match_visibility) —
               one place to change who can watch every full match. */}
           <button type="button" onClick={() => navigate('/settings/privacy')} className="flex h-11 w-full items-center gap-2 rounded-card bg-surface-grouped px-3.5 text-left" data-testid="manage-media-full-match-audience">
             <Lock className="h-4 w-4 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
-            <span className="flex-1 text-row text-ink-1">Who can watch</span>
+            <span className="flex-1 text-row text-ink-1">{t('manageMedia.whoCanWatch')}</span>
             <span className="text-row text-ink-2">{fullMatchAudience}</span>
             <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} aria-hidden="true" />
           </button>
@@ -224,51 +232,51 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
           {fullGames.videos.map((l) => (
             <div key={l.id} className="flex items-center gap-3">
               <a href={l.video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[72px] w-[120px] shrink-0 items-center justify-center rounded-card bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-5 w-5" />{l.visibility === 'recruiters' && <VideoLockBadge size="sm" />}</a>
-              <button type="button" onClick={() => setLinkForm({ open: true, edit: l })} className="min-w-0 flex-1 text-left"><span className="block truncate text-row font-semibold text-ink-1">{l.match_title || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}</span><span className="block truncate text-secondary text-ink-2">{[l.match_date?.slice(0, 7), l.competition].filter(Boolean).join(' · ') || 'Linked video'}</span></button>
-              <button type="button" onClick={() => setPending({ kind: 'link', link: l })} aria-label={`Delete ${l.match_title || 'full match'}`} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3"><Trash2 className="h-4 w-4" strokeWidth={1.8} /></button>
+              <button type="button" onClick={() => setLinkForm({ open: true, edit: l })} className="min-w-0 flex-1 text-left"><span className="block truncate text-row font-semibold text-ink-1">{l.match_title || (l.opponent_team ? t('manageMedia.versus', { opponent: l.opponent_team }) : t('manageMedia.fullMatch'))}</span><span className="block truncate text-secondary text-ink-2">{[l.match_date?.slice(0, 7), l.competition].filter(Boolean).join(' · ') || t('manageMedia.linkedVideo')}</span></button>
+              <button type="button" onClick={() => setPending({ kind: 'link', link: l })} aria-label={l.match_title ? t('manageMedia.deleteLinkNamed', { title: l.match_title }) : t('manageMedia.deleteLink')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3"><Trash2 className="h-4 w-4" strokeWidth={1.8} /></button>
             </div>
           ))}
           {!fullMatches.length && !fullGames.videos.length && !videos.loading && (
             // The one highlighted empty slot (Figma 145:758): dashed, brand soft.
             <button type="button" onClick={() => setFullMatchChoice(true)} className="flex items-center gap-3.5 rounded-card border border-dashed border-brand-primary bg-brand-soft p-4 text-left" data-testid="media-full-match-empty">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-white text-brand-primary"><Upload className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /></span>
-              <span className="min-w-0"><span className="block text-row font-semibold text-brand-primary">Upload a full match</span><span className="block text-secondary leading-[18px] text-ink-2">60+ minutes, any quality. It’s the first thing clubs ask for.</span></span>
+              <span className="min-w-0"><span className="block text-row font-semibold text-brand-primary">{t('manageMedia.uploadFullMatch')}</span><span className="block text-secondary leading-[18px] text-ink-2">{t('manageMedia.uploadFullMatchHint')}</span></span>
             </button>
           )}
         </Section>
 
         <Section
-          title={`Photos · ${gallery.photos.length}`}
-          action={gallery.photos.length > 0 ? (reordering ? 'Done' : 'Reorder') : undefined}
+          title={t('manageMedia.photosTitle', { total: gallery.photos.length })}
+          action={gallery.photos.length > 0 ? (reordering ? t('manageMedia.done') : t('manageMedia.reorder')) : undefined}
           onAction={() => (reordering ? finishReorder() : (setDraftOrder(gallery.photos), setReordering(true)))}
-          secondary={reordering ? 'Cancel' : undefined}
+          secondary={reordering ? t('manageMedia.cancel') : undefined}
           onSecondary={cancelReorder}
         >
           <input ref={fileRef} type="file" accept="image/png,image/jpeg" multiple className="hidden" onChange={(e) => { void addPhotos(e.target.files); e.target.value = '' }} />
           <div className="grid grid-cols-3 gap-1.5">
             {shownPhotos.filter((p) => !stagedDeletes.has(p.id)).map((p, i, visible) => (
               <div key={p.id} className="relative aspect-square overflow-hidden rounded-[10px] bg-surface-grouped">
-                <button type="button" onClick={() => !reordering && setPhotoIndex(i)} className="h-full w-full" aria-label={p.caption || `Photo ${i + 1}`}>
+                <button type="button" onClick={() => !reordering && setPhotoIndex(i)} className="h-full w-full" aria-label={p.caption || t('manageMedia.photoLabel', { index: i + 1 })}>
                   <SmoothImage src={getImageUrl(p.url, 'card-thumb') ?? p.url} srcSet={getImageSrcSet(p.url, 'card-thumb') ?? undefined} sizes="33vw" alt="" eager={i < 6} className="object-cover" />
                 </button>
                 {reordering && (
                   <>
-                    <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move earlier" className="absolute bottom-1 left-1 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-ink-1 disabled:opacity-30"><ArrowLeft className="h-3.5 w-3.5" strokeWidth={2.2} /></button>
-                    <button type="button" onClick={() => move(i, 1)} disabled={i === visible.length - 1} aria-label="Move later" className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-ink-1 disabled:opacity-30"><ArrowRight className="h-3.5 w-3.5" strokeWidth={2.2} /></button>
-                    <button type="button" onClick={() => setStagedDeletes((set) => new Set(set).add(p.id))} aria-label="Delete photo" className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white"><X className="h-3.5 w-3.5" strokeWidth={2.4} /></button>
+                    <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label={t('manageMedia.moveEarlier')} className="absolute bottom-1 left-1 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-ink-1 disabled:opacity-30"><ArrowLeft className="h-3.5 w-3.5" strokeWidth={2.2} /></button>
+                    <button type="button" onClick={() => move(i, 1)} disabled={i === visible.length - 1} aria-label={t('manageMedia.moveLater')} className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-ink-1 disabled:opacity-30"><ArrowRight className="h-3.5 w-3.5" strokeWidth={2.2} /></button>
+                    <button type="button" onClick={() => setStagedDeletes((set) => new Set(set).add(p.id))} aria-label={t('manageMedia.deletePhoto')} className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white"><X className="h-3.5 w-3.5" strokeWidth={2.4} /></button>
                   </>
                 )}
               </div>
             ))}
             {!reordering && (
               <div className="flex aspect-square items-start">
-                <button type="button" onClick={() => fileRef.current?.click()} disabled={gallery.busy} aria-label="Add photos" className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'px-2' })} data-testid="media-add-photo">
-                  {gallery.busy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" /> : 'Add photo'}
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={gallery.busy} aria-label={t('manageMedia.addPhotosLabel')} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true, className: 'px-2' })} data-testid="media-add-photo">
+                  {gallery.busy ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" /> : t('manageMedia.addPhoto')}
                 </button>
               </div>
             )}
           </div>
-          {reordering && <p className="text-caption text-ink-3">Use the arrows to arrange; the first photo is your cover. Tap Done to save{stagedDeletes.size ? ` and remove ${stagedDeletes.size === 1 ? '1 photo' : `${stagedDeletes.size} photos`}` : ''}, or Cancel to keep everything as it was.</p>}
+          {reordering && <p className="text-caption text-ink-3">{stagedDeletes.size ? t('manageMedia.reorderHintRemove', { count: stagedDeletes.size }) : t('manageMedia.reorderHint')}</p>}
         </Section>
       </div>
 
@@ -284,23 +292,23 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
         }}
       />
 
-      <BottomSheet open={fullMatchChoice} onClose={() => setFullMatchChoice(false)} ariaLabel="Add a full match">
+      <BottomSheet open={fullMatchChoice} onClose={() => setFullMatchChoice(false)} ariaLabel={t('manageMedia.choice.title')}>
         <div className="px-5 pb-3 pt-1">
-          <h2 className="text-title text-ink-1">Add a full match</h2>
+          <h2 className="text-title text-ink-1">{t('manageMedia.choice.title')}</h2>
           <div className="mt-3 divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
-            <button type="button" onClick={() => { setFullMatchChoice(false); setUploadKind('full_match') }} className="flex h-[54px] w-full items-center gap-3 px-4 text-left text-body text-ink-1"><Video className="h-5 w-5 text-hockia-primary" strokeWidth={1.8} /> Upload the video<span className="ml-auto text-secondary text-ink-3">plays on Hockia</span></button>
-            <button type="button" onClick={() => { setFullMatchChoice(false); setLinkForm({ open: true, edit: null }) }} className="flex h-[54px] w-full items-center gap-3 px-4 text-left text-body text-ink-1"><ExternalLink className="h-5 w-5 text-hockia-primary" strokeWidth={1.8} /> Paste a link<span className="ml-auto text-secondary text-ink-3">YouTube, Vimeo, Drive</span></button>
+            <button type="button" onClick={() => { setFullMatchChoice(false); setUploadKind('full_match') }} className="flex h-[54px] w-full items-center gap-3 px-4 text-left text-body text-ink-1"><Video className="h-5 w-5 text-hockia-primary" strokeWidth={1.8} /> {t('manageMedia.choice.upload')}<span className="ml-auto text-secondary text-ink-3">{t('manageMedia.choice.uploadHint')}</span></button>
+            <button type="button" onClick={() => { setFullMatchChoice(false); setLinkForm({ open: true, edit: null }) }} className="flex h-[54px] w-full items-center gap-3 px-4 text-left text-body text-ink-1"><ExternalLink className="h-5 w-5 text-hockia-primary" strokeWidth={1.8} /> {t('manageMedia.choice.link')}<span className="ml-auto text-secondary text-ink-3">{t('manageMedia.choice.linkHint')}</span></button>
           </div>
         </div>
       </BottomSheet>
 
-      <BottomSheet open={visibilityFor !== null} onClose={() => setVisibilityFor(null)} ariaLabel="Who can watch">
+      <BottomSheet open={visibilityFor !== null} onClose={() => setVisibilityFor(null)} ariaLabel={t('manageMedia.visibility.title')}>
         {visibilityFor && (
           <div className="px-5 pb-3 pt-1">
-            <h2 className="text-title text-ink-1">Who can watch</h2>
+            <h2 className="text-title text-ink-1">{t('manageMedia.visibility.title')}</h2>
             <p className="mt-1 truncate text-secondary text-ink-2">{visibilityFor.title}</p>
             <div className="mt-3 divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
-              {([['recruiters', 'Clubs & coaches', 'Clubs and coaches who recruit.'], ['public', 'Everyone on Hockia', 'Anyone on Hockia can watch.']] as const).map(([value, title, sub]) => {
+              {([['recruiters', t('manageMedia.visibility.recruiters'), t('manageMedia.visibility.recruitersHint')], ['public', t('manageMedia.visibility.everyone'), t('manageMedia.visibility.everyoneHint')]] as const).map(([value, title, sub]) => {
                 const on = (visibilityFor.visibility ?? 'public') === value
                 return (
                   <button key={value} type="button" role="radio" aria-checked={on} onClick={() => void setVisibility(visibilityFor, value)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
@@ -314,11 +322,11 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
         )}
       </BottomSheet>
 
-      <ConfirmActionModal isOpen={confirmStaged} onClose={() => setConfirmStaged(false)} onConfirm={() => void applyReorder()} title={stagedDeletes.size === 1 ? 'Remove 1 photo?' : `Remove ${stagedDeletes.size} photos?`} description="They disappear from your profile. This cannot be undone." confirmLabel="Remove" confirmTone="danger" />
-      <ConfirmActionModal isOpen={pending !== null} onClose={() => setPending(null)} onConfirm={() => void confirmDelete()} title={`Remove ${pendingLabel}?`} description="It disappears from your profile. This cannot be undone." confirmLabel="Remove" confirmTone="danger" confirmLoading={deleting} loadingLabel="Removing…" />
+      <ConfirmActionModal isOpen={confirmStaged} onClose={() => setConfirmStaged(false)} onConfirm={() => void applyReorder()} title={t('manageMedia.stagedTitle', { count: stagedDeletes.size })} description={t('manageMedia.stagedBody')} confirmLabel={t('manageMedia.stagedConfirm')} confirmTone="danger" />
+      <ConfirmActionModal isOpen={pending !== null} onClose={() => setPending(null)} onConfirm={() => void confirmDelete()} title={pendingTitle} description={t('manageMedia.removeBody')} confirmLabel={t('manageMedia.removeConfirm')} confirmTone="danger" confirmLoading={deleting} loadingLabel={t('manageMedia.removing')} />
 
       {playing && (
-        <MediaLightbox images={[{ video_id: playing.id, media_type: 'video', duration: playing.durationSeconds, order: 0 }]} initialIndex={0} onClose={() => setPlaying(null)} videoLabel={playing.kind === 'highlight' ? 'Highlight' : 'Full match'} isOwner caption={[playing.title, formatVideoDuration(playing.durationSeconds)].filter(Boolean).join(' · ')} />
+        <MediaLightbox images={[{ video_id: playing.id, media_type: 'video', duration: playing.durationSeconds, order: 0 }]} initialIndex={0} onClose={() => setPlaying(null)} videoLabel={playing.kind === 'highlight' ? t('manageMedia.playerHighlight') : t('manageMedia.playerFullMatch')} isOwner caption={[playing.title, formatVideoDuration(playing.durationSeconds)].filter(Boolean).join(' · ')} />
       )}
       {photoIndex !== null && (
         <MediaLightbox images={shownPhotos.map((p, i) => ({ url: p.url, media_type: 'image', order: i }))} initialIndex={photoIndex} onClose={() => setPhotoIndex(null)} caption={shownPhotos[photoIndex]?.caption ?? null} />

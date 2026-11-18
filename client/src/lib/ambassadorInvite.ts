@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { tBrands } from '@/i18n/ns/brands'
 
 /**
  * Role gating for actions on a person (design audit 2026-10-21, A7):
@@ -24,23 +25,21 @@ export function personActionGate(viewerRole: string | null | undefined, targetRo
   return { addFriend: true, inviteAmbassador: false, messagePrimary: false }
 }
 
-export const INVITE_AMBASSADOR_LABEL = 'Invite as ambassador'
-
 export type AmbassadorInviteResult = { ok: true } | { ok: false; message: string; already?: boolean }
 
 /** Friendly words for the add_brand_ambassador RPC's error strings. */
 export function ambassadorInviteError(raw: string | null | undefined): { message: string; already: boolean } {
   switch (raw) {
     case 'Request already pending':
-      return { message: 'Invite already sent.', already: true }
+      return { message: tBrands('ambassadorInvite.errors.pending'), already: true }
     case 'Player is already an ambassador':
-      return { message: 'Already one of your ambassadors.', already: true }
+      return { message: tBrands('ambassadorInvite.errors.already'), already: true }
     case 'Player not available':
-      return { message: 'This player can’t be invited.', already: false }
+      return { message: tBrands('ambassadorInvite.errors.notAvailable'), already: false }
     case 'Only players can be ambassadors':
-      return { message: 'Only players can be ambassadors.', already: false }
+      return { message: tBrands('ambassadorInvite.errors.onlyPlayers'), already: false }
     default:
-      return { message: 'Couldn’t send the invite. Try again.', already: false }
+      return { message: tBrands('ambassadorInvite.errors.generic'), already: false }
   }
 }
 
@@ -55,7 +54,7 @@ export async function inviteAsAmbassador(playerId: string): Promise<AmbassadorIn
     const brandId = (brand as { id?: string } | null)?.id ?? null
     if (brandError || !brandId) {
       if (brandError) logger.error('[ambassadorInvite] get_my_brand failed', brandError)
-      return { ok: false, message: 'Couldn’t send the invite. Try again.' }
+      return { ok: false, message: tBrands('ambassadorInvite.errors.generic') }
     }
     const { data, error } = await supabase.rpc('add_brand_ambassador', { p_brand_id: brandId, p_player_id: playerId })
     if (error) throw error
@@ -65,7 +64,7 @@ export async function inviteAsAmbassador(playerId: string): Promise<AmbassadorIn
     return { ok: false, message: mapped.message, already: mapped.already }
   } catch (err) {
     logger.error('[ambassadorInvite] add_brand_ambassador failed', err)
-    return { ok: false, message: 'Couldn’t send the invite. Try again.' }
+    return { ok: false, message: tBrands('ambassadorInvite.errors.generic') }
   }
 }
 
@@ -78,7 +77,7 @@ export function useAmbassadorInvite(playerId: string | null | undefined, onMessa
     const res = await inviteAsAmbassador(playerId)
     if (res.ok) {
       setState('sent')
-      onMessage?.('Ambassador invite sent.', 'success')
+      onMessage?.(tBrands('ambassadorInvite.sent'), 'success')
     } else if (res.already) {
       setState('sent')
       onMessage?.(res.message, 'info')
@@ -87,5 +86,5 @@ export function useAmbassadorInvite(playerId: string | null | undefined, onMessa
       onMessage?.(res.message, 'error')
     }
   }, [playerId, state, onMessage])
-  return { state, invite, label: state === 'sent' ? 'Invite sent' : INVITE_AMBASSADOR_LABEL }
+  return { state, invite, label: state === 'sent' ? tBrands('ambassadorInvite.labelSent') : tBrands('ambassadorInvite.label') }
 }

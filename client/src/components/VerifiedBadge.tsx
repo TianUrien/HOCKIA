@@ -1,5 +1,7 @@
 import { BadgeCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useProfileT } from '@/i18n/ns/profile'
+import { intlLocale } from '@/i18n/format'
 
 interface VerifiedBadgeProps {
   /** Whether the owner / brand is verified. Render nothing when false. */
@@ -17,7 +19,7 @@ interface VerifiedBadgeProps {
 function formatGrantedDate(iso: string): string {
   const ts = Date.parse(iso)
   if (Number.isNaN(ts)) return ''
-  return new Date(ts).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
+  return new Date(ts).toLocaleDateString(intlLocale(), { year: 'numeric', month: 'short' })
 }
 
 /**
@@ -38,19 +40,20 @@ export default function VerifiedBadge({
   size = 'md',
   className,
 }: VerifiedBadgeProps) {
+  const t = useProfileT()
   if (!verified) return null
 
   const iconClass = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4'
   const grantedLabel = verifiedAt ? formatGrantedDate(verifiedAt) : ''
   const tooltip = grantedLabel
-    ? `Verified by Hockia · ${grantedLabel}`
-    : 'Verified by Hockia'
+    ? t('verifiedBadge.tooltipWithDate', { date: grantedLabel })
+    : t('verifiedBadge.tooltip')
 
   return (
     <span
       className={cn('inline-flex items-center text-positive', className)}
       role="img"
-      aria-label="Verified profile"
+      aria-label={t('verifiedBadge.ariaLabel')}
       title={tooltip}
     >
       <BadgeCheck className={iconClass} aria-hidden="true" />

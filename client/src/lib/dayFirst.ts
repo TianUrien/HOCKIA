@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import { formatClock, formatDayMonth, isEnglish } from '@/i18n/format'
 
 /**
  * Day-first dates, app-wide (founder rule, QA round 7 re-check): "3 Oct",
@@ -8,6 +9,9 @@ import { format } from 'date-fns'
  * ("Oct 2026") are not covered here and stay as they are.
  *
  * Admin charts (features/admin) and EmailActionPage are out of scope.
+ *
+ * The shapes above are the English ones. In any other interface language the
+ * same day-first form comes from Intl ("3 oct", "3 oct 2026"; i18n/format).
  */
 
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -41,6 +45,7 @@ export function dayFirst(input: string | Date | null | undefined, opts: DayFirst
   const year = opts.year ?? 'auto'
   const now = opts.now ?? new Date()
   const withYear = year === 'always' || (year === 'auto' && d.getFullYear() !== now.getFullYear())
+  if (!isEnglish()) return formatDayMonth(d, withYear)
   const dayMonth = `${d.getDate()} ${MONTH[d.getMonth()]}`
   return withYear ? `${dayMonth} ${d.getFullYear()}` : dayMonth
 }
@@ -52,5 +57,6 @@ export function dayFirst(input: string | Date | null | undefined, opts: DayFirst
  */
 export function clockTime(input: string | Date | null | undefined): string {
   const d = parseDayFirst(input)
-  return d ? format(d, 'h:mm a') : ''
+  if (!d) return ''
+  return isEnglish() ? format(d, 'h:mm a') : formatClock(d)
 }

@@ -11,6 +11,7 @@ import type { NationalityCountry } from '@/lib/nationality'
 import { useBrandOfferCount } from '@/components/offers/OffersWhereYouLive'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * Card / Member photo (Figma 6:100), Community grid on the phone. 3:4, radius
@@ -43,8 +44,9 @@ interface MemberPhotoCardProps {
 const SCRIM = CARD_SCRIM
 
 export function MemberPhotoCard({ member, photoUrl, pending = false, age, place = null, nationalities = [], fit = null, onOpen, priority = false }: MemberPhotoCardProps) {
+  const t = useCommunityT()
   const [failed, setFailed] = useState<string | null>(null)
-  const name = member.full_name?.trim() || 'Hockia member'
+  const name = member.full_name?.trim() || t('photoCard.fallbackName')
   const isBrand = member.role === 'brand'
   // Offers this member can see from the brand (Figma 08 · Brands P2 BT1); 0 outside the Brands tab.
   const offerCount = useBrandOfferCount(member.id)
@@ -58,7 +60,7 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
     <button
       type="button"
       onClick={onOpen}
-      aria-label={[name, roleLine, placeLine, fitLabel].filter(Boolean).join(', ') + '. Tap to preview.'}
+      aria-label={t('photoCard.openLabel', { summary: [name, roleLine, placeLine, fitLabel].filter(Boolean).join(', ') })}
       data-testid="member-tile"
       className={`${pending ? 'bg-line ' : ''}relative flex aspect-[3/4] w-full flex-col justify-end overflow-hidden rounded-[20px] px-3 pb-3 pt-2.5 text-left ${PRESS} focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2`}
       style={src ? undefined : { backgroundImage: pending ? SCRIM : `${SCRIM}, ${roleGradient(member.role)}` }}
@@ -95,7 +97,7 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
       <span aria-hidden="true" className={`pointer-events-none absolute inset-0 rounded-[20px] ${HAIRLINE_ON_PHOTO}`} />
       {isBrand && offerCount > 0 && (
         <span className="absolute right-2.5 top-2.5 rounded-full bg-brand-soft px-2.5 py-1 text-caption font-semibold text-brand-primary" data-testid="brand-offer-count">
-          {offerCount} {offerCount === 1 ? 'offer' : 'offers'}
+          {t('photoCard.offerCount', { count: offerCount })}
         </span>
       )}
       <span className="relative flex w-full min-w-0 flex-col gap-0.5">

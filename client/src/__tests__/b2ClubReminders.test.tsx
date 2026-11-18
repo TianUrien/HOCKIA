@@ -126,7 +126,7 @@ describe('Decline with a kind note (?decline=1)', () => {
   it('opens the Decline sheet with the Hockia AI draft filled in, and drops the param', async () => {
     openReview('pending', '?decline=1')
     expect(await screen.findByTestId('decline-sheet')).toBeTruthy()
-    await waitFor(() => expect(fx.invoke).toHaveBeenCalledWith('application-feedback', { body: { mode: 'draft', application_id: 'a1', reason: DECLINE_DEEP_LINK_REASON } }))
+    await waitFor(() => expect(fx.invoke).toHaveBeenCalledWith('application-feedback', { body: { mode: 'draft', application_id: 'a1', reason: DECLINE_DEEP_LINK_REASON, locale: 'en' } }))
     await waitFor(() => expect((screen.getByLabelText('Note to Ana') as HTMLTextAreaElement).value).toBe('Thanks for applying, Ana. We went another way this time.'))
     expect(screen.getByTestId('decline-note-ai').textContent).toContain('Drafted by Hockia AI')
     expect(screen.getByRole('radio', { name: 'Other' }).getAttribute('aria-checked')).toBe('true')

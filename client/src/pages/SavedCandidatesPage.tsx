@@ -23,15 +23,18 @@ import { useAuthStore } from '@/lib/auth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getInitials } from '@/lib/utils'
 import { useSavedProfilesList, useIsProfileSaved, type SavedProfileSummary } from '@/hooks/useSavedProfiles'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
+import { Trans } from 'react-i18next'
 
 export default function SavedCandidatesPage() {
+  const t = useRecruitingT()
   const { user, profile } = useAuthStore()
   // Recruiters (club/coach) save "candidates"; everyone else (players,
   // umpires) saves mixed "profiles" — clubs, coaches, players they want
   // to revisit. Same list + data; only the framing changes. Mirrors the
   // SavedCandidatesCard variant copy.
   const isRecruiter = isRecruitingViewer(profile)
-  const noun = isRecruiter ? 'Saved Candidates' : 'Saved Profiles'
+  const noun = isRecruiter ? t('savedCandidates.documentTitleCandidates') : t('savedCandidates.documentTitleProfiles')
   useDocumentTitle(noun)
   const navigate = useNavigate()
   const { items, loading, error, refresh } = useSavedProfilesList()
@@ -41,14 +44,14 @@ export default function SavedCandidatesPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="max-w-3xl mx-auto px-4 pt-under-header-lg pb-12 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to view saved profiles</h1>
-          <p className="text-gray-600 mb-6">Save people you discover and keep them organised for later.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('savedCandidates.signedOutTitle')}</h1>
+          <p className="text-gray-600 mb-6">{t('savedCandidates.signedOutBody')}</p>
           <button
             type="button"
             onClick={() => navigate('/signin')}
             className="px-6 py-3 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-semibold hover:opacity-90"
           >
-            Sign in
+            {t('savedCandidates.signIn')}
           </button>
         </div>
       </div>
@@ -65,14 +68,14 @@ export default function SavedCandidatesPage() {
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          {t('savedCandidates.back')}
         </button>
 
         <header className="mb-6">
-          <h1 className="text-title text-ink-1">Saved</h1>
+          <h1 className="text-title text-ink-1">{t('savedCandidates.title')}</h1>
           {/* Rebrand page 28 · Saved: sentence case, and the privacy promise first. */}
           <p className="mt-2 text-[17px] leading-[22px] text-ink-2">
-            Only you see who you saved. They’re never told.
+            {t('savedCandidates.privacy')}
           </p>
           {/* Active recruiting context drives the Club Fit chip on
               each saved candidate row. Self-hides for non-recruiter
@@ -84,10 +87,12 @@ export default function SavedCandidatesPage() {
 
         {error && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {error} —{' '}
-            <button type="button" onClick={() => void refresh()} className="underline">
-              try again
-            </button>
+            <Trans
+              t={t}
+              i18nKey="savedCandidates.errorRetry"
+              values={{ error }}
+              components={{ button: <button type="button" onClick={() => void refresh()} className="underline" /> }}
+            />
           </div>
         )}
 
@@ -112,30 +117,32 @@ export default function SavedCandidatesPage() {
 }
 
 function EmptyState({ isRecruiter }: { isRecruiter: boolean }) {
+  const t = useRecruitingT()
   return (
     <div className="rounded-xl border-2 border-dashed border-gray-300 bg-white p-8 text-center">
       <div className="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center mx-auto mb-4">
         <BookmarkCheck className="w-7 h-7 text-hockia-primary" />
       </div>
       <h2 className="text-lg font-semibold text-gray-900 mb-1">
-        {isRecruiter ? 'No saved candidates yet' : 'No saved profiles yet'}
+        {isRecruiter ? t('savedCandidates.emptyTitleCandidates') : t('savedCandidates.emptyTitleProfiles')}
       </h2>
       <p className="text-sm text-gray-600 mb-6">
         {isRecruiter
-          ? 'Tap the bookmark icon on any player card in Community to save them here.'
-          : 'Tap the bookmark icon on any profile in Community to save them here.'}
+          ? t('savedCandidates.emptyBodyCandidates')
+          : t('savedCandidates.emptyBodyProfiles')}
       </p>
       <Link
         to="/community"
         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold hover:opacity-90"
       >
-        Browse Community
+        {t('savedCandidates.browseCommunity')}
       </Link>
     </div>
   )
 }
 
 function SavedCandidateRow({ item, onRemoved }: { item: SavedProfileSummary; onRemoved: () => void }) {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const savedState = useIsProfileSaved(item.profile?.id ?? null)
   const profile = item.profile
@@ -147,7 +154,7 @@ function SavedCandidateRow({ item, onRemoved }: { item: SavedProfileSummary; onR
     // user can still remove it.
     return (
       <li className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-500">
-        This player is no longer available on Hockia.
+        {t('savedCandidates.unavailable')}
       </li>
     )
   }
@@ -170,7 +177,7 @@ function SavedCandidateRow({ item, onRemoved }: { item: SavedProfileSummary; onR
         type="button"
         onClick={() => navigate(profileRoute)}
         className="flex items-center gap-3 flex-1 min-w-0 text-left"
-        aria-label={`Open ${profile.full_name ?? 'profile'}`}
+        aria-label={profile.full_name != null ? t('savedCandidates.openNamed', { name: profile.full_name }) : t('savedCandidates.openProfile')}
       >
         <Avatar
           src={profile.avatar_url}
@@ -181,7 +188,7 @@ function SavedCandidateRow({ item, onRemoved }: { item: SavedProfileSummary; onR
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate">{profile.full_name ?? 'Unnamed'}</h3>
+            <h3 className="font-semibold text-gray-900 truncate">{profile.full_name ?? t('savedCandidates.unnamed')}</h3>
             <RoleBadge role={profile.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire'} />
           </div>
           {/* F12 (QA): consistency with the new ShortlistDetailPage —
@@ -202,8 +209,8 @@ function SavedCandidateRow({ item, onRemoved }: { item: SavedProfileSummary; onR
         onClick={handleRemove}
         disabled={savedState.mutating}
         className="ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-status-danger-soft hover:text-status-danger disabled:opacity-50"
-        aria-label={`Remove ${profile.full_name} from saved`}
-        title="Remove from saved"
+        aria-label={t('savedCandidates.removeNamed', { name: String(profile.full_name) })}
+        title={t('savedCandidates.removeTitle')}
       >
         <Trash2 className="w-4 h-4" />
       </button>

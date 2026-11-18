@@ -7,6 +7,7 @@ import { trackCardClick } from '@/lib/homeInstrumentation'
 import type { MembersDigestFeedItem, OpenToPlayWeekFeedItem } from '@/types/homeFeed'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface MosaicMember { id: string; full_name: string | null; avatar_url: string | null; role: string }
 
@@ -16,20 +17,21 @@ interface MosaicMember { id: string; full_name: string | null; avatar_url: strin
  * members. Shared by the weekly new-members digest and the "open to play"
  * card. No author → no comments, no ⋯ (spec rulings 11 Oct).
  */
-function MemberMosaicCard({ feedItemId, itemType, title, deckLabel, faceLabel, moreLabel, members, memberCount, testId }: {
+function MemberMosaicCard({ feedItemId, itemType, title, deckLabel, faceAria, moreAria, members, memberCount, testId }: {
   feedItemId: string
   itemType: string
   title: string
   /** Title of the deck the mosaic opens. */
   deckLabel: string
-  /** aria suffix for one face: "new member", "open to play". */
-  faceLabel: string
-  /** aria label of the "+N" tile, after the number. */
-  moreLabel: string
+  /** Accessible name of one face tile, given the member's name. */
+  faceAria: (name: string) => string
+  /** Accessible name of the "+N" tile, given how many more there are. */
+  moreAria: (extra: number) => string
   members: MosaicMember[]
   memberCount: number
   testId: string
 }) {
+  const t = useHomeT()
   const { openDeckByIds } = useHomeV1()
   const faces = members.slice(0, 6)
   const extra = Math.max(0, memberCount - 5)
@@ -42,7 +44,7 @@ function MemberMosaicCard({ feedItemId, itemType, title, deckLabel, faceLabel, m
 
   return (
     <article className="flex flex-col gap-2 py-4" data-testid={testId}>
-      <SectionHeader title={title} action="Swipe through" onAction={() => open(0)} />
+      <SectionHeader title={title} action={t('digest.swipeThrough')} onAction={() => open(0)} />
       <div className="grid grid-cols-3 gap-2 px-4">
         {faces.map((m, i) => {
           const more = showMore && i === 5
@@ -52,7 +54,7 @@ function MemberMosaicCard({ feedItemId, itemType, title, deckLabel, faceLabel, m
               key={m.id}
               type="button"
               onClick={() => open(i)}
-              aria-label={more ? `${extra} ${moreLabel}` : `${m.full_name ?? 'Member'}, ${faceLabel}`}
+              aria-label={more ? moreAria(extra) : faceAria(m.full_name ?? t('digest.unnamedMember'))}
               className="relative aspect-[115/116] overflow-hidden rounded-2xl bg-surface-muted transition-transform duration-300 active:scale-[0.97]"
             >
               {src ? (
@@ -76,15 +78,16 @@ function MemberMosaicCard({ feedItemId, itemType, title, deckLabel, faceLabel, m
  * Server-side: only weeks with ≥4 visible members (hidden + blocked excluded).
  */
 export function DigestCard({ item }: { item: MembersDigestFeedItem }) {
-  const title = `${item.member_count} joined this week`
+  const t = useHomeT()
+  const title = t('digest.joined.title', { count: item.member_count })
   return (
     <MemberMosaicCard
       feedItemId={item.feed_item_id}
       itemType={item.item_type}
       title={title}
       deckLabel={title}
-      faceLabel="new member"
-      moreLabel="more new members"
+      faceAria={(name) => t('digest.joined.faceAria', { name })}
+      moreAria={(extra) => t('digest.joined.moreAria', { count: extra })}
       members={item.members}
       memberCount={item.member_count}
       testId="home-digest-card"
@@ -99,15 +102,16 @@ export function DigestCard({ item }: { item: MembersDigestFeedItem }) {
  * server-side from 3 visible players up, and it moves up as players confirm.
  */
 export function OpenToPlayWeekCard({ item }: { item: OpenToPlayWeekFeedItem }) {
-  const title = `${item.member_count} players are open to play`
+  const t = useHomeT()
+  const title = t('digest.openToPlay.title', { count: item.member_count })
   return (
     <MemberMosaicCard
       feedItemId={item.feed_item_id}
       itemType={item.item_type}
       title={title}
       deckLabel={title}
-      faceLabel="open to play"
-      moreLabel="more players open to play"
+      faceAria={(name) => t('digest.openToPlay.faceAria', { name })}
+      moreAria={(extra) => t('digest.openToPlay.moreAria', { count: extra })}
       members={item.members}
       memberCount={item.member_count}
       testId="home-open-to-play-card"

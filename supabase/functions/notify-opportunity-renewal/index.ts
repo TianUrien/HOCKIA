@@ -7,6 +7,7 @@ import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { hashToken, mintRawToken } from '../_shared/action-tokens.ts'
 import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
+import { FOOTER_ES, readMemberLanguage } from '../_shared/member-language.ts'
 
 /**
  * ============================================================================
@@ -58,6 +59,9 @@ function json(status: number, body: Record<string, unknown>): Response {
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
+
+const RENEWAL_DONE_ES =
+  '¿La búsqueda ya terminó? No tienes que hacer nada: sigue cerrada, y las postulaciones en espera se cierran solas para que nadie quede sin respuesta.'
 
 Deno.serve(async (req: Request) => {
   const correlationId = crypto.randomUUID().slice(0, 8)
@@ -126,6 +130,11 @@ Deno.serve(async (req: Request) => {
       return json(200, { message: 'Ignored - publisher not eligible' })
     }
 
+    // The publisher's interface language (profiles.ui_language), read on its
+    // own and failing to English. Spanish copy: client/src/locales/glossary.md.
+    const language = await readMemberLanguage(supabase, publisher.id)
+    const es = language === 'es'
+
     // ── Idempotency: one renewal email per (opportunity, sweep) ──
     const { count: alreadySent } = await supabase
       .from('email_sends')
@@ -184,61 +193,94 @@ Deno.serve(async (req: Request) => {
     // ── Compose ──
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
     const renewUrl = `${HOCKIA_BASE_URL}/email-action?t=${raw}`
-    const firstName = publisher.full_name?.split(' ')[0]?.trim() || 'there'
-    const subject = `Your opportunity "${opp.title}" reached its deadline`
-    const waitingLine = (pendingCount ?? 0) > 0
+    const firstName = publisher.full_name?.split(' ')[0]?.trim() || (es ? '' : 'there')
+    const subject = es
+      ? `Tu oportunidad "${opp.title}" llegó a su fecha límite`
+      : `Your opportunity "${opp.title}" reached its deadline`
+    const waitingLine = es
+      ? (pendingCount ?? 0) > 0
+        ? (pendingCount === 1
+            ? '1 postulación sigue esperando respuesta.'
+            : `${pendingCount} postulaciones siguen esperando respuesta.`)
+        : ''
+      : (pendingCount ?? 0) > 0
       ? (pendingCount === 1
           ? '1 applicant is still waiting for a response on it.'
           : `${pendingCount} applicants are still waiting for a response on it.`)
       : ''
 
     const html = `<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html lang="${es ? 'es' : 'en'}"><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
         ${EMAIL_LOGO_HTML}
-        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Hi ${escapeHtml(firstName)},</div>
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? (firstName ? `Hola, ${escapeHtml(firstName)}:` : 'Hola:') : `Hi ${escapeHtml(firstName)},`}</div>
         <p style="font-size:15px;color:#3f3c4d;line-height:1.55;">
-          Your opportunity <strong>${escapeHtml(opp.title)}</strong> reached its application deadline and is now closed on Hockia.
+          ${es
+            ? `Tu oportunidad <strong>${escapeHtml(opp.title)}</strong> llegó a su fecha límite de postulación y ahora está cerrada en Hockia.`
+            : `Your opportunity <strong>${escapeHtml(opp.title)}</strong> reached its application deadline and is now closed on Hockia.`}
           ${waitingLine ? `<br/><strong>${waitingLine}</strong>` : ''}
         </p>
         <p style="font-size:14px;color:#3f3c4d;line-height:1.55;">
-          Still recruiting for this role? One click reopens it with a fresh 30-day deadline:
+          ${es ? '¿La búsqueda sigue abierta? Con un clic la reabres con una nueva fecha límite de 30 días:' : 'Still recruiting for this role? One click reopens it with a fresh 30-day deadline:'}
         </p>
         <div style="margin-top:16px;">
-          <a href="${renewUrl}" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Renew for 30 days</a>
+          <a href="${renewUrl}" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">${es ? 'Renovar por 30 días' : 'Renew for 30 days'}</a>
         </div>
         <p style="font-size:13px;color:#6b6878;line-height:1.5;margin-top:16px;">
-          Done recruiting for this role? Nothing to do: it stays closed, and any waiting applications will close automatically so nobody is left in limbo.
+          ${es ? RENEWAL_DONE_ES : 'Done recruiting for this role? Nothing to do: it stays closed, and any waiting applications will close automatically so nobody is left in limbo.'}
         </p>
         <p style="font-size:12px;color:#73707c;margin-top:24px;">
-          You can also manage this opportunity <a href="${HOCKIA_BASE_URL}/opportunities/${opp.id}" style="color:#6c2bd9;">in the app</a>.
+          ${es
+            ? `También puedes gestionar esta oportunidad <a href="${HOCKIA_BASE_URL}/opportunities/${opp.id}" style="color:#6c2bd9;">en la app</a>.`
+            : `You can also manage this opportunity <a href="${HOCKIA_BASE_URL}/opportunities/${opp.id}" style="color:#6c2bd9;">in the app</a>.`}
+          <br><a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
         </p>
       </td></tr>
     </table>
   </td></tr></table>
 </body></html>`
 
-    const text = [
+    const text = es
+      ? [
+        firstName ? `Hola, ${firstName}:` : 'Hola:',
+        '',
+        `Tu oportunidad "${opp.title}" llegó a su fecha límite de postulación y ahora está cerrada en Hockia.`,
+        ...(waitingLine ? [waitingLine] : []),
+        '',
+        '¿La búsqueda sigue abierta? Con un clic la reabres con una nueva fecha límite de 30 días:',
+        renewUrl,
+        '',
+        RENEWAL_DONE_ES,
+        '',
+        `También puedes gestionar esta oportunidad en la app: ${HOCKIA_BASE_URL}/opportunities/${opp.id}`,
+        `${FOOTER_ES.manage}${HOCKIA_BASE_URL}/settings`,
+      ].join('\n')
+      : [
       `Hi ${firstName},`,
       '',
       `Your opportunity "${opp.title}" reached its application deadline and is now closed on Hockia.`,
       ...(waitingLine ? [waitingLine] : []),
       '',
-      `Still recruiting for this role? Renew it with a fresh 30-day deadline in one click:`,
+      'Still recruiting for this role? One click reopens it with a fresh 30-day deadline:',
       renewUrl,
       '',
       'Done recruiting for this role? Nothing to do: it stays closed, and any waiting applications will close automatically so nobody is left in limbo.',
+      '',
+      `You can also manage this opportunity in the app: ${HOCKIA_BASE_URL}/opportunities/${opp.id}`,
+      `Notification settings: ${HOCKIA_BASE_URL}/settings`,
     ].join('\n')
 
-    const rendered = await renderTemplate(supabase, 'opportunity_renewal', {
+    // Used only when it is in the publisher's language.
+    const renderedAny = await renderTemplate(supabase, 'opportunity_renewal', {
       first_name: firstName,
       opportunity_title: opp.title,
       waiting_line: waitingLine,
       renew_url: renewUrl,
       manage_url: `${HOCKIA_BASE_URL}/opportunities/${opp.id}`,
-    })
+    }, language)
+    const rendered = renderedAny && renderedAny.language === language ? renderedAny : null
 
     const result = await sendTrackedEmail({
       supabase,

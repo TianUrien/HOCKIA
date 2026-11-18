@@ -7,6 +7,7 @@ import { DECLINE_REASON_MAX, offerCardState, offerPackageLine, offerPayLine, off
 import { offerCardKey, useOfferCard, useSigningActions, type OfferCardData } from '@/hooks/useSigning'
 import { STATUS_TONE_PILL } from '@/lib/statusTone'
 import { cn } from '@/lib/utils'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 /**
  * D4.3 · Offer in chat (Figma 390:557; DEV NOTE 391:32). The offer lands in
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
+  const t = useInboxT()
   const queryClient = useQueryClient()
   const { data, loading } = useOfferCard(offerId)
   const { respondOffer, busy } = useSigningActions()
@@ -51,14 +53,14 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
     viewer: isMine ? 'club' : 'player',
     status: offer.status,
     openUntil: offer.open_until,
-    playerFirstName: firstNameOf(data.playerName, 'The player'),
+    playerFirstName: firstNameOf(data.playerName, t('chat.offerCard.playerFallback')),
     // The player's reason reaches the club here ("<name> declined — <reason>", grey).
     declineReason: isMine ? offer.decline_reason : null,
   })
   const facts: [string, string | null][] = [
-    ['Start', offerStartLine(offer.start_date, offer.length)],
-    ['Pay', offerPayLine(offer.pay)],
-    ['Package', offerPackageLine(offer.package)],
+    [t('chat.offerCard.facts.start'), offerStartLine(offer.start_date, offer.length)],
+    [t('chat.offerCard.facts.pay'), offerPayLine(offer.pay)],
+    [t('chat.offerCard.facts.package'), offerPackageLine(offer.package)],
   ]
   const patch = (status: OfferCardData['offer']['status']) =>
     queryClient.setQueryData<OfferCardData | null>(offerCardKey(offer.id), (d) => (d ? { ...d, offer: { ...d.offer, status } } : d))
@@ -85,7 +87,7 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
     >
       <div className="flex items-center justify-between gap-2">
         <span className={cn('flex items-center gap-1.5 text-[13px] font-semibold', state.muted ? 'text-ink-3' : 'text-hockia-primary')}>
-          <FileText className="h-4 w-4" strokeWidth={2} aria-hidden="true" /> Offer
+          <FileText className="h-4 w-4" strokeWidth={2} aria-hidden="true" /> {t('chat.offerCard.title')}
         </span>
         {state.deadline && (
           <span
@@ -116,13 +118,13 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
         <>
           <div className="mt-3.5 flex gap-2.5">
             <button type="button" onClick={() => setDeclining(true)} disabled={busy} className="flex h-11 flex-1 items-center justify-center rounded-full border border-line bg-white text-[16px] font-semibold text-ink-1 disabled:opacity-60" data-testid="offer-decline">
-              Decline
+              {t('chat.offerCard.decline')}
             </button>
             <button type="button" onClick={() => void accept()} disabled={busy} className="flex h-11 flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="offer-accept">
-              Accept
+              {t('chat.offerCard.accept')}
             </button>
           </div>
-          <p className="mt-2.5 text-caption text-ink-2">Questions? Reply here before you decide.</p>
+          <p className="mt-2.5 text-caption text-ink-2">{t('chat.offerCard.questions')}</p>
         </>
       ) : state.line ? (
         <span className="mt-3.5 inline-flex items-center rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="offer-card-status">
@@ -130,24 +132,24 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
         </span>
       ) : null}
 
-      <BottomSheet open={declining} onClose={() => setDeclining(false)} ariaLabel="Decline the offer">
+      <BottomSheet open={declining} onClose={() => setDeclining(false)} ariaLabel={t('chat.offerCard.declineSheet.label')}>
         <div className="px-5 pb-3 pt-1">
-          <h2 className="text-[22px] font-bold leading-7 text-ink-1">Decline this offer?</h2>
-          <p className="mt-1 text-row text-ink-2">The club will be told. You can say why (it’s optional).</p>
+          <h2 className="text-[22px] font-bold leading-7 text-ink-1">{t('chat.offerCard.declineSheet.title')}</h2>
+          <p className="mt-1 text-row text-ink-2">{t('chat.offerCard.declineSheet.body')}</p>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value.slice(0, DECLINE_REASON_MAX))}
             rows={3}
-            placeholder="Add a reason (optional)"
-            aria-label="Reason (optional)"
+            placeholder={t('chat.offerCard.declineSheet.placeholder')}
+            aria-label={t('chat.offerCard.declineSheet.reasonLabel')}
             className="mt-3 w-full resize-none rounded-card border border-line px-3.5 py-3 text-row text-ink-1 outline-none placeholder:text-ink-3 focus:border-hockia-primary"
             data-testid="offer-decline-reason"
           />
           <button type="button" onClick={() => void decline()} disabled={busy} className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="offer-decline-confirm">
-            Decline offer
+            {t('chat.offerCard.declineSheet.confirm')}
           </button>
           <button type="button" onClick={() => setDeclining(false)} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1">
-            Keep the offer
+            {t('chat.offerCard.declineSheet.keep')}
           </button>
         </div>
       </BottomSheet>

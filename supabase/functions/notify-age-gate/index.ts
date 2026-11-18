@@ -6,6 +6,8 @@ import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { fetchSuggestions, suggestionsHtml, suggestionsText } from '../_shared/opportunity-suggestions.ts'
 import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
+import { readMemberLanguage } from '../_shared/member-language.ts'
+import { ageGateEmailEs } from '../_shared/age-gate-email-es.ts'
 
 /**
  * ============================================================================
@@ -26,6 +28,10 @@ import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
  * These are ACCOUNT-POLICY emails: no topic notify_* pref applies (none
  * exists for account notices); the suppression list (checked inside
  * sendTrackedEmail) is the opt-out that is always honoured.
+ *
+ * Language: the member's profiles.ui_language (read in its own query that
+ * falls back to English). Spanish copy lives in _shared/age-gate-email-es.ts;
+ * the English copy below is unchanged.
  * ============================================================================
  */
 
@@ -59,9 +65,9 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
-function shell(inner: string): string {
+function shell(inner: string, lang: 'en' | 'es' = 'en'): string {
   return `<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html${lang === 'es' ? ' lang="es"' : ''}><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
@@ -177,7 +183,31 @@ Deno.serve(async (req: Request) => {
     let html = ''
     let text = ''
 
-    if (queueRecord.kind === 'goodbye') {
+    // The recipient's interface language, read on its own (fails to English).
+    const language = await readMemberLanguage(supabase, person.id)
+
+    if (language === 'es') {
+      const kind = queueRecord.kind
+      const suggestions = kind === 'welcome_back' ? await fetchSuggestions(supabase, person.id, [], 3) : []
+      const email = ageGateEmailEs({
+        kind,
+        firstName: person.full_name?.split(' ')[0]?.trim() || '',
+        baseUrl: HOCKIA_BASE_URL,
+        waitlistUrl: kind === 'goodbye'
+          ? `${HOCKIA_BASE_URL}/juniors-waitlist?e=${encodeURIComponent(btoa(person.email))}`
+          : undefined,
+        deadline: person.dob_required_since
+          ? new Date(new Date(person.dob_required_since).getTime() + 14 * 86_400_000)
+          : new Date(Date.now() + 14 * 86_400_000),
+        suggestionsHtml: kind === 'welcome_back' ? suggestionsHtml(suggestions, HOCKIA_BASE_URL, 'es') : undefined,
+        suggestionsText: kind === 'welcome_back' ? suggestionsText(suggestions, HOCKIA_BASE_URL, 'es') : undefined,
+        button: btn,
+        escapeHtml,
+      })
+      subject = email.subject
+      html = shell(email.inner, 'es')
+      text = email.text
+    } else if (queueRecord.kind === 'goodbye') {
       const waitlistUrl = `${HOCKIA_BASE_URL}/juniors-waitlist?e=${encodeURIComponent(btoa(person.email))}`
       subject = 'Your Hockia profile is saved for you'
       html = shell(`
@@ -201,22 +231,22 @@ Deno.serve(async (req: Request) => {
         'Hockia is 18+ for now. Your profile is saved, not deleted. Everything you built is waiting for you.',
         "We're building Hockia Juniors, a version with protections designed for young players. Want to be first to know when it opens?",
         waitlistUrl, '',
-        'Questions, or want your data removed instead? Write to team@inhockia.com. We answer every message.',
+        'Questions, or want your data removed instead? Just reply, or write to team@inhockia.com. We answer every message.',
       ].join('\n')
     } else if (queueRecord.kind === 'welcome_back') {
       const suggestions = await fetchSuggestions(supabase, person.id, [], 3)
       subject = 'Welcome back: your Hockia profile is live again'
       html = shell(`
-        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Happy 18th, ${escapeHtml(firstName)}! 🎉</div>
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${person.full_name?.trim() ? `Happy 18th, ${escapeHtml(firstName)}!` : 'Happy 18th!'} 🎉</div>
         <p style="font-size:15px;color:#3f3c4d;line-height:1.6;">
           Your Hockia profile is live again, exactly as you left it. The hockey
-          market kept moving while you were away; here's what's open right now:
+          market kept moving while you were away.
         </p>
         ${suggestionsHtml(suggestions, HOCKIA_BASE_URL)}
         ${btn(`${HOCKIA_BASE_URL}/opportunities`, 'Browse open opportunities')}`)
       text = [
-        `Happy 18th, ${firstName}!`, '',
-        'Your Hockia profile is live again, exactly as you left it.',
+        person.full_name?.trim() ? `Happy 18th, ${firstName}!` : 'Happy 18th!', '',
+        'Your Hockia profile is live again, exactly as you left it. The hockey market kept moving while you were away.',
         suggestionsText(suggestions, HOCKIA_BASE_URL), '',
         `Browse open opportunities: ${HOCKIA_BASE_URL}/opportunities`,
       ].join('\n')

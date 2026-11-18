@@ -9,7 +9,9 @@
  * directory rows (world_countries_with_directory, world_clubs, countries,
  * world_provinces, world_leagues — all readable by anon, no profiles), and
  * returns the shell with the head from src/lib/seo/worldHead.ts. The app
- * then boots exactly as before.
+ * then boots exactly as before. Each page also carries a body block for
+ * crawlers that do not run JavaScript (clubs, leagues, regions; a club's
+ * place, leagues and open roles), which the app replaces on boot.
  *
  * - A country name slug (/world/argentina) gets a 301 to its ISO-2 URL,
  *   the canonical form the app already uses.
@@ -21,7 +23,9 @@
  * (navigateFallback serves app.html from cache); crawlers always do.
  */
 import { renderNoindexHtml } from '../src/lib/seo/opportunityHead'
-import { renderClubHtml, renderCountryHtml, type WorldClubHead, type WorldCountryHead } from '../src/lib/seo/worldHead'
+import { clubDescription, countryDescription, renderClubHtml, renderCountryHtml, type WorldClubHead, type WorldCountryHead } from '../src/lib/seo/worldHead'
+import { clubBody, countryBody, injectServerBody, rolesForClub } from '../src/lib/seo/serverBody'
+import { fetchOpenRoles } from './_publicData'
 
 export const config = { runtime: 'edge' }
 
@@ -82,6 +86,15 @@ async function country(slugRaw: string, shell: string, siteUrl: string): Promise
   const clubs = await rest<{ id: string; club_name: string }>(
     `world_clubs?select=id,club_name&country_id=eq.${row.country_id}&order=is_claimed.desc,club_name.asc&limit=${ITEM_LIST_MAX}`,
   )
+  // Leagues hang off the country (national) or one of its regions.
+  const provinces = await rest<{ id: number; name: string; slug: string }>(
+    `world_provinces?select=id,name,slug&country_id=eq.${row.country_id}&order=display_order.asc,name.asc&limit=60`,
+  )
+  const provinceIds = (provinces ?? []).map((p) => p.id)
+  const leagueFilter = provinceIds.length > 0
+    ? `or=(country_id.eq.${row.country_id},province_id.in.(${provinceIds.join(',')}))`
+    : `country_id=eq.${row.country_id}`
+  const leagues = await rest<{ name: string }>(`world_leagues?select=name&${leagueFilter}&order=tier.asc.nullslast,display_order.asc&limit=60`)
   const head: WorldCountryHead = {
     code: row.country_code,
     name: row.country_name,
@@ -89,10 +102,11 @@ async function country(slugRaw: string, shell: string, siteUrl: string): Promise
     totalLeagues: row.total_leagues ?? 0,
     clubs: (clubs ?? []).map((c) => ({ id: c.id, name: c.club_name })),
   }
-  return { kind: 'html', html: renderCountryHtml(shell, head, siteUrl) }
+  const body = countryBody(head, { leagues: [...new Set((leagues ?? []).map((l) => l.name))], provinces: (provinces ?? []).map((p) => ({ name: p.name, slug: p.slug })) }, countryDescription(head))
+  return { kind: 'html', html: injectServerBody(renderCountryHtml(shell, head, siteUrl), body) }
 }
 
-async function club(id: string, shell: string, siteUrl: string): Promise<Outcome> {
+async function club(id: string, shell: string, siteUrl: string, clientIp: string | null): Promise<Outcome> {
   if (!UUID.test(id)) return { kind: 'noindex', why: 'bad-id' }
   const rows = await rest<{
     id: string; club_name: string; avatar_url: string | null; is_claimed: boolean | null
@@ -103,7 +117,8 @@ async function club(id: string, shell: string, siteUrl: string): Promise<Outcome
   if (!c) return { kind: 'noindex', why: 'unknown-club' }
 
   const leagueIds = [c.men_league_id, c.women_league_id].filter((v): v is number => typeof v === 'number')
-  const [countryRows, provinceRows, leagueRows] = await Promise.all([
+  const [openRoles, countryRows, provinceRows, leagueRows] = await Promise.all([
+    fetchOpenRoles(clientIp),
     c.country_id ? rest<{ code: string; name: string }>(`countries?select=code,name&id=eq.${c.country_id}&limit=1`) : Promise.resolve(null),
     c.province_id ? rest<{ name: string }>(`world_provinces?select=name&id=eq.${c.province_id}&limit=1`) : Promise.resolve(null),
     leagueIds.length ? rest<{ id: number; name: string }>(`world_leagues?select=id,name&id=in.(${leagueIds.join(',')})`) : Promise.resolve(null),
@@ -119,7 +134,8 @@ async function club(id: string, shell: string, siteUrl: string): Promise<Outcome
     menLeague: leagueName(c.men_league_id),
     womenLeague: leagueName(c.women_league_id),
   }
-  return { kind: 'html', html: renderClubHtml(shell, head, siteUrl) }
+  const body = clubBody(head, rolesForClub(openRoles ?? [], head), clubDescription(head))
+  return { kind: 'html', html: injectServerBody(renderClubHtml(shell, head, siteUrl), body) }
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -137,7 +153,8 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   const siteUrl = siteUrlFor(host)
-  const outcome = clubId !== null ? await club(clubId, shell, siteUrl) : await country(countrySlug ?? '', shell, siteUrl)
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip')
+  const outcome = clubId !== null ? await club(clubId, shell, siteUrl, clientIp) : await country(countrySlug ?? '', shell, siteUrl)
 
   if (outcome.kind === 'redirect') {
     return new Response(null, { status: 301, headers: { location: `${origin}${outcome.to}`, 'cache-control': 'public, s-maxage=3600' } })

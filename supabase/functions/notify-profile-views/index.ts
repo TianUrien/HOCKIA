@@ -12,8 +12,12 @@ import {
   composeTrendLine,
   generateEmailHtml,
   generateEmailText,
+  profileViewsCtaLabel,
+  profileViewsFallbackSubject,
+  viewCountPhrase,
 } from '../_shared/profile-views-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
+import { type MemberLanguage, readMemberLanguage } from '../_shared/member-language.ts'
 import { sendTrackedEmail, createLogger } from '../_shared/email-sender.ts'
 
 /**
@@ -181,37 +185,41 @@ Deno.serve(async (req: Request) => {
     // Role breakdown + week-over-week trend, both computed at enqueue time
     // (queue columns). Empty strings on pre-upgrade rows — the template
     // paragraphs are conditional and simply drop.
-    const stats = {
+    // The recipient's interface language, read on its own (fails to English).
+    const language = await readMemberLanguage(supabase, recipient.id)
+    const statsFor = (lang: MemberLanguage) => ({
       uniqueViewers: queueRecord.unique_viewers,
       totalViews: queueRecord.total_views,
       anonymousViewers: queueRecord.anonymous_viewers,
-      statsLine: composeStatsLine(queueRecord.viewers_by_role ?? null),
-      trendLine: composeTrendLine(queueRecord.total_views, queueRecord.views_prior_7d ?? null),
-    }
+      statsLine: composeStatsLine(queueRecord.viewers_by_role ?? null, lang),
+      trendLine: composeTrendLine(queueRecord.total_views, queueRecord.views_prior_7d ?? null, lang),
+    })
+    const stats = statsFor(language)
 
-    const firstName = recipient.full_name?.split(' ')[0]?.trim() || 'there'
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
-    const templateVars = {
-      first_name: firstName,
-      view_count: stats.uniqueViewers === 1
-        ? '1 person'
-        : `${stats.uniqueViewers} people`,
-      unique_viewers: String(stats.uniqueViewers),
-      total_views: String(stats.totalViews),
-      anonymous_viewers: String(stats.anonymousViewers),
-      stats_line: stats.statsLine,
-      trend_line: stats.trendLine,
-      // The Home Pulse carries the weekly-visibility card — a richer landing
-      // than the old dashboard viewers deep-link (2026-07 digest UX lesson:
-      // land people where the next action is).
-      // ?tab=pulse is REQUIRED since Feed became the default tab (2026-07-27):
-      // bare /home now lands on the feed, which carries no visibility card.
-      cta_url: `${HOCKIA_BASE_URL}/home?tab=pulse`,
-      // Label matches the destination: the Pulse (visibility card when it
-      // applies), NOT the viewers list — don't promise that list.
-      cta_label: 'See your week on Hockia',
-      settings_url: `${HOCKIA_BASE_URL}/settings`,
+    // Built for the language of the row actually used.
+    const templateVars = (lang: MemberLanguage) => {
+      const s = statsFor(lang)
+      return {
+        first_name: recipient.full_name?.split(' ')[0]?.trim() || (lang === 'es' ? '' : 'there'),
+        view_count: viewCountPhrase(s.uniqueViewers, lang),
+        unique_viewers: String(s.uniqueViewers),
+        total_views: String(s.totalViews),
+        anonymous_viewers: String(s.anonymousViewers),
+        stats_line: s.statsLine,
+        trend_line: s.trendLine,
+        // The Home Pulse carries the weekly-visibility card — a richer landing
+        // than the old dashboard viewers deep-link (2026-07 digest UX lesson:
+        // land people where the next action is).
+        // ?tab=pulse is REQUIRED since Feed became the default tab (2026-07-27):
+        // bare /home now lands on the feed, which carries no visibility card.
+        cta_url: `${HOCKIA_BASE_URL}/home?tab=pulse`,
+        // Label matches the destination: the Pulse (visibility card when it
+        // applies), NOT the viewers list — don't promise that list.
+        cta_label: profileViewsCtaLabel(lang),
+        settings_url: `${HOCKIA_BASE_URL}/settings`,
+      }
     }
 
     // Try DB template, fall back to hardcoded
@@ -219,19 +227,17 @@ Deno.serve(async (req: Request) => {
     let emailHtml: string
     let emailText: string
 
-    const rendered = await renderTemplate(supabase, 'profile_view_digest', templateVars)
+    const rendered = await renderTemplate(supabase, 'profile_view_digest', templateVars, language)
     if (rendered) {
       subject = rendered.subject
       emailHtml = rendered.html
       emailText = rendered.text
-      logger.info('Using DB template for profile_view_digest')
+      logger.info('Using DB template for profile_view_digest', { language: rendered.language })
     } else {
-      emailHtml = generateEmailHtml(recipient as RecipientData, viewers, stats)
-      emailText = generateEmailText(recipient as RecipientData, viewers, stats)
-      subject = stats.uniqueViewers === 1
-        ? 'Someone viewed your Hockia profile'
-        : `${stats.uniqueViewers} people viewed your Hockia profile`
-      logger.info('Falling back to hardcoded template')
+      emailHtml = generateEmailHtml(recipient as RecipientData, viewers, stats, language)
+      emailText = generateEmailText(recipient as RecipientData, viewers, stats, language)
+      subject = profileViewsFallbackSubject(stats.uniqueViewers, language)
+      logger.info('Falling back to hardcoded template', { language })
     }
 
     // The weekly generator inserts every recipient's queue row in one

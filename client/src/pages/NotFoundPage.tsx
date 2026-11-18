@@ -4,12 +4,14 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { AuthStatus } from '@/components/auth/authUi'
 import { Button } from '@/components/ui/Button'
 import { SearchIcon } from '@/components/icons/HockiaIcons'
+import { useTranslation } from 'react-i18next'
 
 /** Not found (rebrand page 28 · System): what happened, two ways on. */
 export default function NotFoundPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  useDocumentTitle('Page not found')
+  const { t } = useTranslation()
+  useDocumentTitle(t('notFound.documentTitle'))
 
   return (
     <div className="flex min-h-app-screen flex-col bg-white px-6 pt-[env(safe-area-inset-top)] pb-[max(env(safe-area-inset-bottom),24px)]">
@@ -17,15 +19,15 @@ export default function NotFoundPage() {
         <AuthStatus
           tone="brand"
           icon={<SearchIcon className="h-9 w-9" />}
-          title="We can’t find that page"
+          title={t('notFound.title')}
           actions={
             <>
-              <Button block onClick={() => navigate(user ? '/home' : '/')}>Go to Home</Button>
-              <Button block variant="secondary" onClick={() => navigate('/search')}>Search Hockia</Button>
+              <Button block onClick={() => navigate(user ? '/home' : '/')}>{t('notFound.goHome')}</Button>
+              <Button block variant="secondary" onClick={() => navigate('/search')}>{t('notFound.search')}</Button>
             </>
           }
         >
-          The link may be old, or the page was removed.
+          {t('notFound.body')}
         </AuthStatus>
       </main>
     </div>

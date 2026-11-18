@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { ChevronRight, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useCommonT } from '@/i18n/ns/common'
 
 /**
  * List item / Activity (Figma 531:469) for lists outside Pulse — the same
@@ -28,6 +29,7 @@ interface ActivityRowProps {
 }
 
 export function ActivityRow({ leading, text, detail, when, onOpen, unread = false, children, className }: ActivityRowProps) {
+  const t = useCommonT()
   return (
     <div
       role={onOpen ? 'button' : undefined}
@@ -55,7 +57,7 @@ export function ActivityRow({ leading, text, detail, when, onOpen, unread = fals
           <span className="mt-0.5 block text-secondary text-ink-3" data-testid="activity-row-when">{when}</span>
           {children}
         </span>
-        {unread && <span aria-label="Unread" className="h-2 w-2 shrink-0 rounded-full bg-hockia-primary" data-testid="activity-row-unread" />}
+        {unread && <span aria-label={t('activityRow.unread')} className="h-2 w-2 shrink-0 rounded-full bg-hockia-primary" data-testid="activity-row-unread" />}
         {onOpen && <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" aria-hidden="true" data-testid="activity-row-chevron" />}
       </span>
     </div>

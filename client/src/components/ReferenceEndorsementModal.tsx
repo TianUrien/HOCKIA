@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal'
 import { formatRelationshipType } from '@/lib/utils'
+import { useMediaT } from '@/i18n/ns/media'
 
 interface ReferenceEndorsementModalProps {
   isOpen: boolean
@@ -27,6 +28,7 @@ export default function ReferenceEndorsementModal({
   existingEndorsement,
   mode = 'accept',
 }: ReferenceEndorsementModalProps) {
+  const t = useMediaT()
   const [endorsement, setEndorsement] = useState('')
 
   // Populate with existing text when opening in edit mode
@@ -59,22 +61,22 @@ export default function ReferenceEndorsementModal({
       <div className="space-y-6 p-6">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-hockia-primary">
-            {isEditMode ? 'Edit Endorsement' : 'Add Endorsement'}
+            {isEditMode ? t('references.endorsement.kickerEdit') : t('references.endorsement.kickerAdd')}
           </p>
           <h2 className="text-2xl font-bold text-gray-900">
-            {isEditMode ? `Update your endorsement for ${requesterName}` : `Share a few words about ${requesterName}`}
+            {isEditMode ? t('references.endorsement.titleEdit', { name: requesterName }) : t('references.endorsement.titleAdd', { name: requesterName })}
           </h2>
           <p className="mt-2 text-sm text-gray-500">
-            This note will appear on their public profile as part of your trusted reference.
+            {t('references.endorsement.publicNote')}
           </p>
         </div>
 
         <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600">
-          <p className="font-semibold text-gray-800">Relationship</p>
+          <p className="font-semibold text-gray-800">{t('references.endorsement.relationship')}</p>
           <p>{formatRelationshipType(relationshipType)}</p>
           {!isEditMode && requestNote && (
             <div className="mt-3">
-              <p className="font-semibold text-gray-800">Their note</p>
+              <p className="font-semibold text-gray-800">{t('references.endorsement.theirNote')}</p>
               <p className="whitespace-pre-wrap">{requestNote}</p>
             </div>
           )}
@@ -82,7 +84,7 @@ export default function ReferenceEndorsementModal({
 
         <div>
           <label htmlFor="endorsement" className="text-sm font-medium text-gray-700">
-            Endorsement (optional)
+            {t('references.endorsement.fieldLabel')}
           </label>
           <textarea
             id="endorsement"
@@ -90,7 +92,7 @@ export default function ReferenceEndorsementModal({
             maxLength={800}
             value={endorsement}
             onChange={(event) => setEndorsement(event.target.value)}
-            placeholder="Add a quick testimonial or highlight their impact."
+            placeholder={t('references.endorsement.placeholder')}
             className="mt-2 w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none"
           />
           <p className="mt-1 text-right text-xs text-gray-400">{endorsement.length}/800</p>
@@ -103,7 +105,7 @@ export default function ReferenceEndorsementModal({
             disabled={loading}
             className="flex-1 rounded-2xl border border-gray-200 px-4 py-2 font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-60"
           >
-            Cancel
+            {t('references.endorsement.cancel')}
           </button>
           <button
             type="button"
@@ -111,7 +113,7 @@ export default function ReferenceEndorsementModal({
             disabled={loading}
             className="flex-1 rounded-2xl bg-brand-primary px-4 py-2 font-semibold text-white shadow-lg transition-opacity disabled:opacity-60"
           >
-            {loading ? 'Saving…' : isEditMode ? 'Save Changes' : 'Accept & Share'}
+            {loading ? t('references.endorsement.saving') : isEditMode ? t('references.endorsement.save') : t('references.endorsement.accept')}
           </button>
         </div>
       </div>

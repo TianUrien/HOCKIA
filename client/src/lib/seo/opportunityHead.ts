@@ -94,7 +94,7 @@ const POSITION_LABEL: Record<string, string> = {
   performance_analyst: 'Performance Analyst', sports_scientist: 'Sports Scientist', other_coach: 'Coach',
 }
 const GENDER_PREFIX: Record<string, string> = { Men: "Men's", Women: "Women's", Girls: "Girls'", Boys: "Boys'", Mixed: 'Mixed' }
-const BENEFIT_LABEL: Record<string, string> = {
+export const BENEFIT_LABEL: Record<string, string> = {
   housing: 'Housing provided', car: 'Car provided', visa: 'Visa sponsorship', flights: 'Flight allowance',
   meals: 'Meals included', job: 'Employment opportunity', insurance: 'Health insurance',
   education: 'Education support', bonuses: 'Performance bonuses', equipment: 'Equipment provided',

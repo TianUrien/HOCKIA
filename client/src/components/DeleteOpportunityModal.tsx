@@ -2,6 +2,8 @@ import { useCallback, useEffect, useId, useRef } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
 import Button from './Button'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
+import { Trans } from 'react-i18next'
+import { useClubT } from '@/i18n/ns/club'
 
 interface DeleteVacancyModalProps {
   isOpen: boolean
@@ -20,6 +22,7 @@ export default function DeleteVacancyModal({
   isLoading,
   isDraft = false,
 }: DeleteVacancyModalProps) {
+  const t = useClubT()
   const dialogRef = useRef<HTMLDivElement>(null)
   const confirmButtonRef = useRef<HTMLButtonElement | null>(null)
   const titleId = useId()
@@ -73,17 +76,17 @@ export default function DeleteVacancyModal({
             </div>
             <div className="flex-1">
               <h2 id={titleId} className="text-xl font-bold text-gray-900 mb-1">
-                {isDraft ? 'Delete Draft' : 'Delete Opportunity Permanently'}
+                {isDraft ? t('deleteOpportunity.titleDraft') : t('deleteOpportunity.title')}
               </h2>
               <p id={descriptionId} className="text-sm text-gray-600">
-                This action cannot be undone
+                {t('deleteOpportunity.subtitle')}
               </p>
             </div>
             <button
               onClick={handleClose}
               disabled={isLoading}
               className="p-1 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-              aria-label="Close modal"
+              aria-label={t('deleteOpportunity.closeAria')}
             >
               <X className="w-5 h-5 text-gray-500" />
             </button>
@@ -94,23 +97,23 @@ export default function DeleteVacancyModal({
         <div className="p-6 space-y-4">
           {isDraft ? (
             <p className="text-sm text-gray-600">
-              Are you sure you want to delete the draft "<strong>{vacancyTitle}</strong>"? This draft has not been published and has no applicants.
+              <Trans t={t} i18nKey="deleteOpportunity.draftBody" values={{ title: vacancyTitle }} components={{ strong: <strong /> }} />
             </p>
           ) : (
             <>
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-sm text-red-800 font-medium">
-                  Warning: This will permanently delete:
+                  {t('deleteOpportunity.warning')}
                 </p>
                 <ul className="mt-2 text-sm text-red-700 space-y-1 ml-4 list-disc">
-                  <li>The opportunity "<strong>{vacancyTitle}</strong>"</li>
-                  <li>All applications submitted to this opportunity</li>
-                  <li>Any related media or attachments</li>
+                  <li><Trans t={t} i18nKey="deleteOpportunity.listOpportunity" values={{ title: vacancyTitle }} components={{ strong: <strong /> }} /></li>
+                  <li>{t('deleteOpportunity.listApplications')}</li>
+                  <li>{t('deleteOpportunity.listMedia')}</li>
                 </ul>
               </div>
 
               <p className="text-sm text-gray-600">
-                Are you sure you want to permanently delete this opportunity? This action cannot be undone.
+                {t('deleteOpportunity.confirmBody')}
               </p>
             </>
           )}
@@ -123,7 +126,7 @@ export default function DeleteVacancyModal({
             disabled={isLoading}
             className="flex-1 bg-gray-100 text-gray-700 hover:bg-gray-200"
           >
-            Cancel
+            {t('deleteOpportunity.cancel')}
           </Button>
           <Button
             ref={confirmButtonRef}
@@ -131,7 +134,7 @@ export default function DeleteVacancyModal({
             disabled={isLoading}
             className="flex-1 bg-red-600 hover:bg-red-700 text-white"
           >
-            {isLoading ? 'Deleting...' : isDraft ? 'Delete Draft' : 'Delete Permanently'}
+            {isLoading ? t('deleteOpportunity.deleting') : isDraft ? t('deleteOpportunity.titleDraft') : t('deleteOpportunity.confirm')}
           </Button>
         </div>
       </div>

@@ -20,7 +20,8 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 import { checkUserRateLimit } from '../_shared/rate-limit.ts'
 import { recordAiUsage } from '../_shared/aiUsage.ts'
 import { captureException, setSentryUser } from '../_shared/sentry.ts'
-import { ageOn, normalizeClub, PROFILE_DRAFT_SYSTEM, PROFILE_DRAFT_TOOL, seasonDate, TEXT_MAX, validateProfileDraft, yearsLabel } from '../_shared/profile-draft.ts'
+import { resolveAiLanguage } from '../_shared/ai-language.ts'
+import { ageOn, builderSteps, normalizeClub, PROFILE_DRAFT_SYSTEM, PROFILE_DRAFT_TOOL, seasonDate, TEXT_MAX, validateProfileDraft, yearsLabel } from '../_shared/profile-draft.ts'
 import { classifyLink, LINKS_MAX, oembed, readPublicPage } from '../_shared/profile-links.ts'
 
 const MODEL = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
@@ -55,7 +56,7 @@ Deno.serve(async (req) => {
     const p = prof as { role?: string; date_of_birth?: string | null; nationality_country_id?: number | null; nationality2_country_id?: number | null; position?: string | null; secondary_position?: string | null; highlight_video_url?: string | null; social_links?: Record<string, unknown> | null } | null
     if (!p || (p.role !== 'player' && p.role !== 'coach')) return json({ error: 'forbidden' }, 403)
 
-    let body: { text?: unknown; links?: unknown; cv?: { base64?: unknown; name?: unknown } | null; photos?: unknown }
+    let body: { text?: unknown; links?: unknown; cv?: { base64?: unknown; name?: unknown } | null; photos?: unknown; locale?: unknown }
     try { body = await req.json() } catch { return json({ error: 'invalid_body' }, 400) }
     const text = typeof body.text === 'string' ? body.text.replace(/\s+/g, ' ').trim().slice(0, TEXT_MAX) : ''
     const links = (Array.isArray(body.links) ? body.links : []).filter((l): l is string => typeof l === 'string').slice(0, LINKS_MAX).map(classifyLink).filter((l) => l.kind !== 'invalid')
@@ -67,6 +68,7 @@ Deno.serve(async (req) => {
       return typeof o.index === 'number' && typeof o.base64 === 'string' && o.base64.length > 100 && b64Bytes(o.base64) <= PHOTO_MAX_BYTES ? [{ index: o.index, base64: o.base64, media_type }] : []
     })
     if (!text && !links.length && !cv && !photos.length) return json({ error: 'nothing_to_read' }, 400)
+    const lang = await resolveAiLanguage(supabase, userId, body)
 
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
     if (!apiKey) return json({ draft: null, reason: 'unavailable' })
@@ -159,7 +161,7 @@ Deno.serve(async (req) => {
         start_date: start,
         end_date: c.current ? null : seasonDate(c.end_year, c.end_month),
         current: c.current,
-        years: yearsLabel(c),
+        years: yearsLabel(c, lang),
       })
     }
 
@@ -188,15 +190,17 @@ Deno.serve(async (req) => {
     const photoResults = photos.map((ph) => ({ index: ph.index, ok: !d.idPhotos.includes(ph.index) }))
     const vids = videos.filter((v): v is NonNullable<typeof v> => Boolean(v))
 
-    const steps: string[] = []
-    if (d.career.length) steps.push(`Found ${d.career.length} ${d.career.length === 1 ? 'club' : 'clubs'} in what you sent`)
-    if (career.length) steps.push(`Matched ${matched} of ${career.length} to the club directory`)
-    if (duplicates) steps.push(`${duplicates} already on your profile`)
-    if (cv) steps.push('Read your CV')
-    if (vids.length) steps.push(`Found ${vids.length === 1 ? 'a video' : `${vids.length} videos`}`)
-    if (pages.some(Boolean)) steps.push(`Read ${pages.filter(Boolean).length === 1 ? 'the page' : `${pages.filter(Boolean).length} pages`} you linked`)
-    if (unreadPages) steps.push(`Couldn’t open ${unreadPages === 1 ? 'one link' : `${unreadPages} links`}`)
-    if (photos.length) steps.push(`Checked ${photos.length === 1 ? 'the photo' : `the ${photos.length} photos`}`)
+    const steps = builderSteps({
+      found: d.career.length,
+      proposed: career.length,
+      matched,
+      duplicates,
+      cv: Boolean(cv),
+      videos: vids.length,
+      pagesRead: pages.filter(Boolean).length,
+      unreadPages,
+      photos: photos.length,
+    }, lang)
 
     return json({
       draft: { career, passports, date_of_birth, dob_note, position, secondary_position, videos: vids, socials: newSocials, photos: photoResults },

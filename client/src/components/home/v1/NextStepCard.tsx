@@ -12,6 +12,7 @@ import { useNextStep, type NextStep, type NextStepVisual } from './useNextStep'
 import { HOME_V1_MODULES, recordModuleImpression, recordNextStepImpression, trackModuleClick, trackNextStepAction, useImpressionOnce } from '@/lib/homeInstrumentation'
 import { navState } from '@/lib/navSource'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * Next step (Figma 60:140 / H5 64:326): ONE purple card, the highest-priority
@@ -20,6 +21,7 @@ import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
  * Announces as one button with its CTA (spec Accessibility).
  */
 export function NextStepCard({ onCompose }: { onCompose: () => void }) {
+  const t = useHomeT()
   const { steps, loading, run, markDone } = useNextStep()
   const navigate = useNavigate()
   const showAi = useHockiaAiSheet((st) => st.show)
@@ -83,7 +85,7 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
   }
 
   return (
-    <section ref={impressionRef} aria-label="Next step" className="flex flex-col items-center gap-2 px-4 pb-4 pt-2" data-testid="home-next-step">
+    <section ref={impressionRef} aria-label={t('nextStep.ariaLabel')} className="flex flex-col items-center gap-2 px-4 pb-4 pt-2" data-testid="home-next-step">
       <div
         ref={trackRef}
         onScroll={onScroll}
@@ -98,7 +100,7 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
                 type="button"
                 onClick={() => void act(step)}
                 disabled={busy === step.key}
-                aria-label={`${step.title}${step.subtitle ? `, ${step.subtitle}` : ''}. ${step.cta}`}
+                aria-label={step.subtitle ? t('nextStep.stepAriaWithSubtitle', { title: step.title, subtitle: step.subtitle, cta: step.cta }) : t('nextStep.stepAria', { title: step.title, cta: step.cta })}
                 className="flex w-full items-center gap-3 py-4 pl-3.5 pr-3 text-left transition-transform duration-300 ease-[cubic-bezier(0.34,1.36,0.64,1)] active:scale-[0.97]"
               >
                 <Visual visual={step.visual} />
@@ -115,7 +117,7 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
         ))}
       </div>
       {steps.length > 1 && (
-        <div className="flex items-center gap-[5px]" aria-label={`${active + 1} of ${steps.length}`}>
+        <div className="flex items-center gap-[5px]" aria-label={t('nextStep.position', { current: active + 1, total: steps.length })}>
           {steps.map((s, i) => (
             <span key={s.key} className={cn('h-1.5 rounded-[3px] transition-[width,background-color] duration-[250ms] ease-[cubic-bezier(.2,0,0,1)]', i === active ? 'w-4 bg-hockia-primary' : 'w-1.5 bg-ink-4')} />
           ))}

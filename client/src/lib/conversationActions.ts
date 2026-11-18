@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { qk } from '@/lib/queryKeys'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 /**
  * Per-member conversation and message actions (founder 2026-11-10), backed by
@@ -59,6 +60,7 @@ interface InboxRowLike {
  * keep their own state (the desktop list) pass `onLocalChange` to mirror it.
  */
 export function useConversationActions(userId: string | null) {
+  const t = useInboxT()
   const addToast = useToastStore((s) => s.addToast)
 
   const patchInbox = useCallback((update: (rows: InboxRowLike[]) => InboxRowLike[]) => {
@@ -80,28 +82,28 @@ export function useConversationActions(userId: string | null) {
     } catch (error) {
       rollback()
       logger.error('[INBOX] mark unread/read failed', error)
-      addToast(unread ? 'Could not mark as unread. Try again.' : 'Could not mark as read. Try again.', 'error')
+      addToast(unread ? t('actions.toasts.markUnreadFailed') : t('actions.toasts.markReadFailed'), 'error')
       return false
     } finally {
       invalidateConversationCaches(userId)
     }
-  }, [addToast, patchInbox, userId])
+  }, [addToast, patchInbox, userId, t])
 
   const deleteConversation = useCallback(async (conversationId: string) => {
     const rollback = patchInbox((rows) => rows.filter((r) => r.conversation_id !== conversationId))
     try {
       await deleteConversationForMe(conversationId)
-      addToast('Conversation deleted', 'success')
+      addToast(t('actions.toasts.deleted'), 'success')
       return true
     } catch (error) {
       rollback()
       logger.error('[INBOX] delete conversation failed', error)
-      addToast('Could not delete the conversation. Try again.', 'error')
+      addToast(t('actions.toasts.deleteFailed'), 'error')
       return false
     } finally {
       invalidateConversationCaches(userId)
     }
-  }, [addToast, patchInbox, userId])
+  }, [addToast, patchInbox, userId, t])
 
   return { setUnread, deleteConversation }
 }

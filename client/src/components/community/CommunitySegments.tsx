@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { chipTone } from '@/components/ui/chipClasses'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { pathWithSearch, searchQueryOf } from './communityFilters'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * Community role filter chips (Figma Community v2 "role filters"):
@@ -15,16 +16,18 @@ import { pathWithSearch, searchQueryOf } from './communityFilters'
  */
 export type CommunityTab = 'all' | 'players' | 'coaches' | 'clubs' | 'umpires' | 'brands' | 'questions'
 
-const SEGMENTS: Array<{ id: Exclude<CommunityTab, 'questions'>; label: string; path: string }> = [
-  { id: 'all', label: 'All', path: '/community' },
-  { id: 'players', label: 'Players', path: '/community/players' },
-  { id: 'coaches', label: 'Coaches', path: '/community/coaches' },
-  { id: 'clubs', label: 'Clubs', path: '/community/clubs' },
-  { id: 'brands', label: 'Brands', path: '/community/brands' },
-  { id: 'umpires', label: 'Umpires', path: '/community/umpires' },
+// Labels are catalog keys (segments.<id>), translated where the chip renders.
+const SEGMENTS: Array<{ id: Exclude<CommunityTab, 'questions'>; path: string }> = [
+  { id: 'all', path: '/community' },
+  { id: 'players', path: '/community/players' },
+  { id: 'coaches', path: '/community/coaches' },
+  { id: 'clubs', path: '/community/clubs' },
+  { id: 'brands', path: '/community/brands' },
+  { id: 'umpires', path: '/community/umpires' },
 ]
 
 export function CommunitySegments({ activeTab }: { activeTab: CommunityTab }) {
+  const t = useCommunityT()
   const navigate = useNavigate()
   const location = useLocation()
   // The typed search rides along: each chip is a route, but not a new search.
@@ -39,7 +42,7 @@ export function CommunitySegments({ activeTab }: { activeTab: CommunityTab }) {
     <div className="relative">
     <div
       role="tablist"
-      aria-label="Member type"
+      aria-label={t('segments.label')}
       className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0"
     >
       <div className="flex items-center gap-2">
@@ -57,7 +60,7 @@ export function CommunitySegments({ activeTab }: { activeTab: CommunityTab }) {
                 chipTone(active)
               }`}
             >
-              {s.label}
+              {t(`segments.${s.id}`)}
             </button>
           )
         })}

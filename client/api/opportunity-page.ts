@@ -13,6 +13,7 @@
  * (navigateFallback serves app.html from cache); crawlers always do.
  */
 import { fromPublicApi, isStaleOpenRole, renderNoindexHtml, renderOpportunityHtml, type PublicApiOpportunity, type PublicOpportunityRow } from '../src/lib/seo/opportunityHead'
+import { injectServerBody, roleBody } from '../src/lib/seo/serverBody'
 
 export const config = { runtime: 'edge' }
 
@@ -95,6 +96,7 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(html, { status: 200, headers: { ...HTML, 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' } })
   }
 
-  const html = renderOpportunityHtml(shell, row, siteUrlFor(host))
+  // Head plus the role as body text for crawlers that do not run JavaScript.
+  const html = injectServerBody(renderOpportunityHtml(shell, row, siteUrlFor(host)), roleBody(row))
   return new Response(html, { status: 200, headers: { ...HTML, 'cache-control': 'public, s-maxage=300, stale-while-revalidate=3600' } })
 }

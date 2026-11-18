@@ -15,17 +15,12 @@ import { SearchV2Screen } from '@/components/search/SearchV2Screen'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackSearch } from '@/lib/analytics'
 import type { SearchResult } from '@/hooks/useSearch'
+import { useWorldT } from '@/i18n/ns/world'
 
 type TabType = 'all' | 'posts' | 'people' | 'clubs' | 'brands' | 'opportunities'
 
-const TABS: { key: TabType; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'posts', label: 'Posts' },
-  { key: 'people', label: 'People' },
-  { key: 'clubs', label: 'Clubs' },
-  { key: 'brands', label: 'Brands' },
-  { key: 'opportunities', label: 'Opportunities' },
-]
+/** Tab labels: world catalog `searchPage.tabs.<key>`. */
+const TABS: TabType[] = ['all', 'posts', 'people', 'clubs', 'brands', 'opportunities']
 
 /**
  * /search: the phone (<1024px) gets Search v2 — one ranked list of members
@@ -38,6 +33,7 @@ export default function SearchPage() {
 }
 
 function DesktopSearchPage() {
+  const t = useWorldT()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialQuery = searchParams.get('q') || ''
   const initialType = (searchParams.get('type') as TabType) || 'all'
@@ -135,23 +131,23 @@ function DesktopSearchPage() {
           <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
             {TABS.map((tab) => {
               const count = typeCounts
-                ? tab.key === 'all'
+                ? tab === 'all'
                   ? typeCounts.posts + typeCounts.people + typeCounts.clubs + (typeCounts.brands ?? 0) + (typeCounts.opportunities ?? 0)
-                  : typeCounts[tab.key as keyof typeof typeCounts]
+                  : typeCounts[tab as keyof typeof typeCounts]
                 : null
 
               return (
                 <button
-                  key={tab.key}
+                  key={tab}
                   type="button"
-                  onClick={() => handleTabChange(tab.key)}
+                  onClick={() => handleTabChange(tab)}
                   className={`px-4 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
-                    chipTone(activeTab === tab.key)
+                    chipTone(activeTab === tab)
                   }`}
                 >
-                  {tab.label}
+                  {t(`searchPage.tabs.${tab}`)}
                   {count != null && count > 0 && (
-                    <span className={`ml-1.5 text-xs ${activeTab === tab.key ? 'text-white/70' : 'text-gray-400'}`}>
+                    <span className={`ml-1.5 text-xs ${activeTab === tab ? 'text-white/70' : 'text-gray-400'}`}>
                       {count}
                     </span>
                   )}
@@ -165,7 +161,7 @@ function DesktopSearchPage() {
         {query.length < 2 ? (
           <div className="text-center py-16 text-gray-500">
             <SearchX className="w-12 h-12 mx-auto mb-3 text-gray-500" />
-            <p className="text-sm">Enter at least 2 characters to search</p>
+            <p className="text-sm">{t('searchPage.minChars')}</p>
           </div>
         ) : isLoading ? (
           <div className="flex items-center justify-center py-16">
@@ -174,8 +170,8 @@ function DesktopSearchPage() {
         ) : results.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <SearchX className="w-12 h-12 mx-auto mb-3 text-gray-500" />
-            <p className="text-sm font-medium">No results found</p>
-            <p className="text-xs mt-1">Try different keywords or check the spelling</p>
+            <p className="text-sm font-medium">{t('searchPage.noResults')}</p>
+            <p className="text-xs mt-1">{t('searchPage.noResultsHint')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -193,7 +189,7 @@ function DesktopSearchPage() {
                   {isFetchingNextPage ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    'Load more'
+                    t('searchPage.loadMore')
                   )}
                 </button>
               </div>

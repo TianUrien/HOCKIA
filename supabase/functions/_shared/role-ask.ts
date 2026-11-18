@@ -5,6 +5,8 @@
 // (players never see fit scores). General questions about the city or
 // league get brief, general answers with no invented specifics.
 
+import { currentAiLanguage, type MemberLanguage } from './ai-language.ts'
+
 export const ROLE_ASK_MODE = 'role_ask'
 
 export const ROLE_ASK_SYSTEM = [
@@ -21,10 +23,13 @@ export const ROLE_ASK_SYSTEM = [
 
 const SCORE_RE = /\d{1,3}\s?%|\b(percent|score|rank(ed|ing)?|chances? (of|are)|guarantee[sd]?|definitely (get|be))\b/i
 
+// Spanish answers: the same claims in Spanish (checked on top, Spanish only).
+const SCORE_RE_ES = /\d{1,3}\s?%|(^|[^\p{L}])(por ciento|porcentaje|puntaje|puntuación|ranking|probabilidad(es)? de|garantiz|seguro que (te|lo|la) (elijan|tomen|fichen|incorporen))/iu
+
 /** Drop any sentence that slips into scores, rankings or promises. */
-export function stripClaims(text: string): string {
+export function stripClaims(text: string, lang: MemberLanguage = currentAiLanguage()): string {
   const sentences = text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+/)
-  return sentences.filter((s) => !SCORE_RE.test(s)).join(' ').trim()
+  return sentences.filter((s) => !SCORE_RE.test(s) && !(lang === 'es' && SCORE_RE_ES.test(s))).join(' ').trim()
 }
 
 // Newer Claude models reason before they write unless told otherwise, and that

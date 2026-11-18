@@ -13,8 +13,10 @@ import { FeedImageCarousel } from '@/components/home/FeedImageCarousel'
 import Skeleton from '@/components/Skeleton'
 import { getTimeAgo } from '@/lib/utils'
 import { getImageUrl } from '@/lib/imageUrl'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 export function GlobalBrandFeed() {
+  const t = useBrandsT()
   const { items, isLoading, error, hasMore, loadMore } = useBrandFeed()
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -56,10 +58,10 @@ export function GlobalBrandFeed() {
       <div className="text-center py-12">
         <Rss className="w-16 h-16 text-gray-500 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">
-          No activity yet
+          {t('globalFeed.emptyTitle')}
         </h3>
         <p className="text-gray-500">
-          When brands add products or share updates, they'll appear here.
+          {t('globalFeed.emptyBody')}
         </p>
       </div>
     )
@@ -94,6 +96,7 @@ function FeedCard({ item }: { item: FeedItem }) {
 // Product Feed Card
 // --------------------------------------------------------------------------
 function ProductFeedCard({ item }: { item: ProductFeedItem }) {
+  const t = useBrandsT()
   const images = Array.isArray(item.product_images)
     ? [...item.product_images].sort((a, b) => a.order - b.order)
     : []
@@ -131,7 +134,7 @@ function ProductFeedCard({ item }: { item: ProductFeedItem }) {
               <CheckCircle className="w-4 h-4 text-indigo-500 flex-shrink-0" />
             )}
           </div>
-          <p className="text-xs text-gray-500">Added a product &middot; {timeAgo}</p>
+          <p className="text-xs text-gray-500">{t('globalFeed.addedProduct', { time: timeAgo })}</p>
         </div>
       </div>
 
@@ -154,7 +157,7 @@ function ProductFeedCard({ item }: { item: ProductFeedItem }) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
           >
-            Learn more
+            {t('globalFeed.learnMore')}
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         )}
@@ -166,7 +169,7 @@ function ProductFeedCard({ item }: { item: ProductFeedItem }) {
           to={`/brands/${item.brand_slug}`}
           className="text-sm text-gray-500 hover:text-indigo-600 transition-colors inline-flex items-center gap-1"
         >
-          View brand
+          {t('globalFeed.viewBrand')}
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
@@ -178,6 +181,7 @@ function ProductFeedCard({ item }: { item: ProductFeedItem }) {
 // Post Feed Card
 // --------------------------------------------------------------------------
 function PostFeedCard({ item }: { item: PostFeedItem }) {
+  const t = useBrandsT()
   const timeAgo = getTimeAgo(item.created_at, true)
 
   return (
@@ -226,7 +230,7 @@ function PostFeedCard({ item }: { item: PostFeedItem }) {
           <div className="aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden">
             <img
               src={getImageUrl(item.post_image_url, 'feed-full') ?? undefined}
-              alt="Post image"
+              alt={t('globalFeed.postImageAlt')}
               className="w-full h-full object-cover"
               loading="lazy"
               decoding="async"
@@ -241,7 +245,7 @@ function PostFeedCard({ item }: { item: PostFeedItem }) {
           to={`/brands/${item.brand_slug}`}
           className="text-sm text-gray-500 hover:text-indigo-600 transition-colors inline-flex items-center gap-1"
         >
-          View brand
+          {t('globalFeed.viewBrand')}
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>

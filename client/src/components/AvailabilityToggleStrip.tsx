@@ -7,6 +7,7 @@ import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import InfoTooltip from './InfoTooltip'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 /** The profile columns this strip can flip. */
 type AvailabilityField =
@@ -36,6 +37,7 @@ interface AvailabilityToggleStripProps {
 export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStripProps) {
   const { profile, setProfile } = useAuthStore()
   const { addToast } = useToastStore()
+  const t = useProfileEditT()
   const [saving, setSaving] = useState<string | null>(null)
 
   if (!profile) return null
@@ -55,49 +57,49 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
     // open_to_opportunities is player/coach-framed and isn't read for umpires).
     toggles = [{
       id: 'available_for_appointments',
-      label: 'Open to umpire',
+      label: t('availabilityStrip.umpire'),
       active: Boolean(profile.available_for_appointments),
       activeGradient: 'from-role-umpire-ink to-role-umpire-ink',
-      tooltip: 'Available to be appointed to matches by clubs and federations.',
+      tooltip: t('availabilityStrip.umpireTip'),
     }]
   } else if (role === 'club' || role === 'brand') {
     // Orgs have a single availability flag: open_to_opportunities.
     toggles = [{
       id: 'open_to_opportunities',
-      label: role === 'club' ? 'Recruiting' : 'Open to partnerships',
+      label: role === 'club' ? t('availabilityStrip.club') : t('availabilityStrip.brand'),
       active: Boolean(profile.open_to_opportunities),
       activeGradient: role === 'club' ? 'from-role-club-ink to-role-club-ink' : 'from-role-brand-ink to-role-brand-ink',
       tooltip:
         role === 'club'
-          ? 'Actively recruiting players and coaches for your teams.'
-          : 'Open to ambassadors, sponsorships, and partnerships.',
+          ? t('availabilityStrip.clubTip')
+          : t('availabilityStrip.brandTip'),
     }]
   } else {
     toggles = [
       role === 'player'
         ? {
             id: 'open_to_play',
-            label: 'Open to Play',
+            label: t('availabilityStrip.play'),
             active: Boolean(profile.open_to_play),
             activeGradient: 'from-status-positive to-status-positive',
-            tooltip: 'Looking to join a team or club to play regular matches.',
+            tooltip: t('availabilityStrip.playTip'),
           }
         : {
             id: 'open_to_coach',
-            label: 'Open to Coach',
+            label: t('availabilityStrip.coach'),
             active: Boolean(profile.open_to_coach),
             activeGradient: 'from-role-coach-ink to-role-coach-ink',
-            tooltip: 'Looking for a head, assistant, or youth coaching opportunity.',
+            tooltip: t('availabilityStrip.coachTip'),
           },
       {
         id: 'open_to_opportunities',
-        label: 'Open to Opportunities',
+        label: t('availabilityStrip.opportunities'),
         active: Boolean(profile.open_to_opportunities),
         activeGradient: 'from-brand-primary to-brand-primary',
         tooltip:
           role === 'player'
-            ? 'Broader than playing: trials, transfers, sponsorships, or other offers.'
-            : 'Broader than coaching: consulting, clinics, sponsorships, or other offers.',
+            ? t('availabilityStrip.playerOpportunitiesTip')
+            : t('availabilityStrip.coachOpportunitiesTip'),
       },
     ]
   }
@@ -120,7 +122,7 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
       setProfile({ ...profile, [field]: newValue })
     } catch (err) {
       logger.error('[AVAILABILITY] Toggle failed', { field, err })
-      addToast('Failed to update availability', 'error')
+      addToast(t('availabilityStrip.saveFailed'), 'error')
     } finally {
       setSaving(null)
     }
@@ -128,7 +130,7 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-xs font-medium text-gray-500 mr-0.5">I&apos;m open to:</span>
+      <span className="text-xs font-medium text-gray-500 mr-0.5">{t('availabilityStrip.intro')}</span>
       {toggles.map(toggle => (
         <div key={toggle.id} className="inline-flex items-center gap-1">
           <button
@@ -148,7 +150,7 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
           </button>
           {toggle.tooltip && (
             <InfoTooltip
-              label={`What does "${toggle.label}" mean?`}
+              label={t('availabilityStrip.tooltipLabel', { label: toggle.label })}
               triggerClassName="h-5 w-5 text-gray-400 hover:text-gray-700"
               iconClassName="h-3.5 w-3.5"
             >

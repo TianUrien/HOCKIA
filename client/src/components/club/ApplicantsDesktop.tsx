@@ -25,6 +25,7 @@ import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, 
 import { recruiterRolesHome } from '@/lib/coachRoles'
 import { cn } from '@/lib/utils'
 import { ApplicantRowsSkeleton } from '@/components/ScreenSkeletons'
+import { tRecruiting, useRecruitingT } from '@/i18n/ns/recruiting'
 
 type ChipId = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_response'
 const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
@@ -50,6 +51,7 @@ const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
  * Decline N) with the same fixed-note decline sheet and one Undo as the phone.
  */
 export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const owner = useAuthStore((s) => s.profile)
@@ -111,8 +113,8 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return
-      const t = e.target as HTMLElement | null
-      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return
+      const target = e.target as HTMLElement | null
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return
       if (document.querySelector('[role="dialog"]')) return
       // Selecting several: the keys act on one applicant, so they rest.
       if (selecting) return
@@ -139,21 +141,21 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
   const pill = role ? genderPill(role.gender) : null
   const family = role ? categoryFamily(role.gender) : null
   const chips: { id: ChipId; label: string }[] = [
-    { id: 'pending', label: p.toReview ? `To review · ${p.toReview}` : 'To review' },
-    { id: 'shortlisted', label: 'Shortlisted' },
-    { id: 'maybe', label: 'Maybe' },
-    { id: 'rejected', label: 'Not a fit' },
-    { id: 'no_response', label: p.closed ? `Closed · ${p.closed}` : 'Closed' },
+    { id: 'pending', label: p.toReview ? t('applicantsDesktop.chips.toReviewCount', { count: p.toReview }) : t('applicantsDesktop.chips.toReview') },
+    { id: 'shortlisted', label: t('applicantsDesktop.chips.shortlisted') },
+    { id: 'maybe', label: t('applicantsDesktop.chips.maybe') },
+    { id: 'rejected', label: t('applicantsDesktop.chips.notAFit') },
+    { id: 'no_response', label: p.closed ? t('applicantsDesktop.chips.closedCount', { count: p.closed }) : t('applicantsDesktop.chips.closed') },
   ]
   const caption = chip === 'pending'
-    ? `Oldest first · each closes ${data.expiryDays} days after it arrives`
-    : chip === 'no_response' ? `Closed without a reply after ${data.expiryDays} days, filled, or withdrawn by the applicant` : 'Most recent decision first'
+    ? t('applicantsDesktop.caption.pending', { days: data.expiryDays })
+    : chip === 'no_response' ? t('applicantsDesktop.caption.closed', { days: data.expiryDays }) : t('applicantsDesktop.caption.recent')
   const emptyCopy: Record<ChipId, string> = {
-    pending: 'Nobody waiting. New applicants show up here.',
-    shortlisted: 'No one shortlisted yet.',
-    maybe: 'No one on maybe.',
-    rejected: 'No one declined.',
-    no_response: 'None closed yet.',
+    pending: t('applicantsDesktop.empty.pending'),
+    shortlisted: t('applicantsDesktop.empty.shortlisted'),
+    maybe: t('applicantsDesktop.empty.maybe'),
+    rejected: t('applicantsDesktop.empty.rejected'),
+    no_response: t('applicantsDesktop.empty.closed'),
   }
   const flagFor = (id: number | null) => {
     const c = id ? countries.find((x) => x.id === id) : null
@@ -173,7 +175,7 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
           <aside className="flex flex-col gap-4 self-start" data-testid="applicants-master">
             {role && (
               <div className="flex items-start gap-3" data-testid="applicants-role-header">
-                <CrestTile src={cover.crestUrl} name={cover.clubName ?? 'Club'} size={48} radius={14} className="mt-0.5" />
+                <CrestTile src={cover.crestUrl} name={cover.clubName ?? t('applicantsDesktop.clubFallback')} size={48} radius={14} className="mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <h1 className="text-[22px] font-bold leading-[27px] tracking-[-0.01em] text-ink-1">{roleTitle(role)}</h1>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -197,20 +199,20 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Application status">
+            <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('applicantsDesktop.statusTabsLabel')}>
               {chips.map((c) => (
                 <Chip key={c.id} label={c.label} selected={chip === c.id} role="tab" aria-selected={chip === c.id} aria-pressed={undefined} onClick={() => changeChip(c.id)} />
               ))}
             </div>
             <div className="-mt-1 flex items-center gap-3">
-              <p className="min-w-0 flex-1 text-secondary text-ink-2">{selecting ? 'Select applicants to answer them together' : caption}</p>
+              <p className="min-w-0 flex-1 text-secondary text-ink-2">{selecting ? t('applicantsDesktop.selectHint') : caption}</p>
               {selecting ? (
                 <>
-                  <button type="button" onClick={() => setPicks(allPicked ? new Set() : new Set(list.map((a) => a.applicationId)))} className="shrink-0 text-secondary font-semibold text-brand-primary hover:underline" data-testid="select-all">{allPicked ? 'Deselect all' : 'Select all'}</button>
-                  <button type="button" onClick={endSelect} className="shrink-0 text-secondary font-semibold text-brand-primary hover:underline">Cancel</button>
+                  <button type="button" onClick={() => setPicks(allPicked ? new Set() : new Set(list.map((a) => a.applicationId)))} className="shrink-0 text-secondary font-semibold text-brand-primary hover:underline" data-testid="select-all">{allPicked ? t('applicantsDesktop.deselectAll') : t('applicantsDesktop.selectAll')}</button>
+                  <button type="button" onClick={endSelect} className="shrink-0 text-secondary font-semibold text-brand-primary hover:underline">{t('applicantsDesktop.cancel')}</button>
                 </>
               ) : selectable && list.length > 0 && (
-                <button type="button" onClick={() => setSelecting(true)} className="shrink-0 text-secondary font-semibold text-brand-primary hover:underline" data-testid="applicants-select">Select</button>
+                <button type="button" onClick={() => setSelecting(true)} className="shrink-0 text-secondary font-semibold text-brand-primary hover:underline" data-testid="applicants-select">{t('applicantsDesktop.select')}</button>
               )}
             </div>
 
@@ -219,8 +221,8 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
             )}
             {data.error && (
               <div className="rounded-[16px] bg-white p-4" role="alert" data-testid="applicants-error">
-                <h1 className="text-[17px] font-semibold leading-[22px] text-ink-1">Can’t open these applicants</h1>
-                <p className="mt-1 text-row text-ink-2">{data.error.replace('Pull to try again.', 'Please try again.')}</p>
+                <h1 className="text-[17px] font-semibold leading-[22px] text-ink-1">{t('applicantsDesktop.errorTitle')}</h1>
+                <p className="mt-1 text-row text-ink-2">{data.error === tRecruiting('roleApplicants.loadFailed') ? t('applicantsDesktop.loadFailed') : data.error}</p>
               </div>
             )}
             {!data.loading && !data.error && list.length === 0 && <p className="text-row text-ink-3">{emptyCopy[chip]}</p>}
@@ -253,14 +255,14 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
                     )}
                     <span className="relative shrink-0">
                       <EntityAvatar src={avatar} name={a.person.fullName} role={a.person.role} size={48} />
-                      {isNew && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-primary" aria-label="New" />}
+                      {isNew && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-primary" aria-label={t('applicantsDesktop.newLabel')} />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         <span className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{a.person.fullName}</span>
                         {a.invited
-                          ? <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary" data-testid="applicant-invited-tag">Invited</span>
-                          : isNew && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary">New</span>}
+                          ? <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary" data-testid="applicant-invited-tag">{t('applicantsDesktop.invitedTag')}</span>
+                          : isNew && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary">{t('applicantsDesktop.newTag')}</span>}
                         {tag && <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[2px] text-caption font-semibold text-ink-2" data-testid="applicant-status-tag">{tag}</span>}
                       </span>
                       <span className="block truncate text-secondary text-ink-2">{[personRoleLine(a.person), flags].filter(Boolean).join(' · ')}</span>
@@ -276,12 +278,14 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
               <div className="flex items-start gap-2.5 rounded-[12px] bg-white p-3.5">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
                 <p className="text-secondary leading-[18px] text-ink-2">
-                  Shortlist, Maybe or Decline. Anything you don’t answer closes after {data.expiryDays} days{toReviewClosedNote(p) ? `. ${toReviewClosedNote(p)}` : ''}.
+                  {toReviewClosedNote(p)
+                    ? t('applicantsDesktop.footerWithNote', { days: data.expiryDays, note: toReviewClosedNote(p) })
+                    : t('applicantsDesktop.footer', { days: data.expiryDays })}
                 </p>
               </div>
             )}
             {list.length > 0 && !selecting && (
-              <p className="text-caption text-ink-3" data-testid="applicants-keyboard-hint">Keyboard: ↑ ↓ to move · S Shortlist · M Maybe · D Decline</p>
+              <p className="text-caption text-ink-3" data-testid="applicants-keyboard-hint">{t('applicantsDesktop.keyboardHint')}</p>
             )}
           </aside>
 
@@ -289,20 +293,20 @@ export default function ApplicantsDesktop({ roleId }: { roleId: string }) {
           <section className="min-w-0 rounded-[24px] bg-white p-6" data-testid="applicants-detail">
             {selecting ? (
               <div className="flex flex-col items-start gap-4 py-10" data-testid="selection-pane">
-                <h2 className="text-[22px] font-bold leading-[27px] text-ink-1">{picked.length === 1 ? '1 selected' : `${picked.length} selected`}</h2>
-                <p className="text-row text-ink-2">{picked.length ? namesLine(picked.map((a) => a.person.fullName)) : 'Tick the applicants you want to answer together.'}</p>
+                <h2 className="text-[22px] font-bold leading-[27px] text-ink-1">{t('applicantsDesktop.selectedCount', { count: picked.length })}</h2>
+                <p className="text-row text-ink-2">{picked.length ? namesLine(picked.map((a) => a.person.fullName)) : t('applicantsDesktop.selectionEmpty')}</p>
                 <div className="flex gap-3">
                   {chip === 'pending' && (
-                    <button type="button" disabled={picked.length === 0} onClick={() => { bulk.maybe(picked); endSelect() }} className="flex h-12 items-center rounded-full bg-surface-subtle px-6 text-[16px] font-semibold text-ink-1 hover:bg-surface-muted disabled:opacity-40" data-testid="bulk-maybe">Maybe</button>
+                    <button type="button" disabled={picked.length === 0} onClick={() => { bulk.maybe(picked); endSelect() }} className="flex h-12 items-center rounded-full bg-surface-subtle px-6 text-[16px] font-semibold text-ink-1 hover:bg-surface-muted disabled:opacity-40" data-testid="bulk-maybe">{t('applicantsDesktop.bulkMaybe')}</button>
                   )}
                   <button type="button" disabled={picked.length === 0} onClick={() => setBulkDeclining(true)} className="flex h-12 items-center rounded-full bg-hockia-primary px-6 text-[16px] font-semibold text-white hover:opacity-90 disabled:opacity-40" data-testid="bulk-decline">
-                    {picked.length ? `Not a fit · ${picked.length}` : 'Not a fit'}
+                    {picked.length ? t('applicantsDesktop.bulkDeclineCount', { count: picked.length }) : t('applicantsDesktop.bulkDecline')}
                   </button>
                 </div>
               </div>
             ) : selected
               ? <ApplicantReviewScreen key={selected.applicationId} roleId={roleId} applicationId={selected.applicationId} layout="pane" onDecided={onDecided} actionsRef={actions} />
-              : <p className="py-16 text-center text-row text-ink-3">{data.loading ? '' : 'Pick an applicant to review.'}</p>}
+              : <p className="py-16 text-center text-row text-ink-3">{data.loading ? '' : t('applicantsDesktop.pickOne')}</p>}
           </section>
         </div>
       </main>

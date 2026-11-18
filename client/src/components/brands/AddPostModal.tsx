@@ -13,6 +13,8 @@ import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { BrandPost, CreatePostInput, UpdatePostInput } from '@/hooks/useBrandPosts'
+import { Trans } from 'react-i18next'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 interface AddPostModalProps {
   isOpen: boolean
@@ -31,6 +33,7 @@ export function AddPostModal({
   onSubmit,
   editingPost,
 }: AddPostModalProps) {
+  const t = useBrandsT()
   const { user } = useAuthStore()
   const isEdit = Boolean(editingPost)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -103,27 +106,27 @@ export function AddPostModal({
       logger.error('[AddPostModal] Image upload error:', err)
       setErrors(prev => ({
         ...prev,
-        image: err instanceof Error ? err.message : 'Failed to upload image',
+        image: err instanceof Error ? err.message : t('addPost.uploadFailed'),
       }))
     } finally {
       setIsUploading(false)
     }
-  }, [user])
+  }, [user, t])
 
   const validate = useCallback((): boolean => {
     const newErrors: Record<string, string> = {}
 
     if (!content.trim()) {
-      newErrors.content = 'Post content is required'
+      newErrors.content = t('addPost.contentRequired')
     }
 
     if (content.length > MAX_CONTENT_LENGTH) {
-      newErrors.content = `Content exceeds ${MAX_CONTENT_LENGTH} character limit`
+      newErrors.content = t('addPost.contentTooLong', { max: MAX_CONTENT_LENGTH })
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
-  }, [content])
+  }, [content, t])
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -139,7 +142,7 @@ export function AddPostModal({
       const result = await onSubmit(submitData, isEdit)
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to save post')
+        throw new Error(result.error || t('addPost.saveFailed'))
       }
 
       setContent('')
@@ -149,12 +152,12 @@ export function AddPostModal({
       logger.error('[AddPostModal] Submit error:', err)
       setErrors(prev => ({
         ...prev,
-        submit: err instanceof Error ? err.message : 'Failed to save post',
+        submit: err instanceof Error ? err.message : t('addPost.saveFailed'),
       }))
     } finally {
       setIsSubmitting(false)
     }
-  }, [content, imageUrl, validate, onSubmit, isEdit, onClose])
+  }, [content, imageUrl, validate, onSubmit, isEdit, onClose, t])
 
   if (!isOpen) return null
 
@@ -173,13 +176,13 @@ export function AddPostModal({
           {/* Header */}
           <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <h2 id="add-post-title" className="text-xl font-semibold text-gray-900">
-              {isEdit ? 'Edit Post' : 'Create Post'}
+              {isEdit ? t('addPost.titleEdit') : t('addPost.titleCreate')}
             </h2>
             <button
               type="button"
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
-              aria-label="Close"
+              aria-label={t('addPost.close')}
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -199,7 +202,7 @@ export function AddPostModal({
             {/* Content */}
             <div>
               <label htmlFor="post-content" className="block text-sm font-medium text-gray-700 mb-1">
-                What's new with your brand?
+                {t('addPost.contentLabel')}
               </label>
               <textarea
                 id="post-content"
@@ -208,7 +211,7 @@ export function AddPostModal({
                   setContent(e.target.value)
                   setErrors(prev => { const n = { ...prev }; delete n.content; return n })
                 }}
-                placeholder="Share an update, announcement, or news..."
+                placeholder={t('addPost.contentPlaceholder')}
                 rows={5}
                 maxLength={MAX_CONTENT_LENGTH}
                 autoCapitalize="sentences"
@@ -232,19 +235,19 @@ export function AddPostModal({
             {/* Image */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Image <span className="text-gray-400">(optional)</span>
+                <Trans t={t} i18nKey="addPost.imageLabel" components={{ muted: <span className="text-gray-400" /> }} />
               </label>
 
               {imageUrl ? (
                 <div className="relative rounded-lg overflow-hidden bg-gray-100 group">
                   <img
                     src={imageUrl}
-                    alt="Post image"
+                    alt={t('addPost.imageAlt')}
                     className="w-full max-h-[300px] object-cover"
                   />
                   <button
                     type="button"
-                    aria-label="Remove image"
+                    aria-label={t('addPost.removeImage')}
                     onClick={() => setImageUrl(null)}
                     className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-black/80 transition-colors"
                   >
@@ -263,7 +266,7 @@ export function AddPostModal({
                   ) : (
                     <>
                       <ImagePlus className="w-6 h-6" />
-                      <span className="text-sm">Add an image</span>
+                      <span className="text-sm">{t('addPost.addImage')}</span>
                     </>
                   )}
                 </button>
@@ -279,7 +282,7 @@ export function AddPostModal({
                 accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                 onChange={handleImageUpload}
                 className="hidden"
-                aria-label="Upload post image"
+                aria-label={t('addPost.uploadImage')}
               />
             </div>
 
@@ -290,7 +293,7 @@ export function AddPostModal({
               className="w-full py-2.5 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitting ? 'Posting...' : isEdit ? 'Save Changes' : 'Publish Post'}
+              {isSubmitting ? t('addPost.posting') : isEdit ? t('addPost.saveChanges') : t('addPost.publish')}
             </button>
           </form>
         </div>

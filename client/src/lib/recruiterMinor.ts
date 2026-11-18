@@ -1,4 +1,5 @@
 import { isRecruitingViewer, type RecruiterAccessProfile } from './recruiterAccess'
+import { tCommon } from '@/i18n/ns/common'
 
 /**
  * Founder ruling 2026-10-06: clubs and coaches who recruit cannot START a
@@ -8,6 +9,11 @@ import { isRecruitingViewer, type RecruiterAccessProfile } from './recruiterAcce
  */
 export const RECRUITER_MINOR_MESSAGE = "This member can't be contacted by clubs or coaches."
 export const RECRUITER_MINOR_CODE = 'recruiter_minor'
+
+/** The refusal in the interface language (English is RECRUITER_MINOR_MESSAGE, word for word). */
+export function recruiterMinorMessage(): string {
+  return tCommon('errors.recruiterMinor')
+}
 
 type ErrorLike = { message?: unknown; details?: unknown } | null | undefined
 

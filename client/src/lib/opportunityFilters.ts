@@ -1,5 +1,7 @@
 import type { Vacancy } from '@/lib/supabase'
 import { isPaid, type PackageFilterKey } from '@/lib/opportunityCopy'
+import { tOpportunities } from '@/i18n/ns/opportunities'
+import { withLazyText } from '@/lib/opportunityLazyText'
 
 /** Filters sheet state (Figma Opportunities — Filters). */
 export interface RoleFilters {
@@ -42,14 +44,14 @@ export function applyRoleFilters(list: Vacancy[], f: RoleFilters, viewerIsEuElig
  */
 export type QuickChipKey = 'all' | 'women' | 'men' | 'mixed' | 'paid' | 'housing' | 'flights' | 'no-eu-passport'
 export const QUICK_CHIPS: { key: QuickChipKey; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'women', label: "Women's" },
-  { key: 'men', label: "Men's" },
-  { key: 'mixed', label: 'Mixed' },
-  { key: 'paid', label: 'Paid' },
-  { key: 'housing', label: 'Housing' },
-  { key: 'flights', label: 'Flights' },
-  { key: 'no-eu-passport', label: 'No EU passport needed' },
+  withLazyText({ key: 'all' as const }, { label: () => tOpportunities('filters.chips.all') }),
+  withLazyText({ key: 'women' as const }, { label: () => tOpportunities('filters.chips.women') }),
+  withLazyText({ key: 'men' as const }, { label: () => tOpportunities('filters.chips.men') }),
+  withLazyText({ key: 'mixed' as const }, { label: () => tOpportunities('filters.chips.mixed') }),
+  withLazyText({ key: 'paid' as const }, { label: () => tOpportunities('filters.chips.paid') }),
+  withLazyText({ key: 'housing' as const }, { label: () => tOpportunities('filters.chips.housing') }),
+  withLazyText({ key: 'flights' as const }, { label: () => tOpportunities('filters.chips.flights') }),
+  withLazyText({ key: 'no-eu-passport' as const }, { label: () => tOpportunities('filters.chips.noEuPassport') }),
 ]
 const CHIP_PACKAGE: Partial<Record<QuickChipKey, PackageFilterKey>> = { paid: 'paid', housing: 'housing', flights: 'flights' }
 

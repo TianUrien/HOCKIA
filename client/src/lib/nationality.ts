@@ -1,5 +1,7 @@
 import { isEuCountryCode } from '@/hooks/useCountries'
 import type { DisplayPlace } from '@/lib/communityCard'
+import { tProfile } from '@/i18n/ns/profile'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Nationality is identity; location is where someone lives. A person's FLAG
@@ -24,7 +26,7 @@ export function nationalityCountries(ids: (number | null | undefined)[], countri
     .slice(0, 2)
     .map((id) => countries.find((c) => c.id === id))
     .filter((c): c is CountryLike => Boolean(c))
-    .map((c) => ({ id: c.id, name: c.common_name || c.name, flag: c.flag_emoji ?? null, isEu: isEuCountryCode(c.code) }))
+    .map((c) => ({ id: c.id, name: countryLabel(c.common_name || c.name), flag: c.flag_emoji ?? null, isEu: isEuCountryCode(c.code) }))
 }
 
 /** Either passport is EU → the member can play in the EU without a permit. */
@@ -48,7 +50,7 @@ export function nationalityNames(list: NationalityCountry[]): string | null {
 export function basedInLine(place: DisplayPlace | null | undefined): string | null {
   if (!place) return null
   const where = [place.city, place.country].filter(Boolean).join(', ')
-  return where ? `Based in ${where}` : null
+  return where ? tProfile('place.basedIn', { where }) : null
 }
 
 /** Card line 3 tail: "29 · Santander" (age, city only, no flag). */

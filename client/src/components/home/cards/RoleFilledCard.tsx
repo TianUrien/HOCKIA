@@ -2,6 +2,7 @@ import { CheckCircle2, BadgeCheck } from 'lucide-react'
 import { positionLabel } from '@/lib/identity'
 import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardHeader, profilePathForRole } from '../FeedCard'
 import type { RoleFilledFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface RoleFilledCardProps {
   item: RoleFilledFeedItem
@@ -15,6 +16,7 @@ interface RoleFilledCardProps {
  * through the platform.
  */
 export function RoleFilledCard({ item }: RoleFilledCardProps) {
+  const t = useHomeT()
   // Vacancies can be coach-published — then club_id/club_name carry the
   // COACH's profile; route + avatar tint by author_role ('club' fallback
   // covers cached pre-migration payloads).
@@ -31,7 +33,7 @@ export function RoleFilledCard({ item }: RoleFilledCardProps) {
         createdAt={item.created_at}
         profilePath={publisherPath}
       />
-      <FeedCardCaption icon={<CheckCircle2 />}>Opportunity filled</FeedCardCaption>
+      <FeedCardCaption icon={<CheckCircle2 />}>{t('cards.roleFilled.caption')}</FeedCardCaption>
 
       <FeedCardBody>
         <h3 className="text-[17px] font-semibold leading-6 text-gray-900">{item.title}</h3>
@@ -45,7 +47,7 @@ export function RoleFilledCard({ item }: RoleFilledCardProps) {
             {item.filled_via_hockia && (
               <span className="inline-flex items-center gap-1 rounded-full bg-hockia-soft px-2.5 py-1 text-xs font-semibold text-hockia-primary">
                 <BadgeCheck className="h-3 w-3" />
-                Filled via Hockia
+                {t('cards.roleFilled.viaHockia')}
               </span>
             )}
           </div>

@@ -18,6 +18,9 @@
  */
 
 import { labelFor, labelForInline } from './display-labels.ts'
+import { currentAiLanguage, type MemberLanguage } from './ai-language.ts'
+import { spanishList } from './member-language.ts'
+import { SPANISH_COUNTRY_NAMES, plainText, spanishCountryName, spanishPlaceName } from './country-names-es.ts'
 
 export type OpportunityType = 'player' | 'coach'
 export type OpportunityGender = 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed'
@@ -227,11 +230,11 @@ const BENEFIT_PATTERNS: Array<[string, RegExp]> = [
 ]
 
 const GENDER_PATTERNS: Array<[OpportunityGender[], RegExp]> = [
-  [['Women'], /\b(?:women'?s?|womens|ladies|female)\b/i],
-  [['Men'], /\b(?:men'?s?|mens|male)\b/i],
+  [['Women'], /\b(?:women'?s?|womens|ladies|female|damas?|femenin[oa]s?|mujeres)\b/i],
+  [['Men'], /\b(?:men'?s?|mens|male|caballeros?|masculin[oa]s?|varones|hombres)\b/i],
   [['Girls'], /\bgirls?\b/i],
   [['Boys'], /\bboys?\b/i],
-  [['Mixed'], /\bmixed\b/i],
+  [['Mixed'], /\b(?:mixed|mixt[oa]s?)\b/i],
 ]
 
 /** Aliases the countries table spells differently from how people type. */
@@ -243,8 +246,8 @@ const COUNTRY_ALIASES: Record<string, string[]> = {
 
 const REGION_ALIASES: Record<string, string[]> = {
   europe: ['europe', 'european', 'europa'],
-  'south america': ['south america', 'latin america', 'sudamerica', 'sudamérica'],
-  'north america': ['north america'],
+  'south america': ['south america', 'latin america', 'sudamerica', 'america del sur', 'latinoamerica', 'america latina'],
+  'north america': ['north america', 'norteamerica', 'america del norte'],
   oceania: ['oceania'],
   asia: ['asia'],
   africa: ['africa'],
@@ -265,6 +268,28 @@ function namesFor(c: CountryRef): string[] {
   return Array.from(new Set([...base, ...extra]))
 }
 
+/** Extra Spanish ways to name a country, by its English name. */
+const SPANISH_COUNTRY_ALIASES: Record<string, string[]> = {
+  'united kingdom': ['gran bretana'],
+  'united states': ['eeuu', 'ee. uu.', 'estados unidos de america'],
+  netherlands: ['holanda'],
+}
+
+/**
+ * The same names as a Spanish speaker types them ("Inglaterra", "Países
+ * Bajos", "Holanda"), lower case and without accents: compare them with
+ * `plainText(query)`. Names spelled the same in English are left out.
+ */
+function spanishNamesFor(c: CountryRef): string[] {
+  const out = new Set<string>()
+  for (const n of namesFor(c)) {
+    const es = SPANISH_COUNTRY_NAMES[n]
+    if (es) out.add(plainText(es))
+    for (const alias of SPANISH_COUNTRY_ALIASES[n] ?? []) out.add(alias)
+  }
+  return Array.from(out)
+}
+
 /**
  * Parse a candidate's role query. `countries` is the countries table
  * (name, common_name, region) so geography stays data-driven.
@@ -273,8 +298,10 @@ export function parseOpportunityQuery(
   query: string,
   viewer: Viewer,
   countries: CountryRef[],
+  lang: MemberLanguage = currentAiLanguage(),
 ): OpportunityCriteria {
   const q = query ?? ''
+  const qPlain = plainText(q)
   const opportunityType: OpportunityType = viewer.role === 'coach' ? 'coach' : 'player'
   const positionPatterns = opportunityType === 'coach' ? COACH_POSITION_PATTERNS : PLAYER_POSITION_PATTERNS
   // Strip coach phrases before reading player positions so "goalkeeper coach"
@@ -298,7 +325,8 @@ export function parseOpportunityQuery(
   // Region named directly ("in Europe").
   let regionLabel: string | null = null
   for (const [region, aliases] of Object.entries(REGION_ALIASES)) {
-    if (aliases.some(a => wordIn(q, a))) {
+    // Compared without accents: "África", "Oceanía", "Sudamérica".
+    if (aliases.some(a => wordIn(qPlain, a))) {
       const canonical = countries.find(c => (c.region ?? '').toLowerCase() === region)?.region
       regionLabel = canonical ?? region.replace(/\b\w/g, ch => ch.toUpperCase())
       break
@@ -316,12 +344,18 @@ export function parseOpportunityQuery(
   for (const c of countries) {
     const names = namesFor(c)
     const matches = (n: string) => n.length <= 2 ? new RegExp(`\\b${n.toUpperCase()}\\b`).test(q) : wordIn(q, n)
-    const hit = names.some(matches)
+    // Spanish names are read whatever the member's language: a question
+    // typed in Spanish on an English interface means the same country.
+    const spanish = spanishNamesFor(c)
+    const matchesSpanish = (n: string) => wordIn(qPlain, n)
+    const hit = names.some(matches) || spanish.some(matchesSpanish)
     if (hit) {
       countryNames.push(...names)
       const own = [c.name, c.common_name].filter((n): n is string => !!n).map(n => n.toLowerCase())
-      if (own.some(matches)) named.push(c.common_name || c.name)
-      else viaAlias.push(c.common_name || c.name)
+      const ownSpanish = own.map(n => SPANISH_COUNTRY_NAMES[n]).filter((n): n is string => !!n).map(plainText)
+      const label = lang === 'es' ? spanishCountryName(c.common_name || c.name) : c.common_name || c.name
+      if (own.some(matches) || ownSpanish.some(matchesSpanish)) named.push(label)
+      else viaAlias.push(label)
     }
   }
   const labelParts = named.length ? named : viaAlias
@@ -441,24 +475,40 @@ const CATEGORY_LABELS: Record<OpportunityGender, string> = {
   Men: "Men's team", Women: "Women's team", Girls: 'Girls', Boys: 'Boys', Mixed: 'Mixed',
 }
 
+// Spanish (Stage 3, client/src/locales/glossary.md).
+const BENEFIT_LABELS_ES: Record<string, string> = {
+  housing: 'Alojamiento', flights: 'Pasajes', visa: 'Visa', car: 'Auto', job: 'Trabajo',
+  insurance: 'Seguro', bonuses: 'Premios', equipment: 'Equipamiento', meals: 'Comidas',
+  education: 'Estudios',
+}
+
+const CATEGORY_LABELS_ES: Record<OpportunityGender, string> = {
+  Men: 'Caballeros', Women: 'Damas', Girls: 'Juveniles damas', Boys: 'Juveniles caballeros', Mixed: 'Mixto',
+}
+
 function clean(s: string | null | undefined, max = 80): string | null {
   if (!s) return null
   const t = s.replace(/\s+/g, ' ').trim().slice(0, max)
   return t || null
 }
 
-export function toOpportunityResult(row: OpportunityRow): OpportunityResult {
+export function toOpportunityResult(row: OpportunityRow, lang: MemberLanguage = currentAiLanguage()): OpportunityResult {
+  const es = lang === 'es'
+  const benefitTable = es ? BENEFIT_LABELS_ES : BENEFIT_LABELS
+  const categoryTable = es ? CATEGORY_LABELS_ES : CATEGORY_LABELS
   const location = [clean(row.location_city, 40), clean(row.location_country, 40)].filter(Boolean).join(', ')
   return {
     id: row.id,
-    title: clean(row.title, 120) ?? (row.position ? `${labelFor(row.position)} role` : 'Open role'),
-    position_label: row.position ? labelFor(row.position) : null,
-    category_label: row.gender ? CATEGORY_LABELS[row.gender] ?? null : null,
+    title: clean(row.title, 120) ?? (es
+      ? (row.position ? `Oportunidad: ${labelFor(row.position, lang)}` : 'Oportunidad abierta')
+      : (row.position ? `${labelFor(row.position, lang)} role` : 'Open role')),
+    position_label: row.position ? labelFor(row.position, lang) : null,
+    category_label: row.gender ? categoryTable[row.gender] ?? null : null,
     location_label: location || null,
     organization: clean(row.world_club_name) ?? clean(row.organization_name) ?? clean(row.club_name),
     logo_url: row.world_club_avatar_url ?? row.club_logo_url ?? null,
     benefit_labels: (row.benefits ?? [])
-      .map(b => BENEFIT_LABELS[b.toLowerCase()] ?? null)
+      .map(b => benefitTable[b.toLowerCase()] ?? null)
       .filter((b): b is string => !!b)
       .slice(0, 4),
     deadline: row.application_deadline ?? null,
@@ -467,7 +517,8 @@ export function toOpportunityResult(row: OpportunityRow): OpportunityResult {
 }
 
 /** "midfielder roles", "head coach roles", "open roles" — plural noun phrase. */
-export function describeRoleNoun(criteria: OpportunityCriteria): { plural: string; singular: string } {
+export function describeRoleNoun(criteria: OpportunityCriteria, lang: MemberLanguage = currentAiLanguage()): { plural: string; singular: string } {
+  if (lang === 'es') return describeRoleNounEs(criteria)
   const pos = criteria.positions.map(p => labelForInline(p))
   const head = pos.length === 0 ? 'open'
     : pos.length === 1 ? pos[0]
@@ -478,6 +529,25 @@ export function describeRoleNoun(criteria: OpportunityCriteria): { plural: strin
   return { plural: `${cat}${head} roles`, singular: `${cat}${head} role` }
 }
 
+/** "oportunidades de volante en Damas", "oportunidades abiertas". */
+function describeRoleNounEs(criteria: OpportunityCriteria): { plural: string; singular: string } {
+  const pos = criteria.positions.map(p => labelForInline(p, 'es'))
+  const what = pos.length === 0 ? ''
+    : pos.length === 1 ? pos[0]
+      : `${pos.slice(0, -1).join(', ')} o ${pos[pos.length - 1]}`
+  const cat = criteria.genders.length === 1 && criteria.genders[0] !== 'Mixed'
+    ? ` en ${CATEGORY_LABELS_ES[criteria.genders[0]]}`
+    : ''
+  if (!what) return { plural: `oportunidades abiertas${cat}`, singular: `oportunidad abierta${cat}` }
+  return { plural: `oportunidades de ${what}${cat}`, singular: `oportunidad de ${what}${cat}` }
+}
+
+function benefitsPhraseEs(criteria: OpportunityCriteria): string {
+  if (!criteria.benefits.length) return ''
+  const labels = criteria.benefits.map(b => (BENEFIT_LABELS_ES[b] ?? b).toLowerCase())
+  return ` con ${spanishList(labels)}`
+}
+
 function benefitsPhrase(criteria: OpportunityCriteria): string {
   if (!criteria.benefits.length) return ''
   const labels = criteria.benefits.map(b => (BENEFIT_LABELS[b] ?? b).toLowerCase())
@@ -486,7 +556,13 @@ function benefitsPhrase(criteria: OpportunityCriteria): string {
 }
 
 /** Headline for a successful role search. Gender-neutral, count-of-roles only. */
-export function buildOpportunityMessage(count: number, criteria: OpportunityCriteria, geoLabel: string | null): string {
+export function buildOpportunityMessage(count: number, criteria: OpportunityCriteria, geoLabel: string | null, lang: MemberLanguage = currentAiLanguage()): string {
+  if (lang === 'es') {
+    const noun = describeRoleNounEs(criteria)
+    const n = count === 1 ? noun.singular : noun.plural
+    const where = geoLabel ? ` en ${spanishPlaceName(geoLabel)}` : ''
+    return `Encontré ${count} ${n}${where}${benefitsPhraseEs(criteria)} a ${count === 1 ? 'la' : 'las'} que puedes postularte.`
+  }
   const noun = describeRoleNoun(criteria)
   const n = count === 1 ? noun.singular : noun.plural
   const where = geoLabel ? ` in ${geoLabel}` : ''
@@ -494,7 +570,15 @@ export function buildOpportunityMessage(count: number, criteria: OpportunityCrit
 }
 
 /** Copy when nothing matched even after widening geography. */
-export function buildNoOpportunitiesMessage(criteria: OpportunityCriteria, geoLabel: string | null): string {
+export function buildNoOpportunitiesMessage(criteria: OpportunityCriteria, geoLabel: string | null, lang: MemberLanguage = currentAiLanguage()): string {
+  if (lang === 'es') {
+    const noun = describeRoleNounEs(criteria)
+    const where = geoLabel ? ` en ${spanishPlaceName(geoLabel)}` : ''
+    const narrowed = criteria.positions.length > 0 || criteria.benefits.length > 0 || criteria.genders.length > 0
+    return narrowed
+      ? `Por ahora no hay ${noun.plural}${where}${benefitsPhraseEs(criteria)} a las que puedas postularte. Se publican oportunidades nuevas todo el tiempo. Puedes ampliar la búsqueda o ver todas las oportunidades abiertas.`
+      : `Por ahora no hay oportunidades abiertas${where} a las que puedas postularte. Se publican oportunidades nuevas todo el tiempo. Mantén tu perfil al día para que los clubes también puedan encontrarte.`
+  }
   const noun = describeRoleNoun(criteria)
   const where = geoLabel ? ` in ${geoLabel}` : ''
   const hasNarrowing = criteria.positions.length > 0 || criteria.benefits.length > 0 || criteria.genders.length > 0
@@ -514,7 +598,17 @@ export function buildIneligibleMessage(
   criteria: OpportunityCriteria,
   askedLabel: string | null,
   widened: { count: number; region: string | null } | null = null,
+  lang: MemberLanguage = currentAiLanguage(),
 ): string {
+  if (lang === 'es') {
+    const noun = describeRoleNounEs(criteria)
+    const where = askedLabel ? ` en ${spanishPlaceName(askedLabel)}` : ' en Hockia'
+    const head = `Hay ${noun.plural}${where}${benefitsPhraseEs(criteria)}, pero por ahora no puedes postularte a ninguna`
+    if (!widened || widened.count === 0) return `${head}.`
+    const n = widened.count === 1 ? `1 ${noun.singular}` : `${widened.count} ${noun.plural}`
+    const elsewhere = widened.region ? `en otra parte de ${spanishPlaceName(widened.region)}` : 'en otras partes del mundo'
+    return `${head}. Hay ${n} ${elsewhere} a ${widened.count === 1 ? 'la' : 'las'} que puedes postularte.`
+  }
   const noun = describeRoleNoun(criteria)
   const where = askedLabel ? ` in ${askedLabel}` : ' on HOCKIA'
   const head = `There are ${noun.plural}${where}${benefitsPhrase(criteria)}, but none you can apply to right now`
@@ -558,7 +652,7 @@ export function runOpportunitySearch(
 ): OpportunitySearchOutcome {
   const criteria = parseOpportunityQuery(query, viewer, countries)
   // "for my position" → the viewer's own position(s).
-  if (!criteria.positions.length && /\bmy (?:position|role)s?\b/i.test(query) && viewer.position) {
+  if (!criteria.positions.length && /\b(?:my (?:position|role)s?|mi posici[oó]n)\b/i.test(query) && viewer.position) {
     criteria.positions = [viewer.position, viewer.secondaryPosition].filter((p): p is string => !!p)
   }
 

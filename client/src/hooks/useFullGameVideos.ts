@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/lib/database.types'
+import { tMedia } from '@/i18n/ns/media'
 
 export type FullGameVideo = Database['public']['Tables']['player_full_game_videos']['Row']
 export type FullGameVideoInsert = Database['public']['Tables']['player_full_game_videos']['Insert']
@@ -64,7 +65,7 @@ export function useFullGameVideos(targetUserId: string | null | undefined): UseF
       const message =
         err && typeof err === 'object' && 'message' in err && typeof err.message === 'string'
           ? err.message
-          : 'Failed to load full game videos'
+          : tMedia('fullGames.loadFailed')
       logger.error('[useFullGameVideos] fetch failed', err)
       setError(message)
     } finally {

@@ -11,6 +11,8 @@ import { ArrowLeft, MapPin, Building2, Trophy, CheckCircle, Clock, RefreshCw, Ba
 import { Header } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { tWorld, useWorldT } from '@/i18n/ns/world'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface Province {
   province_id: number | null
@@ -70,6 +72,7 @@ interface ClubLeagueRow {
  *  list. Claimed clubs link to their HOCKIA profile; the blue BadgeCheck is
  *  the admin-granted verification mark (public trust signal, World Phase 1). */
 function ClubCard({ club, highlighted, onClick }: { club: Club; highlighted: boolean; onClick: () => void }) {
+  const t = useWorldT()
   return (
     <button
       data-club-id={club.id}
@@ -104,7 +107,7 @@ function ClubCard({ club, highlighted, onClick }: { club: Club; highlighted: boo
             <h3 className={`font-medium inline-flex items-center gap-1 ${club.is_claimed ? 'text-gray-900' : 'text-gray-500'}`}>
               {club.club_name}
               {club.verified && (
-                <BadgeCheck className="w-4 h-4 text-positive flex-shrink-0" aria-label="Verified club" />
+                <BadgeCheck className="w-4 h-4 text-positive flex-shrink-0" aria-label={t('country.verifiedClub')} />
               )}
             </h3>
             {club.profile_username && (
@@ -117,12 +120,12 @@ function ClubCard({ club, highlighted, onClick }: { club: Club; highlighted: boo
           {club.is_claimed ? (
             <span className="flex items-center gap-1 text-xs text-positive bg-positive-soft px-2 py-1 rounded-full">
               <CheckCircle className="w-3 h-3" />
-              Active
+              {t('country.active')}
             </span>
           ) : (
             <span className="flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
               <Clock className="w-3 h-3" />
-              Unclaimed
+              {t('country.unclaimed')}
             </span>
           )}
         </div>
@@ -142,13 +145,14 @@ function CommunityClubsSection({ title, clubs, highlightClubId, onClubClick, cla
   onClubClick: (club: Club) => void
   className?: string
 }) {
+  const t = useWorldT()
   if (clubs.length === 0) return null
   return (
     <div className={className}>
       <div className="mb-4">
         <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
         <p className="text-sm text-gray-500 mt-0.5">
-          Added by the community — not yet part of a league
+          {t('country.communityNote')}
         </p>
       </div>
       <div className="grid gap-3">
@@ -168,6 +172,7 @@ function CommunityClubsSection({ title, clubs, highlightClubId, onClubClick, cla
 export default function WorldCountryPage() {
   const { countrySlug } = useParams<{ countrySlug: string }>()
   const navigate = useNavigate()
+  const t = useWorldT()
   const [country, setCountry] = useState<Country | null>(null)
   const [hasRegions, setHasRegions] = useState<boolean | null>(null)
   const [provinces, setProvinces] = useState<Province[]>([])
@@ -250,7 +255,7 @@ export default function WorldCountryPage() {
     const friendlySlug = countrySlug
       .replace(/-/g, ' ')
       .replace(/\b\p{L}/gu, c => c.toUpperCase())
-    document.title = `Field Hockey Clubs in ${friendlySlug} – Leagues & Clubs | Hockia`
+    document.title = tWorld('country.documentTitle', { country: friendlySlug })
 
     const fetchCountryData = async () => {
       try {
@@ -331,7 +336,7 @@ export default function WorldCountryPage() {
         }
         setCountry(countryData)
         setHasRegions(data.has_regions ?? false)
-        document.title = `Field Hockey Clubs in ${countryData.name} – Leagues & Clubs | Hockia`
+        document.title = tWorld('country.documentTitle', { country: countryLabel(countryData.name) })
 
         if (data.has_regions) {
           const { data: provinceData, error: provinceError } = await supabase
@@ -540,16 +545,16 @@ export default function WorldCountryPage() {
           <div className="text-center py-12">
             <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-700 font-medium mb-1">
-              {isNotFound ? 'Country not found' : 'Unable to load country data'}
+              {isNotFound ? t('country.notFound') : t('country.loadFailed')}
             </p>
             <p className="text-sm text-gray-500 mb-4">
               {isNotFound
-                ? `We couldn't find a country matching "${countrySlug}". Try the directory.`
-                : 'Check your connection and try again'}
+                ? t('country.notFoundBody', { slug: countrySlug })
+                : t('country.loadFailedHint')}
             </p>
             <div className="flex items-center justify-center gap-3">
               <Link to="/world" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                Back to World
+                {t('country.backToWorld')}
               </Link>
               {/* Retry doesn't help when the slug is just wrong — hide
                   it for the not-found case so we don't suggest a fix
@@ -561,7 +566,7 @@ export default function WorldCountryPage() {
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  Retry
+                  {t('country.retry')}
                 </button>
               )}
             </div>
@@ -587,17 +592,17 @@ export default function WorldCountryPage() {
               loading="lazy"
             />
             <h1 className="text-lg font-semibold text-gray-900 mb-1">
-              {notInDirectory.name} isn't in our directory yet
+              {t('country.notInDirectoryTitle', { country: notInDirectory.name })}
             </h1>
             <p className="text-sm text-gray-500 mb-5">
-              We're still curating club directories country by country. Browse the ones we do have so far:
+              {t('country.notInDirectoryBody')}
             </p>
             <Link
               to="/world"
               className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to World
+              {t('country.backToWorld')}
             </Link>
           </div>
         </main>
@@ -611,9 +616,9 @@ export default function WorldCountryPage() {
         <Header />
         <main className="mx-auto max-w-7xl px-4 pt-under-header-lg pb-12 md:px-6">
           <div className="text-center py-12">
-            <p className="text-gray-500">Country not found</p>
+            <p className="text-gray-500">{t('country.notFound')}</p>
             <Link to="/world" className="text-brand-text hover:underline mt-2 inline-block">
-              Back to World
+              {t('country.backToWorld')}
             </Link>
           </div>
         </main>
@@ -633,7 +638,7 @@ export default function WorldCountryPage() {
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
+          <span>{t('country.back')}</span>
         </button>
 
         {/* Country Header */}
@@ -642,7 +647,7 @@ export default function WorldCountryPage() {
             <div className="w-16 h-16 rounded-full overflow-hidden shadow-md border border-gray-200">
               <img
                 src={flagUrl}
-                alt={`${country.name} flag`}
+                alt={t('country.flagAlt', { country: countryLabel(country.name) })}
                 loading="lazy"
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -659,11 +664,11 @@ export default function WorldCountryPage() {
             </div>
             <div>
               <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                <Link to="/world" className="hover:text-gray-700">World</Link>
+                <Link to="/world" className="hover:text-gray-700">{t('country.breadcrumbWorld')}</Link>
                 <span>/</span>
-                <span className="text-hockia-primary">{country.name}</span>
+                <span className="text-hockia-primary">{countryLabel(country.name)}</span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">{country.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{countryLabel(country.name)}</h1>
             </div>
           </div>
         </div>
@@ -675,9 +680,9 @@ export default function WorldCountryPage() {
           /* ===== REGION-BASED COUNTRIES ===== */
           <>
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Regions</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('country.regions')}</h2>
               <p className="text-gray-600 mb-6">
-                Select a region to explore leagues and clubs in {country.name}
+                {t('country.regionsBody', { country: countryLabel(country.name) })}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -696,11 +701,11 @@ export default function WorldCountryPage() {
                     <div className="flex flex-wrap justify-center gap-2">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-hockia-soft text-brand-text rounded-full text-xs font-medium">
                         <Trophy className="w-3 h-3" />
-                        {province.total_leagues} {province.total_leagues === 1 ? 'league' : 'leagues'}
+                        {t('country.leagueCount', { count: province.total_leagues })}
                       </span>
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-hockia-soft text-brand-text rounded-full text-xs font-medium">
                         <Building2 className="w-3 h-3" />
-                        {province.total_clubs} {province.total_clubs === 1 ? 'club' : 'clubs'}
+                        {t('country.clubCount', { count: province.total_clubs })}
                       </span>
                     </div>
                   </div>
@@ -715,9 +720,9 @@ export default function WorldCountryPage() {
                   <MapPin className="w-5 h-5 text-brand-text" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">{country.name}'s Hockey Structure</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">{t('country.structureTitle', { country: countryLabel(country.name) })}</h3>
                   <p className="text-sm text-gray-600">
-                    {country.name} organizes its hockey system by region. Each region manages its own leagues and tournaments.
+                    {t('country.structureBody', { country: countryLabel(country.name) })}
                   </p>
                 </div>
               </div>
@@ -726,7 +731,7 @@ export default function WorldCountryPage() {
             {/* Community clubs not yet placed in any league — without this
                 section they'd be unreachable through the region drill-down. */}
             <CommunityClubsSection
-              title={`More clubs in ${country.name}`}
+              title={t('country.moreClubs', { country: countryLabel(country.name) })}
               clubs={communityClubs}
               highlightClubId={highlightClubId}
               onClubClick={handleClubClick}
@@ -750,7 +755,7 @@ export default function WorldCountryPage() {
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Women
+                  {t('country.women')}
                 </button>
                 <button
                   type="button"
@@ -761,7 +766,7 @@ export default function WorldCountryPage() {
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Men
+                  {t('country.men')}
                 </button>
               </div>
 
@@ -800,9 +805,9 @@ export default function WorldCountryPage() {
             ) : clubs.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
                 <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <p className="text-gray-500">No clubs in this league yet</p>
+                <p className="text-gray-500">{t('country.noClubsInLeague')}</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Clubs will appear here once they join the platform
+                  {t('country.noClubsHint')}
                 </p>
               </div>
             ) : (
@@ -823,7 +828,7 @@ export default function WorldCountryPage() {
                 club-only countries; a secondary section under the league
                 tabs everywhere else. */}
             <CommunityClubsSection
-              title={leagues.length > 0 ? `More clubs in ${country.name}` : `Clubs in ${country.name}`}
+              title={leagues.length > 0 ? t('country.moreClubs', { country: countryLabel(country.name) }) : t('country.clubsIn', { country: countryLabel(country.name) })}
               clubs={communityClubs}
               highlightClubId={highlightClubId}
               onClubClick={handleClubClick}
@@ -833,9 +838,9 @@ export default function WorldCountryPage() {
             {leagues.length === 0 && communityClubs.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
                 <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <p className="text-gray-500">No clubs in {country.name} yet</p>
+                <p className="text-gray-500">{t('country.noClubsInCountry', { country: countryLabel(country.name) })}</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Clubs will appear here once they join the platform
+                  {t('country.noClubsHint')}
                 </p>
               </div>
             )}

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 import { profilePath } from '@/lib/profileNavigation'
 import { logger } from '@/lib/logger'
+import { useProfileT } from '@/i18n/ns/profile'
 
 /**
  * ConnectionsPreview — the public-portfolio Connections section
@@ -59,6 +60,7 @@ export default function ConnectionsPreview({
   onSeeAll,
   signInVerb = 'plays with',
 }: ConnectionsPreviewProps) {
+  const t = useProfileT()
   const navigate = useNavigate()
   const [faces, setFaces] = useState<PreviewProfile[]>([])
   // Fenced total from get_profile_connections — what THIS viewer can
@@ -117,23 +119,29 @@ export default function ConnectionsPreview({
   // RPC access) and the pre-load skeleton use the denormalized prop.
   const displayTotal = isAuthenticated && fencedTotal !== null ? fencedTotal : totalConnections
   const showCount = displayTotal >= MIN_COUNT_TO_SHOW
-  const firstName = profileFirstName?.trim().split(/\s+/)[0] ?? 'this member'
+  const firstName = profileFirstName?.trim().split(/\s+/)[0] ?? null
+  // The two verbs callers pass get whole sentences; any other verb keeps its English words.
+  const signInLine = signInVerb === 'plays with'
+    ? (firstName ? t('connectionsPreview.signIn.playsWith', { firstName }) : t('connectionsPreview.signIn.playsWithAnon'))
+    : signInVerb === 'connects with'
+      ? (firstName ? t('connectionsPreview.signIn.connectsWith', { firstName }) : t('connectionsPreview.signIn.connectsWithAnon'))
+      : t('connectionsPreview.signIn.otherVerb', { firstName: firstName ?? t('connectionsPreview.signIn.thisMember'), verb: signInVerb })
 
   const header = useMemo(
     () => (
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
           <Users className="h-5 w-5 text-hockia-primary" />
-          Connections
+          {t('connectionsPreview.title')}
         </h2>
         {showCount && (
           <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600">
-            {displayTotal} connections
+            {t('connectionsPreview.count', { count: displayTotal })}
           </span>
         )}
       </div>
     ),
-    [showCount, displayTotal]
+    [showCount, displayTotal, t]
   )
 
   // Nothing to show, nothing to sell — collapse entirely.
@@ -146,14 +154,14 @@ export default function ConnectionsPreview({
         <div className="flex flex-col items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4">
           <p className="flex items-center gap-2 text-sm text-gray-600">
             <Lock className="h-4 w-4 flex-shrink-0 text-gray-400" />
-            Sign in to see who {firstName} {signInVerb}.
+            {signInLine}
           </p>
           <button
             type="button"
             onClick={() => navigate('/signin')}
             className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
           >
-            Sign in
+            {t('connectionsPreview.signInButton')}
           </button>
         </div>
       </div>
@@ -172,12 +180,12 @@ export default function ConnectionsPreview({
           ))}
         </div>
       ) : loadFailed ? (
-        <p className="text-sm text-gray-500">Couldn&apos;t load connections right now.</p>
+        <p className="text-sm text-gray-500">{t('connectionsPreview.loadFailed')}</p>
       ) : faces.length === 0 ? (
         // The viewer's fences hid everything the denormalized gate let
         // through (blocked pairs / hidden / test accounts) — say so
         // instead of leaving a silent hollow card.
-        <p className="text-sm text-gray-500">No connections to show.</p>
+        <p className="text-sm text-gray-500">{t('connectionsPreview.empty')}</p>
       ) : (
         <div className="flex flex-wrap items-start gap-3">
           {faces.map((f) => {
@@ -210,7 +218,7 @@ export default function ConnectionsPreview({
           onClick={onSeeAll}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-hockia-primary hover:underline"
         >
-          See all {displayTotal} connections
+          {t('connectionsPreview.seeAll', { count: displayTotal })}
           <ArrowRight className="h-4 w-4" />
         </button>
       )}

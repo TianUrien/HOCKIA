@@ -22,8 +22,10 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackProfileView, trackPublicProfileViewed } from '@/lib/analytics'
 import PublicProfileFooterCTA from '@/components/profile/PublicProfileFooterCTA'
 import { usePublicProfileMeta } from '@/hooks/usePublicProfileMeta'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 export default function BrandProfilePage() {
+  const t = useBrandsT()
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const isMobile = useMediaQuery('(max-width: 1023px)')
@@ -125,7 +127,7 @@ export default function BrandProfilePage() {
               className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span>Back</span>
+              <span>{t('profilePage.back')}</span>
             </button>
           </div>
         )}
@@ -135,8 +137,8 @@ export default function BrandProfilePage() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 pb-2">
             <Breadcrumbs
               items={[
-                { label: 'Marketplace', to: '/marketplace' },
-                { label: brand?.name || 'Brand' },
+                { label: t('profilePage.breadcrumbMarketplace'), to: '/marketplace' },
+                { label: brand?.name || t('profilePage.breadcrumbBrand') },
               ]}
             />
           </div>
@@ -162,8 +164,8 @@ export default function BrandProfilePage() {
         {isBlockedProfile && (
           <div className="max-w-4xl mx-auto px-4 py-12 text-center">
             <Store className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">This profile is not available</h2>
-            <button type="button" onClick={() => navigate(-1)} className="mt-4 text-hockia-primary hover:underline font-medium">Go back</button>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('profilePage.blockedTitle')}</h2>
+            <button type="button" onClick={() => navigate(-1)} className="mt-4 text-hockia-primary hover:underline font-medium">{t('profilePage.goBack')}</button>
           </div>
         )}
 
@@ -172,13 +174,13 @@ export default function BrandProfilePage() {
           <div className="max-w-4xl mx-auto px-4 py-12 text-center">
             <Store className="w-16 h-16 text-gray-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Brand not found
+              {t('profilePage.notFoundTitle')}
             </h2>
             <p className="text-gray-600 mb-6">
-              The brand you're looking for doesn't exist or has been removed.
+              {t('profilePage.notFoundBody')}
             </p>
             <Link to="/marketplace">
-              <Button>Browse Marketplace</Button>
+              <Button>{t('profilePage.browse')}</Button>
             </Link>
           </div>
         )}

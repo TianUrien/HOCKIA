@@ -14,6 +14,8 @@
 import { Check, AlertTriangle } from 'lucide-react'
 import { fitStateFromVerdict, type RecruiterVerdict } from '@/lib/recruiterVerdict'
 import { FitBadge } from '@/components/ui/FitBadge'
+import { Trans } from 'react-i18next'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 interface RecruiterVerdictCardProps {
   verdict: RecruiterVerdict
@@ -26,6 +28,7 @@ interface RecruiterVerdictCardProps {
  * badge; the caveats below say why.
  */
 export default function RecruiterVerdictCard({ verdict, className = '' }: RecruiterVerdictCardProps) {
+  const t = useRecruitingT()
   if (!verdict.isApplicable) return null
   const fit = fitStateFromVerdict(verdict)
 
@@ -33,20 +36,20 @@ export default function RecruiterVerdictCard({ verdict, className = '' }: Recrui
     <div
       className={`rounded-xl border border-line bg-white px-4 py-3 ${className}`}
       role="group"
-      aria-label="Fit for your context"
+      aria-label={t('verdictCard.groupLabel')}
       data-testid="recruiter-verdict"
     >
       <div className="flex items-center gap-2">
         <FitBadge state={fit} />
         <span className="ml-auto text-[11px] font-medium text-ink-3">
-          {verdict.scoped ? 'For your context' : 'General fit'}
+          {verdict.scoped ? t('verdictCard.scoped') : t('verdictCard.general')}
         </span>
       </div>
 
       {/* #6 — the recruitment problem the weighting was tuned for. */}
       {verdict.weightedFor && (
         <p className="mt-1 text-[11px] text-gray-500">
-          Weighted for <span className="font-medium text-gray-700">{verdict.weightedFor}</span>
+          <Trans t={t} i18nKey="verdictCard.weightedFor" values={{ problem: verdict.weightedFor }} components={{ strong: <span className="font-medium text-gray-700" /> }} />
         </p>
       )}
 

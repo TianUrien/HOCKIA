@@ -10,29 +10,30 @@ import { positionLabel } from '@/lib/identity'
 import { logger } from '@/lib/logger'
 import { APPLICATION_STATUS_REASONS, applicationNote } from '@/lib/applicationStatus'
 import { dayFirst } from '@/lib/dayFirst'
+import { useClubT } from '@/i18n/ns/club'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
 type ShortlistTier = 'shortlisted' | 'maybe' | 'rejected'
 
-const TIER_OPTIONS: { tier: ShortlistTier; label: string; icon: typeof Star; pillClass: string; menuActiveClass: string }[] = [
+const TIER_OPTIONS: { tier: ShortlistTier; labelKey: 'topPick' | 'maybe' | 'notFit'; icon: typeof Star; pillClass: string; menuActiveClass: string }[] = [
   {
     tier: 'shortlisted',
-    label: 'Top pick',
+    labelKey: 'topPick',
     icon: Star,
     pillClass: 'bg-positive-soft text-positive border-positive/30',
     menuActiveClass: 'bg-positive-soft',
   },
   {
     tier: 'maybe',
-    label: 'Maybe',
+    labelKey: 'maybe',
     icon: HelpCircle,
     pillClass: 'bg-surface-grouped text-ink-2 border-line',
     menuActiveClass: 'bg-surface-grouped',
   },
   {
     tier: 'rejected',
-    label: 'Not a fit',
+    labelKey: 'notFit',
     icon: XCircle,
     pillClass: 'bg-status-danger-soft text-status-danger border-status-danger/30',
     menuActiveClass: 'bg-status-danger-soft',
@@ -64,12 +65,13 @@ interface ApplicantCardProps {
 
 export default function ApplicantCard({ application, onStatusChange, isUpdating, referenceInfo, tag }: ApplicantCardProps) {
   const navigate = useNavigate()
+  const t = useClubT()
   const [menuOpen, setMenuOpen] = useState(false)
   // When set, the status menu shows the optional "why?" reason step for that tier.
   const [reasonFor, setReasonFor] = useState<ShortlistTier | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const { applicant } = application
-  const displayName = applicant.full_name?.trim() || applicant.username?.trim() || 'Applicant'
+  const displayName = applicant.full_name?.trim() || applicant.username?.trim() || t('applicantCard.fallbackName')
   const positions = [applicant.position, applicant.secondary_position].filter((value, index, self): value is string => {
     if (!value) return false
     return self.findIndex((item) => item === value) === index
@@ -179,12 +181,12 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
           </div>
 
           <div className="mt-2 text-xs text-ink-3 sm:text-sm">
-            Applied {formatDate(application.applied_at)}
+            {t('applicantCard.applied', { date: formatDate(application.applied_at) })}
           </div>
 
           {note && (
             <p className="mt-2 whitespace-pre-wrap break-words rounded-lg bg-surface-subtle px-3 py-2 text-sm text-ink-2" data-testid="applicant-card-note">
-              <span className="font-medium text-ink-1">Note: </span>{note}
+              <span className="font-medium text-ink-1">{t('applicantCard.notePrefix')}</span>{note}
             </p>
           )}
 
@@ -193,7 +195,7 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0 text-positive" />
                 <span className="text-xs font-medium text-positive">
-                  {referenceInfo.count} {referenceInfo.count === 1 ? 'reference' : 'references'}
+                  {t('applicantCard.references', { count: referenceInfo.count })}
                 </span>
               </div>
               {referenceInfo.topEndorsement && (
@@ -234,12 +236,12 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
                 {currentTier ? (
                   <>
                     <currentTier.icon className="h-3.5 w-3.5" />
-                    {currentTier.label}
+                    {t(`applicantCard.tier.${currentTier.labelKey}`)}
                   </>
                 ) : (
                   <>
                     <Minus className="h-3.5 w-3.5" />
-                    Unsorted
+                    {t('applicantCard.unsorted')}
                   </>
                 )}
                 <ChevronDown className={`h-3 w-3 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
@@ -256,12 +258,12 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
                           type="button"
                           onClick={() => setReasonFor(null)}
                           className="flex items-center text-ink-4 transition-colors hover:text-ink-2"
-                          aria-label="Back to status options"
+                          aria-label={t('applicantCard.backAria')}
                         >
                           <ArrowLeft className="h-3.5 w-3.5" />
                         </button>
                         <span className="text-xs font-medium text-ink-3">
-                          Reason for &ldquo;{reasonFor === 'maybe' ? 'Maybe' : 'Not a fit'}&rdquo; · optional
+                          {t('applicantCard.reasonHeading', { status: t(reasonFor === 'maybe' ? 'applicantCard.tier.maybe' : 'applicantCard.tier.notFit') })}
                         </span>
                       </div>
                       <div className="my-1 border-t border-line" />
@@ -281,7 +283,7 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
                         onClick={() => handleSelectReason()}
                         className="flex w-full items-center px-3 py-2 text-left text-sm text-ink-4 transition-colors hover:bg-surface-subtle"
                       >
-                        Skip — just set status
+                        {t('applicantCard.skipReason')}
                       </button>
                     </>
                   ) : (
@@ -299,7 +301,7 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
                             }`}
                           >
                             <Icon className="h-4 w-4 flex-shrink-0" />
-                            {opt.label}
+                            {t(`applicantCard.tier.${opt.labelKey}`)}
                           </button>
                         )
                       })}
@@ -312,7 +314,7 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink-4 transition-colors hover:bg-surface-subtle"
                           >
                             <Minus className="h-4 w-4 flex-shrink-0" />
-                            Clear
+                            {t('applicantCard.clear')}
                           </button>
                         </>
                       )}
@@ -329,7 +331,7 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
             onClick={handleViewProfile}
             className="inline-flex items-center justify-center rounded-lg border border-hockia-primary/20 px-4 py-2 text-sm font-medium text-hockia-primary transition-colors hover:bg-hockia-primary/5 sm:px-5 sm:py-2"
           >
-            View Profile
+            {t('applicantCard.viewProfile')}
           </button>
         </div>
       </div>

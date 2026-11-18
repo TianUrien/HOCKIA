@@ -13,6 +13,8 @@ import { Header } from '@/components'
 import WorldSearchDropdown from '@/components/WorldSearchDropdown'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { useWorldT } from '@/i18n/ns/world'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface CountryWithStats {
   country_id: number
@@ -43,6 +45,7 @@ function dailyShuffle<T>(arr: T[]): T[] {
 
 export default function WorldPage() {
   const navigate = useNavigate()
+  const t = useWorldT()
   const [countries, setCountries] = useState<CountryWithStats[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -83,12 +86,15 @@ export default function WorldPage() {
   }, [])
 
   useEffect(() => {
-    document.title = 'World | Hockia'
+    document.title = t('worldPage.documentTitle')
+  }, [t])
+
+  useEffect(() => {
     fetchCountries()
   }, [fetchCountries])
 
   const filteredCountries = countries.filter(country =>
-    country.country_name.toLowerCase().includes(searchQuery.toLowerCase())
+    [country.country_name, countryLabel(country.country_name)].some((n) => n.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   // Get the correct flag URL based on country code (e.g. "GB-ENG" → "gb-eng")
@@ -108,8 +114,8 @@ export default function WorldPage() {
       <main className="mx-auto max-w-3xl px-4 pt-under-header-lg pb-12 md:px-6">
         {/* Page Header */}
         <div className="mb-5">
-          <h1 className="text-title text-ink-1">Explore clubs &amp; leagues</h1>
-          <p className="mt-2 text-[17px] leading-[22px] text-ink-2">Every club and league we know, by country.</p>
+          <h1 className="text-title text-ink-1">{t('worldPage.title')}</h1>
+          <p className="mt-2 text-[17px] leading-[22px] text-ink-2">{t('worldPage.subtitle')}</p>
         </div>
 
         {/* Search */}
@@ -141,22 +147,22 @@ export default function WorldPage() {
         ) : error ? (
           <div className="text-center py-12">
             <Globe className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-700 font-medium mb-1">Unable to load countries</p>
-            <p className="text-sm text-gray-500 mb-4">Check your connection and try again</p>
+            <p className="text-gray-700 font-medium mb-1">{t('worldPage.loadFailed')}</p>
+            <p className="text-sm text-gray-500 mb-4">{t('worldPage.loadFailedHint')}</p>
             <button
               type="button"
               onClick={() => fetchCountries()}
               className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
-              Retry
+              {t('worldPage.retry')}
             </button>
           </div>
         ) : filteredCountries.length === 0 ? (
           <div className="text-center py-12">
             <Globe className="w-12 h-12 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-500">
-              {searchQuery ? 'No countries found matching your search' : 'No countries available yet'}
+              {searchQuery ? t('worldPage.noMatch') : t('worldPage.noCountries')}
             </p>
           </div>
         ) : (
@@ -187,9 +193,9 @@ export default function WorldPage() {
                     />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{country.country_name}</span>
+                    <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{countryLabel(country.country_name)}</span>
                     <span className="block truncate text-secondary text-ink-2">
-                      {country.total_clubs} {country.total_clubs === 1 ? 'club' : 'clubs'} · {country.league_count} {country.league_count === 1 ? 'league' : 'leagues'}
+                      {t('worldPage.countsLine', { clubs: t('worldPage.clubCount', { count: country.total_clubs }), leagues: t('worldPage.leagueCount', { count: country.league_count }) })}
                     </span>
                   </span>
                   <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={1.75} aria-hidden="true" />

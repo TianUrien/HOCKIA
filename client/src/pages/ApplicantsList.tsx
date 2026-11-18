@@ -10,15 +10,18 @@ import ApplicantCard from '@/components/ApplicantCard'
 import type { ApplicantReferenceInfo } from '@/components/ApplicantCard'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { isWithdrawnApplicationError, WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
+import { isWithdrawnApplicationError, withdrawnApplicationMessage } from '@/lib/applicationStatus'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { clubRoadTag } from '@/lib/signing'
+import { humanizeToken } from '@/lib/identity'
+import { tRecruiting, useRecruitingT } from '@/i18n/ns/recruiting'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
 interface TierGroup {
   key: string
-  label: string
+  /** Read at render time (the interface language is not known at import). */
+  label: () => string
   icon: typeof Star
   iconClass: string
   statuses: ApplicationStatus[]
@@ -27,38 +30,39 @@ interface TierGroup {
 }
 
 const TIER_GROUPS: TierGroup[] = [
-  { key: 'unsorted', label: 'Unsorted', icon: Inbox, iconClass: 'text-ink-4', statuses: ['pending'] },
+  { key: 'unsorted', label: () => tRecruiting('applicantsList.tiers.unsorted'), icon: Inbox, iconClass: 'text-ink-4', statuses: ['pending'] },
   // offer_declined is only ever a history row (respond_to_offer puts the
   // application straight back to shortlisted); listed so no status is orphaned.
-  { key: 'shortlisted', label: 'Top pick', icon: Star, iconClass: 'text-positive', statuses: ['shortlisted', 'offer_declined'] },
-  { key: 'maybe', label: 'Maybe', icon: HelpCircle, iconClass: 'text-ink-2', statuses: ['maybe'] },
+  { key: 'shortlisted', label: () => tRecruiting('applicantsList.tiers.topPick'), icon: Star, iconClass: 'text-positive', statuses: ['shortlisted', 'offer_declined'] },
+  { key: 'maybe', label: () => tRecruiting('applicantsList.tiers.maybe'), icon: HelpCircle, iconClass: 'text-ink-2', statuses: ['maybe'] },
   // Past Top pick on the offer / signing road (Club v2 actions, phone only).
   // Desktop stays v1 (founder ruling): shown for the record with the phone
   // road's grey tag (clubRoadTag), no status menu; tapping opens the profile.
   {
     key: 'offer-signing',
-    label: 'Offer & signing',
+    label: () => tRecruiting('applicantsList.tiers.offerSigning'),
     icon: Handshake,
     iconClass: 'text-ink-3',
     statuses: ['offered', 'accepted', 'signed_pending_confirmation', 'signed'],
     readOnly: true,
   },
-  { key: 'not-a-fit', label: 'Not a fit', icon: XCircle, iconClass: 'text-status-danger', statuses: ['rejected'] },
+  { key: 'not-a-fit', label: () => tRecruiting('applicantsList.tiers.notAFit'), icon: XCircle, iconClass: 'text-status-danger', statuses: ['rejected'] },
   // The expiry sweep flips un-triaged applications to 'no_response'. Those
   // rows are fetched and were counted in the header, but no tier rendered
   // them — so once the sweep arms, a club would read "5 applicants" above 2
   // cards. They get their own tier: still the club's applicants, just past
   // the response window.
-  { key: 'expired', label: 'Expired (no response)', icon: Clock, iconClass: 'text-ink-4', statuses: ['no_response'] },
+  { key: 'expired', label: () => tRecruiting('applicantsList.tiers.expired'), icon: Clock, iconClass: 'text-ink-4', statuses: ['no_response'] },
   // The role was filled (by someone else or this applicant): kept visible so
   // the header count matches the cards, but closed — no status changes.
-  { key: 'filled', label: 'Opportunity filled', icon: CheckCircle2, iconClass: 'text-ink-4', statuses: ['filled'], readOnly: true },
+  { key: 'filled', label: () => tRecruiting('applicantsList.tiers.filled'), icon: CheckCircle2, iconClass: 'text-ink-4', statuses: ['filled'], readOnly: true },
   // D4 re-check (2026-10-02): the publisher can read applications the player
   // withdrew. Shown for the record, never re-decided.
-  { key: 'withdrawn', label: 'Withdrawn', icon: Undo2, iconClass: 'text-ink-4', statuses: ['withdrawn'], readOnly: true },
+  { key: 'withdrawn', label: () => tRecruiting('applicantsList.tiers.withdrawn'), icon: Undo2, iconClass: 'text-ink-4', statuses: ['withdrawn'], readOnly: true },
 ]
 
 export default function ApplicantsList() {
+  const t = useRecruitingT()
   const { opportunityId } = useParams<{ opportunityId: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
@@ -67,7 +71,7 @@ export default function ApplicantsList() {
   // QA-flagged: the applicants route was leaving the default index.html
   // title in the browser tab, making back-button context + pinned tabs
   // useless. Reflect the opportunity title once it loads.
-  useDocumentTitle(opportunity?.title ? `Applicants · ${opportunity.title}` : 'Applicants')
+  useDocumentTitle(opportunity?.title ? t('applicantsList.documentTitleNamed', { title: opportunity.title }) : t('applicantsList.documentTitle'))
   const [applications, setApplications] = useState<OpportunityApplicationWithApplicant[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -106,7 +110,7 @@ export default function ApplicantsList() {
 
         if (opportunityError) {
           if (opportunityError.code === 'PGRST116') {
-            setError('Opportunity not found or you do not have permission to view it.')
+            setError(t('applicantsList.errors.notFoundOrForbidden'))
           } else {
             throw opportunityError
           }
@@ -217,7 +221,7 @@ export default function ApplicantsList() {
                     count: 1,
                     topEndorsement: ref.endorsement_text ? {
                       text: ref.endorsement_text,
-                      endorserName: endorser?.full_name ?? 'Hockia Member',
+                      endorserName: endorser?.full_name ?? t('applicantsList.endorserFallback'),
                       endorserRole: endorser?.role ?? null,
                       relationshipType: ref.relationship_type,
                     } : null,
@@ -227,7 +231,7 @@ export default function ApplicantsList() {
                   if (!existing.topEndorsement && ref.endorsement_text) {
                     existing.topEndorsement = {
                       text: ref.endorsement_text,
-                      endorserName: endorser?.full_name ?? 'Hockia Member',
+                      endorserName: endorser?.full_name ?? t('applicantsList.endorserFallback'),
                       endorserRole: endorser?.role ?? null,
                       relationshipType: ref.relationship_type,
                     }
@@ -244,14 +248,14 @@ export default function ApplicantsList() {
         setReferenceMap(refMap)
         setApplications(transformedApplications)
       } catch {
-        setError('Failed to load applicants. Please try again.')
+        setError(t('applicantsList.errors.loadFailed'))
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchData()
-  }, [opportunityId, user])
+  }, [opportunityId, user, t])
 
   const handleStatusChange = useCallback(async (applicationId: string, newStatus: ApplicationStatus, reason?: string) => {
     setUpdatingId(applicationId)
@@ -294,10 +298,10 @@ export default function ApplicantsList() {
         })
       )
       if (await isWithdrawnApplicationError(err)) {
-        addToast(WITHDRAWN_APPLICATION_MESSAGE, 'info')
+        addToast(withdrawnApplicationMessage(), 'info')
       } else {
         logger.error('Error updating application status:', err)
-        addToast('Failed to update status. Please try again.', 'error')
+        addToast(t('applicantsList.errors.updateFailed'), 'error')
       }
 
       // Refetch to ensure consistency
@@ -321,7 +325,7 @@ export default function ApplicantsList() {
     } finally {
       setUpdatingId(null)
     }
-  }, [addToast, opportunityId, applications])
+  }, [addToast, opportunityId, applications, t])
 
   // Derive unique positions from applicants for filter dropdown
   const availablePositions = useMemo(() => {
@@ -366,7 +370,7 @@ export default function ApplicantsList() {
       <div className="min-h-screen bg-surface-subtle flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-line border-t-hockia-primary mb-4"></div>
-          <p className="text-ink-2">Loading applicants...</p>
+          <p className="text-ink-2">{t('applicantsList.loading')}</p>
         </div>
       </div>
     )
@@ -377,15 +381,15 @@ export default function ApplicantsList() {
       <div className="min-h-screen bg-surface-subtle flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
           <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-ink-1 mb-2">Error</h2>
-          <p className="text-ink-2 mb-6">{error || 'Opportunity not found.'}</p>
+          <h2 className="text-2xl font-bold text-ink-1 mb-2">{t('applicantsList.errorTitle')}</h2>
+          <p className="text-ink-2 mb-6">{error || t('applicantsList.errors.notFound')}</p>
           <button
             type="button"
             onClick={() => navigate('/dashboard/profile')}
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
+            {t('applicantsList.backToDashboard')}
           </button>
         </div>
       </div>
@@ -403,19 +407,19 @@ export default function ApplicantsList() {
             className="inline-flex w-fit items-center gap-2 text-sm font-medium text-ink-2 transition-colors hover:text-ink-1"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Opportunities
+            {t('applicantsList.backToOpportunities')}
           </button>
 
           <div>
             <h1 className="text-2xl font-bold text-ink-1 sm:text-3xl">
-              Applicants for {opportunity.title}
+              {t('applicantsList.title', { title: opportunity.title })}
             </h1>
             <p className="mt-2 flex items-center gap-2 text-sm text-ink-2">
               <Users className="h-4 w-4" />
-              {applications.length} applicant{applications.length !== 1 ? 's' : ''}
+              {t('applicantsList.count', { count: applications.length })}
               {filteredApplications.length !== applications.length && (
                 <span className="text-ink-4">
-                  ({filteredApplications.length} shown)
+                  {t('applicantsList.shown', { count: filteredApplications.length })}
                 </span>
               )}
             </p>
@@ -430,13 +434,13 @@ export default function ApplicantsList() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name, location, nationality..."
+                  placeholder={t('applicantsList.searchPlaceholder')}
                   className="w-full rounded-lg border border-line bg-white py-2 pl-9 pr-8 text-sm text-ink-1 placeholder:text-ink-4 focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary"
                 />
                 {searchQuery && (
                   <button
                     type="button"
-                    aria-label="Clear search"
+                    aria-label={t('applicantsList.clearSearch')}
                     onClick={() => setSearchQuery('')}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink-2"
                   >
@@ -446,15 +450,15 @@ export default function ApplicantsList() {
               </div>
               {availablePositions.length > 1 && (
                 <select
-                  aria-label="Filter by position"
+                  aria-label={t('applicantsList.positionFilterLabel')}
                   value={positionFilter}
                   onChange={(e) => setPositionFilter(e.target.value)}
                   className="rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink-2 focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary"
                 >
-                  <option value="">All positions</option>
+                  <option value="">{t('applicantsList.allPositions')}</option>
                   {availablePositions.map((pos) => (
                     <option key={pos} value={pos}>
-                      {pos.charAt(0).toUpperCase() + pos.slice(1).replace(/_/g, ' ')}
+                      {humanizeToken(pos) ?? pos}
                     </option>
                   ))}
                 </select>
@@ -468,29 +472,29 @@ export default function ApplicantsList() {
       <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
         {referencesUnavailable && applications.length > 0 && (
           <div className="mb-4 rounded-lg border border-status-warning/30 bg-status-warning-soft px-4 py-3 text-sm text-status-warning">
-            Reference data could not be loaded. Applicant references may not be shown.
+            {t('applicantsList.referencesUnavailable')}
           </div>
         )}
         {applications.length === 0 ? (
           <div className="rounded-2xl border border-line bg-white p-10 text-center">
             <div className="mb-4 text-5xl">📭</div>
-            <h3 className="mb-2 text-lg font-semibold text-ink-1 sm:text-xl">No Applicants Yet</h3>
+            <h3 className="mb-2 text-lg font-semibold text-ink-1 sm:text-xl">{t('applicantsList.empty.title')}</h3>
             <p className="text-sm text-ink-2 sm:text-base">
-              Applications will appear here once candidates start applying to this opportunity.
+              {t('applicantsList.empty.body')}
             </p>
           </div>
         ) : filteredApplications.length === 0 ? (
           <div className="rounded-2xl border border-line bg-white p-10 text-center">
-            <h3 className="mb-2 text-lg font-semibold text-ink-1">No matches</h3>
+            <h3 className="mb-2 text-lg font-semibold text-ink-1">{t('applicantsList.noMatches.title')}</h3>
             <p className="text-sm text-ink-2">
-              No applicants match your current search or filter.
+              {t('applicantsList.noMatches.body')}
             </p>
             <button
               type="button"
               onClick={() => { setSearchQuery(''); setPositionFilter('') }}
               className="mt-3 text-sm font-medium text-hockia-primary hover:underline"
             >
-              Clear filters
+              {t('applicantsList.noMatches.clear')}
             </button>
           </div>
         ) : (
@@ -502,7 +506,7 @@ export default function ApplicantsList() {
                   <div className="mb-3 flex items-center gap-2">
                     <Icon className={`h-4 w-4 ${group.iconClass}`} />
                     <h2 className="text-sm font-semibold text-ink-2">
-                      {group.label}
+                      {group.label()}
                     </h2>
                     <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-ink-2">
                       {group.applications.length}

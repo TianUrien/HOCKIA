@@ -17,11 +17,15 @@ import PublishConfirmationModal from './PublishConfirmationModal'
 import DeleteOpportunityModal from './DeleteOpportunityModal'
 import Skeleton, { OpportunityCardSkeleton } from './Skeleton'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
-import { isRoleHasSigningError, REOPEN_ROLE_TOAST, reopenRolePatch, ROLE_HAS_SIGNING_MESSAGE } from '@/lib/roleLifecycle'
+import { isRoleHasSigningError, reopenRoleToast, reopenRolePatch, roleHasSigningMessage } from '@/lib/roleLifecycle'
 import { CloseRoleSheet } from '@/components/club/CloseRoleSheet'
 import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
 import { fetchRolesWithSigning } from '@/lib/roleWaiting'
 import { dayFirst } from '@/lib/dayFirst'
+import { positionLabel } from '@/lib/identity'
+import { tOpportunities, useOpportunitiesT } from '@/i18n/ns/opportunities'
+import { isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 type VacancyWithCount = Vacancy & { applicant_count: number | null }
 
@@ -50,6 +54,7 @@ interface VacancyActionMenuProps {
 }
 
 function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDuplicate, onPublish, onClose, onReopen, onDelete }: VacancyActionMenuProps) {
+  const t = useOpportunitiesT()
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -87,7 +92,7 @@ function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDu
   if (vacancy.status === 'draft') {
     menuItems.push({
       key: 'publish',
-      label: 'Publish opportunity',
+      label: t('manage.menu.publish'),
       icon: <Rocket className="w-4 h-4 text-green-600" />,
       onClick: () => {
         closeMenu()
@@ -100,7 +105,7 @@ function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDu
   if (vacancy.status === 'open') {
     menuItems.push({
       key: 'close',
-      label: 'Close opportunity',
+      label: t('manage.menu.close'),
       icon: <Archive className="w-4 h-4 text-ink-2" />,
       onClick: () => {
         closeMenu()
@@ -118,7 +123,7 @@ function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDu
   if (vacancy.status === 'closed') {
     menuItems.push({
       key: 'reopen',
-      label: 'Reopen opportunity',
+      label: t('manage.menu.reopen'),
       icon: <RotateCcw className="w-4 h-4 text-green-600" />,
       onClick: () => {
         closeMenu()
@@ -131,7 +136,7 @@ function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDu
   menuItems.push(
     {
       key: 'edit',
-      label: 'Edit details',
+      label: t('manage.menu.edit'),
       icon: <Edit2 className="w-4 h-4" />,
       onClick: () => {
         closeMenu()
@@ -140,7 +145,7 @@ function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDu
     },
     {
       key: 'duplicate',
-      label: 'Duplicate',
+      label: t('manage.menu.duplicate'),
       icon: <Copy className="w-4 h-4" />,
       onClick: () => {
         closeMenu()
@@ -154,16 +159,16 @@ function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDu
     // the server refuses the delete too. The role stays closed instead.
     menuItems.push({
       key: 'delete',
-      label: vacancy.status === 'draft' ? 'Delete draft' : 'Delete permanently',
+      label: vacancy.status === 'draft' ? t('manage.menu.deleteDraft') : t('manage.menu.deletePermanently'),
       icon: <Trash2 className="w-4 h-4 text-gray-400" />,
       onClick: () => {},
       disabled: true,
-      hint: ROLE_HAS_SIGNING_MESSAGE
+      hint: roleHasSigningMessage()
     })
   } else if (vacancy.status === 'closed' || vacancy.status === 'draft') {
     menuItems.push({
       key: 'delete',
-      label: vacancy.status === 'draft' ? 'Delete draft' : 'Delete permanently',
+      label: vacancy.status === 'draft' ? t('manage.menu.deleteDraft') : t('manage.menu.deletePermanently'),
       icon: <Trash2 className="w-4 h-4 text-red-600" />,
       onClick: () => {
         closeMenu()
@@ -177,7 +182,7 @@ function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDu
     <div className="relative" ref={menuRef}>
       <button
         type="button"
-        aria-label="Open opportunity menu"
+        aria-label={t('manage.menu.openAria')}
         onClick={() => setOpen((prev) => !prev)}
         disabled={disabled}
         className="rounded-full border border-gray-200 p-2 text-gray-500 transition hover:text-gray-900 disabled:opacity-50"
@@ -227,6 +232,7 @@ function VacancyActionMenu({ vacancy, disabled, hasSigning = false, onEdit, onDu
 }
 
 export default function VacanciesTab({ profileId, readOnly = false, triggerCreate, onCreateTriggered, initialOpportunityType }: VacanciesTabProps) {
+  const t = useOpportunitiesT()
   const { user, profile } = useAuthStore()
   const targetUserId = profileId || user?.id
   const navigate = useNavigate()
@@ -327,7 +333,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       logger.error('Error fetching vacancies:', error)
       reportSupabaseError('fetch_club_opportunities_with_counts', error)
       if (!readOnly) {
-        addToast('Failed to load opportunities. Please refresh the page.', 'error')
+        addToast(tOpportunities('manage.toasts.loadFailed'), 'error')
       }
     } finally {
       setIsLoading(false)
@@ -430,7 +436,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       }
 
       if (clubData) {
-        setClubName(clubData.full_name || 'Unknown Club')
+        setClubName(clubData.full_name || tOpportunities('manage.unknownClub'))
         setClubLogo(clubData.avatar_url)
       }
     } catch (error) {
@@ -441,7 +447,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         feature: 'vacancies',
         operation: 'load_club_profile'
       })
-      setClubName('Unknown Club')
+      setClubName(tOpportunities('manage.unknownClub'))
     }
   }
 
@@ -450,7 +456,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     // its name and logo are already in memory — use them at once instead of
     // painting the grey placeholder until a profile fetch lands (round 5).
     if (profile && vacancy.club_id === profile.id) {
-      setClubName(profile.full_name || 'Unknown Club')
+      setClubName(profile.full_name || tOpportunities('manage.unknownClub'))
       setClubLogo(profile.avatar_url ?? null)
       setDetailVacancy(vacancy)
       setShowDetailModal(true)
@@ -488,7 +494,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       const newVacancy = {
         ...duplicateData,
         club_id: user.id,
-        title: `${vacancy.title} (Copy)`,
+        title: tOpportunities('manage.copyTitle', { title: vacancy.title }),
         status: 'draft' as const,
       }
 
@@ -505,7 +511,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       if (error) throw error
       
       await fetchVacancies()
-      addToast('Opportunity duplicated as draft.', 'success')
+      addToast(tOpportunities('manage.toasts.duplicated'), 'success')
     } catch (error) {
       logger.error('Error duplicating vacancy:', error)
       reportSupabaseError('vacancies.duplicate', error, {
@@ -514,7 +520,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         feature: 'vacancies',
         operation: 'duplicate_vacancy'
       })
-      addToast('Failed to duplicate opportunity. Please try again.', 'error')
+      addToast(tOpportunities('manage.toasts.duplicateFailed'), 'error')
     } finally {
       setActionLoading(null)
     }
@@ -560,7 +566,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       void useRecruitingContextStore.getState().roleStatusChanged(vacancy.id, 'open')
       await fetchVacancies()
       setStatusFilter('open')
-      addToast(REOPEN_ROLE_TOAST, 'success')
+      addToast(reopenRoleToast(), 'success')
     } catch (error) {
       logger.error('Error reopening vacancy:', error)
       reportSupabaseError('vacancies.reopen', error, {
@@ -569,7 +575,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         feature: 'vacancies',
         operation: 'reopen_vacancy'
       })
-      addToast('Failed to reopen opportunity. Please try again.', 'error')
+      addToast(tOpportunities('manage.toasts.reopenFailed'), 'error')
     } finally {
       setActionLoading(null)
     }
@@ -603,7 +609,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       // Close modal and show success toast
       setShowPublishModal(false)
       setVacancyToPublish(null)
-      addToast('Opportunity published successfully!', 'success')
+      addToast(tOpportunities('manage.toasts.published'), 'success')
     } catch (error) {
       logger.error('Error publishing vacancy:', error)
       reportSupabaseError('vacancies.publish', error, {
@@ -612,7 +618,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         feature: 'vacancies',
         operation: 'publish_vacancy'
       })
-      addToast('Failed to publish opportunity. Please try again.', 'error')
+      addToast(tOpportunities('manage.toasts.publishFailed'), 'error')
     } finally {
       setActionLoading(null)
     }
@@ -648,7 +654,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       // Close modal
       setShowDeleteModal(false)
       setVacancyToDelete(null)
-      addToast('Opportunity deleted.', 'success')
+      addToast(tOpportunities('manage.toasts.deleted'), 'success')
     } catch (error) {
       if (isRoleHasSigningError(error)) {
         // Refused by the server: the role has a signing. Keep it, say why.
@@ -656,7 +662,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         setRolesWithSigning((prev) => new Set(prev).add(refusedId))
         setShowDeleteModal(false)
         setVacancyToDelete(null)
-        addToast(ROLE_HAS_SIGNING_MESSAGE, 'info')
+        addToast(roleHasSigningMessage(), 'info')
         return
       }
       logger.error('Error deleting vacancy:', error)
@@ -666,7 +672,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         feature: 'vacancies',
         operation: 'delete_vacancy'
       })
-      addToast('Failed to delete opportunity. Please try again.', 'error')
+      addToast(tOpportunities('manage.toasts.deleteFailed'), 'error')
     } finally {
       setActionLoading(null)
     }
@@ -676,9 +682,9 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     if (!status) return null
 
     const config: Record<string, { style: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
-      draft: { style: 'bg-surface-grouped text-ink-2 border border-line', icon: AlertCircle, label: 'Draft' },
-      open: { style: 'bg-hockia-primary/5 text-hockia-primary border border-hockia-primary/15', icon: CheckCircle, label: 'Published' },
-      closed: { style: 'bg-gray-100 text-gray-600 border border-gray-200', icon: XCircle, label: 'Closed' },
+      draft: { style: 'bg-surface-grouped text-ink-2 border border-line', icon: AlertCircle, label: t('manage.status.draft') },
+      open: { style: 'bg-hockia-primary/5 text-hockia-primary border border-hockia-primary/15', icon: CheckCircle, label: t('manage.status.published') },
+      closed: { style: 'bg-gray-100 text-gray-600 border border-gray-200', icon: XCircle, label: t('manage.status.closed') },
     }
 
     const { style, icon: Icon, label } = config[status] || config.draft
@@ -692,7 +698,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   }
 
   // "10 Oct 2026" — day first (lib/dayFirst).
-  const formatDate = (dateString: string | null) => dayFirst(dateString, { year: 'always' }) ?? 'TBD'
+  const formatDate = (dateString: string | null) => dayFirst(dateString, { year: 'always' }) ?? t('manage.dateTbd')
 
   if (isLoading) {
     return (
@@ -721,12 +727,12 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="text-xl font-bold text-gray-900">
-              {readOnly ? 'Open Opportunities' : 'Manage Opportunities'}
+              {readOnly ? t('manage.titleReadOnly') : t('manage.title')}
             </h2>
             <p className="text-sm text-gray-500">
               {readOnly
-                ? `${vacancies.length} live ${vacancies.length === 1 ? 'opportunity' : 'opportunities'}`
-                : `${vacancies.length} total opportunit${vacancies.length === 1 ? 'y' : 'ies'}`}
+                ? t('manage.liveCount', { count: vacancies.length })
+                : t('manage.totalCount', { count: vacancies.length })}
             </p>
           </div>
           {!readOnly && (
@@ -736,7 +742,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
             >
               <Plus className="w-4 h-4" />
-              Add
+              {t('manage.add')}
             </button>
           )}
         </div>
@@ -745,10 +751,10 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         {!readOnly && vacancies.length > 0 && (
           <div className="flex gap-1 border-t border-gray-100 pt-3">
             {([
-              { key: 'all' as StatusFilter, label: 'All' },
-              { key: 'draft' as StatusFilter, label: 'Drafts' },
-              { key: 'open' as StatusFilter, label: 'Published' },
-              { key: 'closed' as StatusFilter, label: 'Closed' },
+              { key: 'all' as StatusFilter, label: t('manage.filter.all') },
+              { key: 'draft' as StatusFilter, label: t('manage.filter.drafts') },
+              { key: 'open' as StatusFilter, label: t('manage.filter.published') },
+              { key: 'closed' as StatusFilter, label: t('manage.filter.closed') },
             ]).map(({ key, label }) => {
               const count = key === 'all' ? vacancies.length : vacancies.filter(v => v.status === key).length
               if (key !== 'all' && count === 0) return null
@@ -782,18 +788,18 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
               <Briefcase className="w-8 h-8 text-hockia-primary" />
             </div>
           </div>
-          <h3 className="mb-2 text-lg font-semibold text-gray-900">No Opportunities Yet</h3>
+          <h3 className="mb-2 text-lg font-semibold text-gray-900">{t('manage.emptyTitle')}</h3>
           <p className="mb-6 text-gray-600">
             {profile?.role === 'coach'
-              ? 'Create your first opportunity to start attracting talent to your team'
-              : 'Create your first opportunity to start attracting talent to your club'}
+              ? t('manage.emptyBodyCoach')
+              : t('manage.emptyBodyClub')}
           </p>
           <Button
             onClick={handleCreateNew}
             className="mx-auto flex items-center gap-2 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
-            Create First Opportunity
+            {t('manage.createFirst')}
           </Button>
         </div>
       )}
@@ -805,9 +811,9 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
               <span className="text-2xl">👀</span>
             </div>
           </div>
-          <h3 className="mb-2 text-lg font-semibold text-gray-900">No Open Opportunities</h3>
+          <h3 className="mb-2 text-lg font-semibold text-gray-900">{t('manage.emptyReadOnlyTitle')}</h3>
           <p className="text-sm text-gray-600">
-            This profile hasn’t posted any openings yet. Check back soon or follow them to stay updated.
+            {t('manage.emptyReadOnlyBody')}
           </p>
         </div>
       )}
@@ -816,16 +822,17 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       {vacancies.length > 0 && (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {vacancies.filter(v => statusFilter === 'all' || v.status === statusFilter).map((vacancy) => {
-            const locationLabel = [vacancy.location_city, vacancy.location_country].filter(Boolean).join(', ')
+            const locationLabel = [vacancy.location_city, countryLabel(vacancy.location_country)].filter(Boolean).join(', ')
 
             // Compound badge: "Player · Men's · Forward" / "Coach · Girls · Head Coach".
             // The team shows on coach roles too.
             const badgeParts: string[] = []
-            badgeParts.push(vacancy.opportunity_type === 'player' ? 'Player' : 'Coach')
+            badgeParts.push(vacancy.opportunity_type === 'player' ? t('manage.playerBadge') : t('manage.coachBadge'))
             const teamLabel = roleTeamLabel(vacancy.gender)
             if (teamLabel) badgeParts.push(teamLabel)
             if (vacancy.position) {
-              badgeParts.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
+              const titleCased = vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+              badgeParts.push(isEnglish() ? titleCased : positionLabel(vacancy.position) ?? titleCased)
             }
             const roleBadgeStyle = vacancy.opportunity_type === 'player'
               ? 'bg-[#EFF6FF] text-[#2563EB]'
@@ -867,12 +874,12 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                 <div className="mt-3 flex items-center flex-wrap gap-x-3 gap-y-1 text-[13px] text-gray-500">
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>{locationLabel || 'Location TBD'}</span>
+                    <span>{locationLabel || t('manage.locationTbd')}</span>
                   </div>
                   <span className="text-gray-500">·</span>
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
-                    <span>{vacancy.start_date ? formatDate(vacancy.start_date) : 'Start TBD'}</span>
+                    <span>{vacancy.start_date ? formatDate(vacancy.start_date) : t('manage.startTbd')}</span>
                   </div>
                 </div>
 
@@ -884,14 +891,14 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                     className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
                   >
                     <Users className="w-3.5 h-3.5" />
-                    {applicantCounts[vacancy.id] || 0} applicant{applicantCounts[vacancy.id] === 1 ? '' : 's'}
+                    {t('manage.applicants', { count: applicantCounts[vacancy.id] || 0 })}
                   </button>
                 )}
 
                 {/* Draft hint */}
                 {!readOnly && vacancy.status === 'draft' && (
                   <p className="mt-3 rounded-lg bg-surface-grouped px-3 py-2 text-xs font-medium text-ink-2">
-                    Draft — publish when you're ready to go live.
+                    {t('manage.draftHint')}
                   </p>
                 )}
 
@@ -904,7 +911,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                         onClick={() => handleApply(vacancy)}
                         className="flex-1 rounded-2xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30"
                       >
-                        Sign in to apply
+                        {t('manage.signInToApply')}
                       </button>
                     ) : userApplications.has(vacancy.id) ? (
                       <button
@@ -912,7 +919,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                         disabled
                         className="flex-1 rounded-2xl border border-[#e3d6ff] bg-gradient-to-r from-[#ede8ff] via-[#f6edff] to-[#fbf2ff] px-4 py-3 text-sm font-semibold text-[#7c3aed] shadow-[0_12px_30px_rgba(124,58,237,0.18)]"
                       >
-                        ✓ Applied
+                        {t('manage.applied')}
                       </button>
                     ) : canUserApply(vacancy) ? (
                       <button
@@ -920,20 +927,20 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                         onClick={() => handleApply(vacancy)}
                         className="flex-1 rounded-2xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30"
                       >
-                        Apply now
+                        {t('manage.applyNow')}
                       </button>
                     ) : (
                       <div className="flex-1 rounded-2xl border border-dashed border-gray-200 px-4 py-3 text-center text-xs font-medium text-gray-500">
                         {vacancy.opportunity_type === 'player'
-                          ? 'Players only'
-                          : 'Coaches only'}
+                          ? t('manage.playersOnly')
+                          : t('manage.coachesOnly')}
                       </div>
                     )}
                     <button
                       type="button"
                       onClick={() => handleViewDetails(vacancy)}
                       className="rounded-2xl border border-gray-200 p-3 text-gray-500 transition hover:bg-gray-50"
-                      aria-label="View opportunity details"
+                      aria-label={t('manage.viewDetailsAria')}
                     >
                       <Eye className="w-5 h-5" />
                     </button>
@@ -944,10 +951,10 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                 {!readOnly && actionLoading?.id === vacancy.id && (
                   <div className="mt-4 flex items-center gap-2 text-xs font-medium text-gray-500">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {actionLoading.action === 'publish' && 'Publishing opportunity...'}
-                    {actionLoading.action === 'close' && 'Closing opportunity...'}
-                    {actionLoading.action === 'delete' && 'Deleting opportunity...'}
-                    {actionLoading.action === 'duplicate' && 'Duplicating opportunity...'}
+                    {actionLoading.action === 'publish' && t('manage.loading.publish')}
+                    {actionLoading.action === 'close' && t('manage.loading.close')}
+                    {actionLoading.action === 'delete' && t('manage.loading.delete')}
+                    {actionLoading.action === 'duplicate' && t('manage.loading.duplicate')}
                   </div>
                 )}
               </div>

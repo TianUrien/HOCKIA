@@ -14,6 +14,7 @@ import { useRolesHealth } from '@/hooks/useRolesHealth'
 import { useClubProfileScrollData } from '@/hooks/useClubProfileScrollData'
 import { friendsHereLabel } from '@/lib/communityCard'
 import { positionLabel } from '@/lib/identity'
+import { useEnumsT } from '@/i18n/ns/enums'
 import { publicProfileShareUrl } from '@/lib/profileShare'
 import { nextStepPart, NEXT_STEP_COPY, type CompletenessPart } from '@/lib/profileV2'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
@@ -28,9 +29,12 @@ import { ClubHero } from './ClubHero'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
 import { OwnerButtons, PrimaryCard, RecruitingCard } from './OwnerArea'
+import { Trans } from 'react-i18next'
+import { useWorldT } from '@/i18n/ns/world'
 import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { CommentsPreview, FacesRow, PostsPhotosGrid, RoleRow, Section, type GridTile } from './ProfileSections'
+import { placeText } from '@/i18n/countryNames'
 
 /**
  * Profile v2 — club, phone (Figma PR6 public 106:255 / PR7 own 107:302).
@@ -56,12 +60,13 @@ export interface ClubProfileV2Props {
   onOpenMedia: () => void
 }
 
+/** `label` is a key in the world catalog; translated where the anchors render. */
 const ANCHORS = [
-  { id: 'roles', label: 'Open opportunities' },
-  { id: 'squad', label: 'Squad' },
-  { id: 'posts', label: 'Posts' },
-  { id: 'about', label: 'About' },
-]
+  { id: 'roles', label: 'club.profile.anchors.roles' },
+  { id: 'squad', label: 'club.profile.anchors.squad' },
+  { id: 'posts', label: 'club.profile.anchors.posts' },
+  { id: 'about', label: 'club.profile.anchors.about' },
+] as const
 
 function websiteHref(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`
@@ -89,6 +94,8 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
   const { profile, readOnly, isOwnProfile } = props
   const navigate = useNavigate()
   const location = useLocation()
+  const t = useWorldT()
+  const tEnums = useEnumsT()
   const addToast = useToastStore((s) => s.addToast)
   const signedIn = useAuthStore((s) => Boolean(s.user))
   // Brands have followers, not friends (audit A7).
@@ -110,14 +117,14 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
   const [bioOpen, setBioOpen] = useState(false)
 
   // ── Identity ────────────────────────────────────────────────────────────
-  const name = profile.full_name?.trim() || 'Club'
+  const name = profile.full_name?.trim() || t('club.profile.nameFallback')
   const men = profile.mens_league_division?.trim() || null
   const women = profile.womens_league_division?.trim() || null
-  const leagueLine = [women ? `Women’s ${women}` : null, men ? `Men’s ${men}` : null].filter(Boolean).join(' · ') || null
+  const leagueLine = [women ? t('club.profile.womensLeague', { league: women }) : null, men ? t('club.profile.mensLeague', { league: men }) : null].filter(Boolean).join(' · ') || null
   const flag = countries.find((c) => c.id === profile.nationality_country_id)?.flag_emoji ?? null
-  const base = profile.base_location?.trim() || null
+  const base = placeText(profile.base_location?.trim()) || null
   const founded = profile.year_founded ?? null
-  const placeLine = [base ? [flag, base].filter(Boolean).join(' ') : null, founded ? `Founded ${founded}` : null].filter(Boolean).join(' · ') || null
+  const placeLine = [base ? [flag, base].filter(Boolean).join(' ') : null, founded ? t('club.profile.founded', { year: founded }) : null].filter(Boolean).join(' · ') || null
   const openRoles = data.openRoles
   const recruiting = openRoles.length > 0
   const coverPhotos = useMemo(() => data.photos.map((p) => p.url).filter(Boolean).slice(0, 4), [data.photos])
@@ -134,7 +141,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
     try {
       if (navigator.share) { await navigator.share({ title: name, url }); return }
       await navigator.clipboard.writeText(url)
-      addToast('Link copied', 'success')
+      addToast(t('club.profile.linkCopied'), 'success')
     } catch (err) {
       if (!(err instanceof Error && err.name === 'AbortError')) logger.warn('[ClubProfileV2] share failed', err)
     }
@@ -178,11 +185,11 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
     else if (!friendship.isFriend && !friendship.isOutgoingRequest) void friendship.sendRequest()
   }
   const friendButton: ActionBarButton = friendship.isFriend
-    ? { key: 'friend', label: 'Friends', icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'done', disabled: true }
+    ? { key: 'friend', label: t('club.profile.friends'), icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'done', disabled: true }
     : friendship.isOutgoingRequest
-      ? { key: 'friend', label: 'Requested', icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'secondary', disabled: true }
-      : { key: 'friend', label: friendship.isIncomingRequest ? 'Accept' : 'Add friend', icon: <UserPlus className="h-5 w-5" strokeWidth={2} />, tone: canMessage ? 'secondary' : 'primary', onClick: addFriend, disabled: friendship.mutating, testId: 'profile-add-friend' }
-  const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? 'Opening…' : 'Message', icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'primary', onClick: signedIn ? props.onMessage : () => setSignIn(true), disabled: props.sendingMessage, testId: 'club-message-button' }
+      ? { key: 'friend', label: t('club.profile.requested'), icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'secondary', disabled: true }
+      : { key: 'friend', label: friendship.isIncomingRequest ? t('club.profile.accept') : t('club.profile.addFriend'), icon: <UserPlus className="h-5 w-5" strokeWidth={2} />, tone: canMessage ? 'secondary' : 'primary', onClick: addFriend, disabled: friendship.mutating, testId: 'profile-add-friend' }
+  const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? t('club.profile.opening') : t('club.profile.message'), icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'primary', onClick: signedIn ? props.onMessage : () => setSignIn(true), disabled: props.sendingMessage, testId: 'club-message-button' }
   const buttons: ActionBarButton[] = !visitor ? [] : viewerIsBrand ? (canMessage ? [messageButton] : []) : canMessage ? [messageButton, friendButton] : [friendButton]
 
   const moreMenu = (triggerClassName: string) => (visitor ? (
@@ -194,9 +201,9 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
       : a.id === 'squad' ? owner || data.memberCount > 0
         : a.id === 'posts' ? owner || tiles.length > 0
           : true
-  ))
+  )).map((a) => ({ id: a.id, label: t(a.label) }))
   const friendsHere = atClub.people.length
-  const socialText = [friendsHereLabel(friendsHere), data.memberCount > 0 ? `${data.memberCount} ${data.memberCount === 1 ? 'member' : 'members'}` : null].filter(Boolean).join(' · ')
+  const socialText = [friendsHereLabel(friendsHere), data.memberCount > 0 ? t('club.profile.memberCount', { count: data.memberCount }) : null].filter(Boolean).join(' · ')
   const pending = health.totals.pending
   // One primary per screen: applicants to review own it, else the next step does.
   const toReview = recruiting && pending > 0
@@ -231,7 +238,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
         <div className="flex flex-col gap-3">
           <OwnerButtons
             onEdit={props.onEdit}
-            previews={[{ key: 'public', label: 'Someone on Hockia', detail: 'What players and coaches see', onSelect: props.onViewPublic }]}
+            previews={[{ key: 'public', label: t('club.profile.previewLabel'), detail: t('club.profile.previewDetail'), onSelect: props.onViewPublic }]}
           />
           {stepCopy && step && (
             <PrimaryCard role="club" stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} secondary={toReview} />
@@ -249,9 +256,9 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
             <button type="button" onClick={() => setViewers(true)} className="flex w-full items-center gap-3 rounded-[16px] border border-line px-3.5 py-3 text-left" data-testid="club-views-row">
               <span className="text-[22px] font-bold leading-[27px] tracking-[-0.13px] text-ink-1 tabular-nums">{views}</span>
               <span className="flex min-w-0 flex-1 items-center gap-1 text-secondary text-ink-2">
-                {views === 1 ? 'profile view' : 'profile views'} this week · <Lock className="h-3 w-3 shrink-0" strokeWidth={2} /> only you
+                <Trans t={t} i18nKey="club.profile.viewsLine" count={views} components={{ lock: <Lock className="h-3 w-3 shrink-0" strokeWidth={2} /> }} />
               </span>
-              <span className="shrink-0 text-secondary font-semibold text-hockia-primary">See who</span>
+              <span className="shrink-0 text-secondary font-semibold text-hockia-primary">{t('club.profile.seeWho')}</span>
             </button>
           </div>
         </div>
@@ -273,8 +280,8 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
       {(owner || recruiting) && (
         <Section
           id="roles"
-          title={recruiting ? `Open opportunities · ${openRoles.length}` : 'Open opportunities'}
-          action={owner ? '+ Post an opportunity' : openRoles.length > 2 ? 'See all' : null}
+          title={recruiting ? t('club.profile.openRolesWithCount', { count: openRoles.length }) : t('club.profile.openRoles')}
+          action={owner ? t('club.profile.postRole') : openRoles.length > 2 ? t('club.profile.seeAllRoles') : null}
           onAction={owner ? props.onPostRole : () => navigate('/opportunities')}
         >
           <div className="flex flex-col gap-2.5 px-4">
@@ -282,28 +289,28 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
               <RoleRow key={r.id} role={r} onOpen={() => openRole(r.id)} />
             ))}
             {owner && openRoles.length > 3 && (
-              <button type="button" onClick={props.onOpenRoles} className="flex min-h-[44px] items-center text-secondary font-semibold text-hockia-primary">See all {openRoles.length} opportunities</button>
+              <button type="button" onClick={props.onOpenRoles} className="flex min-h-[44px] items-center text-secondary font-semibold text-hockia-primary">{t('club.profile.seeAllRolesCount', { count: openRoles.length })}</button>
             )}
-            {owner && !recruiting && !data.loading && <p className="text-body text-ink-3">No open opportunities right now.</p>}
+            {owner && !recruiting && !data.loading && <p className="text-body text-ink-3">{t('club.profile.noOpenRoles')}</p>}
           </div>
         </Section>
       )}
 
       {/* Squad */}
       {(owner || data.memberCount > 0) && (
-        <Section id="squad" title={data.memberCount > 0 ? `Squad · ${data.memberCount}` : 'Squad'} action={owner ? 'Manage' : data.memberCount > data.members.length ? 'See all' : null} onAction={props.onOpenSquad}>
+        <Section id="squad" title={data.memberCount > 0 ? t('club.profile.squadWithCount', { count: data.memberCount }) : t('club.profile.squad')} action={owner ? t('club.profile.manage') : data.memberCount > data.members.length ? t('club.profile.seeAllSquad') : null} onAction={props.onOpenSquad}>
           {data.members.length > 0 ? (
             <div className="flex gap-3.5 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {data.members.map((m) => (
                 <button key={m.id} type="button" onClick={() => navigate(m.role === 'coach' ? `/coaches/id/${m.id}` : `/players/id/${m.id}`)} className="flex w-16 shrink-0 flex-col items-center gap-1" data-testid="club-squad-face">
                   <FaceCircle url={m.avatarUrl} name={m.fullName} role={m.role} size="avatar-md" initialsClassName="text-[18px]" className="h-16 w-16" />
                   <span className="w-full truncate text-center text-secondary font-semibold text-ink-1">{m.fullName.split(/\s+/)[0]}</span>
-                  <span className="w-full truncate text-center text-caption text-ink-3">{m.role === 'coach' ? 'Coach' : positionLabel(m.position) || 'Player'}</span>
+                  <span className="w-full truncate text-center text-caption text-ink-3">{m.role === 'coach' ? tEnums('role.coach') : positionLabel(m.position) || tEnums('role.player')}</span>
                 </button>
               ))}
             </div>
           ) : !data.loading && (
-            <p className="px-4 text-body text-ink-3">No one on the squad yet.</p>
+            <p className="px-4 text-body text-ink-3">{t('club.profile.noSquad')}</p>
           )}
         </Section>
       )}
@@ -312,38 +319,38 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
       {(owner || tiles.length > 0) && (
         <Section
           id="posts"
-          title="Posts & photos"
-          action={owner ? '+ Add' : data.postCount > tiles.length ? `See all ${data.postCount}` : null}
+          title={t('club.profile.postsTitle')}
+          action={owner ? t('club.profile.addPost') : data.postCount > tiles.length ? t('club.profile.seeAllPosts', { count: data.postCount }) : null}
           onAction={owner ? () => setComposer(true) : props.onOpenPosts}
         >
-          {tiles.length > 0 ? <PostsPhotosGrid tiles={tiles} /> : !data.loading && <p className="px-4 text-body text-ink-3">No posts yet.</p>}
+          {tiles.length > 0 ? <PostsPhotosGrid tiles={tiles} /> : !data.loading && <p className="px-4 text-body text-ink-3">{t('club.profile.noPosts')}</p>}
         </Section>
       )}
 
       <CommentsPreview profileId={profile.id} profileRole="club" owner={owner} />
 
       {/* About */}
-      <Section id="about" title="About" action={owner ? 'Edit' : null} onAction={props.onEdit}>
+      <Section id="about" title={t('club.profile.aboutTitle')} action={owner ? t('club.profile.edit') : null} onAction={props.onEdit}>
         <div className="flex flex-col items-start gap-1.5 px-4">
           {bio ? (
             <>
               <p className={cn('whitespace-pre-line text-body text-ink-1', !bioOpen && 'line-clamp-3')}>{bio}</p>
-              {!bioOpen && bio.length > 140 && <button type="button" onClick={() => setBioOpen(true)} className="min-h-[32px] text-secondary font-semibold text-hockia-primary">More</button>}
+              {!bioOpen && bio.length > 140 && <button type="button" onClick={() => setBioOpen(true)} className="min-h-[32px] text-secondary font-semibold text-hockia-primary">{t('club.profile.more')}</button>}
             </>
           ) : owner ? (
-            <p className="text-body text-ink-3">No description yet</p>
+            <p className="text-body text-ink-3">{t('club.profile.noDescription')}</p>
           ) : null}
           <div className="w-full pt-2">
-            {(founded || owner) && <DetailRow label="Founded" value={founded ? String(founded) : 'Add'} tone={founded ? undefined : 'link'} onClick={!founded && owner ? props.onEdit : undefined} />}
-            {women && <DetailRow label="Women" value={women} />}
-            {men && <DetailRow label="Men" value={men} />}
-            {(website || owner) && <DetailRow label="Website" value={website ? hostOf(website) : 'Add website'} tone="link" href={website ? websiteHref(website) : undefined} onClick={!website && owner ? props.onEdit : undefined} />}
+            {(founded || owner) && <DetailRow label={t('club.profile.foundedLabel')} value={founded ? String(founded) : t('club.profile.add')} tone={founded ? undefined : 'link'} onClick={!founded && owner ? props.onEdit : undefined} />}
+            {women && <DetailRow label={t('club.profile.womenLabel')} value={women} />}
+            {men && <DetailRow label={t('club.profile.menLabel')} value={men} />}
+            {(website || owner) && <DetailRow label={t('club.profile.websiteLabel')} value={website ? hostOf(website) : t('club.profile.addWebsite')} tone="link" href={website ? websiteHref(website) : undefined} onClick={!website && owner ? props.onEdit : undefined} />}
             {owner ? (
-              <DetailRow label="Contact" value={publicEmail ?? 'Add contact email'} tone="link" onClick={props.onEdit} />
+              <DetailRow label={t('club.profile.contactLabel')} value={publicEmail ?? t('club.profile.addContactEmail')} tone="link" onClick={props.onEdit} />
             ) : visitor && canMessage ? (
-              <DetailRow label="Contact" value="Message the club" tone="link" onClick={signedIn ? props.onMessage : () => setSignIn(true)} />
+              <DetailRow label={t('club.profile.contactLabel')} value={t('club.profile.messageClub')} tone="link" onClick={signedIn ? props.onMessage : () => setSignIn(true)} />
             ) : publicEmail ? (
-              <DetailRow label="Contact" value={publicEmail} tone="link" href={`mailto:${publicEmail}`} />
+              <DetailRow label={t('club.profile.contactLabel')} value={publicEmail} tone="link" href={`mailto:${publicEmail}`} />
             ) : null}
           </div>
         </div>
@@ -351,9 +358,9 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
 
       </ProfileLayout>
 
-      <SignInPromptModal isOpen={signIn} onClose={() => setSignIn(false)} title="Sign in to connect with this club" action="connect" />
+      <SignInPromptModal isOpen={signIn} onClose={() => setSignIn(false)} title={t('club.profile.signInTitle')} action="connect" />
       {owner && (
-        <BottomSheet open={viewers} onClose={() => setViewers(false)} ariaLabel="Profile views">
+        <BottomSheet open={viewers} onClose={() => setViewers(false)} ariaLabel={t('club.profile.viewsSheet')}>
           <div className="px-1 pb-4"><ProfileViewersSection /></div>
         </BottomSheet>
       )}

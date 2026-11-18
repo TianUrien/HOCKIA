@@ -6,6 +6,7 @@ import { useToastStore } from '@/lib/toast'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { hasTalked, signingErrorMessage, type OfferDraft, type OfferRow } from '@/lib/signing'
+import { tInbox } from '@/i18n/ns/inbox'
 
 /**
  * Data for D4 · From yes to signed. opportunity_offers and the signing
@@ -237,31 +238,31 @@ export function useSigningActions() {
     // An explicit list (possibly empty) so a package the club cleared stays cleared.
     p_package: d.package,
     p_note: d.note.trim() || null,
-  }, 'Couldn’t send the offer. Please try again.', ['offer_sent', 'application', applicationId]), [call])
+  }, tInbox('signing.actionErrors.sendOffer'), ['offer_sent', 'application', applicationId]), [call])
 
   const withdrawOffer = useCallback((offerId: string, applicationId: string) =>
-    call('withdraw_offer', { p_offer_id: offerId }, 'Couldn’t withdraw the offer. Please try again.', ['offer_withdrawn', 'application', applicationId]), [call])
+    call('withdraw_offer', { p_offer_id: offerId }, tInbox('signing.actionErrors.withdrawOffer'), ['offer_withdrawn', 'application', applicationId]), [call])
 
   const respondOffer = useCallback((offerId: string, accept: boolean, reason: string | null) =>
-    call('respond_offer', { p_offer_id: offerId, p_accept: accept, p_reason: reason?.trim() || null }, 'Couldn’t send your answer. Please try again.',
+    call('respond_offer', { p_offer_id: offerId, p_accept: accept, p_reason: reason?.trim() || null }, tInbox('signing.actionErrors.respondOffer'),
       [accept ? 'offer_accepted' : 'offer_declined', 'offer', offerId]), [call])
 
   const markSigned = useCallback((applicationId: string, closeRole: boolean) =>
-    call('mark_signed', { p_application_id: applicationId, p_close_role: closeRole }, 'Couldn’t mark the signing. Please try again.',
+    call('mark_signed', { p_application_id: applicationId, p_close_role: closeRole }, tInbox('signing.actionErrors.markSigned'),
       ['signing_marked', 'application', applicationId, { close_role: closeRole }]), [call])
 
   const undoMarkSigned = useCallback((applicationId: string) =>
-    call('undo_mark_signed', { p_application_id: applicationId }, 'Couldn’t undo the signing. Please try again.', ['signing_undone', 'application', applicationId]), [call])
+    call('undo_mark_signed', { p_application_id: applicationId }, tInbox('signing.actionErrors.undoSigning'), ['signing_undone', 'application', applicationId]), [call])
 
   const confirmSigning = useCallback((applicationId: string, hideFromClubs: boolean) =>
-    call('confirm_signing', { p_application_id: applicationId, p_hide_from_clubs: hideFromClubs }, 'Couldn’t confirm the signing. Please try again.',
+    call('confirm_signing', { p_application_id: applicationId, p_hide_from_clubs: hideFromClubs }, tInbox('signing.actionErrors.confirmSigning'),
       ['signing_confirmed', 'application', applicationId, { hide_from_clubs: hideFromClubs }]), [call])
 
   const setTrial = useCallback((applicationId: string, trial: boolean) =>
-    call('set_trial', { p_application_id: applicationId, p_trial: trial }, 'Couldn’t save the trial. Please try again.'), [call])
+    call('set_trial', { p_application_id: applicationId, p_trial: trial }, tInbox('signing.actionErrors.setTrial')), [call])
 
   const withdrawApplication = useCallback((applicationId: string) =>
-    call('withdraw_application', { p_application_id: applicationId }, 'Couldn’t withdraw the application. Please try again.', ['application_withdrawn', 'application', applicationId]), [call])
+    call('withdraw_application', { p_application_id: applicationId }, tInbox('signing.actionErrors.withdrawApplication'), ['application_withdrawn', 'application', applicationId]), [call])
 
   return { busy, makeOffer, withdrawOffer, respondOffer, markSigned, undoMarkSigned, confirmSigning, setTrial, withdrawApplication }
 }

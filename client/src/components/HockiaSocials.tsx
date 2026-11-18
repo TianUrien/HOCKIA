@@ -1,4 +1,5 @@
 import { Instagram, Linkedin, Facebook } from 'lucide-react'
+import { tCommon } from '@/i18n/ns/common'
 
 /**
  * Official HOCKIA social channels — single source of truth. Used by the
@@ -52,7 +53,7 @@ export default function HockiaSocials({
   return (
     <div
       className={`flex items-center ${gap} ${className}`}
-      aria-label="Follow Hockia on social media"
+      aria-label={tCommon('socials.follow')}
     >
       {HOCKIA_SOCIALS.map(({ label, href, Icon }) => (
         <a
@@ -60,7 +61,7 @@ export default function HockiaSocials({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Hockia on ${label} (opens in a new tab)`}
+          aria-label={tCommon('socials.link', { network: label })}
           title={label}
           className={`${linkTone} transition-colors hover:scale-110`}
         >

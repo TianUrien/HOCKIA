@@ -5,6 +5,7 @@ import { positionLabel } from '@/lib/identity'
 import { contextPillLabel, type ContextLike } from '@/lib/findPlayers'
 import { cn } from '@/lib/utils'
 import type { ContextKind } from '@/lib/newContext'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 // Own chunk: the Post a role form pieces load only when "New context" is tapped.
 const NewContextSheet = lazy(() => import('./NewContextSheet'))
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export function RankedForSheet({ open, contexts, activeId, roles, onPick, onClose, kind = 'player' }: Props) {
+  const t = useRecruitingT()
   const [creating, setCreating] = useState(false)
   // Closed from outside while the form was up: the next open starts on the list.
   if (!open && creating) setCreating(false)
@@ -55,28 +57,28 @@ export function RankedForSheet({ open, contexts, activeId, roles, onPick, onClos
   }
   const roleDetail = (c: ContextLike) => {
     const n = c.opportunity_id ? roles.get(c.opportunity_id)?.toReview ?? 0 : 0
-    return n > 0 ? `${n} to review` : 'No applicants yet'
+    return n > 0 ? t('rankedForSheet.toReview', { count: n }) : t('rankedForSheet.noApplicants')
   }
   return (
     <>
-    <BottomSheet open={open && !creating} onClose={onClose} ariaLabel="Ranked for">
+    <BottomSheet open={open && !creating} onClose={onClose} ariaLabel={t('rankedForSheet.title')}>
       <div className="relative px-5 pb-2 pt-1">
-        <h2 className="pr-10 text-[22px] font-bold leading-7 text-ink-1">Ranked for</h2>
-        <p className="text-[14px] leading-[19px] text-ink-2">Narrows and ranks people for one context. Only you see this.</p>
-        <button type="button" onClick={onClose} aria-label="Close" className="absolute right-3 top-0 flex h-10 w-10 items-center justify-center text-ink-3">
+        <h2 className="pr-10 text-[22px] font-bold leading-7 text-ink-1">{t('rankedForSheet.title')}</h2>
+        <p className="text-[14px] leading-[19px] text-ink-2">{t('rankedForSheet.intro')}</p>
+        <button type="button" onClick={onClose} aria-label={t('rankedForSheet.close')} className="absolute right-3 top-0 flex h-10 w-10 items-center justify-center text-ink-3">
           <X className="h-5 w-5" strokeWidth={2} />
         </button>
       </div>
-      <div role="radiogroup" aria-label="Ranked for" className="flex flex-col gap-2 px-5 pb-4">
-        {roleContexts.length > 0 && <p className="pt-2 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Your open opportunities</p>}
+      <div role="radiogroup" aria-label={t('rankedForSheet.title')} className="flex flex-col gap-2 px-5 pb-4">
+        {roleContexts.length > 0 && <p className="pt-2 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">{t('rankedForSheet.openRoles')}</p>}
         {roleContexts.map((c) => option(c.id, roleTitle(c), roleDetail(c), c.id === activeId, () => onPick(c)))}
-        {saved.length > 0 && <p className="pt-3 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Saved contexts</p>}
-        {saved.map((c) => option(c.id, contextPillLabel(c), ['Saved search', c.region?.trim()].filter(Boolean).join(' · '), c.id === activeId, () => onPick(c)))}
-        {option('none', 'No context', 'Newest first, no fit', activeId === null, () => onPick(null))}
+        {saved.length > 0 && <p className="pt-3 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">{t('rankedForSheet.savedContexts')}</p>}
+        {saved.map((c) => option(c.id, contextPillLabel(c), c.region?.trim() ? t('rankedForSheet.savedSearchRegion', { region: c.region.trim() }) : t('rankedForSheet.savedSearch'), c.id === activeId, () => onPick(c)))}
+        {option('none', t('rankedForSheet.noContext'), t('rankedForSheet.noContextDetail'), activeId === null, () => onPick(null))}
         {/* Tonal, never Primary: tapping a row applies it at once (Figma U2). */}
         <button type="button" onClick={() => setCreating(true)} className="mt-2 flex h-[50px] w-full items-center justify-center gap-1.5 rounded-full bg-brand-soft text-body font-semibold text-brand-primary" data-testid="new-context-button">
           <Plus className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
-          New context
+          {t('rankedForSheet.newContext')}
         </button>
       </div>
     </BottomSheet>

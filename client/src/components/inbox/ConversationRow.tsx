@@ -7,6 +7,7 @@ import type { RoleLike } from '@/lib/identity'
 import { SPRING, animateSpring, springValue, stopSpring, type SpringValue } from '@/lib/spring'
 import { hapticSelection } from '@/lib/haptics'
 import { useLongPress } from '@/hooks/useLongPress'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 /**
  * List item / Conversation (Figma 494:2377), the one conversation row for the
@@ -52,6 +53,7 @@ const AXIS_LOCK = 8
 let closeOpenRow: (() => void) | null = null
 
 export function ConversationRow({ name, avatarUrl, role, at, contextLine, preview, unread, waiting = false, selected = false, onSelect, testId = 'conversation-row', conversationId, onToggleUnread, onDelete, onLongPress }: ConversationRowProps) {
+  const t = useInboxT()
   const swipeable = Boolean(onToggleUnread && onDelete)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const faceRef = useRef<HTMLButtonElement>(null)
@@ -109,9 +111,9 @@ export function ConversationRow({ name, avatarUrl, role, at, contextLine, previe
     let crossed = false
 
     const onStart = (e: TouchEvent) => {
-      const t = e.touches[0]
-      startX = lastX = t.clientX
-      startY = t.clientY
+      const touch = e.touches[0]
+      startX = lastX = touch.clientX
+      startY = touch.clientY
       lastT = performance.now()
       base = offset.current
       axis = null
@@ -119,9 +121,9 @@ export function ConversationRow({ name, avatarUrl, role, at, contextLine, previe
       crossed = isOpen.current
     }
     const onMove = (e: TouchEvent) => {
-      const t = e.touches[0]
-      const dx = t.clientX - startX
-      const dy = t.clientY - startY
+      const touch = e.touches[0]
+      const dx = touch.clientX - startX
+      const dy = touch.clientY - startY
       if (!axis) {
         if (Math.abs(dx) < AXIS_LOCK && Math.abs(dy) < AXIS_LOCK) return
         axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
@@ -130,8 +132,8 @@ export function ConversationRow({ name, avatarUrl, role, at, contextLine, previe
       if (axis !== 'x') return
       e.preventDefault()
       const now = performance.now()
-      velocity = (t.clientX - lastX) / Math.max(1, now - lastT) * 1000
-      lastX = t.clientX
+      velocity = (touch.clientX - lastX) / Math.max(1, now - lastT) * 1000
+      lastX = touch.clientX
       lastT = now
       let next = base + dx
       // Rubber band past the actions and to the right of closed.
@@ -197,9 +199,9 @@ export function ConversationRow({ name, avatarUrl, role, at, contextLine, previe
         <span className="mt-0.5 flex items-center gap-2">
           <span className={cn('min-w-0 flex-1 truncate text-[14px] leading-[19px]', unread ? 'font-medium text-ink-1' : 'text-ink-2')}>{preview}</span>
           {waiting ? (
-            <span aria-label="Waiting for your first reply" className="h-2 w-2 shrink-0 rounded-full bg-status-warning" data-testid="inbox-waiting-dot" />
+            <span aria-label={t('row.waiting')} className="h-2 w-2 shrink-0 rounded-full bg-status-warning" data-testid="inbox-waiting-dot" />
           ) : unread ? (
-            <span aria-label="Unread" className="h-2 w-2 shrink-0 rounded-full bg-hockia-primary" data-testid="inbox-unread-dot" />
+            <span aria-label={t('row.unread')} className="h-2 w-2 shrink-0 rounded-full bg-hockia-primary" data-testid="inbox-unread-dot" />
           ) : null}
         </span>
       </span>
@@ -221,7 +223,7 @@ export function ConversationRow({ name, avatarUrl, role, at, contextLine, previe
           data-testid="conversation-swipe-unread"
         >
           {unread ? <MailOpen className="h-5 w-5" /> : <Mail className="h-5 w-5" />}
-          {unread ? 'Read' : 'Unread'}
+          {unread ? t('row.swipeRead') : t('row.swipeUnread')}
         </button>
         <button
           type="button"
@@ -231,7 +233,7 @@ export function ConversationRow({ name, avatarUrl, role, at, contextLine, previe
           data-testid="conversation-swipe-delete"
         >
           <Trash2 className="h-5 w-5" />
-          Delete
+          {t('row.swipeDelete')}
         </button>
       </div>
       {face}

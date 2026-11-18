@@ -1,3 +1,5 @@
+import { tClub } from '@/i18n/ns/club'
+
 /**
  * Who can act on a role page (design audit 2026-10-21, A7). The role page
  * was player-first: a coach on a player role hit a dead end with no reason,
@@ -17,10 +19,11 @@ export interface RoleViewerGate {
   messageOnly: boolean
 }
 
-export const COACH_ON_PLAYER_ROLE_NOTE = 'This opportunity is for players. Coaching opportunities are in Opportunities.'
-export const PLAYER_ON_COACH_ROLE_NOTE = 'This opportunity is for coaches. Player opportunities are in Opportunities.'
-export const UMPIRE_BROWSE_NOTE = 'You can browse opportunities here. Umpiring opportunities and assessments will live here when we open them.'
-export const BRAND_BROWSE_NOTE = 'You can browse opportunities here. Applying is for players and coaches.'
+// Functions, not constants: the text follows the interface language.
+export const coachOnPlayerRoleNote = (): string => tClub('roleViewerGate.coachOnPlayerRole')
+export const playerOnCoachRoleNote = (): string => tClub('roleViewerGate.playerOnCoachRole')
+export const umpireBrowseNote = (): string => tClub('roleViewerGate.umpireBrowse')
+export const brandBrowseNote = (): string => tClub('roleViewerGate.brandBrowse')
 
 export function roleViewerGate(o: {
   viewerRole: string | null | undefined
@@ -36,15 +39,15 @@ export function roleViewerGate(o: {
     case 'player':
       return type === 'player'
         ? { kind: 'applicant', note: null, applyCopy: true, messageOnly: false }
-        : { kind: 'wrong_type', note: PLAYER_ON_COACH_ROLE_NOTE, applyCopy: false, messageOnly: true }
+        : { kind: 'wrong_type', note: playerOnCoachRoleNote(), applyCopy: false, messageOnly: true }
     case 'coach':
       return type === 'coach'
         ? { kind: 'applicant', note: null, applyCopy: true, messageOnly: false }
-        : { kind: 'wrong_type', note: COACH_ON_PLAYER_ROLE_NOTE, applyCopy: false, messageOnly: true }
+        : { kind: 'wrong_type', note: coachOnPlayerRoleNote(), applyCopy: false, messageOnly: true }
     case 'umpire':
-      return { kind: 'browse_only', note: UMPIRE_BROWSE_NOTE, applyCopy: false, messageOnly: true }
+      return { kind: 'browse_only', note: umpireBrowseNote(), applyCopy: false, messageOnly: true }
     case 'brand':
-      return { kind: 'browse_only', note: BRAND_BROWSE_NOTE, applyCopy: false, messageOnly: true }
+      return { kind: 'browse_only', note: brandBrowseNote(), applyCopy: false, messageOnly: true }
     default:
       // Clubs and anything else: no apply copy, no note (unchanged).
       return { kind: 'other', note: null, applyCopy: false, messageOnly: false }

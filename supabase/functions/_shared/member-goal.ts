@@ -28,11 +28,36 @@ const GOAL_LABELS: Record<string, string> = {
   build_record: 'Build my record',
 }
 
+/** Spanish labels (Stage 3): client/src/locales/es/home.json goalOptions. Same keys as GOAL_LABELS. */
+const GOAL_LABELS_ES: Record<string, string> = {
+  play_abroad: 'Jugar en el exterior',
+  move_up: 'Subir de categoría',
+  club_near_me: 'Encontrar un club donde vivo',
+  get_sponsor: 'Conseguir un sponsor',
+  keep_playing: 'Seguir jugando bien',
+  coach_abroad: 'Entrenar en el exterior',
+  coach_higher: 'Entrenar en un nivel más alto',
+  recruit_players: 'Sumar jugadores/as a mi equipo',
+  grow_coach: 'Crecer como entrenador/a',
+  fill_role: 'Cubrir un lugar esta temporada',
+  sign_abroad: 'Incorporar deportistas del exterior',
+  find_coach: 'Encontrar entrenador/a',
+  find_sponsors: 'Encontrar sponsors',
+  grow_club: 'Hacer crecer nuestro club',
+  find_ambassadors: 'Encontrar embajadores/as',
+  reach_new_countries: 'Llegar a deportistas de otros países',
+  reach_clubs: 'Llegar a clubes',
+  umpire_higher: 'Arbitrar en un nivel más alto',
+  umpire_abroad: 'Arbitrar en el exterior',
+  build_record: 'Sumar antecedentes',
+}
+
 /** "Play abroad · Get a sponsor · <own words>"; null when nothing is set.
  *  The member's own words are flattened to one line, quotes softened and
  *  capped, like the bio, so they read as data in the prompt. */
-export function goalSummary(options: string[] | null | undefined, otherText: string | null | undefined): string | null {
-  const parts = (options ?? []).map((k) => GOAL_LABELS[k]).filter((l): l is string => !!l)
+export function goalSummary(options: string[] | null | undefined, otherText: string | null | undefined, lang: 'en' | 'es' = 'en'): string | null {
+  const labels = lang === 'es' ? GOAL_LABELS_ES : GOAL_LABELS
+  const parts = (options ?? []).map((k) => labels[k]).filter((l): l is string => !!l)
   const own = (otherText ?? '').replace(/\s+/g, ' ').replace(/"/g, "'").trim().slice(0, 120)
   if (own) parts.push(own)
   return parts.length > 0 ? parts.join(' · ') : null

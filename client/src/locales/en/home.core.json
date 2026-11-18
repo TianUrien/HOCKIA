@@ -1,0 +1,14 @@
+{
+  "profileStep": {
+    "heading": "Your profile",
+    "completeEyebrow": "Profile complete",
+    "completeTitle": "Your profile is fully built",
+    "completeBody": "Keep it up to date as your season changes.",
+    "nextEyebrow": "Next step",
+    "cta": "Get started"
+  },
+  "freshness": {
+    "dismiss": "Dismiss this nudge",
+    "eyebrow": "Keep it fresh"
+  }
+}

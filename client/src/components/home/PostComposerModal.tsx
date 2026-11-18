@@ -24,6 +24,8 @@ import { NewSigningArt } from './v1/NewSigningArt'
 import { signingDetail } from '@/lib/homeEngagement'
 import { seasonLabel } from '@/lib/signing'
 import type { HomeFeedItem, UserPostFeedItem, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
+import { countryLabel, placeText } from '@/i18n/countryNames'
 
 interface PostComposerModalProps {
   isOpen: boolean
@@ -67,6 +69,7 @@ export function PostComposerModal({
   onPostCreated,
   editingPost,
 }: PostComposerModalProps) {
+  const t = useHomeT()
   const { user, profile } = useAuthStore()
   const { createPost, createTransferPost, createSigningPost, updatePost } = useUserPosts()
   const isEdit = Boolean(editingPost)
@@ -458,11 +461,11 @@ export function PostComposerModal({
       reportSupabaseError('composer.image_upload', err, {
         userId: user?.id,
       }, { feature: 'post_composer', upload_kind: 'post_image' })
-      setError(err instanceof Error ? err.message : 'Failed to upload image')
+      setError(err instanceof Error ? err.message : t('composer.errors.imageUpload'))
     } finally {
       setIsUploading(false)
     }
-  }, [user])
+  }, [user, t])
 
   const handleMediaAddVideo = useCallback((file: File) => {
     if (!user) return
@@ -569,11 +572,11 @@ export function PostComposerModal({
       reportSupabaseError('composer.logo_upload', err, {
         userId: user?.id,
       }, { feature: 'post_composer', upload_kind: 'club_logo' })
-      setError(err instanceof Error ? err.message : 'Failed to upload club logo')
+      setError(err instanceof Error ? err.message : t('composer.errors.logoUpload'))
     } finally {
       setIsUploadingLogo(false)
     }
-  }, [user])
+  }, [user, t])
 
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return
@@ -585,7 +588,7 @@ export function PostComposerModal({
       // from a prior modal session, or a manual setMode call), block roles
       // that have no coherent transfer/signing semantics.
       if (role !== 'player' && role !== 'coach' && role !== 'club') {
-        setError('Transfer mode is only available to players, coaches, and clubs.')
+        setError(t('composer.errors.transferRole'))
         return
       }
       const isClubRole = role === 'club'
@@ -593,14 +596,14 @@ export function PostComposerModal({
       // Club signing flow
       if (isClubRole) {
         if (!selectedPerson) {
-          setError('Please select a player or coach')
+          setError(t('composer.errors.personRequired'))
           return
         }
 
         // Content filter on optional caption
         if (content.trim()) {
           const filterResult = checkContent(content.trim())
-          if (!filterResult.allowed) { setError(filterResult.reason || 'Content violates community guidelines.'); return }
+          if (!filterResult.allowed) { setError(filterResult.reason || t('composer.errors.blockedFallback')); return }
         }
 
         setIsSubmitting(true)
@@ -616,7 +619,7 @@ export function PostComposerModal({
           )
 
           if (!result.success) {
-            throw new Error(result.error || 'Failed to create signing post')
+            throw new Error(result.error || t('composer.errors.signingFailed'))
           }
 
           // Build optimistic feed item
@@ -669,7 +672,7 @@ export function PostComposerModal({
             hasSelectedPerson: Boolean(selectedPerson),
             hasMedia: media.length > 0,
           }, { feature: 'post_composer', submit_mode: 'signing' })
-          setError(err instanceof Error ? err.message : 'Failed to create signing post')
+          setError(err instanceof Error ? err.message : t('composer.errors.signingFailed'))
         } finally {
           setIsSubmitting(false)
         }
@@ -679,14 +682,14 @@ export function PostComposerModal({
       // Player/Coach transfer flow (existing)
       const clubName = selectedClub ? selectedClub.name : customClubName.trim()
       if (!clubName) {
-        setError('Please select or enter a club name')
+        setError(t('composer.errors.clubRequired'))
         return
       }
 
       // Content filter on optional caption
       if (content.trim()) {
         const filterResult = checkContent(content.trim())
-        if (!filterResult.allowed) { setError(filterResult.reason || 'Content violates community guidelines.'); return }
+        if (!filterResult.allowed) { setError(filterResult.reason || t('composer.errors.blockedFallback')); return }
       }
 
       setIsSubmitting(true)
@@ -704,7 +707,7 @@ export function PostComposerModal({
         )
 
         if (!result.success) {
-          throw new Error(result.error || 'Failed to create transfer post')
+          throw new Error(result.error || t('composer.errors.transferFailed'))
         }
 
         // Build optimistic feed item
@@ -754,7 +757,7 @@ export function PostComposerModal({
           hasCustomClub: Boolean(customClubName),
           hasMedia: media.length > 0,
         }, { feature: 'post_composer', submit_mode: 'transfer' })
-        setError(err instanceof Error ? err.message : 'Failed to create transfer post')
+        setError(err instanceof Error ? err.message : t('composer.errors.transferFailed'))
       } finally {
         setIsSubmitting(false)
       }
@@ -766,12 +769,12 @@ export function PostComposerModal({
 
     // A post is valid with text OR media — a media-only post is allowed.
     if (!trimmed && media.length === 0) {
-      setError('Add text, a photo, or a video to publish.')
+      setError(t('composer.errors.empty'))
       return
     }
 
     if (trimmed.length > MAX_CONTENT_LENGTH) {
-      setError(`Content exceeds ${MAX_CONTENT_LENGTH} character limit`)
+      setError(t('composer.errors.tooLong', { max: MAX_CONTENT_LENGTH }))
       return
     }
 
@@ -780,7 +783,7 @@ export function PostComposerModal({
     if (trimmed) {
       const filterResult = checkContent(trimmed)
       if (!filterResult.allowed) {
-        setError(filterResult.reason || 'Content violates community guidelines.')
+        setError(filterResult.reason || t('composer.errors.blockedFallback'))
         return
       }
     }
@@ -794,12 +797,12 @@ export function PostComposerModal({
       if (isEdit && editingPost) {
         const result = await updatePost(editingPost.id, trimmed, postMedia)
         if (!result.success) {
-          throw new Error(result.error || 'Failed to update post')
+          throw new Error(result.error || t('composer.errors.updateFailed'))
         }
       } else {
         const result = await createPost(trimmed, postMedia, kind === 'question' ? 'question' : 'text')
         if (!result.success) {
-          throw new Error(result.error || 'Failed to create post')
+          throw new Error(result.error || t('composer.errors.createFailed'))
         }
 
         if (result.post_id && profile) {
@@ -838,11 +841,11 @@ export function PostComposerModal({
         authorRole: profile?.role,
         hasMedia: media.length > 0,
       }, { feature: 'post_composer', submit_mode: isEdit ? 'edit' : 'post' })
-      setError(err instanceof Error ? err.message : 'Failed to save post')
+      setError(err instanceof Error ? err.message : t('composer.errors.saveFailed'))
     } finally {
       setIsSubmitting(false)
     }
-  }, [content, media, mode, selectedClub, selectedPerson, customClubName, clubLogoUrl, isEdit, editingPost, createPost, createTransferPost, createSigningPost, updatePost, profile, onPostCreated, onClose, isSubmitting, user?.id, kind, signingRole, signingSeason])
+  }, [content, media, mode, selectedClub, selectedPerson, customClubName, clubLogoUrl, isEdit, editingPost, createPost, createTransferPost, createSigningPost, updatePost, profile, onPostCreated, onClose, isSubmitting, user?.id, kind, signingRole, signingSeason, t])
 
   if (!isOpen) return null
 
@@ -896,40 +899,40 @@ export function PostComposerModal({
               the right — Post / Ask / Save / Announce. */}
           <div className="sticky top-0 z-10 flex h-11 items-center justify-between bg-white px-5 pt-[env(safe-area-inset-top)]">
             <h2 id="post-composer-title" className="sr-only">
-              {isEdit ? 'Edit post' : mode === 'transfer' ? (isClubRole ? 'Announce new signing' : 'Announce transfer') : kind === 'question' ? 'Ask a question' : 'Create post'}
+              {isEdit ? t('composer.title.edit') : mode === 'transfer' ? (isClubRole ? t('composer.title.signing') : t('composer.title.transfer')) : kind === 'question' ? t('composer.title.question') : t('composer.title.post')}
             </h2>
             {isPhone ? (
               <>
                 {/* Figma Compose 101:823: Tertiary "Cancel", Primary Small "Post" / "Ask". */}
-                <button type="button" onClick={handleClose} className={buttonClassName({ variant: 'tertiary', size: 'small', radius: 'rounded-full', className: '-ml-3.5' })} aria-label="Cancel" data-testid="composer-cancel">
-                  Cancel
+                <button type="button" onClick={handleClose} className={buttonClassName({ variant: 'tertiary', size: 'small', radius: 'rounded-full', className: '-ml-3.5' })} aria-label={t('composer.cancel')} data-testid="composer-cancel">
+                  {t('composer.cancel')}
                 </button>
                 <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={isSubmitting || isUploading || isUploadingLogo || !canSubmit}
-                  aria-label={isEdit ? 'Save changes' : mode === 'transfer' ? 'Announce' : kind === 'question' ? 'Ask' : 'Publish post'}
+                  aria-label={isEdit ? t('composer.submitAria.save') : mode === 'transfer' ? t('composer.submitAria.announce') : kind === 'question' ? t('composer.submitAria.ask') : t('composer.submitAria.publish')}
                   className={buttonClassName({ variant: 'primary', size: 'small', radius: 'rounded-full', className: 'px-4' })}
                   data-testid="composer-submit"
                 >
                   {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {isEdit ? 'Save' : mode === 'transfer' && !isClubRole ? 'Announce' : kind === 'question' && mode === 'post' ? 'Ask' : 'Post'}
+                  {isEdit ? t('composer.submit.save') : mode === 'transfer' && !isClubRole ? t('composer.submit.announce') : kind === 'question' && mode === 'post' ? t('composer.submit.ask') : t('composer.submit.post')}
                 </button>
               </>
             ) : (
               <>
-            <button type="button" onClick={handleClose} className="-ml-1 min-h-[44px] pr-3 text-body text-hockia-primary" aria-label="Cancel">
-              Cancel
+            <button type="button" onClick={handleClose} className="-ml-1 min-h-[44px] pr-3 text-body text-hockia-primary" aria-label={t('composer.cancel')}>
+              {t('composer.cancel')}
             </button>
             <button
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || isUploading || isUploadingLogo || !canSubmit}
-              aria-label={isEdit ? 'Save changes' : mode === 'transfer' ? 'Announce' : kind === 'question' ? 'Ask' : 'Publish post'}
+              aria-label={isEdit ? t('composer.submitAria.save') : mode === 'transfer' ? t('composer.submitAria.announce') : kind === 'question' ? t('composer.submitAria.ask') : t('composer.submitAria.publish')}
               className="flex h-[34px] items-center gap-1.5 rounded-full bg-hockia-primary px-4 text-row font-semibold text-white transition-opacity disabled:opacity-40"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isEdit ? 'Save' : mode === 'transfer' ? 'Announce' : kind === 'question' ? 'Ask' : 'Post'}
+              {isEdit ? t('composer.submit.save') : mode === 'transfer' ? t('composer.submit.announce') : kind === 'question' ? t('composer.submit.ask') : t('composer.submit.post')}
             </button>
               </>
             )}
@@ -950,7 +953,7 @@ export function PostComposerModal({
                 />
                 <div>
                   <p className="text-row font-semibold text-ink-1">{profile.full_name}</p>
-                  <p className="text-secondary text-ink-2">{identityLine(profile.role)} · Everyone on Hockia</p>
+                  <p className="text-secondary text-ink-2">{t('composer.audienceLine', { identity: identityLine(profile.role) })}</p>
                 </div>
               </div>
             )}
@@ -960,14 +963,14 @@ export function PostComposerModal({
                 and button; Transfer / New signing switches to the announcement
                 form. Questions are public by design so coaches and clubs can answer. */}
             {!isEdit && (
-              <div className="flex gap-2" role="radiogroup" aria-label="Post type">
+              <div className="flex gap-2" role="radiogroup" aria-label={t('composer.kind.groupAria')}>
                 {/* Transfers are career events, not posts (founder 2026-09-20):
                     the milestone reaches the feed from Career entry. The
                     transfer/signing form stays in the code but is never offered. */}
                 {(isClubRole
                   // Clubs post New signings (Figma H11b; ruling 11 Oct: only clubs).
-                  ? ([['post', 'Post'], ['question', 'Question'], ['signing', 'New signing']] as const)
-                  : ([['post', 'Post'], ['question', 'Question']] as const)
+                  ? ([['post', t('composer.kind.post')], ['question', t('composer.kind.question')], ['signing', t('composer.kind.signing')]] as const)
+                  : ([['post', t('composer.kind.post')], ['question', t('composer.kind.question')]] as const)
                 ).map(([value, label]) => {
                   const active = value === 'signing' ? mode === 'transfer' : mode === 'post' && kind === value
                   const select = () => {
@@ -1027,7 +1030,7 @@ export function PostComposerModal({
                           type="search"
                           value={personSearch}
                           onChange={(e) => handlePersonSearch(e.target.value)}
-                          placeholder="Search for a player or coach..."
+                          placeholder={t('composer.signing.personSearch')}
                           className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/30 focus:border-[#EA580C]"
                           autoComplete="off"
                           enterKeyHint="search"
@@ -1066,7 +1069,7 @@ export function PostComposerModal({
                                   <RoleBadge role={person.role} />
                                 </div>
                                 <p className="text-xs text-gray-500 truncate">
-                                  {[positionLabel(person.position), person.current_club, person.base_location].filter(Boolean).join(' · ')}
+                                  {[positionLabel(person.position), person.current_club, placeText(person.base_location)].filter(Boolean).join(' · ')}
                                 </p>
                               </div>
                             </button>
@@ -1077,7 +1080,7 @@ export function PostComposerModal({
                       {/* No results state */}
                       {personSearch.trim().length >= 2 && !isSearchingPeople && personResults.length === 0 && (
                         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                          <p className="text-sm text-gray-500 text-center">No players or coaches found</p>
+                          <p className="text-sm text-gray-500 text-center">{t('composer.signing.personEmpty')}</p>
                         </div>
                       )}
                     </div>
@@ -1092,26 +1095,26 @@ export function PostComposerModal({
                       type="button"
                       onClick={() => setSelectedPerson(null)}
                       className="flex w-full items-center gap-3 rounded-2xl bg-surface-muted px-3.5 py-2.5 text-left"
-                      aria-label={`Tagged ${selectedPerson.full_name}. Tap to change`}
+                      aria-label={t('composer.signing.taggedAria', { name: selectedPerson.full_name })}
                     >
                       <Avatar src={selectedPerson.avatar_url} initials={selectedPerson.full_name?.slice(0, 2) || '?'} size="sm" role={selectedPerson.role} />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-micro font-semibold uppercase text-ink-3">Signing (tag a member)</span>
+                        <span className="block text-micro font-semibold uppercase text-ink-3">{t('composer.signing.personLabel')}</span>
                         <span className="block truncate text-body text-ink-1">{selectedPerson.full_name}</span>
                       </span>
                       <X className="h-4 w-4 shrink-0 text-ink-3" aria-hidden="true" />
                     </button>
                     <label className="block rounded-2xl bg-surface-muted px-3.5 py-2.5">
-                      <span className="block text-micro font-semibold uppercase text-ink-3">Role</span>
+                      <span className="block text-micro font-semibold uppercase text-ink-3">{t('composer.signing.roleLabel')}</span>
                       <input
                         value={signingRole}
                         onChange={(e) => setSigningRole(e.target.value.slice(0, 60))}
-                        placeholder={[positionLabel(selectedPerson.position), "Women's 1st team"].filter(Boolean).join(' · ')}
+                        placeholder={[positionLabel(selectedPerson.position), t('composer.signing.rolePlaceholder')].filter(Boolean).join(' · ')}
                         className="w-full bg-transparent text-body text-ink-1 placeholder:text-ink-4 focus:outline-none"
                       />
                     </label>
                     <label className="block rounded-2xl bg-surface-muted px-3.5 py-2.5">
-                      <span className="block text-micro font-semibold uppercase text-ink-3">Season</span>
+                      <span className="block text-micro font-semibold uppercase text-ink-3">{t('composer.signing.seasonLabel')}</span>
                       <input
                         value={signingSeason}
                         onChange={(e) => setSigningSeason(e.target.value.slice(0, 20))}
@@ -1119,11 +1122,11 @@ export function PostComposerModal({
                         className="w-full bg-transparent text-body text-ink-1 placeholder:text-ink-4 focus:outline-none"
                       />
                     </label>
-                    <p className="pt-1.5 text-micro font-semibold uppercase text-ink-3">Preview</p>
+                    <p className="pt-1.5 text-micro font-semibold uppercase text-ink-3">{t('composer.signing.preview')}</p>
                     <NewSigningArt
                       personName={selectedPerson.full_name}
                       personAvatarUrl={selectedPerson.avatar_url}
-                      clubName={profile?.full_name ?? 'Your club'}
+                      clubName={profile?.full_name ?? t('composer.signing.clubFallback')}
                       clubCrestUrl={profile?.avatar_url ?? null}
                       detail={signingDetail({ signing_role: signingRole, person_position: selectedPerson.position, season: signingSeason })}
                     />
@@ -1145,7 +1148,7 @@ export function PostComposerModal({
                           type="search"
                           value={clubSearch}
                           onChange={(e) => handleClubSearch(e.target.value)}
-                          placeholder="Search for a club..."
+                          placeholder={t('composer.transfer.clubSearch')}
                           className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary"
                           autoComplete="off"
                           enterKeyHint="search"
@@ -1188,12 +1191,12 @@ export function PostComposerModal({
                                     className="w-3.5 h-2.5 object-cover rounded-sm"
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                                   />
-                                  <span className="text-xs text-gray-500">{club.country_name}</span>
+                                  <span className="text-xs text-gray-500">{countryLabel(club.country_name)}</span>
                                 </div>
                               </div>
                               {club.is_claimed && (
                                 <span className="text-[10px] font-medium text-hockia-primary bg-hockia-primary/10 px-1.5 py-0.5 rounded flex-shrink-0">
-                                  On Hockia
+                                  {t('composer.transfer.onHockia')}
                                 </span>
                               )}
                             </button>
@@ -1204,7 +1207,7 @@ export function PostComposerModal({
                       {/* No results state */}
                       {clubSearch.trim().length >= 2 && !isSearching && clubResults.length === 0 && (
                         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                          <p className="text-sm text-gray-500 text-center">No clubs found</p>
+                          <p className="text-sm text-gray-500 text-center">{t('composer.transfer.clubEmpty')}</p>
                         </div>
                       )}
                     </div>
@@ -1219,7 +1222,7 @@ export function PostComposerModal({
                       }}
                       className="text-sm text-hockia-primary hover:text-hockia-secondary font-medium"
                     >
-                      Club not listed? Enter manually
+                      {t('composer.transfer.enterManually')}
                     </button>
                   </>
                 )}
@@ -1243,14 +1246,14 @@ export function PostComposerModal({
                           className="w-3.5 h-2.5 object-cover rounded-sm"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                         />
-                        <span className="text-xs text-gray-500">{selectedClub.country_name}</span>
+                        <span className="text-xs text-gray-500">{countryLabel(selectedClub.country_name)}</span>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setSelectedClub(null)}
                       className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                      aria-label="Remove selected club"
+                      aria-label={t('composer.transfer.removeClub')}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1261,7 +1264,7 @@ export function PostComposerModal({
                 {showUnknownClub && !selectedClub && (
                   <div className="space-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-700">Enter club details</p>
+                      <p className="text-sm font-medium text-gray-700">{t('composer.transfer.manualTitle')}</p>
                       <button
                         type="button"
                         onClick={() => {
@@ -1271,14 +1274,14 @@ export function PostComposerModal({
                         }}
                         className="text-xs text-hockia-primary hover:text-hockia-secondary font-medium"
                       >
-                        Back to search
+                        {t('composer.transfer.backToSearch')}
                       </button>
                     </div>
                     <input
                       type="text"
                       value={customClubName}
                       onChange={(e) => setCustomClubName(e.target.value)}
-                      placeholder="Club name"
+                      placeholder={t('composer.transfer.clubName')}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary"
                     />
 
@@ -1287,13 +1290,13 @@ export function PostComposerModal({
                       {clubLogoUrl ? (
                         <div className="relative">
                           <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 overflow-hidden">
-                            <img src={clubLogoUrl} alt="Club logo" className="w-full h-full object-cover" />
+                            <img src={clubLogoUrl} alt={t('composer.transfer.logoAlt')} className="w-full h-full object-cover" />
                           </div>
                           <button
                             type="button"
                             onClick={() => setClubLogoUrl(null)}
                             className="absolute -top-1 -right-1 p-0.5 bg-red-500 rounded-full text-white"
-                            aria-label="Remove club logo"
+                            aria-label={t('composer.transfer.removeLogo')}
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -1305,7 +1308,7 @@ export function PostComposerModal({
                           ) : (
                             <ImagePlus className="w-4 h-4" />
                           )}
-                          <span>Add club logo (optional)</span>
+                          <span>{t('composer.transfer.addLogo')}</span>
                           <input
                             type="file"
                             accept=".jpg,.jpeg,.png,image/jpeg,image/png"
@@ -1325,13 +1328,13 @@ export function PostComposerModal({
                 saved draft, not for fresh-open or edit-existing-post. */}
             {draftRestored && !editingPost && mode === 'post' && content.length > 0 && (
               <div className="flex items-center justify-between gap-2 px-3 py-2 mb-2 bg-surface-grouped border border-line rounded-lg text-xs text-ink-2">
-                <span>Draft restored from your last session.</span>
+                <span>{t('composer.draft.restored')}</span>
                 <button
                   type="button"
                   onClick={handleDiscardDraft}
                   className="font-medium underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary rounded"
                 >
-                  Discard
+                  {t('composer.draft.discard')}
                 </button>
               </div>
             )}
@@ -1345,13 +1348,13 @@ export function PostComposerModal({
                 placeholder={
                   mode === 'transfer'
                     ? (isClubRole
-                        ? 'Share something about this signing... (optional)'
-                        : 'Share something about your transfer... (optional)')
+                        ? t('composer.placeholder.signing')
+                        : t('composer.placeholder.transfer'))
                     // Default ('post') mode uses the per-role rotating
                     // placeholder. Umpire prompts in that pool already
                     // stick to credentials / federation / aggregates, per
                     // officials' professional norms (NASO, TASO).
-                    : kind === 'question' ? 'What do you want to ask?' : postPlaceholder
+                    : kind === 'question' ? t('composer.placeholder.question') : postPlaceholder
                 }
                 rows={mode === 'transfer' ? 3 : 4}
                 maxLength={MAX_CONTENT_LENGTH}
@@ -1399,16 +1402,16 @@ export function PostComposerModal({
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {isSubmitting
-                ? (mode === 'transfer' ? 'Announcing...' : 'Posting...')
+                ? (mode === 'transfer' ? t('composer.footer.announcing') : t('composer.footer.posting'))
                 : isEdit
-                  ? 'Save changes'
+                  ? t('composer.footer.save')
                   : mode === 'transfer'
-                    ? (isClubRole ? 'Announce signing' : 'Announce transfer')
+                    ? (isClubRole ? t('composer.footer.announceSigning') : t('composer.footer.announceTransfer'))
                     // "Publish post" — distinct from the "Post" mode tab
                     // above so the dialog has no two same-named controls.
                     // (Avoids "Share post", which is already the share-
                     // sheet heading elsewhere.)
-                    : 'Publish post'
+                    : t('composer.footer.publish')
               }
             </button>
             )}

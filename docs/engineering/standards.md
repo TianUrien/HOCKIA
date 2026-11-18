@@ -41,7 +41,7 @@ Enforced in `.github/workflows/ci.yml`, job "Build" (verified):
 | Metric | Hard limit | Warning | Notes |
 |---|---|---|---|
 | Initial-load JS (gzip of the chunks `app.html` eagerly loads) | 560 KB | 520 KB | Raised from 480 KB on 2026-10-07 (founder approval) when the Sentry Capacitor SDK joined the eager set. If a change pushes it over, split the code instead; planned recoveries: lazy Sentry replay/tracing, signed-in-only paths out of the eager graph |
-| Raw JS across all chunks | 5,800 KB | 5,700 KB | Total-bloat backstop; raised to 5,800 KB on 2026-11-11 with founder approval (on-demand library updates: posthog-js, recharts; history in the workflow comments) |
+| Raw JS across all chunks | 6,600 KB | 6,500 KB | Total-bloat backstop; raised to 6,000, 6,300 and then 6,600 KB on 2026-11-16 with founder approval (Spanish interface stages 1 to 3: translation runtime and catalog keys; measured 5,847, 6,150 and 6,299 KB; history in the workflow comments) |
 | Single chunk | - | 512 KB raw | Warning only |
 | Growth vs base commit | - | +50 KB raw | Warning only; flags a new heavy dependency or code leaking out of a lazy chunk |
 
@@ -53,6 +53,7 @@ Supporting conventions in `client/vite.config.ts`:
   `tus-js-client` and friends out of the eager `vendor` chunk.
 - Admin chart chunks are stripped from the HTML modulepreload list.
 - Images are never precached by the service worker.
+- Catalogs (2026-11-16): Spanish text is JSON fetched on demand, outside both gates. An English catalog travels with whatever imports its `i18n/ns/<ns>` module, so a namespace that start-up code needs is split into `<ns>.core.json` (start-up keys) and `<ns>.json` (the rest); start-up files import `i18n/ns/<ns>.core`. `scripts/check-locales.mjs` fails when a start-up file uses a key outside the core file.
 
 See decisions/ADR-0004.
 
@@ -65,6 +66,7 @@ See decisions/ADR-0004.
 | **One set of words per application status** | `client/src/lib/applicationStatus.ts` (`APPLICATION_STATUS_LABELS`); tests in `applicationStatus.test.ts` |
 | **Players never see counts, scores, levels or reply-time estimates** | Header comment and helpers in `client/src/lib/opportunityCopy.ts` |
 | **Status labels and copy come from shared helpers**, not inline strings | `lib/applicationStatus.ts`, `lib/opportunityCopy.ts`, `lib/clubInviteCopy.ts`, `lib/clubSquadCopy.ts`, `lib/careerCopy.ts`, `lib/videoCopy.ts`, `lib/invites.ts`, `lib/signing.ts` |
+| **Two languages (2026-11-16, Claude Code)**: new or changed member-facing copy goes into `client/src/locales/en` and `es` in the same PR; dates, times, numbers and lists come from `client/src/i18n/format.ts` or `lib/dayFirst.ts`. Admin stays English | ESLint `i18next/no-literal-string` on the files listed in `I18N_MIGRATED` (`client/eslint.config.js`; the list only grows) and `client/scripts/check-locales.mjs` (part of `npm run lint`); how-to in `client/src/locales/README.md` |
 | **No Save/bookmark surfaces in the player redesign** | Founder ruling (see memory); not machine-checked |
 | **Figma "03 Player" / "04 Club" pages are the source of truth for the redesign** | Component headers cite Figma node ids |
 

@@ -9,6 +9,7 @@ import { checkContent } from '@/lib/contentFilter'
 import { identityLine } from '@/lib/identity'
 import { CommentListItem } from '@/components/ui/CommentListItem'
 import type { PostComment } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface PostCommentsSectionProps {
   postId: string
@@ -34,6 +35,7 @@ export function PostCommentsSection({
   variant = 'comments',
   autoFocus = true,
 }: PostCommentsSectionProps) {
+  const t = useHomeT()
   const { user, profile } = useAuthStore()
   const { fetchComments, createComment, deleteComment } = usePostInteractions()
 
@@ -49,8 +51,7 @@ export function PostCommentsSection({
   const totalRef = useRef(commentCount)
   useEffect(() => { totalRef.current = total }, [total])
 
-  const noun = variant === 'answers' ? 'answer' : 'comment'
-  const plural = (n: number) => `${n} ${noun}${n === 1 ? '' : 's'}`
+  const plural = (n: number) => (variant === 'answers' ? t('comments.answerCount', { count: n }) : t('comments.commentCount', { count: n }))
 
   useEffect(() => {
     let cancelled = false
@@ -88,7 +89,7 @@ export function PostCommentsSection({
 
     const filterResult = checkContent(trimmed)
     if (!filterResult.allowed) {
-      alert(filterResult.reason || 'Content violates community guidelines.')
+      alert(filterResult.reason || t('comments.blockedFallback'))
       return
     }
 
@@ -115,7 +116,7 @@ export function PostCommentsSection({
     }
 
     setIsSubmitting(false)
-  }, [newComment, user, isSubmitting, postId, profile, createComment, onCommentCountChange])
+  }, [newComment, user, isSubmitting, postId, profile, createComment, onCommentCountChange, t])
 
   const handleDelete = useCallback(async (commentId: string) => {
     const result = await deleteComment(commentId)
@@ -151,7 +152,7 @@ export function PostCommentsSection({
         {comments.map(comment => (
           <CommentListItem
             key={comment.id}
-            name={comment.author_name || 'Member'}
+            name={comment.author_name || t('comments.unnamedAuthor')}
             avatarUrl={comment.author_avatar}
             role={comment.author_role}
             meta={`${identityLine(comment.author_role)} · ${getTimeAgo(comment.created_at, true)}`}
@@ -164,7 +165,7 @@ export function PostCommentsSection({
                   className="mt-0.5 flex items-center gap-1 text-caption text-ink-3 transition-colors hover:text-red-600"
                 >
                   <Trash2 className="h-3 w-3" />
-                  Delete
+                  {t('comments.delete')}
                 </button>
               ) : user ? (
                 <button
@@ -172,12 +173,12 @@ export function PostCommentsSection({
                   onClick={() => setReportingComment({
                     id: comment.id,
                     authorId: comment.author_id,
-                    authorName: comment.author_name || 'Member',
+                    authorName: comment.author_name || t('comments.unnamedAuthor'),
                   })}
                   className="mt-0.5 flex items-center gap-1 text-caption text-ink-3 transition-colors hover:text-red-600"
                 >
                   <Flag className="h-3 w-3" />
-                  Report
+                  {t('comments.report')}
                 </button>
               ) : null
             }
@@ -192,7 +193,7 @@ export function PostCommentsSection({
           disabled={isLoading}
           className="px-5 py-2 text-secondary font-semibold text-ink-2"
         >
-          {isLoading ? 'Loading…' : `View all ${plural(total)}`}
+          {isLoading ? t('comments.loading') : variant === 'answers' ? t('comments.viewAllAnswers', { count: total }) : t('comments.viewAllComments', { count: total })}
         </button>
       )}
 
@@ -213,7 +214,7 @@ export function PostCommentsSection({
             value={newComment}
             onChange={e => setNewComment(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={variant === 'answers' ? 'Write an answer' : 'Add a comment'}
+            placeholder={variant === 'answers' ? t('comments.answerPlaceholder') : t('comments.commentPlaceholder')}
             maxLength={500}
             enterKeyHint="send"
             autoCapitalize="sentences"
@@ -224,7 +225,7 @@ export function PostCommentsSection({
             onClick={handleSubmit}
             disabled={!newComment.trim() || isSubmitting}
             className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary text-white transition-opacity disabled:opacity-40"
-            aria-label={variant === 'answers' ? 'Post answer' : 'Post comment'}
+            aria-label={variant === 'answers' ? t('comments.sendAnswer') : t('comments.sendComment')}
           >
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-[18px] w-[18px]" strokeWidth={1.75} />}
           </button>

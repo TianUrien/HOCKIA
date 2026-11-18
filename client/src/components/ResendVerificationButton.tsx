@@ -1,6 +1,7 @@
 import { buttonClassName } from '@/components/ui/buttonClasses'
 import { useEffect, useRef, useState } from 'react'
 import { resendVerificationEmail } from '@/lib/auth'
+import { useAuthT } from '@/i18n/ns/auth'
 
 interface ResendVerificationButtonProps {
   email?: string
@@ -16,6 +17,7 @@ interface ResendVerificationButtonProps {
 const RESEND_COOLDOWN_S = 60
 
 export default function ResendVerificationButton({ email }: ResendVerificationButtonProps) {
+  const t = useAuthT()
   const [isLoading, setIsLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +44,7 @@ export default function ResendVerificationButton({ email }: ResendVerificationBu
 
   const handleResend = async () => {
     if (!email) {
-      setError('Email address not provided')
+      setError(t('verifyResend.noEmail'))
       return
     }
 
@@ -64,7 +66,7 @@ export default function ResendVerificationButton({ email }: ResendVerificationBu
         setSent(true)
         startCooldown(parseInt(match[1], 10))
       } else {
-        setError(result.error || 'Failed to resend email')
+        setError(result.error || t('verifyResend.failed'))
       }
     }
   }
@@ -84,15 +86,15 @@ export default function ResendVerificationButton({ email }: ResendVerificationBu
         {isLoading ? (
           <>
             <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />
-            Sending…
+            {t('verifyResend.sending')}
           </>
         ) : (
-          'Resend email'
+          t('verifyResend.resend')
         )}
       </button>
       {cooldown > 0 && (
         <p className="text-center text-caption text-ink-3" aria-live="polite">
-          Didn’t get it? You can resend in {Math.floor(cooldown / 60)}:{String(cooldown % 60).padStart(2, '0')}.
+          {t('verifyResend.countdown', { time: `${Math.floor(cooldown / 60)}:${String(cooldown % 60).padStart(2, '0')}` })}
         </p>
       )}
 
@@ -105,7 +107,7 @@ export default function ResendVerificationButton({ email }: ResendVerificationBu
       {sent && cooldown > 0 && (
         <div className="bg-positive-soft rounded-[12px] px-3.5 py-2.5">
           <p className="text-sm text-positive">
-            Check your inbox for a new verification link.
+            {t('verifyResend.sent')}
           </p>
         </div>
       )}

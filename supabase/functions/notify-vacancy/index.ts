@@ -22,9 +22,17 @@ import {
   claimFirstAnnouncement,
   announcementSendOutcome,
   reportAnnouncementFailure,
+  spanishPositionOr,
+  unnamedClub,
+  vacancyFallbackSubject,
+  vacancyLocation,
+  vacancySummary,
+  personaliseGreeting,
 } from '../_shared/vacancy-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
+import { type MemberLanguage, readMemberLanguages } from '../_shared/member-language.ts'
 import { sendTrackedBatch, RecipientInfo } from '../_shared/email-sender.ts'
+import { pingIndexNow, roleVisibilityChange } from '../_shared/indexnow.ts'
 
 /**
  * ============================================================================
@@ -228,8 +236,22 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    // Check if vacancy was newly published using shared utility
     const vacancy = payload.record
+
+    // A role that became public or stopped being public: tell IndexNow its
+    // URL changed (the page itself decides what a crawler may read). Off
+    // unless INDEXNOW_KEY is set; a failed ping never fails the webhook.
+    const visibility = roleVisibilityChange(payload)
+    if (visibility && vacancy?.id) {
+      const ping = await pingIndexNow(
+        Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com',
+        [`/opportunities/${vacancy.id}`, '/opportunities'],
+        { key: Deno.env.get('INDEXNOW_KEY') },
+      )
+      logger.info('IndexNow', { change: visibility, ...ping })
+    }
+
+    // Check if vacancy was newly published using shared utility
     if (!isVacancyNewlyPublished(payload)) {
       logger.info('Ignoring - vacancy not newly published', { 
         type: payload.type,
@@ -378,47 +400,59 @@ Deno.serve(async (req: Request) => {
       )
     }
 
+    // Each recipient's interface language (profiles.ui_language), read in
+    // one separate batch that fails to English. The email is rendered once
+    // per language present, never per recipient.
+    const recipientLanguages = await readMemberLanguages(
+      supabase,
+      recipients.map(r => r.recipientId).filter((id): id is string => !!id),
+    )
+    const languageOfRecipient = (r: RecipientInfo): MemberLanguage =>
+      (r.recipientId ? recipientLanguages.get(r.recipientId) : undefined) ?? 'en'
+    const languagesNeeded = new Set<MemberLanguage>(['en', ...recipients.map(languageOfRecipient)])
+
     // Generate email content — try DB template first, fall back to hardcoded
     const clubName = clubProfile.full_name || 'A club'
     // "head_coach" → "Head coach" (the app's label), never the raw token.
     const position = positionLabel(vacancy.position) ?? ''
-    const city = vacancy.location_city?.trim() || ''
-    const country = vacancy.location_country?.trim() || ''
-    const location = city && country ? `${city}, ${country}` : city || country || ''
-    const summary = vacancy.description?.trim()?.slice(0, 200) || ''
+    const summary = vacancySummary(vacancy.description)
 
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
     // Use a sentinel placeholder for first_name so we can personalize per-recipient.
     // The template will render "Hi __FIRST_NAME__," and we replace it per-recipient.
     const FIRST_NAME_SENTINEL = '__FIRST_NAME_SENTINEL__'
-    const templateVars = {
+    const templateVars = (lang: MemberLanguage) => ({
       vacancy_title: vacancy.title,
-      club_name: clubName,
-      position,
-      location,
+      club_name: lang === 'es' ? clubProfile.full_name || unnamedClub(lang) : clubName,
+      position: lang === 'es' ? spanishPositionOr(vacancy.position, position) : position,
+      location: vacancyLocation(vacancy, lang),
       summary,
       first_name: FIRST_NAME_SENTINEL,
       cta_url: `${HOCKIA_BASE_URL}/opportunities/${vacancy.id}`,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
-    }
+    })
 
-    let baseSubject: string
-    let baseHtml: string
-    let baseText: string
-
-    const rendered = await renderTemplate(supabase, 'vacancy_notification', templateVars)
-    if (rendered) {
-      baseSubject = rendered.subject
-      baseHtml = rendered.html
-      baseText = rendered.text
-      logger.info('Using DB template for vacancy_notification')
-    } else {
-      baseSubject = `New opportunity on Hockia: ${vacancy.title}`
-      baseHtml = generateEmailHtml(vacancy, clubName)
-      baseText = generateEmailText(vacancy, clubName)
-      logger.info('Falling back to hardcoded template')
+    type BaseEmail = { subject: string; html: string; text: string }
+    const baseByLanguage = new Map<MemberLanguage, BaseEmail>()
+    for (const lang of languagesNeeded) {
+      const rendered = await renderTemplate(supabase, 'vacancy_notification', templateVars, lang)
+      if (rendered) {
+        baseByLanguage.set(lang, { subject: rendered.subject, html: rendered.html, text: rendered.text })
+        logger.info('Using DB template for vacancy_notification', { language: rendered.language })
+      } else {
+        baseByLanguage.set(lang, {
+          subject: vacancyFallbackSubject(vacancy.title, lang),
+          html: generateEmailHtml(vacancy, clubName, lang),
+          text: generateEmailText(vacancy, clubName, lang),
+        })
+        logger.info('Falling back to hardcoded template', { language: lang })
+      }
     }
+    const englishBase = baseByLanguage.get('en')!
+    const baseSubject = englishBase.subject
+    const baseHtml = englishBase.html
+    const baseText = englishBase.text
 
     // ==========================================================================
     // SEND TO REAL USERS ONLY with tracking
@@ -446,12 +480,13 @@ Deno.serve(async (req: Request) => {
         const firstName = r.recipientName
           ? r.recipientName.split(' ')[0]
           : ''
-        const personalizedHtml = baseHtml.replace(FIRST_NAME_SENTINEL, firstName)
-        const personalizedText = baseText.replace(FIRST_NAME_SENTINEL, firstName)
+        const base = baseByLanguage.get(languageOfRecipient(r)) ?? englishBase
+        const personalizedHtml = personaliseGreeting(base.html, FIRST_NAME_SENTINEL, firstName)
+        const personalizedText = personaliseGreeting(base.text, FIRST_NAME_SENTINEL, firstName)
         return {
           html: personalizedHtml,
           text: personalizedText,
-          subject: baseSubject,
+          subject: base.subject,
         }
       },
     })

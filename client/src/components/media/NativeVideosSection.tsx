@@ -7,6 +7,7 @@ import Button from '../Button'
 import NativeVideoPlayer from './NativeVideoPlayer'
 import UploadVideoModal from './UploadVideoModal'
 import ConfirmActionModal from '../ConfirmActionModal'
+import { useMediaT } from '@/i18n/ns/media'
 
 /**
  * NativeVideosSection — the player's natively-uploaded (Cloudflare Stream)
@@ -44,6 +45,7 @@ interface NativeVideosSectionProps {
 }
 
 export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyHighlight = false, onAddLink }: NativeVideosSectionProps) {
+  const t = useMediaT()
   const { addToast } = useToastStore()
   const [videos, setVideos] = useState<PlayerVideoRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,7 +93,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
       // Previously silent: the modal closed, the row stayed, and the user was
       // never told why.
       logger.error('[NativeVideosSection] delete failed', err)
-      addToast('Could not delete the video. Please try again.', 'error')
+      addToast(t('nativeVideos.deleteFailed'), 'error')
     } finally {
       setDeleting(false)
     }
@@ -108,14 +110,14 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
         <div className="min-w-0">
           <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
             <Film className="h-4 w-4 text-hockia-primary flex-shrink-0" />
-            Highlight videos
+            {t('nativeVideos.title')}
           </h3>
-          <p className="text-xs text-gray-500">Hosted on Hockia. Play instantly, no external links.</p>
+          <p className="text-xs text-gray-500">{t('nativeVideos.subtitle')}</p>
         </div>
         {!readOnly && (
           <Button variant="primary" onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
             <Plus className="h-4 w-4" />
-            Upload video
+            {t('nativeVideos.upload')}
           </Button>
         )}
       </div>
@@ -135,14 +137,14 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
                 <Film className="h-6 w-6 text-white" />
               </div>
             </div>
-            <p className="text-sm font-semibold text-gray-900">Add your highlight reel</p>
+            <p className="text-sm font-semibold text-gray-900">{t('nativeVideos.emptyTitle')}</p>
             <p className="mx-auto mb-4 mt-1 max-w-xs text-xs text-gray-500">
-              Upload a video so clubs and coaches can evaluate you. It plays directly inside Hockia.
+              {t('nativeVideos.emptyBody')}
             </p>
             <div className="flex flex-col items-center justify-center gap-2 sm:flex-row">
               <Button onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5">
                 <Plus className="h-4 w-4" />
-                Upload video
+                {t('nativeVideos.emptyUpload')}
               </Button>
               {onAddLink && (
                 <button
@@ -150,7 +152,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
                   onClick={onAddLink}
                   className="text-xs font-medium text-hockia-primary hover:underline"
                 >
-                  or paste a YouTube / Vimeo / Drive link
+                  {t('nativeVideos.emptyPasteLink')}
                 </button>
               )}
             </div>
@@ -177,13 +179,13 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
                 <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl bg-gray-100 text-gray-600">
                   {v.status === 'removed' ? (
                     // Admin takedown (20261011150700): only the owner sees it, neutrally.
-                    <span className="px-4 text-center text-xs">Removed for breaking the community rules</span>
+                    <span className="px-4 text-center text-xs">{t('nativeVideos.removed')}</span>
                   ) : v.status === 'errored' ? (
-                    <span className="text-xs">Processing failed. Try re-uploading</span>
+                    <span className="text-xs">{t('nativeVideos.processingFailed')}</span>
                   ) : (
                     <>
                       <Clock className="h-5 w-5 animate-pulse" />
-                      <span className="text-xs">Processing…</span>
+                      <span className="text-xs">{t('nativeVideos.processing')}</span>
                     </>
                   )}
                 </div>
@@ -192,14 +194,14 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-gray-900">{v.title}</p>
                   {v.visibility === 'recruiters' && (
-                    <span className="text-[11px] font-medium text-gray-600">Clubs &amp; coaches</span>
+                    <span className="text-[11px] font-medium text-gray-600">{t('nativeVideos.recruitersOnly')}</span>
                   )}
                 </div>
                 {!readOnly && (
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(v)}
-                    aria-label={`Delete ${v.title}`}
+                    aria-label={t('nativeVideos.deleteLabel', { title: v.title })}
                     className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -219,7 +221,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
           onClick={onAddLink}
           className="text-xs font-medium text-hockia-primary hover:underline"
         >
-          or paste a YouTube / Vimeo / Drive link
+          {t('nativeVideos.pasteLink')}
         </button>
       )}
 
@@ -232,9 +234,9 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Delete this video?"
-        description="This permanently removes the video from your profile."
-        confirmLabel="Delete"
+        title={t('nativeVideos.confirmTitle')}
+        description={t('nativeVideos.confirmBody')}
+        confirmLabel={t('nativeVideos.confirmDelete')}
         confirmLoading={deleting}
         confirmTone="danger"
       />

@@ -3,6 +3,7 @@ import { CheckCircle2 } from 'lucide-react'
 import { useMyPulse } from '@/hooks/useMyPulse'
 import { PulseCard } from './PulseCard'
 import { isKnownPulseItemType } from './pulseItemTypes'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * PulseSection — "Since you last visited" surface for the v5-plan Movement
@@ -18,6 +19,7 @@ import { isKnownPulseItemType } from './pulseItemTypes'
  * section when isLoading to avoid a flash of empty content on mount.
  */
 export function PulseSection() {
+  const t = useHomeT()
   const { items, isLoading, markSeen, markClicked, markDismissed } = useMyPulse()
 
   // Track whether this mount ever showed at least one item. Without this,
@@ -65,9 +67,9 @@ export function PulseSection() {
   if (items.length === 0 && !hadItemsThisMount) return null
 
   return (
-    <section className="mb-6" aria-label="Pulse: what changed since your last visit">
+    <section className="mb-6" aria-label={t('pulseSection.ariaLabel')}>
       <header className="mb-3">
-        <h2 className="text-sm font-semibold text-gray-700">Since you last visited</h2>
+        <h2 className="text-sm font-semibold text-gray-700">{t('pulseSection.title')}</h2>
       </header>
       {items.length === 0 ? (
         <div
@@ -75,7 +77,7 @@ export function PulseSection() {
           data-testid="pulse-empty-state"
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" aria-hidden="true" />
-          <span>You're all caught up.</span>
+          <span>{t('pulseSection.empty')}</span>
         </div>
       ) : (
         <div className="space-y-3">

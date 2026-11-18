@@ -10,7 +10,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import type { Vacancy } from '@/lib/supabase'
 import { RoleCard } from '@/components/opportunities/RoleCard'
-import { PACKAGE_NOT_LISTED, rolePackageItems } from '@/lib/opportunityCopy'
+import { packageNotListed, rolePackageItems } from '@/lib/opportunityCopy'
 import { EMPTY_ROLE_FILTERS, applyRoleFilters, isQuickChipOn, toggleQuickChip } from '@/lib/opportunityFilters'
 
 const vac = (p: Partial<Vacancy> = {}) => ({
@@ -88,7 +88,7 @@ describe('rolePackageItems', () => {
   })
   it('notes: "Paid or unpaid", and "Package not listed · ask the club" when nothing is listed', () => {
     expect(rolePackageItems({ compensation: 'either', benefits: [], eu_passport_required: false })[0]).toMatchObject({ type: 'note', label: 'Paid or unpaid' })
-    expect(rolePackageItems({ compensation: null, benefits: [], eu_passport_required: false })).toEqual([expect.objectContaining({ type: 'note', label: PACKAGE_NOT_LISTED })])
+    expect(rolePackageItems({ compensation: null, benefits: [], eu_passport_required: false })).toEqual([expect.objectContaining({ type: 'note', label: packageNotListed() })])
   })
 })
 

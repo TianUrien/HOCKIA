@@ -10,6 +10,9 @@
  * Every member-supplied value goes through escapeHtml; avatars only from
  * https URLs (renderAvatarHtml falls back to the role placeholder). The layout mirrors the
  * branded shell of email-renderer.ts (wordmark header, grey footer).
+ *
+ * Language (Stage 3, 2026-11-16): both renderers take an optional `lang`
+ * (the publisher's interface language); English output is unchanged.
  */
 
 import { escapeHtml } from './html-escape.ts'
@@ -21,6 +24,7 @@ import {
   closesChip,
   closingSoonSubject,
   DECLINE_HINT,
+  DECLINE_HINT_ES,
   declinePath,
   lastCallBody,
   lastCallSubject,
@@ -30,7 +34,9 @@ import {
   reviewPath,
   reviewTarget,
   SETTINGS_FOOTER,
+  SETTINGS_FOOTER_ES,
   SETTINGS_FOOTER_PATH,
+  type ReminderLanguage,
   closingSoonHeadline,
   waitingLine,
 } from './club-reminders.ts'
@@ -60,26 +66,74 @@ function href(baseUrl: string, path: string): string {
   return escapeHtml(url(baseUrl, path))
 }
 
-function fitBadge(fit: ApplicantItem['fit']): string {
+/** Fixed words of the three emails (Spanish: client es/recruiting.json fit words). */
+const COPY = {
+  en: {
+    strongFit: 'Strong fit',
+    possibleFit: 'Possible fit',
+    moreWaiting: (n: number) => `+ ${n} more waiting in Hockia.`,
+    review: 'Review',
+    reviewName: (name: string | null) => `Review ${name ?? 'the application'}`,
+    reviewMany: (n: number, noun: string) => `Review ${n} ${noun}`,
+    newOne: (name: string | null, role: string) => `${name ?? 'A new applicant'} applied for ${role}.`,
+    newOneRole: (n: number, role: string) => `${n} people applied for ${role} since the last email.`,
+    newManyRoles: (n: number) => `${n} people applied for your opportunities since the last email.`,
+    quickAnswer: 'A quick answer, even a no, helps every applicant.',
+    declineHintShort: DECLINE_HINT.replace(/^Not the right fit\? /, ''),
+    declineHint: DECLINE_HINT,
+    settingsFooter: SETTINGS_FOOTER,
+    notAFit: 'Not a fit, with a kind note',
+    lastReminder: (names: string) => `Last reminder for ${names}.`,
+    closingSoon: 'Closing soon',
+    moreAreWaiting: (n: number, names: string) => `${n} more ${n === 1 ? 'is' : 'are'} waiting: ${names}.`,
+    theApplicant: 'the applicant',
+  },
+  es: {
+    strongFit: 'Encaje alto',
+    possibleFit: 'Encaje posible',
+    moreWaiting: (n: number) => `+ ${n} más ${n === 1 ? 'espera' : 'esperan'} en Hockia.`,
+    review: 'Revisar',
+    reviewName: (name: string | null) => (name ? `Ver la postulación de ${name}` : 'Ver la postulación'),
+    // You review applications, not people: the noun is not used in Spanish.
+    reviewMany: (n: number, _noun: string) => `Revisar ${n} postulaciones`,
+    newOne: (name: string | null, role: string) => `${name ?? 'Una persona'} se postuló a ${role}.`,
+    newOneRole: (n: number, role: string) => `${n} personas se postularon a ${role} desde el último email.`,
+    newManyRoles: (n: number) => `${n} personas se postularon a tus oportunidades desde el último email.`,
+    quickAnswer: 'Una respuesta rápida, aunque sea un no, ayuda a cada deportista.',
+    declineHintShort: DECLINE_HINT_ES.replace(/^¿No encaja\? /, ''),
+    declineHint: DECLINE_HINT_ES,
+    settingsFooter: SETTINGS_FOOTER_ES,
+    notAFit: 'No encaja, con una nota amable',
+    lastReminder: (names: string) => `Último recordatorio sobre ${names}.`,
+    closingSoon: 'Cierran pronto',
+    moreAreWaiting: (n: number, names: string) => `${n} más ${n === 1 ? 'espera' : 'esperan'}: ${names}.`,
+    theApplicant: 'la persona',
+  },
+} as const
+
+type Copy = typeof COPY['en'] | typeof COPY['es']
+
+function fitBadge(fit: ApplicantItem['fit'], c: Copy = COPY.en): string {
   if (fit === 'strong') {
-    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d;font-size:12px;font-weight:600;line-height:18px;">Strong fit</span>`
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d;font-size:12px;font-weight:600;line-height:18px;">${c.strongFit}</span>`
   }
   if (fit === 'possible') {
-    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#f1eff6;color:#6b6878;font-size:12px;font-weight:600;line-height:18px;">Possible fit</span>`
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:#f1eff6;color:#6b6878;font-size:12px;font-weight:600;line-height:18px;">${c.possibleFit}</span>`
   }
   return ''
 }
 
-function closesChipHtml(item: ReminderItem): string {
+function closesChipHtml(item: ReminderItem, lang: ReminderLanguage = 'en'): string {
   const amber = chipIsAmber(item.daysLeft)
   const style = amber ? 'background:#fdf1e4;color:#b45309;' : 'background:#f1eff6;color:#6b6878;'
-  return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;${style}font-size:12px;font-weight:600;line-height:18px;white-space:nowrap;">${escapeHtml(closesChip(item.daysLeft, item.closesLocal))}</span>`
+  return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;${style}font-size:12px;font-weight:600;line-height:18px;white-space:nowrap;">${escapeHtml(closesChip(item.daysLeft, item.closesLocal, lang))}</span>`
 }
 
 /** One person row: avatar · name · "Player · position · country" · fit · closes chip. */
-function personRow(item: ApplicantItem | ReminderItem, opts: { showRole: boolean }): string {
-  const chip = 'daysLeft' in item ? closesChipHtml(item) : ''
-  const badges = [fitBadge(item.fit), chip].filter(Boolean).join('&nbsp;')
+function personRow(item: ApplicantItem | ReminderItem, opts: { showRole: boolean; lang?: ReminderLanguage }): string {
+  const lang = opts.lang ?? 'en'
+  const chip = 'daysLeft' in item ? closesChipHtml(item, lang) : ''
+  const badges = [fitBadge(item.fit, COPY[lang]), chip].filter(Boolean).join('&nbsp;')
   const role = opts.showRole
     ? `<div style="font-size:13px;color:${INK_3};line-height:18px;">${escapeHtml(item.roleTitle)}</div>`
     : ''
@@ -95,12 +149,13 @@ function personRow(item: ApplicantItem | ReminderItem, opts: { showRole: boolean
       </tr>`
 }
 
-function personTable(items: (ApplicantItem | ReminderItem)[], opts: { showRole: boolean }): string {
+function personTable(items: (ApplicantItem | ReminderItem)[], opts: { showRole: boolean; lang?: ReminderLanguage }): string {
+  const c = COPY[opts.lang ?? 'en']
   const shown = items.slice(0, MAX_ROWS)
   const more = items.length - shown.length
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${shown.map((i) => personRow(i, opts)).join('')}
-    </table>${more > 0 ? `\n    <p style="margin:10px 0 0;font-size:13px;color:${INK_3};">+ ${more} more waiting in Hockia.</p>` : ''}`
+    </table>${more > 0 ? `\n    <p style="margin:10px 0 0;font-size:13px;color:${INK_3};">${escapeHtml(c.moreWaiting(more))}</p>` : ''}`
 }
 
 function primaryButton(link: string, label: string): string {
@@ -117,9 +172,9 @@ function eyebrow(org: string | null): string {
     : ''
 }
 
-function shell(baseUrl: string, body: string, extraFooter = ''): string {
+function shell(baseUrl: string, body: string, extraFooter = '', lang: ReminderLanguage = 'en'): string {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -135,7 +190,7 @@ function shell(baseUrl: string, body: string, extraFooter = ''): string {
       </td></tr>
       <tr><td style="padding:16px 22px 22px;border-top:1px solid ${LINE};">
         ${extraFooter ? `<p style="margin:0 0 6px;font-size:12px;color:${INK_3};line-height:18px;">${escapeHtml(extraFooter)}</p>` : ''}
-        <p style="margin:0;font-size:12px;color:#73707c;line-height:18px;"><a href="${href(baseUrl, SETTINGS_FOOTER_PATH)}" style="color:${BRAND};text-decoration:none;">${escapeHtml(SETTINGS_FOOTER)}</a></p>
+        <p style="margin:0;font-size:12px;color:#73707c;line-height:18px;"><a href="${href(baseUrl, SETTINGS_FOOTER_PATH)}" style="color:${BRAND};text-decoration:none;">${escapeHtml(COPY[lang].settingsFooter)}</a></p>
       </td></tr>
     </table>
   </td></tr></table>
@@ -143,56 +198,62 @@ function shell(baseUrl: string, body: string, extraFooter = ''): string {
 </html>`
 }
 
-function textFooter(baseUrl: string, extra = ''): string[] {
-  return ['', ...(extra ? [extra] : []), `${SETTINGS_FOOTER} ${url(baseUrl, SETTINGS_FOOTER_PATH)}`]
+function textFooter(baseUrl: string, extra = '', lang: ReminderLanguage = 'en'): string[] {
+  return ['', ...(extra ? [extra] : []), `${COPY[lang].settingsFooter} ${url(baseUrl, SETTINGS_FOOTER_PATH)}`]
 }
 
-function textRow(item: ApplicantItem | ReminderItem, showRole: boolean): string {
+function textRow(item: ApplicantItem | ReminderItem, showRole: boolean, lang: ReminderLanguage = 'en'): string {
+  const c = COPY[lang]
   const bits = [item.roleLine]
-  if (item.fit === 'strong') bits.push('Strong fit')
-  if (item.fit === 'possible') bits.push('Possible fit')
-  if ('daysLeft' in item) bits.push(closesChip(item.daysLeft, item.closesLocal))
+  if (item.fit === 'strong') bits.push(c.strongFit)
+  if (item.fit === 'possible') bits.push(c.possibleFit)
+  if ('daysLeft' in item) bits.push(closesChip(item.daysLeft, item.closesLocal, lang))
   if (showRole) bits.push(item.roleTitle)
-  return `- ${item.applicantName} (${bits.join(' · ')})`
+  return `- ${item.applicantName} (${bits.join(', ')})`
 }
 
-function reviewLabel(items: ApplicantItem[]): string {
-  if (items.length === 1) return `Review ${items[0].firstName ?? 'the application'}`
-  return `Review ${items.length} ${peopleNoun(items.length, items.every((i) => i.isPlayer))}`
+function reviewLabel(items: ApplicantItem[], lang: ReminderLanguage = 'en'): string {
+  const c = COPY[lang]
+  if (items.length === 1) return c.reviewName(items[0].firstName)
+  return c.reviewMany(items.length, peopleNoun(items.length, items.every((i) => i.isPlayer), lang))
 }
 
 // ── 1 · New applications (batched) ───────────────────────────────────────────
 
-export function renderNewApplicationsEmail(input: { items: ApplicantItem[]; baseUrl: string }): RenderedEmail {
+export function renderNewApplicationsEmail(input: { items: ApplicantItem[]; baseUrl: string; lang?: ReminderLanguage }): RenderedEmail {
   const { items, baseUrl } = input
-  const subject = newApplicationsSubject(items)
+  const lang = input.lang ?? 'en'
+  const c = COPY[lang]
+  const subject = newApplicationsSubject(items, lang)
   const roles = new Set(items.map((i) => i.opportunityId))
   const target = reviewTarget(items)
   const org = items[0]?.orgName ?? null
   const intro = items.length === 1
-    ? `${items[0].firstName ?? 'A new applicant'} applied for ${items[0].roleTitle}.`
+    ? c.newOne(items[0].firstName, items[0].roleTitle)
     : roles.size === 1
-      ? `${items.length} people applied for ${items[0].roleTitle} since the last email.`
-      : `${items.length} people applied for your opportunities since the last email.`
+      ? c.newOneRole(items.length, items[0].roleTitle)
+      : c.newManyRoles(items.length)
   const body = `
         ${eyebrow(org)}
         ${heading(subject)}
         <p style="margin:0 0 4px;font-size:15px;line-height:22px;color:${INK_2};">${escapeHtml(intro)}</p>
-        ${personTable(items, { showRole: roles.size > 1 })}
-        <div style="padding:20px 0 4px;">${primaryButton(href(baseUrl, target), 'Review')}</div>
-        <p style="margin:12px 0 8px;font-size:13px;line-height:19px;color:${INK_3};">A quick answer, even a no, helps every player. ${escapeHtml(DECLINE_HINT.replace(/^Not the right fit\? /, ''))}</p>`
+        ${personTable(items, { showRole: roles.size > 1, lang })}
+        <div style="padding:20px 0 4px;">${primaryButton(href(baseUrl, target), c.review)}</div>
+        <p style="margin:12px 0 8px;font-size:13px;line-height:19px;color:${INK_3};">${c.quickAnswer} ${escapeHtml(c.declineHintShort)}</p>`
   const text = [
     subject,
     '',
     intro,
     '',
-    ...items.slice(0, MAX_ROWS).map((i) => textRow(i, roles.size > 1)),
-    items.length > MAX_ROWS ? `+ ${items.length - MAX_ROWS} more waiting in Hockia.` : '',
+    ...items.slice(0, MAX_ROWS).map((i) => textRow(i, roles.size > 1, lang)),
+    items.length > MAX_ROWS ? c.moreWaiting(items.length - MAX_ROWS) : '',
     '',
-    `Review: ${url(baseUrl, target)}`,
-    ...textFooter(baseUrl),
+    `${c.review}: ${url(baseUrl, target)}`,
+    '',
+    `${c.quickAnswer} ${c.declineHintShort}`,
+    ...textFooter(baseUrl, '', lang),
   ].filter((l, idx, arr) => !(l === '' && arr[idx - 1] === '')).join('\n')
-  return { subject, html: shell(baseUrl, body), text }
+  return { subject, html: shell(baseUrl, body, '', lang), text }
 }
 
 // ── 2 + 3 · Closing soon / Last call (one email per publisher per day) ───────
@@ -205,10 +266,13 @@ export interface ReminderEmailInput {
   /** Every visible pending application of the publisher, soonest first. */
   pending: ReminderItem[]
   baseUrl: string
+  /** The publisher's interface language; English when absent. */
+  lang?: ReminderLanguage
 }
 
-function lastCallBlock(item: ReminderItem, baseUrl: string, isFirst: boolean): string {
-  const name = item.firstName ?? 'the applicant'
+function lastCallBlock(item: ReminderItem, baseUrl: string, isFirst: boolean, lang: ReminderLanguage = 'en'): string {
+  const c = COPY[lang]
+  const name = item.firstName ?? c.theApplicant
   return `
         <div style="${isFirst ? '' : `border-top:1px solid ${LINE};margin-top:18px;padding-top:18px;`}">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;"><tr>
@@ -217,85 +281,87 @@ function lastCallBlock(item: ReminderItem, baseUrl: string, isFirst: boolean): s
               <div style="font-size:16px;font-weight:600;color:${INK_1};line-height:22px;">${escapeHtml(item.applicantName)}</div>
               <div style="font-size:13px;color:${INK_2};line-height:18px;">${escapeHtml(item.roleLine)}</div>
               <div style="font-size:13px;color:${INK_3};line-height:18px;">${escapeHtml(item.roleTitle)}</div>
-              <div style="padding-top:6px;">${[fitBadge(item.fit), closesChipHtml(item)].filter(Boolean).join('&nbsp;')}</div>
+              <div style="padding-top:6px;">${[fitBadge(item.fit, c), closesChipHtml(item, lang)].filter(Boolean).join('&nbsp;')}</div>
             </td>
           </tr></table>
-          <p style="margin:14px 0 16px;font-size:15px;line-height:22px;color:${INK_2};">${escapeHtml(lastCallBody(item))}</p>
-          <div>${primaryButton(href(baseUrl, reviewPath(item.opportunityId, item.applicationId)), `Review ${name}`)}</div>
-          <div style="padding-top:12px;"><a href="${href(baseUrl, declinePath(item.opportunityId, item.applicationId))}" style="font-size:14px;font-weight:600;color:${BRAND};text-decoration:none;">Not a fit, with a kind note</a></div>
+          <p style="margin:14px 0 16px;font-size:15px;line-height:22px;color:${INK_2};">${escapeHtml(lastCallBody(item, lang))}</p>
+          <div>${primaryButton(href(baseUrl, reviewPath(item.opportunityId, item.applicationId)), lang === 'es' ? c.reviewName(item.firstName) : `Review ${name}`)}</div>
+          <div style="padding-top:12px;"><a href="${href(baseUrl, declinePath(item.opportunityId, item.applicationId))}" style="font-size:14px;font-weight:600;color:${BRAND};text-decoration:none;">${c.notAFit}</a></div>
         </div>`
 }
 
 export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
   const { lastCall, closingSoon, pending, baseUrl } = input
+  const lang = input.lang ?? 'en'
+  const c = COPY[lang]
   const lastIds = new Set(lastCall.map((i) => i.applicationId))
   const others = pending.filter((i) => !lastIds.has(i.applicationId))
   const org = pending[0]?.orgName ?? lastCall[0]?.orgName ?? null
 
   if (lastCall.length > 0) {
-    const subject = lastCallSubject(lastCall)
+    const subject = lastCallSubject(lastCall, lang)
     const combined = closingSoon.length > 0 && others.length > 0
-    const lastFooter = `Last reminder for ${namesPhrase(lastCall.map((i) => i.firstName))}.`
+    const lastFooter = c.lastReminder(namesPhrase(lastCall.map((i) => i.firstName), lang))
     let tail = ''
     let tailText: string[] = []
     if (combined) {
       const allPlayers = others.every((i) => i.isPlayer)
       tail = `
         <div style="border-top:8px solid #f1eff6;margin:24px -22px 0;padding:22px 22px 0;">
-          <div style="font-size:13px;font-weight:600;color:#b45309;margin:0 0 6px;">Closing soon</div>
-          ${heading(waitingLine(others.length, allPlayers))}
-          ${personTable(others, { showRole: new Set(others.map((i) => i.opportunityId)).size > 1 })}
-          <div style="padding:20px 0 4px;">${primaryButton(href(baseUrl, reviewTarget(others)), reviewLabel(others))}</div>
-          <p style="margin:12px 0 8px;font-size:13px;line-height:19px;color:${INK_3};">${escapeHtml(DECLINE_HINT)}</p>
+          <div style="font-size:13px;font-weight:600;color:#b45309;margin:0 0 6px;">${c.closingSoon}</div>
+          ${heading(waitingLine(others.length, allPlayers, lang))}
+          ${personTable(others, { showRole: new Set(others.map((i) => i.opportunityId)).size > 1, lang })}
+          <div style="padding:20px 0 4px;">${primaryButton(href(baseUrl, reviewTarget(others)), reviewLabel(others, lang))}</div>
+          <p style="margin:12px 0 8px;font-size:13px;line-height:19px;color:${INK_3};">${escapeHtml(c.declineHint)}</p>
         </div>`
-      tailText = ['', 'Closing soon', waitingLine(others.length, allPlayers), ...others.slice(0, MAX_ROWS).map((i) => textRow(i, true)), `${reviewLabel(others)}: ${url(baseUrl, reviewTarget(others))}`, DECLINE_HINT]
+      tailText = ['', c.closingSoon, waitingLine(others.length, allPlayers, lang), ...others.slice(0, MAX_ROWS).map((i) => textRow(i, true, lang)), `${reviewLabel(others, lang)}: ${url(baseUrl, reviewTarget(others))}`, c.declineHint]
     } else if (others.length > 0) {
-      const names = namesPhrase(others.map((i) => i.firstName))
-      const line = `${others.length} more ${others.length === 1 ? 'is' : 'are'} waiting: ${names}.`
+      const names = namesPhrase(others.map((i) => i.firstName), lang)
+      const line = c.moreAreWaiting(others.length, names)
       tail = `
         <p style="margin:22px 0 8px;font-size:14px;line-height:20px;color:${INK_2};"><a href="${href(baseUrl, reviewTarget(others))}" style="color:${BRAND};text-decoration:none;font-weight:600;">${escapeHtml(line)}</a></p>`
       tailText = ['', `${line} ${url(baseUrl, reviewTarget(others))}`]
     }
     const body = `
         ${eyebrow(org)}
-        ${heading(subject)}${lastCall.map((i, idx) => lastCallBlock(i, baseUrl, idx === 0)).join('')}${tail}`
+        ${heading(subject)}${lastCall.map((i, idx) => lastCallBlock(i, baseUrl, idx === 0, lang)).join('')}${tail}`
     const text = [
       subject,
       ...lastCall.flatMap((i) => [
         '',
-        `${i.applicantName} (${i.roleLine} · ${i.roleTitle})`,
-        lastCallBody(i),
-        `Review ${i.firstName ?? 'the application'}: ${url(baseUrl, reviewPath(i.opportunityId, i.applicationId))}`,
-        `Not a fit, with a kind note: ${url(baseUrl, declinePath(i.opportunityId, i.applicationId))}`,
+        `${i.applicantName} (${i.roleLine}, ${i.roleTitle})`,
+        lastCallBody(i, lang),
+        `${c.reviewName(i.firstName)}: ${url(baseUrl, reviewPath(i.opportunityId, i.applicationId))}`,
+        `${c.notAFit}: ${url(baseUrl, declinePath(i.opportunityId, i.applicationId))}`,
       ]),
       ...tailText,
-      ...textFooter(baseUrl, lastFooter),
+      ...textFooter(baseUrl, lastFooter, lang),
     ].join('\n')
-    return { subject, html: shell(baseUrl, body, lastFooter), text }
+    return { subject, html: shell(baseUrl, body, lastFooter, lang), text }
   }
 
   // Closing soon only: ALL pending applications, soonest-closing first.
   const allPlayers = pending.every((i) => i.isPlayer)
-  const subject = closingSoonSubject(pending, allPlayers)
+  const subject = closingSoonSubject(pending, allPlayers, lang)
   const target = reviewTarget(pending)
   const showRole = new Set(pending.map((i) => i.opportunityId)).size > 1
   const body = `
         ${eyebrow(org)}
-        ${heading(closingSoonHeadline(pending, allPlayers))}
-        ${pending.length > 1 ? '' : `<p style="margin:0 0 4px;font-size:15px;line-height:22px;color:${INK_2};">${escapeHtml(waitingLine(1, allPlayers))}.</p>`}
-        ${personTable(pending, { showRole })}
-        <div style="padding:20px 0 4px;">${primaryButton(href(baseUrl, target), reviewLabel(pending))}</div>
-        <p style="margin:12px 0 8px;font-size:13px;line-height:19px;color:${INK_3};">${escapeHtml(DECLINE_HINT)}</p>`
+        ${heading(closingSoonHeadline(pending, allPlayers, lang))}
+        ${pending.length > 1 ? '' : `<p style="margin:0 0 4px;font-size:15px;line-height:22px;color:${INK_2};">${escapeHtml(waitingLine(1, allPlayers, lang))}.</p>`}
+        ${personTable(pending, { showRole, lang })}
+        <div style="padding:20px 0 4px;">${primaryButton(href(baseUrl, target), reviewLabel(pending, lang))}</div>
+        <p style="margin:12px 0 8px;font-size:13px;line-height:19px;color:${INK_3};">${escapeHtml(c.declineHint)}</p>`
   const text = [
-    closingSoonHeadline(pending, allPlayers),
-    pending.length > 1 ? '' : `${waitingLine(1, allPlayers)}.`,
+    closingSoonHeadline(pending, allPlayers, lang),
+    pending.length > 1 ? '' : `${waitingLine(1, allPlayers, lang)}.`,
     '',
-    ...pending.slice(0, MAX_ROWS).map((i) => textRow(i, showRole)),
-    pending.length > MAX_ROWS ? `+ ${pending.length - MAX_ROWS} more waiting in Hockia.` : '',
+    ...pending.slice(0, MAX_ROWS).map((i) => textRow(i, showRole, lang)),
+    pending.length > MAX_ROWS ? c.moreWaiting(pending.length - MAX_ROWS) : '',
     '',
-    `${reviewLabel(pending)}: ${url(baseUrl, target)}`,
-    DECLINE_HINT,
-    ...textFooter(baseUrl),
+    `${reviewLabel(pending, lang)}: ${url(baseUrl, target)}`,
+    c.declineHint,
+    ...textFooter(baseUrl, '', lang),
   ].filter((l, idx, arr) => !(l === '' && arr[idx - 1] === '')).join('\n')
-  return { subject, html: shell(baseUrl, body), text }
+  return { subject, html: shell(baseUrl, body, '', lang), text }
 }

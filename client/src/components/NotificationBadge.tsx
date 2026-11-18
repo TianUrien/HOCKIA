@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNotificationsT } from '@/i18n/ns/notifications'
 
 interface NotificationBadgeProps {
   count: number
@@ -28,6 +29,7 @@ export default function NotificationBadge({
   className = '',
   maxDisplay = 9 
 }: NotificationBadgeProps) {
+  const t = useNotificationsT()
   const [isVisible, setIsVisible] = useState(false)
   const [displayCount, setDisplayCount] = useState(0)
 
@@ -52,7 +54,7 @@ export default function NotificationBadge({
   return (
     <span
       className={`notification-badge ${isVisible ? 'notification-badge--visible' : ''} ${className}`}
-      aria-label={`${count} unread ${count === 1 ? 'notification' : 'notifications'}`}
+      aria-label={t('badge.unread', { count })}
       role="status"
       aria-live="polite"
     >

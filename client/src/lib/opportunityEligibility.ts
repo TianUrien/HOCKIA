@@ -2,7 +2,9 @@ import type { Vacancy, Profile } from './supabase'
 import { isEuCountryCode, type Country } from '@/hooks/useCountries'
 import { computeInterest } from './interestFit'
 import { specialistSkillLabel } from './specialistSkills'
-import { compensationLabel } from './opportunityIntent'
+import { tOpportunities } from '@/i18n/ns/opportunities'
+import { intlLocale } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Whether a user may submit an application to an opportunity, and — when
@@ -25,6 +27,9 @@ export interface EligibilityResult {
   eligible: boolean
   /** Why the user is blocked — present only when `eligible` is false. */
   reason?: string
+  /** The rule behind `reason`, for code that must tell the rules apart
+   *  (the words change with the interface language). */
+  code?: 'eu_passport' | 'womens_team' | 'mens_team'
   /** Set when eligibility could not be fully verified because the user's
    *  profile is incomplete. The user is still allowed to apply; the UI
    *  uses this to nudge them to fill the missing fields in. */
@@ -47,7 +52,8 @@ export function checkOpportunityEligibility(
   // server trigger and the sign-in gate enforce eligibility on submit.
   if (!profile) return { eligible: true }
 
-  const missing: string[] = []
+  let missingNationality = false
+  let missingGender = false
 
   // ── Rule A — EU passport ──
   if (vacancy.eu_passport_required === true) {
@@ -58,9 +64,9 @@ export function checkOpportunityEligibility(
       .filter((c): c is string => Boolean(c))
 
     if (codes.length === 0) {
-      missing.push('your nationality')
+      missingNationality = true
     } else if (!codes.some(isEuCountryCode)) {
-      return { eligible: false, reason: 'This opportunity requires an EU passport.' }
+      return { eligible: false, code: 'eu_passport', reason: tOpportunities('eligibility.euPassport') }
     }
   }
 
@@ -71,22 +77,36 @@ export function checkOpportunityEligibility(
     const userGender = normalizeGender(profile.gender)
 
     if (!userGender) {
-      missing.push('your gender')
+      missingGender = true
     } else if (requiresWomen && userGender === 'men') {
-      return { eligible: false, reason: "This opportunity is for women's teams." }
+      return { eligible: false, code: 'womens_team', reason: tOpportunities('eligibility.womensTeams') }
     } else if (requiresMen && userGender === 'women') {
-      return { eligible: false, reason: "This opportunity is for men's teams." }
+      return { eligible: false, code: 'mens_team', reason: tOpportunities('eligibility.mensTeams') }
     }
   }
 
-  if (missing.length > 0) {
+  if (missingNationality || missingGender) {
     return {
       eligible: true,
-      incompleteProfile: `Add ${missing.join(' and ')} to your profile so clubs can confirm you're a fit for this opportunity.`,
+      incompleteProfile: missingNationality && missingGender
+        ? tOpportunities('eligibility.addNationalityAndGender')
+        : missingNationality ? tOpportunities('eligibility.addNationality') : tOpportunities('eligibility.addGender'),
     }
   }
 
   return { eligible: true }
+}
+
+/** "This opening is unpaid / development, but your profile says you're looking for paid." */
+function compensationWarning(compensation: string | null | undefined): string {
+  switch (compensation) {
+    case 'paid': return tOpportunities('mustHave.compensation.paid')
+    case 'unpaid_development': return tOpportunities('mustHave.compensation.unpaidDevelopment')
+    case 'either': return tOpportunities('mustHave.compensation.either')
+    default: return compensation
+      ? tOpportunities('mustHave.compensation.other', { compensation: compensation.toLowerCase() })
+      : tOpportunities('mustHave.compensation.notStated')
+  }
 }
 
 /** Title-case an opportunity_position value for candidate-facing copy. */
@@ -148,23 +168,19 @@ export function opportunityMustHaveWarnings(
   }
   const fmtDate = (iso: string) => {
     const d = new Date(iso)
-    return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(intlLocale(), { month: 'short', year: 'numeric' })
   }
 
   if (vacancy.compensation_required && computeInterest(interestCandidate, { ...baseOpts, compensationRequired: true }).hardFail) {
-    warnings.push(
-      `This opening is ${(compensationLabel(vacancy.compensation) ?? 'a development opportunity').toLowerCase()}, but your profile says you're looking for paid.`,
-    )
+    warnings.push(compensationWarning(vacancy.compensation))
   }
   if (vacancy.location_required && computeInterest(interestCandidate, { ...baseOpts, locationRequired: true }).hardFail) {
-    warnings.push(
-      `This opening is in ${vacancy.location_country}, which your relocation preferences don't currently include.`,
-    )
+    warnings.push(tOpportunities('mustHave.location', { country: countryLabel(vacancy.location_country) }))
   }
   if (vacancy.availability_required && computeInterest(interestCandidate, { ...baseOpts, availabilityRequired: true }).hardFail) {
-    warnings.push(
-      `This opening starts ${vacancy.start_date ? `in ${fmtDate(vacancy.start_date)}` : 'before'} you become available.`,
-    )
+    warnings.push(vacancy.start_date
+      ? tOpportunities('mustHave.startsIn', { date: fmtDate(vacancy.start_date) })
+      : tOpportunities('mustHave.startsBefore'))
   }
 
   // ── Fit-lens dims (position / specialists) — simple inline checks ──
@@ -173,7 +189,7 @@ export function opportunityMustHaveWarnings(
     const primary = profile.position.trim().toLowerCase()
     const secondary = (profile.secondary_position ?? '').trim().toLowerCase()
     if (primary !== target && secondary !== target) {
-      warnings.push(`This opening requires a ${positionLabel(vacancy.position)}; your position is ${positionLabel(profile.position)}.`)
+      warnings.push(tOpportunities('mustHave.position', { wanted: positionLabel(vacancy.position), own: positionLabel(profile.position) }))
     }
   }
   // .filter(Boolean) mirrors clubFit.ts so an empty-string entry can't yield a
@@ -183,7 +199,7 @@ export function opportunityMustHaveWarnings(
   if (vacancy.specialists_required && soughtSpecialists.length > 0 && heldSpecialists.length > 0) {
     const held = new Set(heldSpecialists.map((s) => s.toLowerCase()))
     if (!soughtSpecialists.some((s) => held.has(s.toLowerCase()))) {
-      warnings.push(`This opening wants ${soughtSpecialists.map(specialistSkillLabel).join(', ')}, which isn't listed on your profile.`)
+      warnings.push(tOpportunities('mustHave.specialists', { skills: soughtSpecialists.map(specialistSkillLabel).join(', ') }))
     }
   }
 

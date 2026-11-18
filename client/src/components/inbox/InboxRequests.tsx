@@ -11,6 +11,7 @@ import { formatActivityAge } from '@/lib/inboxTime'
 import { profilePath } from '@/lib/profileNavigation'
 import type { FriendRequest, FriendRequestAction } from '@/hooks/useFriendRequests'
 import type { MyClubInvitation } from '@/lib/clubInvitations'
+import { useInboxT } from '@/i18n/ns/inbox'
 
 interface InboxRequestsProps {
   incoming: FriendRequest[]
@@ -45,6 +46,7 @@ export function InboxRequests({
   clubInvitePendingId = null,
   respondToClubInvite,
 }: InboxRequestsProps) {
+  const t = useInboxT()
   // Rows the member has just acted on stay visible with their outcome until
   // the next visit (design note: "the row becomes a quiet confirmation").
   const [resolved, setResolved] = useState<Record<string, Resolved>>({})
@@ -73,16 +75,16 @@ export function InboxRequests({
   }
 
   return (
-    <section aria-label="Requests">
+    <section aria-label={t('requests.label')}>
       <p className="px-5 pb-1 pt-1 text-secondary text-ink-2" data-testid="requests-explainer">
-        Friends can message you, see your full media and write you a reference.
+        {t('requests.explainer')}
       </p>
 
       {/* Squad invitations sit at the top while pending, read or not (Figma D1
           DEV NOTE: the invitee accepts in Inbox › Requests). Accept or Decline
           removes the row; the toast confirms. */}
       {clubInvitations.length > 0 && respondToClubInvite && (
-        <ul aria-label="Club invitations" data-testid="inbox-club-invitations">
+        <ul aria-label={t('requests.clubInvitationsLabel')} data-testid="inbox-club-invitations">
           {clubInvitations.map((invite) => (
             <ClubInvitationRow
               key={invite.clubMemberId}
@@ -95,14 +97,14 @@ export function InboxRequests({
       )}
 
       {rows.length === 0 ? (
-        clubInvitations.length > 0 ? null : <p className="px-5 py-8 text-center text-row text-ink-2">No requests right now.</p>
+        clubInvitations.length > 0 ? null : <p className="px-5 py-8 text-center text-row text-ink-2">{t('requests.empty')}</p>
       ) : (
         <ul>
           {rows.map((request) => {
             const outcome = resolved[request.friendshipId]
             const busy = pendingId === request.friendshipId
             const person = request.person
-            const name = person?.full_name ?? person?.username ?? 'Hockia member'
+            const name = person?.full_name ?? person?.username ?? t('requests.memberFallback')
             const to = person ? profilePath(person.role, person.username, person.id) : null
             const state = outcome === 'accepted' ? 'accepted' : outcome === 'declined' ? 'declined' : 'incoming'
             return (
@@ -114,14 +116,14 @@ export function InboxRequests({
                 name={name}
                 meta={identityLine(person?.role, person?.position)}
                 detail={
-                  state === 'accepted' ? 'You can now message and reference each other'
-                    : state === 'declined' ? 'Declined'
+                  state === 'accepted' ? t('requests.acceptedDetail')
+                    : state === 'declined' ? t('requests.declined')
                       : <MutualFriendsLine memberId={person?.id ?? null} role={person?.role ?? null} />
                 }
                 trailing={
                   state === 'accepted' ? (
                     <span className="flex shrink-0 items-center gap-1 text-row font-semibold text-positive" data-testid="request-friends">
-                      <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" /> Friends
+                      <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" /> {t('requests.friends')}
                     </span>
                   ) : state === 'declined' ? null : (
                     <span className="flex shrink-0 items-center gap-2">
@@ -131,9 +133,9 @@ export function InboxRequests({
                         onClick={() => void act(request, 'accept')}
                         className={buttonClassName({ variant: 'tonal', size: 'small', radius: 'rounded-full' })}
                       >
-                        {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Accepting" /> : 'Accept'}
+                        {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label={t('requests.accepting')} /> : t('requests.accept')}
                       </button>
-                      <IconButton variant="muted" label={`Decline ${name}`} disabled={busy} onClick={() => void act(request, 'decline')}>
+                      <IconButton variant="muted" label={t('requests.declineLabel', { name })} disabled={busy} onClick={() => void act(request, 'decline')}>
                         <X className="h-[18px] w-[18px]" strokeWidth={2} />
                       </IconButton>
                     </span>
@@ -147,11 +149,11 @@ export function InboxRequests({
 
       {outgoing.length > 0 && (
         <>
-          <h2 className="px-5 pb-1 pt-5 text-title text-ink-1">Sent</h2>
+          <h2 className="px-5 pb-1 pt-5 text-title text-ink-1">{t('requests.sentTitle')}</h2>
           <ul>
             {outgoing.map((request) => {
               const person = request.person
-              const name = person?.full_name ?? person?.username ?? 'Hockia member'
+              const name = person?.full_name ?? person?.username ?? t('requests.sentMemberFallback')
               const to = person ? profilePath(person.role, person.username, person.id) : null
               return (
                 <RequestRow
@@ -160,8 +162,8 @@ export function InboxRequests({
                   to={to}
                   avatar={<EntityAvatar src={person?.avatar_url} name={name} role={person?.role} size={52} />}
                   name={name}
-                  meta={`${identityLine(person?.role, person?.position)} · sent ${formatActivityAge(request.createdAt)}`}
-                  trailing={<span className="shrink-0 text-secondary text-ink-3" data-testid="request-waiting">Waiting</span>}
+                  meta={t('requests.sentMeta', { identity: identityLine(person?.role, person?.position), age: formatActivityAge(request.createdAt) })}
+                  trailing={<span className="shrink-0 text-secondary text-ink-3" data-testid="request-waiting">{t('requests.waiting')}</span>}
                 />
               )
             })}
@@ -212,9 +214,10 @@ function RequestRow({ state, to, avatar, name, meta, detail, trailing, testId = 
  */
 function MutualFriendsLine({ memberId, role }: { memberId: string | null; role: string | null }) {
   const person = Boolean(memberId) && !isOrganisationRole(role)
+  const t = useInboxT()
   const { count, loading } = useFriendsInCommon(person ? memberId : null)
   if (!person || loading) return null
-  return <>{count === 0 ? 'No mutual friends yet' : count === 1 ? '1 mutual friend' : `${count} mutual friends`}</>
+  return <>{count === 0 ? t('requests.noMutualFriends') : t('requests.mutualFriends', { count })}</>
 }
 
 function ClubInvitationRow({ invite, busy, respond }: {
@@ -222,7 +225,8 @@ function ClubInvitationRow({ invite, busy, respond }: {
   busy: boolean
   respond: (clubMemberId: string, action: 'accept' | 'decline') => Promise<boolean>
 }) {
-  const name = invite.club.fullName ?? invite.club.username ?? 'A club'
+  const t = useInboxT()
+  const name = invite.club.fullName ?? invite.club.username ?? t('requests.clubFallback')
   const to = profilePath('club', invite.club.username, invite.club.id)
   return (
     <RequestRow
@@ -231,8 +235,8 @@ function ClubInvitationRow({ invite, busy, respond }: {
       to={to}
       avatar={<EntityAvatar src={invite.club.avatarUrl} name={name} role="club" size={52} />}
       name={name}
-      meta="Invited you to join their club"
-      detail={`Club invitation · ${formatActivityAge(invite.createdAt)}`}
+      meta={t('requests.clubInviteMeta')}
+      detail={t('requests.clubInviteDetail', { age: formatActivityAge(invite.createdAt) })}
       trailing={
         <span className="flex shrink-0 items-center gap-2">
           <button
@@ -241,9 +245,9 @@ function ClubInvitationRow({ invite, busy, respond }: {
             onClick={() => void respond(invite.clubMemberId, 'accept')}
             className={buttonClassName({ variant: 'tonal', size: 'small', radius: 'rounded-full' })}
           >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label="Accepting" /> : 'Accept'}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-label={t('requests.clubAccepting')} /> : t('requests.clubAccept')}
           </button>
-          <IconButton variant="muted" label={`Decline ${name}'s invitation`} disabled={busy} onClick={() => void respond(invite.clubMemberId, 'decline')}>
+          <IconButton variant="muted" label={t('requests.clubDeclineLabel', { name })} disabled={busy} onClick={() => void respond(invite.clubMemberId, 'decline')}>
             <X className="h-[18px] w-[18px]" strokeWidth={2} />
           </IconButton>
         </span>

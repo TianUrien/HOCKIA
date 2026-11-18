@@ -1,8 +1,9 @@
 import { supabase } from './supabase'
 import { logger } from './logger'
+import { tCommunity } from '@/i18n/ns/community'
 import type { SharedPostMetadata } from '@/types/chat'
-import { NEW_CONVERSATION_LIMIT_MESSAGE, isNewConversationLimitError, reportNewConversationRefusal } from './newConversationLimit'
-import { RECRUITER_MINOR_MESSAGE, isRecruiterMinorError } from './recruiterMinor'
+import { newConversationLimitMessage, isNewConversationLimitError, reportNewConversationRefusal } from './newConversationLimit'
+import { recruiterMinorMessage, isRecruiterMinorError } from './recruiterMinor'
 
 /**
  * Send a shared-post message to a recipient without requiring an active chat window.
@@ -27,7 +28,7 @@ export async function sendSharedPostMessage(
 
     if (findError) {
       logger.error('[sharePost] Error finding conversation:', findError)
-      return { success: false, error: 'Failed to find conversation' }
+      return { success: false, error: tCommunity('share.errors.findConversation') }
     }
 
     if (existing) {
@@ -60,18 +61,18 @@ export async function sendSharedPostMessage(
             conversationId = raceExisting.id
           } else {
             logger.error('[sharePost] Race condition but could not find conversation')
-            return { success: false, error: 'Failed to create conversation' }
+            return { success: false, error: tCommunity('share.errors.createConversation') }
           }
         } else if (isNewConversationLimitError(createError)) {
           // Sharing to someone new counts as starting a conversation.
           reportNewConversationRefusal()
-          return { success: false, error: NEW_CONVERSATION_LIMIT_MESSAGE }
+          return { success: false, error: newConversationLimitMessage() }
         } else if (isRecruiterMinorError(createError)) {
           // A rule, not a failure: shown as an info note.
-          return { success: false, error: RECRUITER_MINOR_MESSAGE, notice: true }
+          return { success: false, error: recruiterMinorMessage(), notice: true }
         } else {
           logger.error('[sharePost] Error creating conversation:', createError)
-          return { success: false, error: 'Failed to create conversation' }
+          return { success: false, error: tCommunity('share.errors.createConversation') }
         }
       } else {
         conversationId = created.id
@@ -79,7 +80,7 @@ export async function sendSharedPostMessage(
     }
 
     if (!conversationId) {
-      return { success: false, error: 'Failed to resolve conversation' }
+      return { success: false, error: tCommunity('share.errors.resolveConversation') }
     }
 
     // 3. Insert message with shared post metadata
@@ -92,12 +93,12 @@ export async function sendSharedPostMessage(
 
     if (msgError) {
       logger.error('[sharePost] Error inserting message:', msgError)
-      return { success: false, error: 'Failed to send message' }
+      return { success: false, error: tCommunity('share.errors.sendMessage') }
     }
 
     return { success: true }
   } catch (err) {
     logger.error('[sharePost] Unexpected error:', err)
-    return { success: false, error: 'Something went wrong' }
+    return { success: false, error: tCommunity('share.errors.generic') }
   }
 }

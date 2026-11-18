@@ -1,6 +1,7 @@
 import { Check, Minus } from 'lucide-react'
 import type { RoadStep } from '@/lib/signing'
 import { cn } from '@/lib/utils'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * D4.1 · Road to signing (Figma 390:3; DEV NOTE 391:23). Five steps on a
@@ -36,9 +37,10 @@ function Mark({ done, current, skipped = false }: { done: boolean; current: bool
 }
 
 export function RoadToSigningCard({ steps, onToggleTrial, onMessage, trialBusy }: Props) {
+  const t = useRecruitingT()
   return (
     <section className="rounded-2xl bg-surface-grouped px-4 pb-2 pt-3.5" data-testid="road-to-signing">
-      <h2 className="pb-1 text-[15px] font-semibold leading-5 text-ink-1">Road to signing</h2>
+      <h2 className="pb-1 text-[15px] font-semibold leading-5 text-ink-1">{t('roadToSigning.title')}</h2>
       <ol>
         {steps.map((s) => {
           const strong = s.current
@@ -58,7 +60,7 @@ export function RoadToSigningCard({ steps, onToggleTrial, onMessage, trialBusy }
                   disabled={trialBusy}
                   role="checkbox"
                   aria-checked={s.done}
-                  aria-label="Trial or video call done"
+                  aria-label={t('roadToSigning.trialDoneLabel')}
                   className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:opacity-60"
                   data-testid="road-trial-toggle"
                 >
@@ -72,7 +74,7 @@ export function RoadToSigningCard({ steps, onToggleTrial, onMessage, trialBusy }
                 </>
               )}
               {s.key === 'talked' && !s.done && (
-                <button type="button" onClick={onMessage} className="-mr-2 inline-flex min-h-11 shrink-0 items-center px-2 text-[14px] font-semibold text-hockia-primary" data-testid="road-message">Message</button>
+                <button type="button" onClick={onMessage} className="-mr-2 inline-flex min-h-11 shrink-0 items-center px-2 text-[14px] font-semibold text-hockia-primary" data-testid="road-message">{t('roadToSigning.message')}</button>
               )}
             </li>
           )

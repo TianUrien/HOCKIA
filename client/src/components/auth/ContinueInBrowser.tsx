@@ -4,6 +4,7 @@ import { webButtonClassName } from '@/components/ui/buttonClasses'
 import { trackEvent } from '@/lib/analytics'
 import { getExternalBrowserInstructions, handoffHref, inAppPlatform, openInExternalBrowser } from '@/lib/inAppBrowser'
 import { cn } from '@/lib/utils'
+import { useAuthT } from '@/i18n/ns/auth'
 
 /**
  * Figma: "Sign up v3 · Mobile · In-app browser (Google tapped)" 153:475, card 153:510.
@@ -32,8 +33,21 @@ interface ContinueInBrowserProps {
 export function ContinueInBrowser({ browserName, providerLabel = 'Google', className }: ContinueInBrowserProps) {
   const [copied, setCopied] = useState(false)
   const platform = inAppPlatform()
-  const appName = browserName && !/webview/i.test(browserName) ? browserName : 'This app'
-  const browser = platform === 'ios' ? 'Safari' : platform === 'android' ? 'Chrome' : 'your browser'
+  const t = useAuthT()
+  // null = no name to print: the catalog has its own sentence for "This app" / "your browser".
+  const appName = browserName && !/webview/i.test(browserName) ? browserName : null
+  const browser = platform === 'ios' ? 'Safari' : platform === 'android' ? 'Chrome' : null
+  const title = browser
+    ? t('handoff.title', { provider: providerLabel, browser })
+    : t('handoff.titleOtherBrowser', { provider: providerLabel })
+  const body = appName
+    ? browser
+      ? t('handoff.body', { appName, provider: providerLabel, browser })
+      : t('handoff.bodyOtherBrowser', { appName, provider: providerLabel })
+    : browser
+      ? t('handoff.bodyThisApp', { provider: providerLabel, browser })
+      : t('handoff.bodyThisAppOtherBrowser', { provider: providerLabel })
+  const instructions = getExternalBrowserInstructions(browserName)
   const label = (method: string) => `${browserName ?? 'unknown'}:${platform}:${providerLabel.toLowerCase()}:${method}`
 
   const open = () => {
@@ -68,27 +82,23 @@ export function ContinueInBrowser({ browserName, providerLabel = 'Google', class
           <Globe className="h-4 w-4" strokeWidth={2} />
         </span>
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold leading-5 text-ink-1">Continue with {providerLabel} in {browser}</p>
-          <p className="mt-1 text-[14px] leading-5 text-ink-2">
-            {appName} doesn’t allow {providerLabel} sign-in inside the app. Open this page in {browser} and you’ll pick
-            up right here. Apple and email work here too.
-          </p>
+          <p className="text-[15px] font-semibold leading-5 text-ink-1">{title}</p>
+          <p className="mt-1 text-[14px] leading-5 text-ink-2">{body}</p>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        {platform !== 'other' && (
+        {browser && (
           <button type="button" onClick={open} className={webButtonClassName({ variant: 'primary', size: 'medium' })}>
-            Open in {browser}
+            {t('handoff.open', { browser })}
           </button>
         )}
         <button type="button" onClick={copy} className={cn(webButtonClassName({ variant: 'secondary', size: 'medium' }), 'gap-1.5')}>
           {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
-          {copied ? 'Link copied' : 'Copy link'}
+          {copied ? t('handoff.copied') : t('handoff.copy')}
         </button>
       </div>
       <p className="mt-3 text-[13px] leading-[18px] text-ink-3">
-        {platform !== 'other' ? 'If nothing happens: ' : ''}
-        {getExternalBrowserInstructions(browserName)}
+        {browser ? t('handoff.ifNothingHappens', { instructions }) : instructions}
       </p>
     </div>
   )

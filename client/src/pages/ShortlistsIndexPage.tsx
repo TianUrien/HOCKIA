@@ -22,9 +22,11 @@ import Header from '@/components/Header'
 import { useAuthStore } from '@/lib/auth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useShortlists, type ShortlistWithCount } from '@/hooks/useShortlists'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 export default function ShortlistsIndexPage() {
-  useDocumentTitle('Shortlists')
+  const t = useRecruitingT()
+  useDocumentTitle(t('shortlistsIndex.documentTitle'))
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const { lists, loading, error, create, rename, remove, setDefault } = useShortlists()
@@ -37,14 +39,14 @@ export default function ShortlistsIndexPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="max-w-3xl mx-auto px-4 pt-under-header-lg pb-12 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to manage shortlists</h1>
-          <p className="text-gray-600 mb-6">Group players you're scouting and triage them later.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('shortlistsIndex.signedOutTitle')}</h1>
+          <p className="text-gray-600 mb-6">{t('shortlistsIndex.signedOutBody')}</p>
           <button
             type="button"
             onClick={() => navigate('/signin')}
             className="px-6 py-3 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-semibold hover:opacity-90"
           >
-            Sign in
+            {t('shortlistsIndex.signIn')}
           </button>
         </div>
       </div>
@@ -73,14 +75,14 @@ export default function ShortlistsIndexPage() {
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          {t('shortlistsIndex.back')}
         </button>
 
         <header className="mb-6 flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-title text-ink-1">Shortlists</h1>
+            <h1 className="text-title text-ink-1">{t('shortlistsIndex.title')}</h1>
             <p className="mt-2 text-[17px] leading-[22px] text-ink-2">
-              Group players you're scouting. Only you see these lists.
+              {t('shortlistsIndex.subtitle')}
             </p>
           </div>
           {!creating && (
@@ -90,7 +92,7 @@ export default function ShortlistsIndexPage() {
               className="inline-flex h-11 shrink-0 items-center gap-1 px-1 text-[15px] font-semibold text-brand-text transition-opacity hover:opacity-80"
             >
               <Plus className="h-4 w-4" strokeWidth={2} />
-              New list
+              {t('shortlistsIndex.newList')}
             </button>
           )}
         </header>
@@ -102,7 +104,7 @@ export default function ShortlistsIndexPage() {
               type="text"
               value={draftName}
               onChange={(e) => setDraftName(e.target.value)}
-              placeholder="e.g. Women's pre-season trials"
+              placeholder={t('shortlistsIndex.namePlaceholder')}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void handleCreate()
@@ -115,14 +117,14 @@ export default function ShortlistsIndexPage() {
               disabled={busy || !draftName.trim()}
               className="px-3 py-2 rounded-lg bg-hockia-primary text-white text-sm font-semibold hover:bg-[#6b1de0] disabled:bg-gray-300 transition-colors"
             >
-              {busy ? 'Creating…' : 'Create'}
+              {busy ? t('shortlistsIndex.creating') : t('shortlistsIndex.create')}
             </button>
             <button
               type="button"
               onClick={() => { setCreating(false); setDraftName('') }}
               className="px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900"
             >
-              Cancel
+              {t('shortlistsIndex.cancel')}
             </button>
           </div>
         )}
@@ -156,8 +158,8 @@ export default function ShortlistsIndexPage() {
                   // a modal here for terseness and a11y; can upgrade
                   // to a styled dialog later if QA flags this too.
                   const msg = list.item_count > 0
-                    ? `Delete "${list.name}" and remove ${list.item_count} ${list.item_count === 1 ? 'player' : 'players'} from this list? This can't be undone.`
-                    : `Delete "${list.name}"?`
+                    ? t('shortlistsIndex.confirmDeleteWithItems', { name: list.name, count: list.item_count })
+                    : t('shortlistsIndex.confirmDelete', { name: list.name })
                   if (window.confirm(msg)) {
                     void remove(list.id)
                   }
@@ -181,6 +183,7 @@ interface RowProps {
 }
 
 function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowProps) {
+  const t = useRecruitingT()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(list.name)
 
@@ -197,8 +200,8 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
           <input
             autoFocus
             type="text"
-            aria-label={`Rename shortlist ${list.name}`}
-            placeholder="Shortlist name"
+            aria-label={t('shortlistsIndex.renameLabel', { name: list.name })}
+            placeholder={t('shortlistsIndex.renamePlaceholder')}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={commitRename}
@@ -215,12 +218,12 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
               {list.is_default && (
                 <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-hockia-soft px-2 py-0.5 text-caption font-semibold text-brand-text">
                   <Star className="w-3 h-3 fill-current" />
-                  Default
+                  {t('shortlistsIndex.defaultBadge')}
                 </span>
               )}
             </div>
             <p className="mt-0.5 text-secondary text-ink-2">
-              {list.item_count} {list.item_count === 1 ? 'player' : 'players'}
+              {t('shortlistsIndex.playerCount', { count: list.item_count })}
             </p>
           </Link>
         )}
@@ -231,7 +234,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
               <button
                 type="button"
                 onClick={commitRename}
-                aria-label="Save name"
+                aria-label={t('shortlistsIndex.saveName')}
                 className="flex h-11 w-11 items-center justify-center rounded-full text-hockia-primary hover:bg-hockia-soft"
               >
                 <Check className="w-4 h-4" />
@@ -239,7 +242,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
               <button
                 type="button"
                 onClick={() => { setDraft(list.name); setEditing(false) }}
-                aria-label="Cancel rename"
+                aria-label={t('shortlistsIndex.cancelRename')}
                 className="flex h-11 w-11 items-center justify-center rounded-full text-ink-2 hover:bg-surface-muted"
               >
                 <X className="w-4 h-4" />
@@ -251,8 +254,8 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
                 <button
                   type="button"
                   onClick={onSetDefault}
-                  aria-label="Make this the default list"
-                  title="Make default. Quick-saves land here"
+                  aria-label={t('shortlistsIndex.makeDefault')}
+                  title={t('shortlistsIndex.makeDefaultTitle')}
                   className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-hockia-soft hover:text-hockia-primary"
                 >
                   <Star className="w-4 h-4" />
@@ -261,7 +264,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                aria-label="Rename"
+                aria-label={t('shortlistsIndex.rename')}
                 className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-surface-muted hover:text-ink-1"
               >
                 <Pencil className="w-4 h-4" />
@@ -270,13 +273,13 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
                 <button
                   type="button"
                   onClick={onDelete}
-                  aria-label="Delete"
+                  aria-label={t('shortlistsIndex.delete')}
                   className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-status-danger-soft hover:text-status-danger"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               )}
-              <button type="button" onClick={onOpen} aria-label={`Open ${list.name}`} className="flex h-11 w-8 items-center justify-center text-ink-4">
+              <button type="button" onClick={onOpen} aria-label={t('shortlistsIndex.openList', { name: list.name })} className="flex h-11 w-8 items-center justify-center text-ink-4">
                 <ChevronRight className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden="true" />
               </button>
             </>
@@ -288,12 +291,13 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
 }
 
 function EmptyState({ onCreate }: { onCreate: () => void }) {
+  const t = useRecruitingT()
   return (
     <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-8 text-center">
       <BookmarkCheck className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-      <h2 className="text-lg font-semibold text-gray-900 mb-1">No shortlists yet</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-1">{t('shortlistsIndex.emptyTitle')}</h2>
       <p className="text-sm text-gray-600 mb-4">
-        Save a player from Community or create a list to group your prospects.
+        {t('shortlistsIndex.emptyBody')}
       </p>
       <button
         type="button"
@@ -301,7 +305,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
         className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-hockia-primary text-white text-sm font-semibold hover:bg-[#6b1de0]"
       >
         <Plus className="w-4 h-4" />
-        Create your first list
+        {t('shortlistsIndex.createFirst')}
       </button>
     </div>
   )

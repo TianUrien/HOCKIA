@@ -35,11 +35,13 @@ import {
   roleHeadline,
   CATEGORY_DOT_ON_PHOTO_CLASSES,
 } from '@/lib/opportunityCopy'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 import { askWhenApplying, asksHeading, messageLabel, offersHeading, onBehalfNote, reviewsLine, roleIdentity, wordsHeading, type RoleIdentity } from '@/lib/opportunityIdentity'
 import { isRelevantForViewer, roleStatus } from '@/lib/opportunityRails'
 import { CrestTile, GlassChip, RoleCover } from '@/components/opportunities/RoleCover'
 import { BenefitItem, Fact } from '@/components/opportunities/OpportunityDetailMobile'
 import { roleDates, shareRole, useOwnApplicationRow } from '@/components/opportunities/roleDetailShared'
+import { countryLabel } from '@/i18n/countryNames'
 
 export interface OpportunityDetailDesktopProps {
   vacancy: Vacancy
@@ -80,6 +82,7 @@ const CARD = 'rounded-[16px] border-[0.5px] border-line bg-white'
 export function OpportunityDetailDesktop({
   vacancy, clubName, clubLogo, clubId, publisherRole, identity: identityProp, palette = null, countryFlag, league, hasApplied, applicationStatus, canApply, isPublisher, isClosed = false, onApply, onMessage, onClose, ownApplicationSlot,
 }: OpportunityDetailDesktopProps) {
+  const t = useOpportunitiesT()
   const navigate = useNavigate()
   const location = useLocation()
   const addToast = useToastStore((s) => s.addToast)
@@ -89,14 +92,14 @@ export function OpportunityDetailDesktop({
   const report = useReportAction({ targetId: vacancy.club_id, subject: 'role', contentId: vacancy.id })
   const showMore = !isPublisher && canReport(profile?.id, vacancy.club_id)
   const eligibility = checkOpportunityEligibility(vacancy, profile, countries)
-  const lacksEuPassport = vacancy.eu_passport_required === true && !eligibility.eligible && /EU passport/i.test(eligibility.reason ?? '')
+  const lacksEuPassport = vacancy.eu_passport_required === true && !eligibility.eligible && eligibility.code === 'eu_passport'
   const relevant = isRelevantForViewer(vacancy, { profile, countries })
   const pill = genderPill(vacancy.gender)
   const family = categoryFamily(vacancy.gender)
   const headline = roleHeadline(vacancy)
   const positionText = positionLabel(vacancy.position)
   const city = vacancy.location_city?.trim() || ''
-  const country = vacancy.location_country?.trim() || ''
+  const country = countryLabel(vacancy.location_country?.trim()) || ''
   const identity = identityProp ?? roleIdentity({ publisherRole, publisherName: clubName, publisherAvatar: clubLogo })
   const placeLine = [countryFlag && (city || country) ? `${countryFlag} ${city || country}` : city || country, league].filter(Boolean).join(' · ')
   const benefits = roleBenefits(vacancy)
@@ -119,7 +122,7 @@ export function OpportunityDetailDesktop({
   const compensationKey = (vacancy.compensation ?? '').toLowerCase()
   const eyebrow = [identity.hiringClub?.name ?? clubName, pill?.label].filter(Boolean).join(' · ').toUpperCase()
   const words = vacancy.description?.trim() ?? ''
-  const coachRoleLabel = identity.postedBy ? [identity.postedBy.roleLabel ?? 'Coach', identity.hiringClub?.name].filter(Boolean).join(' · ') : null
+  const coachRoleLabel = identity.postedBy ? [identity.postedBy.roleLabel ?? t('detail.coach'), identity.hiringClub?.name].filter(Boolean).join(' · ') : null
   const showPostedBy = identity.kind === 'coach-for-club' && !!identity.postedBy
 
   const back = () => { if (onClose) onClose(); else navigate('/opportunities') }
@@ -137,7 +140,7 @@ export function OpportunityDetailDesktop({
   return (
     <div className="mx-auto w-full max-w-[1232px] px-4 pb-20 pt-4" data-testid="role-detail-desktop">
       <button type="button" onClick={back} className="inline-flex h-9 items-center gap-0.5 text-[14px] font-semibold leading-[19px] text-brand-primary hover:underline" data-testid="role-close">
-        <ChevronLeft className="h-4 w-4" strokeWidth={2.2} /> Opportunities
+        <ChevronLeft className="h-4 w-4" strokeWidth={2.2} /> {t('detail.backToList')}
       </button>
       {report.sheet}
 
@@ -146,12 +149,12 @@ export function OpportunityDetailDesktop({
         <aside className="sticky top-[88px] self-start" data-testid="role-detail-aside">
           <RoleCover coverUrl={vacancy.cover_url} crestUrl={identity.displayLogo} palette={palette} scrim="hero" className="rounded-[28px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]" style={{ height: wide ? 520 : 460 }}>
             <div className="absolute right-4 top-4 flex items-center gap-2.5">
-              <button type="button" onClick={() => void shareRole(vacancy, `${headline.title} · ${clubName}`, addToast)} aria-label="Share" className={GLASS_BUTTON} style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+              <button type="button" onClick={() => void shareRole(vacancy, `${headline.title} · ${clubName}`, addToast)} aria-label={t('detail.share')} className={GLASS_BUTTON} style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
                 <Share className="h-[18px] w-[18px]" strokeWidth={1.8} />
               </button>
               {showMore && (
                 <span className={GLASS_BUTTON} style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
-                  <MoreMenu items={[report.item]} label="More options" title={vacancy.title ?? undefined} triggerClassName="flex h-9 w-9 items-center justify-center rounded-full text-white" iconClassName="h-[18px] w-[18px]" testId="role-more-menu" />
+                  <MoreMenu items={[report.item]} label={t('detail.moreOptions')} title={vacancy.title ?? undefined} triggerClassName="flex h-9 w-9 items-center justify-center rounded-full text-white" iconClassName="h-[18px] w-[18px]" testId="role-more-menu" />
                 </span>
               )}
             </div>
@@ -162,7 +165,7 @@ export function OpportunityDetailDesktop({
                 {positionText && <GlassChip testId="role-detail-position">{positionText}</GlassChip>}
                 {pill && family && <GlassChip dotClass={CATEGORY_DOT_ON_PHOTO_CLASSES[family]} testId="role-detail-team-tag">{pill.label}</GlassChip>}
                 {roleStat && <GlassChip testId="role-detail-status">{roleStat.label}</GlassChip>}
-                {closed && <GlassChip testId="role-closed-label">Closed</GlassChip>}
+                {closed && <GlassChip testId="role-closed-label">{t('detail.closedLabel')}</GlassChip>}
               </div>
             </div>
           </RoleCover>
@@ -172,16 +175,16 @@ export function OpportunityDetailDesktop({
               {hasApplied && status && (
                 <div className="mb-2.5 flex items-center justify-between">
                   <span className={`rounded-full px-2.5 py-1 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`} data-testid={notSelected ? 'not-selected-state' : withdrawn ? 'withdrawn-state' : undefined}>{status.label}</span>
-                  <button type="button" onClick={goApplications} className="text-secondary font-semibold text-hockia-primary hover:underline">View my applications</button>
+                  <button type="button" onClick={goApplications} className="text-secondary font-semibold text-hockia-primary hover:underline">{t('detail.viewApplications')}</button>
                 </div>
               )}
               <div className="flex items-center gap-3">
                 {notSelected || withdrawn ? null : hasApplied ? (
                   <span className={buttonClassName({ variant: 'tonal', size: 'large', radius: 'rounded-full', className: 'flex-1' })} data-testid="applied-state">
-                    <Check className="h-[18px] w-[18px]" strokeWidth={2.5} /> Applied
+                    <Check className="h-[18px] w-[18px]" strokeWidth={2.5} /> {t('detail.applied')}
                   </span>
                 ) : (
-                  <button type="button" onClick={onApply} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', className: 'flex-1' })} data-testid="role-apply">Apply</button>
+                  <button type="button" onClick={onApply} className={buttonClassName({ variant: 'primary', size: 'large', radius: 'rounded-full', className: 'flex-1' })} data-testid="role-apply">{t('detail.apply')}</button>
                 )}
                 <button type="button" onClick={onMessage} className={`inline-flex h-[52px] ${notSelected || withdrawn ? 'flex-1' : 'shrink-0'} items-center justify-center gap-2 rounded-full border border-line bg-white px-5 text-[16px] font-semibold text-ink-1 transition-colors hover:bg-surface-subtle`} data-testid="role-message">
                   <MessageCircle className="h-5 w-5" strokeWidth={1.6} /> {messageLabel(identity)}
@@ -220,7 +223,7 @@ export function OpportunityDetailDesktop({
                 ? <CrestTile src={identity.hiringClub.logo} name={identity.hiringClub.name} size={48} radius={14} />
                 : <EntityAvatar src={identity.displayLogo} name={identity.displayName} role="coach" size={48} />}
               <span className="min-w-0 flex-1">
-                <span className="block text-micro font-semibold uppercase tracking-[0.02em] text-ink-3">{identity.hiringClub ? 'Hiring club' : 'Coach'}</span>
+                <span className="block text-micro font-semibold uppercase tracking-[0.02em] text-ink-3">{identity.hiringClub ? t('detail.hiringClub') : t('detail.coach')}</span>
                 <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{identity.displayName}</span>
                 {placeLine && <span className="block truncate text-secondary text-ink-2">{placeLine}</span>}
               </span>
@@ -230,7 +233,7 @@ export function OpportunityDetailDesktop({
               <button type="button" onClick={openPublisher} className="flex min-w-0 items-center gap-3 border-l-[0.5px] border-line px-4 py-3.5 text-left transition-colors hover:bg-surface-muted" data-testid="role-posted-by">
                 <EntityAvatar src={identity.postedBy.avatar ? getImageUrl(identity.postedBy.avatar, 'avatar-md') ?? identity.postedBy.avatar : null} name={identity.postedBy.name} role="coach" size={48} />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-micro font-semibold uppercase tracking-[0.02em] text-ink-3">Posted by</span>
+                  <span className="block text-micro font-semibold uppercase tracking-[0.02em] text-ink-3">{t('detail.postedBy')}</span>
                   <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{identity.postedBy.name}</span>
                   {coachRoleLabel && <span className="block truncate text-secondary text-ink-2">{coachRoleLabel}</span>}
                 </span>
@@ -246,19 +249,19 @@ export function OpportunityDetailDesktop({
           {closedView === 'applicant' && status && (
             <section className="pt-4" data-testid="own-application">
               <div className="rounded-card border border-line bg-white p-4">
-                <p className="text-secondary font-semibold text-ink-2">Your application</p>
+                <p className="text-secondary font-semibold text-ink-2">{t('detail.yourApplication')}</p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
                   <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`} data-testid="own-application-status">{status.label}</span>
                   {appliedOn && <span className="text-caption text-ink-3">{appliedOn}</span>}
                 </div>
                 {clubNote && (
                   <div className="mt-3 border-t border-line pt-3" data-testid="club-note">
-                    <p className="text-secondary font-semibold text-ink-2">The club’s note</p>
+                    <p className="text-secondary font-semibold text-ink-2">{t('detail.clubNote')}</p>
                     <p className="mt-1.5 whitespace-pre-wrap break-words text-row leading-[21px] text-ink-1">{clubNote}</p>
-                    <p className="mt-1.5 text-caption text-ink-3">From {clubName}</p>
+                    <p className="mt-1.5 text-caption text-ink-3">{t('detail.noteFrom', { club: clubName })}</p>
                   </div>
                 )}
-                <button type="button" onClick={goApplications} className="mt-3 text-secondary font-semibold text-hockia-primary hover:underline">View my applications</button>
+                <button type="button" onClick={goApplications} className="mt-3 text-secondary font-semibold text-hockia-primary hover:underline">{t('detail.viewApplications')}</button>
               </div>
             </section>
           )}
@@ -266,9 +269,9 @@ export function OpportunityDetailDesktop({
           {closedView === 'visitor' && (
             <section className="pt-4" data-testid="role-closed-notice">
               <div className="rounded-card bg-surface-grouped p-4">
-                <p className="text-row font-semibold text-ink-1">This opportunity is closed</p>
-                <p className="mt-1 text-secondary text-ink-2">It’s no longer taking applications.</p>
-                <button type="button" onClick={() => navigate('/opportunities')} className="mt-2.5 text-secondary font-semibold text-hockia-primary hover:underline">See open opportunities</button>
+                <p className="text-row font-semibold text-ink-1">{t('detail.closedTitle')}</p>
+                <p className="mt-1 text-secondary text-ink-2">{t('detail.closedBody')}</p>
+                <button type="button" onClick={() => navigate('/opportunities')} className="mt-2.5 text-secondary font-semibold text-hockia-primary hover:underline">{t('detail.seeOpen')}</button>
               </div>
             </section>
           )}
@@ -277,9 +280,9 @@ export function OpportunityDetailDesktop({
             {clubNote && !closed && (
               <section className="pt-4" data-testid="club-note">
                 <div className="rounded-card bg-surface-grouped p-4">
-                  <p className="text-secondary font-semibold text-ink-2">Not this time · The club’s note</p>
+                  <p className="text-secondary font-semibold text-ink-2">{t('detail.declineNoteTitle')}</p>
                   <p className="mt-1.5 whitespace-pre-wrap text-row leading-[21px] text-ink-1">{clubNote}</p>
-                  <p className="mt-1.5 text-caption text-ink-3">From {clubName}</p>
+                  <p className="mt-1.5 text-caption text-ink-3">{t('detail.noteFrom', { club: clubName })}</p>
                 </div>
               </section>
             )}
@@ -287,11 +290,11 @@ export function OpportunityDetailDesktop({
             {/* Four facts in one row (Figma 194:946): Team in the category colour, never elsewhere. */}
             <section className="grid grid-cols-4 gap-3 pt-6" data-testid="role-key-facts">
               {pill && (
-                <Fact label="Team" value={pill.label} sub={league ?? (vacancy.opportunity_type === 'coach' ? 'Coaching opportunity' : 'Senior')} className={categoryTagClass(vacancy.gender) ?? 'bg-surface-subtle text-ink-1'} tinted />
+                <Fact label={t('detail.facts.team')} value={pill.label} sub={league ?? (vacancy.opportunity_type === 'coach' ? t('detail.facts.coachingOpportunity') : t('detail.facts.senior'))} className={categoryTagClass(vacancy.gender) ?? 'bg-surface-subtle text-ink-1'} tinted />
               )}
-              {positionText && <Fact label="Position" value={positionText} sub={vacancy.opportunity_type === 'coach' ? 'Coaching opportunity' : vacancy.position_required ? 'Required' : null} />}
-              <Fact label="Starts" value={startsValue} sub={duration} />
-              <Fact label="Apply by" value={applyByValue} sub={applyBySub} />
+              {positionText && <Fact label={t('detail.facts.position')} value={positionText} sub={vacancy.opportunity_type === 'coach' ? t('detail.facts.coachingOpportunity') : vacancy.position_required ? t('detail.facts.required') : null} />}
+              <Fact label={t('detail.facts.starts')} value={startsValue} sub={duration} />
+              <Fact label={t('detail.facts.applyBy')} value={applyByValue} sub={applyBySub} />
             </section>
 
             <section className="pt-9">
@@ -309,11 +312,11 @@ export function OpportunityDetailDesktop({
             <section className="pt-9">
               <h2 className={H2}>{asksHeading(identity)}</h2>
               <div className="mt-3.5 overflow-hidden rounded-[16px] bg-surface-subtle" data-testid="role-asks">
-                {vacancy.opportunity_type === 'player' && vacancy.position && askRow('Position', `${humanizeToken(vacancy.position)}${vacancy.position_required ? ' · required' : ''}`)}
-                {vacancy.opportunity_type === 'player' && pill && askRow('Category', pill.label)}
-                {askRow('Passport', vacancy.eu_passport_required ? `EU passport required${lacksEuPassport ? ' · you don’t hold one' : ''}` : 'Any')}
-                {vacancy.level_sought && askRow('Level', humanizeToken(vacancy.level_sought))}
-                {specialists.length > 0 && askRow('Specialist', (
+                {vacancy.opportunity_type === 'player' && vacancy.position && askRow(t('detail.asks.position'), vacancy.position_required ? t('detail.asks.positionRequired', { position: humanizeToken(vacancy.position) }) : humanizeToken(vacancy.position))}
+                {vacancy.opportunity_type === 'player' && pill && askRow(t('detail.asks.category'), pill.label)}
+                {askRow(t('detail.asks.passport'), vacancy.eu_passport_required ? (lacksEuPassport ? t('detail.asks.euPassportMissing') : t('detail.asks.euPassportRequired')) : t('detail.asks.passportAny'))}
+                {vacancy.level_sought && askRow(t('detail.asks.level'), humanizeToken(vacancy.level_sought))}
+                {specialists.length > 0 && askRow(t('detail.asks.specialist'), (
                   <span className="flex flex-wrap justify-end gap-1.5">
                     {specialists.map((s) => (
                       <span key={s} className="flex items-center gap-1 text-[14px] leading-[19px] text-ink-1">
@@ -323,11 +326,11 @@ export function OpportunityDetailDesktop({
                     ))}
                   </span>
                 ))}
-                {askRow('Available', `${startsValue}${duration ? ` · ${duration}` : ''}`)}
+                {askRow(t('detail.asks.available'), `${startsValue}${duration ? ` · ${duration}` : ''}`)}
               </div>
               {!closed && !isPublisher && relevant && (
                 <p className="mt-3 flex items-center gap-2 rounded-[12px] bg-positive-soft px-3.5 py-2.5 text-secondary text-positive" data-testid="role-eligibility">
-                  <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> You match this opportunity’s position, team and passport
+                  <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} /> {t('detail.youMatch')}
                 </p>
               )}
             </section>
@@ -342,16 +345,16 @@ export function OpportunityDetailDesktop({
 
             {showApplyCopy && (
             <section className="pt-9">
-              <h2 className={H2}>How applying works</h2>
+              <h2 className={H2}>{t('detail.howApplyingWorks')}</h2>
               <ol className="mt-3.5 grid grid-cols-3 gap-3">
-                {['Send your profile, no CV needed', reviewsLine(identity), 'You’ll see every update in Applied'].map((step, i) => (
+                {[t('detail.steps.send'), reviewsLine(identity), t('detail.steps.updates')].map((step, i) => (
                   <li key={step} className={`${CARD} flex items-center gap-3 px-4 py-3.5 text-[14px] leading-[19px] text-ink-1`}>
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-muted text-secondary font-semibold text-ink-1">{i + 1}</span>
                     {step}
                   </li>
                 ))}
               </ol>
-              <p className="mt-3 text-caption text-ink-3">Contact details stay private until the club replies.</p>
+              <p className="mt-3 text-caption text-ink-3">{t('detail.contactPrivate')}</p>
             </section>
             )}
           </div>

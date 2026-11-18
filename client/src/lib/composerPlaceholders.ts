@@ -1,3 +1,5 @@
+import { tCommunity } from '@/i18n/ns/community'
+
 /**
  * Composer placeholder rotation
  *
@@ -21,56 +23,18 @@
 
 export type ComposerRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
-const PLAYER_PROMPTS: string[] = [
-  "What's on your mind?",
-  'Just played a match? Share a moment from it.',
-  'Working on something specific in training?',
-  'Looking for opportunities? Tell people what you’re after.',
-  'Got an update worth sharing with the hockey community?',
-]
-
-const COACH_PROMPTS: string[] = [
-  "What's on your mind?",
-  'Share something you’re working on with your team.',
-  'A coaching insight worth passing on to peers?',
-  'Just earned a certification or completed a course? Tell people.',
-  'Reflections from the latest session?',
-]
-
-const CLUB_PROMPTS: string[] = [
-  "What's new at your club?",
-  'Tell people about a recent match.',
-  'Welcoming someone new? Player, coach, staff, sponsor?',
-  'A moment from training worth sharing?',
-  'Anything coming up your members should know about?',
-]
-
-const BRAND_PROMPTS: string[] = [
-  "What's new with your brand?",
-  'Launching a product? Tell the community.',
-  'Behind the scenes worth sharing? Design, factory, team?',
-  'Welcome a new ambassador or partner.',
-  'Spotlight an athlete you support.',
-]
-
+// Each role's pool is five prompts in the community catalog
+// (composer.<role>.p1…p5). Text is read when a placeholder is picked, never
+// at module load, so it follows the interface language.
+//
+// Player prompts: matches, training, opportunities. Coach: methodology and
+// insights. Club: results and staff. Brand: launches and athletes.
 // Umpires: per NASO / TASO / Referee Magazine guidance, officials should
 // NOT post specifics about matches, calls, players, coaches, or other
 // officials. Steer toward credentials, courses, and federation content.
-const UMPIRE_PROMPTS: string[] = [
-  'Share a course you completed, a federation update, or your year in numbers...',
-  'Just completed a course or clinic? Tell your peers.',
-  'Federation update worth passing on?',
-  'Reflecting on your season? Share the big picture, not specifics.',
-  'New panel or credential? Share the milestone.',
-]
+const PROMPT_IDS = ['p1', 'p2', 'p3', 'p4', 'p5'] as const
 
-const ROLE_PROMPTS: Record<ComposerRole, string[]> = {
-  player: PLAYER_PROMPTS,
-  coach: COACH_PROMPTS,
-  club: CLUB_PROMPTS,
-  brand: BRAND_PROMPTS,
-  umpire: UMPIRE_PROMPTS,
-}
+const ROLES: readonly ComposerRole[] = ['player', 'coach', 'club', 'brand', 'umpire']
 
 /**
  * Pick a placeholder for the given role, optionally seeded with a value
@@ -81,9 +45,7 @@ export function pickPlaceholder(
   role: ComposerRole | null | undefined,
   seed: number = Math.random(),
 ): string {
-  if (!role) return "What's on your mind?"
-  const pool = ROLE_PROMPTS[role]
-  if (!pool || pool.length === 0) return "What's on your mind?"
-  const idx = Math.floor(seed * pool.length) % pool.length
-  return pool[idx]
+  if (!role || !ROLES.includes(role)) return tCommunity('composer.fallback')
+  const idx = Math.floor(seed * PROMPT_IDS.length) % PROMPT_IDS.length
+  return tCommunity(`composer.${role}.${PROMPT_IDS[idx]}`)
 }

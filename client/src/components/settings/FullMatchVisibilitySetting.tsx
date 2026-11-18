@@ -6,11 +6,12 @@ import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { fullMatchVisibilityOf, type FullMatchVisibility } from '@/lib/recruiter'
 import { useFullMatchPrivacyNotice } from '@/hooks/useFullMatchPrivacyNotice'
+import { useSettingsT } from '@/i18n/ns/settings'
 
-const OPTIONS: { value: FullMatchVisibility; title: string; subtitle: string }[] = [
-  { value: 'recruiters', title: 'Clubs & coaches', subtitle: 'Clubs and coaches who recruit. Highlights and reels stay public.' },
-  { value: 'public', title: 'Everyone on Hockia', subtitle: 'Anyone on Hockia can watch them.' },
-]
+const OPTIONS = [
+  { value: 'recruiters', title: 'fullMatch.recruitersTitle', subtitle: 'fullMatch.recruitersBody' },
+  { value: 'public', title: 'fullMatch.publicTitle', subtitle: 'fullMatch.publicBody' },
+] as const satisfies readonly { value: FullMatchVisibility; title: string; subtitle: string }[]
 
 /**
  * Desktop Settings › Privacy: who can watch the player's full matches
@@ -18,6 +19,7 @@ const OPTIONS: { value: FullMatchVisibility; title: string; subtitle: string }[]
  * it onto every full match). Players only.
  */
 export function FullMatchVisibilitySetting() {
+  const t = useSettingsT()
   const { user, profile, refreshProfile } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const { resolveNotice } = useFullMatchPrivacyNotice()
@@ -35,7 +37,7 @@ export function FullMatchVisibilitySetting() {
       void resolveNotice(value === 'public')
     } catch (err) {
       logger.error('[FullMatchVisibilitySetting] update failed', err)
-      addToast('Could not save that. Please try again.', 'error')
+      addToast(t('errors.saveFailed'), 'error')
     } finally {
       setPending(null)
     }
@@ -43,9 +45,9 @@ export function FullMatchVisibilitySetting() {
 
   return (
     <fieldset className="rounded-lg bg-gray-50 p-4" data-testid="full-match-visibility-setting">
-      <legend className="sr-only">Who can watch your full matches</legend>
-      <p className="text-sm font-medium text-gray-900">Who can watch your full matches</p>
-      <p className="mt-0.5 text-xs text-gray-500">Applies to all your full matches. You can still change a single video from your profile&apos;s media.</p>
+      <legend className="sr-only">{t('fullMatch.title')}</legend>
+      <p className="text-sm font-medium text-gray-900">{t('fullMatch.title')}</p>
+      <p className="mt-0.5 text-xs text-gray-500">{t('fullMatch.body')}</p>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {OPTIONS.map((o) => (
           <label
@@ -65,8 +67,8 @@ export function FullMatchVisibilitySetting() {
               className="mt-1 accent-hockia-primary"
             />
             <span>
-              <span className="block font-medium text-gray-900">{o.title}</span>
-              <span className="block text-xs text-gray-500">{o.subtitle}</span>
+              <span className="block font-medium text-gray-900">{t(o.title)}</span>
+              <span className="block text-xs text-gray-500">{t(o.subtitle)}</span>
             </span>
           </label>
         ))}

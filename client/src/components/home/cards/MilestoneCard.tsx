@@ -4,21 +4,24 @@ import { StorageImage } from '@/components'
 import { MediaLightbox } from '../MediaLightbox'
 import { FeedCard, FeedCardAction, FeedCardCaption, FeedCardFooter, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import type { MilestoneAchievedFeedItem, MilestoneType } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface MilestoneCardProps {
   item: MilestoneAchievedFeedItem
 }
 
-const MILESTONE_CONFIG: Record<MilestoneType, { icon: typeof Image; label: string }> = {
-  first_gallery_image: { icon: Image, label: 'Added their first gallery photos' },
+// `label` is a catalog key; it is translated where the card renders.
+const MILESTONE_CONFIG = {
+  first_gallery_image: { icon: Image, label: 'cards.milestone.firstGalleryImage' },
   // Trigger fires when highlight_video_url goes NULL → value — a player adding
   // video evidence for the first time is exactly the moment to celebrate.
-  first_video: { icon: Video, label: 'Added their first highlight video' },
-  profile_100_percent: { icon: CheckCircle, label: 'Completed their profile' },
-  first_reference_received: { icon: Shield, label: 'Received their first reference' },
-}
+  first_video: { icon: Video, label: 'cards.milestone.firstVideo' },
+  profile_100_percent: { icon: CheckCircle, label: 'cards.milestone.profileComplete' },
+  first_reference_received: { icon: Shield, label: 'cards.milestone.firstReference' },
+} as const satisfies Record<MilestoneType, { icon: typeof Image; label: string }>
 
 export function MilestoneCard({ item }: MilestoneCardProps) {
+  const t = useHomeT()
   const [mediaError, setMediaError] = useState(false)
   const [viewerOpen, setViewerOpen] = useState(false)
   const config = MILESTONE_CONFIG[item.milestone_type]
@@ -41,7 +44,7 @@ export function MilestoneCard({ item }: MilestoneCardProps) {
         createdAt={item.created_at}
         profilePath={profilePath}
       />
-      <FeedCardCaption icon={<Icon />}>{config.label}</FeedCardCaption>
+      <FeedCardCaption icon={<Icon />}>{t(config.label)}</FeedCardCaption>
 
       {item.milestone_type === 'first_gallery_image' && item.image_url && (
         <FeedCardMedia>
@@ -50,13 +53,13 @@ export function MilestoneCard({ item }: MilestoneCardProps) {
           <button
             type="button"
             onClick={() => setViewerOpen(true)}
-            aria-label="View photo"
+            aria-label={t('cards.milestone.viewPhoto')}
             className="block w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus-ring"
           >
             <StorageImage
               src={item.image_url}
               imageSize="feed-full"
-              alt="Gallery"
+              alt={t('cards.milestone.galleryAlt')}
               className="h-full w-full object-cover"
               containerClassName="aspect-[4/3]"
               fallbackClassName="h-48"
@@ -82,7 +85,7 @@ export function MilestoneCard({ item }: MilestoneCardProps) {
       )}
 
       <FeedCardFooter>
-        <FeedCardAction to={profilePath}>View profile</FeedCardAction>
+        <FeedCardAction to={profilePath}>{t('cards.milestone.viewProfile')}</FeedCardAction>
       </FeedCardFooter>
     </FeedCard>
   )

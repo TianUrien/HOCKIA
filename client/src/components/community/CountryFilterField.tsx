@@ -6,6 +6,8 @@ import { searchCountries } from '@/lib/countrySearch'
 import { chipTone } from '@/components/ui/chipClasses'
 import { fieldInput } from '@/components/ui/fieldClasses'
 import { cn } from '@/lib/utils'
+import { useCommunityT } from '@/i18n/ns/community'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * A country filter inside the Community Filters sheet (founder 2026-11-09):
@@ -22,12 +24,13 @@ export function CountryFilterField({ label, caption, value, onChange, withFlags 
   withFlags?: boolean
   testId: string
 }) {
+  const t = useCommunityT()
   const { countries, getCountryById } = useCountries()
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const results = useMemo(() => searchCountries(countries, q).filter((c) => !value.includes(c.id)).slice(0, 60), [countries, q, value])
   const close = () => { setOpen(false); setQ('') }
-  const name = (id: number) => { const c = getCountryById(id); return c ? c.common_name || c.name : 'Country' }
+  const name = (id: number) => { const c = getCountryById(id); return c ? countryLabel(c.common_name || c.name) : t('countryFilter.fallbackName') }
 
   return (
     <section className="flex flex-col gap-2.5" data-testid={testId}>
@@ -39,7 +42,7 @@ export function CountryFilterField({ label, caption, value, onChange, withFlags 
             <span key={id} className="inline-flex h-9 items-center gap-1.5 rounded-full border-[1.5px] border-brand-primary bg-brand-soft pl-3.5 pr-1 text-row font-semibold text-brand-text">
               {withFlags && c ? <Flag code={c.code} fallbackEmoji={c.flag_emoji} /> : null}
               {name(id)}
-              <button type="button" aria-label={`Remove ${name(id)}`} onClick={() => onChange(value.filter((v) => v !== id))} className="flex h-8 w-8 items-center justify-center rounded-full">
+              <button type="button" aria-label={t('countryFilter.remove', { country: name(id) })} onClick={() => onChange(value.filter((v) => v !== id))} className="flex h-8 w-8 items-center justify-center rounded-full">
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </span>
@@ -47,7 +50,7 @@ export function CountryFilterField({ label, caption, value, onChange, withFlags 
         })}
         {!open && (
           <button type="button" onClick={() => setOpen(true)} className={cn('inline-flex h-9 items-center gap-1 rounded-full px-4 text-row font-semibold', chipTone(false))} data-testid={`${testId}-add`}>
-            <Plus className="h-4 w-4" aria-hidden="true" /> Add country
+            <Plus className="h-4 w-4" aria-hidden="true" /> {t('countryFilter.add')}
           </button>
         )}
       </div>
@@ -59,8 +62,8 @@ export function CountryFilterField({ label, caption, value, onChange, withFlags 
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search countries"
-              aria-label={`Search countries for ${label}`}
+              placeholder={t('countryFilter.searchPlaceholder')}
+              aria-label={t('countryFilter.searchLabel', { label })}
               className={cn(fieldInput, 'pl-10')}
               data-testid={`${testId}-search`}
             />
@@ -74,14 +77,14 @@ export function CountryFilterField({ label, caption, value, onChange, withFlags 
                   className="flex h-11 w-full items-center gap-2 rounded-[10px] px-3 text-left text-body text-ink-1 active:bg-surface-muted"
                 >
                   {withFlags ? <Flag code={c.code} fallbackEmoji={c.flag_emoji} /> : null}
-                  {c.common_name || c.name}
+                  {countryLabel(c.common_name || c.name)}
                 </button>
               </li>
             ))}
-            {results.length === 0 && <li className="px-3 py-3 text-secondary text-ink-2">No country matches “{q}”.</li>}
+            {results.length === 0 && <li className="px-3 py-3 text-secondary text-ink-2">{t('countryFilter.noMatch', { query: q })}</li>}
           </ul>
           <button type="button" onClick={close} className="mt-1 flex h-10 w-full items-center justify-center rounded-full text-row font-semibold text-ink-2">
-            Cancel
+            {t('countryFilter.cancel')}
           </button>
         </div>
       )}

@@ -3,6 +3,7 @@ import { Check, Share } from 'lucide-react'
 import SettingsSheet from '@/components/SettingsSheet'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * Mobile title row of the Profile screen (UI redesign 2026-09-19):
@@ -21,7 +22,8 @@ function publicProfileUrl(role: string | null | undefined, id: string, username:
   return `${origin}${base}/${username ? username : `id/${id}`}`
 }
 
-export default function ProfileTopBar({ title = 'Profile' }: { title?: string }) {
+export default function ProfileTopBar({ title }: { title?: string }) {
+  const t = useHomeT()
   const profile = useAuthStore((s) => s.profile)
   const [copied, setCopied] = useState(false)
   const url = profile ? publicProfileUrl(profile.role, profile.id, profile.username) : null
@@ -30,7 +32,7 @@ export default function ProfileTopBar({ title = 'Profile' }: { title?: string })
     if (!url) return
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: profile?.full_name ?? 'Hockia profile', url })
+        await navigator.share({ title: profile?.full_name ?? t('topBar.shareTitle'), url })
         return
       }
       await navigator.clipboard.writeText(url)
@@ -40,18 +42,18 @@ export default function ProfileTopBar({ title = 'Profile' }: { title?: string })
       // A dismissed share sheet rejects with AbortError — not a failure.
       if (!(err instanceof Error && err.name === 'AbortError')) logger.warn('[ProfileTopBar] share failed', err)
     }
-  }, [url, profile?.full_name])
+  }, [url, profile?.full_name, t])
 
   return (
     <div className="flex items-center justify-between px-4 pb-1 pt-1 lg:hidden" data-testid="profile-top-bar">
-      <h1 className="text-[22px] font-bold leading-7 text-gray-900">{title}</h1>
+      <h1 className="text-[22px] font-bold leading-7 text-gray-900">{title ?? t('topBar.title')}</h1>
       <div className="-mr-2 flex items-center">
         {url && (
           <button
             type="button"
             onClick={() => void share()}
             className="relative flex h-11 w-11 items-center justify-center rounded-full text-gray-900 transition-colors hover:bg-gray-100"
-            aria-label={copied ? 'Link copied' : 'Share your profile'}
+            aria-label={copied ? t('topBar.linkCopied') : t('topBar.share')}
           >
             {copied ? <Check className="h-[22px] w-[22px] text-emerald-600" strokeWidth={1.75} /> : <Share className="h-[22px] w-[22px]" strokeWidth={1.75} />}
           </button>

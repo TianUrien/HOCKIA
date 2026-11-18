@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import type { BrandDetail } from './useBrand'
+import { tBrands } from '@/i18n/ns/brands'
 
 interface UseMyBrandResult {
   brand: BrandDetail | null
@@ -82,7 +83,7 @@ export function useMyBrand(): UseMyBrandResult {
       loadedRef.current = data != null
     } catch (err) {
       logger.error('[useMyBrand] Error fetching brand:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load brand')
+      setError(err instanceof Error ? err.message : tBrands('hookErrors.myBrandLoad'))
       if (!loadedRef.current) setBrand(null)
     } finally {
       setIsLoading(false)
@@ -127,7 +128,7 @@ export function useMyBrand(): UseMyBrandResult {
       logger.error('[useMyBrand] Error creating brand:', err)
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to create brand',
+        error: err instanceof Error ? err.message : tBrands('hookErrors.myBrandCreate'),
       }
     }
   }, [fetchMyBrand])
@@ -168,7 +169,7 @@ export function useMyBrand(): UseMyBrandResult {
       logger.error('[useMyBrand] Error updating brand:', err)
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to update brand',
+        error: err instanceof Error ? err.message : tBrands('hookErrors.myBrandUpdate'),
       }
     }
   }, [fetchMyBrand, user])

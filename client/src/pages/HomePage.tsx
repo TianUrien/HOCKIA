@@ -18,6 +18,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useCoachPulseMode } from '@/hooks/useCoachPulseMode'
 import { useAuthStore } from '@/lib/auth'
 import type { HomeFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 // The composer is only needed after a tap on "+" (spec: lazy-loaded).
 const PostComposerModal = lazy(() => import('@/components/home/PostComposerModal').then((m) => ({ default: m.PostComposerModal })))
@@ -32,8 +33,9 @@ const PostComposerModal = lazy(() => import('@/components/home/PostComposerModal
  *   4 Feed (get_home_feed_v2) with "Roles for you" after the 2nd item
  */
 export default function HomePage() {
+  const t = useHomeT()
   useScrollRestore()
-  useDocumentTitle('Home')
+  useDocumentTitle(t('page.documentTitle'))
   const [params] = useSearchParams()
   const queryClient = useQueryClient()
   const prependItemRef = useRef<((item: HomeFeedItem) => void) | null>(null)
@@ -66,7 +68,7 @@ export default function HomePage() {
             {/* Tonal, not a second Primary: the Next step card carries the
                 screen's one Primary (design audit B6). */}
             <button type="button" onClick={openComposer} className="flex h-11 shrink-0 items-center rounded-full bg-brand-soft px-5 text-[15px] font-semibold text-brand-primary transition-colors hover:bg-brand-soft-hover" data-testid="home-new-post">
-              New post
+              {t('page.newPost')}
             </button>
           </div>
           {/* One-time, players only; renders nothing once answered. */}

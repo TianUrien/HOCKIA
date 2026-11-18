@@ -12,8 +12,10 @@ import { BrandCard, BrandCategoryFilter } from '@/components/brands'
 import { useBrands, type BrandCategory } from '@/hooks/useBrands'
 import { usePageState } from '@/hooks/usePageState'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
+import { useCommunityT } from '@/i18n/ns/community'
 
 export function BrandListView() {
+  const t = useCommunityT()
   const [category, setCategory] = usePageState<BrandCategory | null>('brand-category', null)
   const [search, setSearch] = usePageState('brand-search', '')
   const [searchInput, setSearchInput] = usePageState('brand-searchInput', '')
@@ -59,7 +61,7 @@ export function BrandListView() {
             data-keyboard-shortcut="search"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search brands..."
+            placeholder={t('brands.searchPlaceholder')}
             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-transparent"
             autoComplete="off"
             enterKeyHint="search"
@@ -78,7 +80,7 @@ export function BrandListView() {
       {/* Results Count */}
       {!isLoading && (
         <p className="text-sm text-gray-500 mb-4">
-          {total} {total === 1 ? 'brand' : 'brands'} found
+          {t('brands.found', { count: total })}
         </p>
       )}
 
@@ -103,12 +105,12 @@ export function BrandListView() {
         <div className="text-center py-12">
           <Store className="w-16 h-16 text-gray-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No brands found
+            {t('brands.emptyTitle')}
           </h3>
           <p className="text-gray-500">
             {search
-              ? 'Try adjusting your search terms'
-              : 'Be the first to register your brand!'}
+              ? t('brands.emptySearch')
+              : t('brands.emptyNone')}
           </p>
         </div>
       )}

@@ -1,4 +1,5 @@
 import type { HomeFeedItem } from '@/types/homeFeed'
+import { tCommunity } from '@/i18n/ns/community'
 
 /**
  * "Happening now" (Home redesign V2, Pulse): compress feed items into
@@ -48,8 +49,8 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
       return {
         id: item.feed_item_id,
         kind: 'role_opened',
-        actor: item.club_name ?? 'A club',
-        action: `posted ${item.title}`,
+        actor: item.club_name ?? tCommunity('happeningNow.aClub'),
+        action: tCommunity('happeningNow.posted', { title: item.title }),
         avatarUrl: item.club_logo,
         actorRole: item.publisher_role ?? 'club',
         createdAt: item.created_at,
@@ -63,8 +64,8 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
       return {
         id: item.feed_item_id,
         kind: 'role_filled',
-        actor: item.club_name ?? 'A club',
-        action: `filled ${item.title}`,
+        actor: item.club_name ?? tCommunity('happeningNow.aClub'),
+        action: tCommunity('happeningNow.filled', { title: item.title }),
         avatarUrl: item.club_avatar_url,
         actorRole: item.author_role ?? 'club',
         createdAt: item.created_at,
@@ -74,8 +75,8 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
       return {
         id: item.feed_item_id,
         kind: 'open_to_play',
-        actor: item.player_name ?? 'A player',
-        action: 'is open to play',
+        actor: item.player_name ?? tCommunity('happeningNow.aPlayer'),
+        action: tCommunity('happeningNow.openToPlay'),
         avatarUrl: item.player_avatar_url,
         actorRole: item.player_role,
         createdAt: item.created_at,
@@ -85,8 +86,8 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
       return {
         id: item.feed_item_id,
         kind: 'media',
-        actor: item.uploader_name ?? 'A member',
-        action: `added ${item.count} new photo${item.count === 1 ? '' : 's'}`,
+        actor: item.uploader_name ?? tCommunity('happeningNow.aMember'),
+        action: tCommunity('happeningNow.photos', { count: item.count }),
         avatarUrl: item.uploader_avatar_url,
         actorRole: item.uploader_role,
         createdAt: item.created_at,
@@ -96,8 +97,8 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
       return {
         id: item.feed_item_id,
         kind: 'video',
-        actor: item.uploader_name ?? 'A member',
-        action: item.kind === 'full_match' ? 'added a full match video' : 'added a new highlight',
+        actor: item.uploader_name ?? tCommunity('happeningNow.aMember'),
+        action: item.kind === 'full_match' ? tCommunity('happeningNow.fullMatch') : tCommunity('happeningNow.highlight'),
         avatarUrl: item.uploader_avatar_url,
         actorRole: item.uploader_role,
         createdAt: item.created_at,
@@ -108,8 +109,8 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
       return {
         id: item.feed_item_id,
         kind: 'responded',
-        actor: item.club_name ?? 'A club',
-        action: `reviewed ${item.response_count} application${item.response_count === 1 ? '' : 's'} this week`,
+        actor: item.club_name ?? tCommunity('happeningNow.aClub'),
+        action: tCommunity('happeningNow.reviewed', { count: item.response_count }),
         avatarUrl: item.club_avatar_url,
         actorRole: item.author_role ?? 'club',
         createdAt: item.created_at,
@@ -120,8 +121,8 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
         return {
           id: item.feed_item_id,
           kind: 'signing',
-          actor: item.club_name ?? 'A club',
-          action: `signed ${item.mover_name ?? 'a player'}`,
+          actor: item.club_name ?? tCommunity('happeningNow.aClub'),
+          action: tCommunity('happeningNow.signed', { name: item.mover_name ?? tCommunity('happeningNow.aPlayerLower') }),
           avatarUrl: item.club_avatar_url,
           actorRole: 'club',
           createdAt: item.created_at,
@@ -133,8 +134,8 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
       return {
         id: item.feed_item_id,
         kind: 'transfer',
-        actor: item.mover_name ?? 'A player',
-        action: item.club_name ? `joined ${item.club_name}` : 'made a move',
+        actor: item.mover_name ?? tCommunity('happeningNow.aPlayer'),
+        action: item.club_name ? tCommunity('happeningNow.joined', { club: item.club_name }) : tCommunity('happeningNow.madeMove'),
         avatarUrl: item.mover_avatar_url,
         actorRole: item.mover_role,
         createdAt: item.created_at,
@@ -146,8 +147,8 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
         return {
           id: item.feed_item_id,
           kind: 'transfer',
-          actor: item.author_name ?? 'A player',
-          action: `joined ${item.metadata.club_name}`,
+          actor: item.author_name ?? tCommunity('happeningNow.aPlayer'),
+          action: tCommunity('happeningNow.joined', { club: item.metadata.club_name }),
           avatarUrl: item.author_avatar,
           actorRole: item.author_role,
           createdAt: item.created_at,
@@ -158,8 +159,8 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
         return {
           id: item.feed_item_id,
           kind: 'signing',
-          actor: item.author_name ?? 'A club',
-          action: `signed ${item.metadata.person_name}`,
+          actor: item.author_name ?? tCommunity('happeningNow.aClub'),
+          action: tCommunity('happeningNow.signed', { name: item.metadata.person_name }),
           avatarUrl: item.author_avatar,
           actorRole: item.author_role,
           createdAt: item.created_at,

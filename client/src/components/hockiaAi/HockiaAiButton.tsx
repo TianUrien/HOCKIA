@@ -1,5 +1,6 @@
 import { usePressSpring } from '@/hooks/usePressSpring'
 import { cn } from '@/lib/utils'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 /**
  * Hockia AI · header button (Figma 178:25): 44 pt hit, the mascot head in a
@@ -8,6 +9,7 @@ import { cn } from '@/lib/utils'
  * (nothing sets it yet).
  */
 export function HockiaAiButton({ onClick, hasSuggestion = false, className, testId = 'hockia-ai-button' }: { onClick: () => void; hasSuggestion?: boolean; className?: string; testId?: string }) {
+  const t = useHockiaAiT()
   const press = usePressSpring<HTMLButtonElement>()
   const state = hasSuggestion ? 'active' : 'calm'
   return (
@@ -16,7 +18,7 @@ export function HockiaAiButton({ onClick, hasSuggestion = false, className, test
       type="button"
       onClick={onClick}
       {...press.handlers}
-      aria-label={hasSuggestion ? 'Hockia AI, something new for you' : 'Ask Hockia AI'}
+      aria-label={hasSuggestion ? t('button.newLabel') : t('button.askLabel')}
       className={cn('relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full [transform-origin:center]', className)}
       data-testid={testId}
     >

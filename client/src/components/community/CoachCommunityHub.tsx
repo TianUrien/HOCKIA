@@ -12,6 +12,7 @@ import CommunityReferencesSection from './CommunityReferencesSection'
 import ConnectionsSection from './ConnectionsSection'
 import type { Profile } from '@/lib/supabase'
 import { trackReferenceModalOpen } from '@/lib/analytics'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * CoachCommunityHub — owner-side Community page assembly for coaches.
@@ -41,6 +42,7 @@ export default function CoachCommunityHub({
   profile,
   highlightedCommentIds,
 }: CoachCommunityHubProps) {
+  const t = useCommunityT()
   const navigate = useNavigate()
   const { profile: authProfile } = useAuthStore()
   const isOwner = authProfile?.id === profile.id
@@ -109,9 +111,9 @@ export default function CoachCommunityHub({
   return (
     <div className="space-y-4 pb-32">
       <header>
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">My Network</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('hubs.coach.title')}</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Build coaching credibility through references, connections and the players you recommend.
+          {t('hubs.coach.subtitle')}
         </p>
       </header>
 

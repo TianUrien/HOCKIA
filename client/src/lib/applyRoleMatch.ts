@@ -1,3 +1,5 @@
+import { tOpportunities } from '@/i18n/ns/opportunities'
+
 /**
  * Players apply to player opportunities and coaches to coach opportunities
  * (the opportunity_applications insert policy enforces it). Returns why the
@@ -9,7 +11,7 @@ export function applyRoleMismatch(opportunityType: string | null | undefined, vi
   if (!opportunityType || !viewerRole) return null
   if (viewerRole !== 'player' && viewerRole !== 'coach') return null
   if (opportunityType === viewerRole) return null
-  if (opportunityType === 'player') return 'This opportunity is for players.'
-  if (opportunityType === 'coach') return 'This opportunity is for coaches.'
+  if (opportunityType === 'player') return tOpportunities('apply.forPlayers')
+  if (opportunityType === 'coach') return tOpportunities('apply.forCoaches')
   return null
 }

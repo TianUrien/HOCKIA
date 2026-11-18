@@ -6,6 +6,9 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import type { PlayingCategory } from '@/lib/hockeyCategories'
 import { CountryFilterField } from './CountryFilterField'
+import { useCommunityT } from '@/i18n/ns/community'
+import { useEnumsT } from '@/i18n/ns/enums'
+import { formatNumber } from '@/i18n/format'
 import type { AvailabilityFilter, CommunityFiltersState, RoleFilter } from './communityFilters'
 
 interface CommunityFiltersDrawerProps {
@@ -21,45 +24,24 @@ interface CommunityFiltersDrawerProps {
   onSelectRole: (role: RoleFilter) => void
 }
 
-const POSITIONS = [
-  { value: 'goalkeeper', label: 'Goalkeeper' },
-  { value: 'defender', label: 'Defender' },
-  { value: 'midfielder', label: 'Midfielder' },
-  { value: 'forward', label: 'Forward' },
-]
-const ROLES: { role: RoleFilter; label: string }[] = [
-  { role: 'player', label: 'Players' },
-  { role: 'coach', label: 'Coaches' },
-  { role: 'club', label: 'Clubs' },
-  { role: 'brand', label: 'Brands' },
-  { role: 'umpire', label: 'Umpires' },
-]
+// Labels are catalog keys, translated where each chip renders (enums.position.<value>).
+const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
+const ROLES: Exclude<RoleFilter, 'all'>[] = ['player', 'coach', 'club', 'brand', 'umpire']
 // "Open to" — each chip reads its own profile column (founder 2026-09-20):
 // Play → open_to_play, Coach → open_to_coach, Recruiting →
 // coach_recruits_for_team / clubs with ≥1 open opportunity (toggle as the
 // fallback — ruling 2026-09-21), Opportunities →
 // open_to_opportunities. The same columns Settings › Availability writes.
-const OPEN_TO: { value: Exclude<AvailabilityFilter, 'all'>; label: string }[] = [
-  { value: 'play', label: 'Play' },
-  { value: 'coach', label: 'Coach' },
-  { value: 'recruiting', label: 'Recruiting' },
-  { value: 'opportunities', label: 'Opportunities' },
-]
+const OPEN_TO: Exclude<AvailabilityFilter, 'all'>[] = ['play', 'coach', 'recruiting', 'opportunities']
 
 // Phone sheet (Figma New Hockia 2 · Community P13 24:835): Availability ·
 // Position · Team · EU passport. Role lives in the chips above the grid.
-const AVAILABILITY: { value: Exclude<AvailabilityFilter, 'all'>; label: string; roles: RoleFilter[] }[] = [
-  { value: 'play', label: 'Open to play', roles: ['all', 'player'] },
-  { value: 'coach', label: 'Open to coach', roles: ['all', 'coach'] },
-  { value: 'recruiting', label: 'Recruiting', roles: ['all', 'club', 'coach'] },
+const AVAILABILITY: { value: 'play' | 'coach' | 'recruiting'; roles: RoleFilter[] }[] = [
+  { value: 'play', roles: ['all', 'player'] },
+  { value: 'coach', roles: ['all', 'coach'] },
+  { value: 'recruiting', roles: ['all', 'club', 'coach'] },
 ]
-const TEAMS: { value: PlayingCategory; label: string }[] = [
-  { value: 'adult_women', label: 'Women’s' },
-  { value: 'adult_men', label: 'Men’s' },
-  { value: 'girls', label: 'Girls' },
-  { value: 'boys', label: 'Boys' },
-  { value: 'mixed', label: 'Mixed' },
-]
+const TEAMS: PlayingCategory[] = ['adult_women', 'adult_men', 'girls', 'boys', 'mixed']
 
 /** Overline group label (Hockia 2/Overline). */
 function GroupLabel({ children }: { children: string }) {
@@ -77,6 +59,8 @@ function GroupLabel({ children }: { children: string }) {
  * (selected = soft purple).
  */
 export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onSelectRole }: CommunityFiltersDrawerProps) {
+  const t = useCommunityT()
+  const tEnums = useEnumsT()
   const { filters, updateFilter, clearFilters, togglePosition, showFilters, setShowFilters } = state
   const close = () => setShowFilters(false)
   // Phone = Figma New Hockia 2 P13 (below). Desktop keeps the earlier controls.
@@ -91,14 +75,14 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
   // Clubs and brands have a country, not a passport.
   const showNationality = filters.role !== 'club' && filters.role !== 'brand'
   const basedInCaption = filters.role === 'club' || filters.role === 'brand'
-    ? 'Where they are.'
+    ? t('filters.basedInCaptionOrg')
     : filters.role === 'all'
-      ? 'Where they live now, not their passport. Clubs and brands: their own country.'
-      : 'Where they live now, not their passport.'
+      ? t('filters.basedInCaptionAll')
+      : t('filters.basedInCaptionPerson')
   const countryFields = (
     <>
       <CountryFilterField
-        label="Based in"
+        label={t('filters.basedIn')}
         caption={basedInCaption}
         value={filters.locationCountryIds}
         onChange={(ids) => updateFilter('locationCountryIds', ids)}
@@ -106,8 +90,8 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
       />
       {showNationality && (
         <CountryFilterField
-          label="Nationality"
-          caption="Either nationality counts, dual passports included."
+          label={t('filters.nationality')}
+          caption={t('filters.nationalityCaption')}
           value={filters.nationalityCountryIds}
           onChange={(ids) => updateFilter('nationalityCountryIds', ids)}
           withFlags
@@ -117,26 +101,28 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
     </>
   )
   // Brands / clubs tabs count brands / clubs, not members (QA copy nit).
-  const noun = filters.role === 'brand' ? ['brand', 'brands'] : filters.role === 'club' ? ['club', 'clubs'] : ['member', 'members']
-  const showLabel = count === null ? `Show ${noun[1]}` : count === 1 ? `Show 1 ${noun[0]}` : `Show ${count.toLocaleString()} ${noun[1]}`
+  const noun = filters.role === 'brand' ? 'Brands' : filters.role === 'club' ? 'Clubs' : 'Members'
+  const showLabel = count === null
+    ? t(`filters.show${noun}`)
+    : t(`filters.show${noun}Count`, { count, formatted: formatNumber(count) })
 
   if (isPhone) {
     return (
-      <BottomSheet open={showFilters} onClose={close} ariaLabel="Filters">
+      <BottomSheet open={showFilters} onClose={close} ariaLabel={t('filters.title')}>
         <div className="flex flex-col gap-5 px-5 pb-2 pt-1" data-testid="community-filters-sheet">
           <div className="flex items-center justify-between">
-            <h2 className="text-[22px] font-bold leading-[27px] tracking-[-0.006em] text-ink-1">Filters</h2>
+            <h2 className="text-[22px] font-bold leading-[27px] tracking-[-0.006em] text-ink-1">{t('filters.title')}</h2>
             <button type="button" onClick={() => { clearFilters(); if (filters.role !== 'all') onSelectRole('all') }} className="-my-2 flex min-h-[44px] items-center text-[14px] font-semibold text-hockia-primary">
-              Reset
+              {t('filters.reset')}
             </button>
           </div>
 
           {AVAILABILITY.some((a) => a.roles.includes(filters.role)) && (
             <section className="flex flex-col gap-2.5">
-              <GroupLabel>Availability</GroupLabel>
+              <GroupLabel>{t('filters.availability')}</GroupLabel>
               <div className="flex flex-wrap gap-2">
                 {AVAILABILITY.filter((a) => a.roles.includes(filters.role)).map((a) => (
-                  <Chip key={a.value} label={a.label} selected={filters.availability === a.value} onClick={() => setOpenTo(a.value)} />
+                  <Chip key={a.value} label={t(`filters.availabilityOption.${a.value}`)} selected={filters.availability === a.value} onClick={() => setOpenTo(a.value)} />
                 ))}
               </div>
             </section>
@@ -144,10 +130,10 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
 
           {showPositions && (
             <section className="flex flex-col gap-2.5">
-              <GroupLabel>Position</GroupLabel>
+              <GroupLabel>{t('filters.position')}</GroupLabel>
               <div className="flex flex-wrap gap-2">
                 {POSITIONS.map((p) => (
-                  <Chip key={p.value} label={p.label} selected={filters.position.includes(p.value)} onClick={() => togglePosition(p.value)} />
+                  <Chip key={p} label={tEnums(`position.${p}`)} selected={filters.position.includes(p)} onClick={() => togglePosition(p)} />
                 ))}
               </div>
             </section>
@@ -155,10 +141,10 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
 
           {showTeams && (
             <section className="flex flex-col gap-2.5">
-              <GroupLabel>Team</GroupLabel>
+              <GroupLabel>{t('filters.team')}</GroupLabel>
               <div className="flex flex-wrap gap-2">
-                {TEAMS.map((t) => (
-                  <Chip key={t.value} label={t.label} selected={filters.categories.includes(t.value)} onClick={() => toggleTeam(t.value)} />
+                {TEAMS.map((team) => (
+                  <Chip key={team} label={t(`filters.teamOption.${team}`)} selected={filters.categories.includes(team)} onClick={() => toggleTeam(team)} />
                 ))}
               </div>
             </section>
@@ -168,8 +154,8 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
 
           {filters.role === 'brand' && (
             <SwitchCardRow
-              title="Looking for ambassadors"
-              description="Brands open to new partners"
+              title={t('filters.partnersTitle')}
+              description={t('filters.partnersDescription')}
               checked={filters.brandOpenToPartners}
               onChange={() => updateFilter('brandOpenToPartners', !filters.brandOpenToPartners)}
               testId="community-filter-partners"
@@ -178,8 +164,8 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
 
           {showEu && (
             <SwitchCardRow
-              title="Only EU passport holders"
-              description={euCount === null ? 'Either nationality counts' : euCount === 1 ? '1 member holds one' : `${euCount.toLocaleString()} members hold one`}
+              title={t('filters.euTitle')}
+              description={euCount === null ? t('filters.euDescription') : t('filters.euCount', { count: euCount, formatted: formatNumber(euCount) })}
               checked={filters.euOnly}
               onChange={() => updateFilter('euOnly', !filters.euOnly)}
               testId="community-filter-eu"
@@ -195,40 +181,40 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
   }
 
   return (
-    <BottomSheet open={showFilters} onClose={close} ariaLabel="Filters">
+    <BottomSheet open={showFilters} onClose={close} ariaLabel={t('filters.title')}>
       <div className="flex flex-col gap-[18px] px-5 pb-2 pt-1">
         <div className="flex items-center justify-between">
-          <h2 className="text-title text-ink-1">Filters</h2>
+          <h2 className="text-title text-ink-1">{t('filters.title')}</h2>
           <button type="button" onClick={() => { clearFilters(); if (filters.role !== 'all') onSelectRole('all') }} className="-my-2 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary">
-            Reset
+            {t('filters.reset')}
           </button>
         </div>
 
         {showPositions && (
           <section className="flex flex-col gap-2.5">
-            <h3 className="text-row font-semibold text-ink-1">Position</h3>
+            <h3 className="text-row font-semibold text-ink-1">{t('filters.position')}</h3>
             <div className="flex flex-wrap gap-2">
               {POSITIONS.map((p) => (
-                <Chip key={p.value} label={p.label} selected={filters.position.includes(p.value)} onClick={() => togglePosition(p.value)} />
+                <Chip key={p} label={tEnums(`position.${p}`)} selected={filters.position.includes(p)} onClick={() => togglePosition(p)} />
               ))}
             </div>
           </section>
         )}
 
         <section className="flex flex-col gap-2.5">
-          <h3 className="text-row font-semibold text-ink-1">Role</h3>
+          <h3 className="text-row font-semibold text-ink-1">{t('filters.role')}</h3>
           <div className="flex flex-wrap gap-2">
             {ROLES.map((r) => (
-              <Chip key={r.role} label={r.label} selected={filters.role === r.role} onClick={() => onSelectRole(filters.role === r.role ? 'all' : r.role)} />
+              <Chip key={r} label={t(`filters.roleOption.${r}`)} selected={filters.role === r} onClick={() => onSelectRole(filters.role === r ? 'all' : r)} />
             ))}
           </div>
         </section>
 
         <section className="flex flex-col gap-2.5">
-          <h3 className="text-row font-semibold text-ink-1">Open to</h3>
+          <h3 className="text-row font-semibold text-ink-1">{t('filters.openTo')}</h3>
           <div className="flex flex-wrap gap-2">
             {OPEN_TO.map((o) => (
-              <Chip key={o.value} label={o.label} selected={filters.availability === o.value} onClick={() => setOpenTo(o.value)} />
+              <Chip key={o} label={t(`filters.openToOption.${o}`)} selected={filters.availability === o} onClick={() => setOpenTo(o)} />
             ))}
           </div>
         </section>
@@ -244,12 +230,12 @@ export function CommunityFiltersDrawer({ state, resultCount, euCount = null, onS
             className="flex items-center gap-3 rounded-card bg-surface-grouped px-3.5 py-3 text-left"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-row font-semibold text-ink-1">Only members with an EU passport</span>
-              <span className="block truncate text-secondary text-ink-2">Either nationality counts, dual passports included</span>
+              <span className="block text-row font-semibold text-ink-1">{t('filters.euDesktopTitle')}</span>
+              <span className="block truncate text-secondary text-ink-2">{t('filters.euDesktopDescription')}</span>
             </span>
             <span className={cn('flex h-7 items-center gap-1.5 rounded-full px-2.5 text-caption font-semibold', filters.euOnly ? 'bg-positive-soft text-positive' : 'bg-white text-ink-2')}>
               <span className={cn('h-1.5 w-1.5 rounded-full', filters.euOnly ? 'bg-positive' : 'bg-ink-4')} />
-              {filters.euOnly ? 'On' : 'Off'}
+              {filters.euOnly ? t('filters.on') : t('filters.off')}
             </span>
           </button>
         )}

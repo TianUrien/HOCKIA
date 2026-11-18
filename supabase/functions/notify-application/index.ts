@@ -12,8 +12,10 @@ import {
   generateEmailHtml,
   generateEmailText,
   sendEmail,
+  applicantPositionsText,
 } from '../_shared/application-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
+import { type MemberLanguage, readMemberLanguage } from '../_shared/member-language.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 
 /**
@@ -375,45 +377,44 @@ Deno.serve(async (req: Request) => {
 
     logger.info('Both applicant and club are REAL accounts - proceeding with email')
 
-    // Build positions string
-    const positions: string[] = []
-    if (applicant.position) positions.push(applicant.position.charAt(0).toUpperCase() + applicant.position.slice(1))
-    if (applicant.secondary_position && applicant.secondary_position !== applicant.position) {
-      positions.push(applicant.secondary_position.charAt(0).toUpperCase() + applicant.secondary_position.slice(1))
-    }
+    // The club's interface language (profiles.ui_language), read on its own
+    // and failing to English.
+    const language = await readMemberLanguage(supabase, club.id)
 
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
     const profileUrl = applicant.username
       ? `${HOCKIA_BASE_URL}/players/${applicant.username}`
       : `${HOCKIA_BASE_URL}/players/id/${applicant.id}`
 
-    const templateVars = {
+    const templateVars = (lang: MemberLanguage) => ({
       opportunity_title: opportunity.title,
-      applicant_name: applicant.full_name?.trim() || 'Player',
-      applicant_position: positions.join(' \u2022 '),
+      applicant_name: applicant.full_name?.trim() || (lang === 'es' ? 'Jugador/a' : 'Player'),
+      applicant_position: applicantPositionsText(applicant, lang) ?? '',
       applicant_location: applicant.base_location?.trim() || '',
       applicant_avatar_url: applicant.avatar_url || '',
       avatar_role: applicant.role || '',
       cta_url: profileUrl,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
-    }
+    })
 
     // Try DB template, fall back to hardcoded
     let subject: string
     let emailHtml: string
     let emailText: string
 
-    const rendered = await renderTemplate(supabase, 'application_notification', templateVars)
+    const rendered = await renderTemplate(supabase, 'application_notification', templateVars, language)
     if (rendered) {
       subject = rendered.subject
       emailHtml = rendered.html
       emailText = rendered.text
-      logger.info('Using DB template for application_notification')
+      logger.info('Using DB template for application_notification', { language: rendered.language })
     } else {
-      emailHtml = generateEmailHtml(applicant as ApplicantData, opportunity as OpportunityData)
-      emailText = generateEmailText(applicant as ApplicantData, opportunity as OpportunityData)
-      subject = `New application for "${opportunity.title}"`
-      logger.info('Falling back to hardcoded template')
+      emailHtml = generateEmailHtml(applicant as ApplicantData, opportunity as OpportunityData, language)
+      emailText = generateEmailText(applicant as ApplicantData, opportunity as OpportunityData, language)
+      subject = language === 'es'
+        ? `Nueva postulación para "${opportunity.title}"`
+        : `New application for "${opportunity.title}"`
+      logger.info('Falling back to hardcoded template', { language })
     }
 
     // Send tracked email to the club

@@ -26,6 +26,7 @@ import {
   type ContextLike,
 } from '@/lib/findPlayers'
 import { cn } from '@/lib/utils'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * Shortlist — club v2 (Figma 04 Club D1.10 332:539; DEV NOTE 332:746), one
@@ -41,6 +42,7 @@ const NOTE_MAX = 500
 const InviteSheet = lazy(() => import('./InviteSheet'))
 
 export default function ShortlistScreen() {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const location = useLocation()
   const user = useAuthStore((s) => s.user)
@@ -67,7 +69,7 @@ export default function ShortlistScreen() {
   const allowance = useInviteAllowance()
   const limitReason = allowance.reached ? inviteLimitReason(allowance.limit) : null
 
-  const parent = (location.state as { parent?: string } | null)?.parent ?? 'Opportunities'
+  const parent = (location.state as { parent?: string } | null)?.parent ?? t('shortlistScreen.backOpportunities')
   const levelUnknown = !!target && !!ownLeague && ownLeague.band === null
   const ranked = useMemo(() => rankScoutRows(data.rows, { byFit: !!target && !levelUnknown }), [data.rows, target, levelUnknown])
   const applied = ranked.filter((r) => r.shortlistedApp)
@@ -75,9 +77,9 @@ export default function ShortlistScreen() {
   const list = chip === 'applied' ? applied : chip === 'scouted' ? scouted : ranked
   const contexts = useMemo(() => playerContexts(scouting.contexts, new Set(openRoles.map((r) => r.id)), ctx?.id ?? null), [scouting.contexts, openRoles, ctx])
   const chips: { id: Chip; label: string }[] = [
-    { id: 'all', label: `All · ${ranked.length}` },
-    { id: 'applied', label: `Applied · ${applied.length}` },
-    { id: 'scouted', label: `Scouted · ${scouted.length}` },
+    { id: 'all', label: t('shortlistScreen.chipAll', { count: ranked.length }) },
+    { id: 'applied', label: t('shortlistScreen.chipApplied', { count: applied.length }) },
+    { id: 'scouted', label: t('shortlistScreen.chipScouted', { count: scouted.length }) },
   ]
   const pick = (c: ContextLike | null) => {
     setSheet(false)
@@ -99,8 +101,8 @@ export default function ShortlistScreen() {
 
   const saveNote = () => {
     if (!noteFor) return
-    const t = noteText.trim()
-    void actions.setNote(noteFor, t ? t.slice(0, NOTE_MAX) : null)
+    const trimmed = noteText.trim()
+    void actions.setNote(noteFor, trimmed ? trimmed.slice(0, NOTE_MAX) : null)
     setNoteFor(null)
   }
 
@@ -108,11 +110,11 @@ export default function ShortlistScreen() {
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="shortlist-screen">
       <DetailNavBar parent={parent} fallbackPath="/opportunities" />
       <div className="px-5 pb-3 pt-0.5">
-        <h1 className="text-[30px] font-bold leading-9 tracking-[-0.36px] text-ink-1">Shortlist</h1>
+        <h1 className="text-[30px] font-bold leading-9 tracking-[-0.36px] text-ink-1">{t('shortlistScreen.title')}</h1>
         <p className="text-[14px] leading-[19px] text-ink-2">{shortlistHeaderLine(ranked.length)}</p>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Shortlist source">
+      <div className="flex gap-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label={t('shortlistScreen.sourceTabs')}>
         {chips.map((c) => (
           <button key={c.id} type="button" role="tab" aria-selected={chip === c.id} onClick={() => setChip(c.id)} className={cn('shrink-0 rounded-full px-3.5 py-2 text-[14px] font-semibold', chip === c.id ? 'bg-brand-soft text-brand-primary' : 'bg-surface-grouped text-ink-1')}>
             {c.label}
@@ -125,14 +127,14 @@ export default function ShortlistScreen() {
 
       {limitReason && list.length > 0 && <InviteLimitNotice reason={limitReason} />}
       {data.error && <p className="px-5 py-3 text-row text-ink-2">{data.error}</p>}
-      {data.loading && <p className="px-5 py-4 text-row text-ink-3" aria-live="polite">Loading…</p>}
+      {data.loading && <p className="px-5 py-4 text-row text-ink-3" aria-live="polite">{t('shortlistScreen.loading')}</p>}
       {!data.loading && !data.error && list.length === 0 && (
         <div className="px-5 py-4">
           <p className="text-row text-ink-3">
-            {chip === 'applied' ? 'No applicants shortlisted for this opportunity yet.' : chip === 'scouted' ? 'No one scouted for this opportunity yet.' : 'No one on this shortlist yet.'}
+            {chip === 'applied' ? t('shortlistScreen.emptyApplied') : chip === 'scouted' ? t('shortlistScreen.emptyScouted') : t('shortlistScreen.emptyAll')}
           </p>
           {chip !== 'applied' && (
-            <button type="button" onClick={() => navigate('/dashboard/find-players')} className="mt-3 flex h-11 items-center rounded-full bg-surface-grouped px-4 text-row font-semibold text-ink-1">Find players</button>
+            <button type="button" onClick={() => navigate('/dashboard/find-players')} className="mt-3 flex h-11 items-center rounded-full bg-surface-grouped px-4 text-row font-semibold text-ink-1">{t('shortlistScreen.findPlayers')}</button>
           )}
         </div>
       )}
@@ -156,7 +158,7 @@ export default function ShortlistScreen() {
                       limitReason={limitReason}
                       onInvite={() => setInviteFor(r)}
                     />
-                    <button type="button" onClick={() => void message(r)} aria-label={`Message ${r.full_name ?? 'player'}`} className="relative before:absolute before:-inset-1 before:content-[''] flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
+                    <button type="button" onClick={() => void message(r)} aria-label={r.full_name != null ? t('shortlistScreen.messageNamed', { name: r.full_name }) : t('shortlistScreen.messagePlayer')} className="relative before:absolute before:-inset-1 before:content-[''] flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
                       <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} />
                     </button>
                   </span>
@@ -175,41 +177,41 @@ export default function ShortlistScreen() {
         <div className="px-5 pt-5">
           <div className="flex items-start gap-2.5 rounded-card bg-surface-grouped p-3.5">
             <Lock className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
-            <p className="text-secondary leading-[18px] text-ink-2">Players are never told they’re on your shortlist. Notes are private to your club.</p>
+            <p className="text-secondary leading-[18px] text-ink-2">{t('shortlistScreen.privacyNote')}</p>
           </div>
         </div>
       )}
 
-      <BottomSheet open={!!menuFor} onClose={() => setMenuFor(null)} ariaLabel={menuFor?.full_name ?? 'Player'}>
+      <BottomSheet open={!!menuFor} onClose={() => setMenuFor(null)} ariaLabel={menuFor?.full_name ?? t('shortlistScreen.playerFallback')}>
         <div role="menu" className="pb-2">
           <p className="truncate px-5 pb-2 pt-1 text-secondary text-ink-2">{menuFor?.full_name}</p>
           {menuFor?.savedId && (
             <button type="button" role="menuitem" onClick={() => { setNoteFor(menuFor); setMenuFor(null) }} className="flex h-[52px] w-full items-center px-5 text-left text-[16px] text-ink-1">
-              {menuFor.note ? 'Edit note' : 'Add note'}
+              {menuFor.note ? t('shortlistScreen.editNote') : t('shortlistScreen.addNote')}
             </button>
           )}
           <button type="button" role="menuitem" onClick={() => { if (menuFor) void actions.remove(menuFor); setMenuFor(null) }} className="flex h-[52px] w-full items-center px-5 text-left text-[16px] text-hockia-danger">
-            {menuFor?.shortlistedApp ? 'Remove (moves the application to Maybe)' : 'Remove'}
+            {menuFor?.shortlistedApp ? t('shortlistScreen.removeApplied') : t('shortlistScreen.remove')}
           </button>
         </div>
       </BottomSheet>
 
-      <BottomSheet open={!!noteFor} onClose={() => setNoteFor(null)} ariaLabel="Note">
+      <BottomSheet open={!!noteFor} onClose={() => setNoteFor(null)} ariaLabel={t('shortlistScreen.noteLabel')}>
         <div className="px-5 pb-3 pt-1">
-          <h2 className="text-[17px] font-semibold text-ink-1">Note on {noteFor?.full_name?.trim().split(/\s+/)[0] || 'this player'}</h2>
-          <p className="pb-2 text-secondary text-ink-2">Only your club sees this.</p>
+          <h2 className="text-[17px] font-semibold text-ink-1">{noteFor?.full_name?.trim().split(/\s+/)[0] ? t('shortlistScreen.noteTitle', { firstName: noteFor.full_name.trim().split(/\s+/)[0] }) : t('shortlistScreen.noteTitleNoName')}</h2>
+          <p className="pb-2 text-secondary text-ink-2">{t('shortlistScreen.noteHint')}</p>
           <textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value.slice(0, NOTE_MAX))}
             rows={4}
-            aria-label="Note"
+            aria-label={t('shortlistScreen.noteLabel')}
             className="w-full resize-none rounded-card bg-surface-grouped p-3 text-[16px] text-ink-1 outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary"
           />
           <div className="flex gap-2.5 pt-3">
             {noteFor?.note && (
-              <button type="button" onClick={() => { if (noteFor) void actions.setNote(noteFor, null); setNoteFor(null) }} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1">Clear</button>
+              <button type="button" onClick={() => { if (noteFor) void actions.setNote(noteFor, null); setNoteFor(null) }} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1">{t('shortlistScreen.clearNote')}</button>
             )}
-            <button type="button" onClick={saveNote} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">Save note</button>
+            <button type="button" onClick={saveNote} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">{t('shortlistScreen.saveNote')}</button>
           </div>
         </div>
       </BottomSheet>

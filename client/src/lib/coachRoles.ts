@@ -7,6 +7,7 @@
  */
 import { applicationStatusPill } from '@/lib/opportunityCopy'
 import { dayFirst } from '@/lib/dayFirst'
+import { tEnums } from '@/i18n/ns/enums'
 
 export interface CoachModeProfile {
   role?: string | null
@@ -25,7 +26,7 @@ export function isRecruitingCoach(profile: CoachModeProfile | null | undefined):
 
 /** "Coaching roles · 0 open" — the line over the candidate's list. */
 export function coachingRolesOpenLine(open: number): string {
-  return `Coaching opportunities · ${open} open`
+  return tEnums('coachRoles.openLine', { count: open })
 }
 
 /**
@@ -34,9 +35,7 @@ export function coachingRolesOpenLine(open: number): string {
  */
 export function coachingRolesPostedLine(count: number | null | undefined): string | null {
   if (typeof count !== 'number' || !Number.isFinite(count) || count <= 0) return null
-  return count === 1
-    ? '1 coaching opportunity was posted on Hockia this year'
-    : `${count} coaching opportunities were posted on Hockia this year`
+  return tEnums('coachRoles.postedLine', { count })
 }
 
 /** The first instant of `now`'s calendar year (UTC), for the "this year" count. */
@@ -60,7 +59,7 @@ export function closedRoleMeta(role: Pick<ClosedCoachingRole, 'clubName' | 'coun
 /** "Closed 3 Oct" (day first; the year once it differs from now's). */
 export function closedRoleDate(closedAt: string | null, now = new Date()): string | null {
   const day = dayFirst(closedAt, { now })
-  return day ? `Closed ${day}` : null
+  return day ? tEnums('coachRoles.closedOn', { date: day }) : null
 }
 
 /**
@@ -76,7 +75,7 @@ export function closedRoleOwnStatus(status: string | null | undefined): string |
 /** "Recruiting for Barnes HC" — the linked world club, else the typed club. */
 export function recruitingForLine(worldClubName: string | null | undefined, currentClub: string | null | undefined): string | null {
   const name = worldClubName?.trim() || currentClub?.trim() || null
-  return name ? `Recruiting for ${name}` : null
+  return name ? tEnums('coachRoles.recruitingFor', { clubName: name }) : null
 }
 
 // ── A recruiting coach as the owner of the Club v2 applicant screens ──
@@ -84,8 +83,8 @@ export function recruitingForLine(worldClubName: string | null | undefined, curr
 /** Where the applicant screens go back to: a coach's roles live under My roles. */
 export function recruiterRolesHome(profile: CoachModeProfile | null | undefined): { path: string; label: string } {
   return isRecruitingCoach(profile)
-    ? { path: '/opportunities?view=mine', label: 'My opportunities' }
-    : { path: '/opportunities', label: 'Opportunities' }
+    ? { path: '/opportunities?view=mine', label: tEnums('coachRoles.homeMine') }
+    : { path: '/opportunities', label: tEnums('coachRoles.homeAll') }
 }
 
 export interface OrganisationRole {
@@ -143,4 +142,13 @@ export function coachSigningNeedsClub(
   )
 }
 
+/**
+ * English only: a string constant cannot follow the language. Kept for the
+ * callers that still import it; new code uses coachSigningNeedsClubNote().
+ */
 export const COACH_SIGNING_NEEDS_CLUB_NOTE = 'Add your club to your profile to mark a signing.'
+
+/** The same note in the interface language. */
+export function coachSigningNeedsClubNote(): string {
+  return tEnums('coachRoles.signingNeedsClub')
+}

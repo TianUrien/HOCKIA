@@ -21,6 +21,7 @@ import { formatActivityAge } from '@/lib/inboxTime'
 import { useAuthorContext } from '@/hooks/useFeedAuthorContext'
 import { roleLabel } from '@/lib/identity'
 import { profilePathForRole, type FeedAuthorRole as Role } from '@/lib/feedPaths'
+import { useHomeT } from '@/i18n/ns/home'
 
 // Re-exported for the cards' convenience; the implementation lives in
 // lib/feedPaths so this file stays fast-refresh clean.
@@ -53,13 +54,14 @@ interface FeedCardHeaderProps {
 }
 
 export function FeedCardHeader({ authorId, name, avatarUrl, role, createdAt, profilePath, subtitle, right }: FeedCardHeaderProps) {
+  const t = useHomeT()
   const ctx = useAuthorContext(authorId)
   // Figma: "Player · Old Lions · 2h" — the club (city only when no club is set).
   const place = role === 'club' ? ctx?.city : ctx?.club ?? ctx?.city
   const context = subtitle ?? [roleLabel(role), place].filter(Boolean).join(' · ')
   const timeAgo = formatActivityAge(createdAt)
   const path = profilePath === undefined ? profilePathForRole(role, authorId) : profilePath
-  const displayName = name || (role === 'club' ? 'A club' : 'A member')
+  const displayName = name || (role === 'club' ? t('feedCard.unnamedClub') : t('feedCard.unnamedMember'))
   const initials = (name ?? '').trim().split(/\s+/).filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase() || '?'
 
   const identity = (
@@ -78,7 +80,7 @@ export function FeedCardHeader({ authorId, name, avatarUrl, role, createdAt, pro
   return (
     <div className="flex items-center gap-2.5 px-5 pb-2.5 pt-3.5">
       {path ? (
-        <Link to={path} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={`${displayName} · view profile`}>
+        <Link to={path} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={t('feedCard.viewProfileAria', { name: displayName })}>
           {identity}
         </Link>
       ) : (

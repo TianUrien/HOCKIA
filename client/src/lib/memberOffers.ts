@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { OFFER_ROLES, countryInSentence, type OfferRole } from '@/lib/brandOffers'
+import { OFFER_ROLES, countryInSentence, offerRegionLabel, type OfferRole } from '@/lib/brandOffers'
+import { withLazyText } from '@/lib/opportunityLazyText'
+import { formatList, isEnglish } from '@/i18n/format'
+import { tBrands } from '@/i18n/ns/brands'
 
 /**
  * Brand offers, Phase 2: what members see (Figma "08 · Brands", P2; founder
@@ -44,12 +47,14 @@ export interface MemberOfferDetail extends MemberOffer {
 export type OfferSurface = 'home' | 'home_rail' | 'hockia_ai' | 'brands_tab' | 'offer_detail' | 'marketplace' | 'need_page' | 'moment_sheet'
 export type DismissReason = 'not_for_me' | 'already_have' | 'wrong_country' | 'too_many' | 'hide_brand'
 
+// Labels are read on each use (the language is not known when this module loads).
+const dismissReason = (value: DismissReason, key: 'notForMe' | 'alreadyHave' | 'wrongCountry' | 'tooMany' | 'hideBrand') => withLazyText({ value }, { label: () => tBrands(`memberOffers.dismiss.${key}`) })
 export const DISMISS_REASONS: { value: DismissReason; label: string }[] = [
-  { value: 'not_for_me', label: 'Not for me' },
-  { value: 'already_have', label: 'Already have it' },
-  { value: 'wrong_country', label: 'Wrong country' },
-  { value: 'too_many', label: 'Too many offers' },
-  { value: 'hide_brand', label: 'Hide this brand' },
+  dismissReason('not_for_me', 'notForMe'),
+  dismissReason('already_have', 'alreadyHave'),
+  dismissReason('wrong_country', 'wrongCountry'),
+  dismissReason('too_many', 'tooMany'),
+  dismissReason('hide_brand', 'hideBrand'),
 ]
 
 // ── Server calls ────────────────────────────────────────────────────────────
@@ -122,17 +127,29 @@ export function reportOfferContactIfPending(recipientId: string | null | undefin
 
 // ── Copy ────────────────────────────────────────────────────────────────────
 
+const ROLE_KEYS = { player: 'players', coach: 'coaches', club: 'clubs', umpire: 'umpires' } as const satisfies Record<OfferRole, string>
+const hasKey = <T extends object>(map: T, k: string): k is Extract<keyof T, string> => Object.prototype.hasOwnProperty.call(map, k)
+
+/** "a, b and c" (English keeps its own form, no serial comma); Intl lists elsewhere. */
+function joinWords(items: string[], type: 'conjunction' | 'disjunction'): string {
+  if (!isEnglish()) return formatList(items, type)
+  return items.length > 1 ? `${items.slice(0, -1).join(', ')} ${type === 'conjunction' ? 'and' : 'or'} ${items[items.length - 1]}` : items[0] ?? ''
+}
+
+/** A region of offer reach (stored in English) in the interface language; one table, kept in brandOffers. */
+export { offerRegionLabel }
+
 /** "Players and coaches who live in England or the Netherlands" (OD1 For row). */
 export function offerForLine(roles: OfferRole[], countryNames: string[], place?: { everywhere?: boolean; regions?: string[] }): string {
-  const who = roles.map((r) => OFFER_ROLES.find((x) => x.value === r)?.label ?? r)
-  const lower = who.map((w, i) => (i === 0 ? w : w.toLowerCase()))
+  const who = roles.map((r) => (hasKey(ROLE_KEYS, r) ? tBrands(`memberOffers.role.${ROLE_KEYS[r]}`) : r))
+  const lower = who.map((w, i) => (i === 0 ? w : w.toLocaleLowerCase(isEnglish() ? 'en' : undefined)))
   // Every role targeted reads as "Members" (design review 2026-10-25); a subset keeps the list.
   const everyone = OFFER_ROLES.every((x) => roles.includes(x.value))
-  const whoText = everyone || lower.length === 0 ? 'Members' : lower.length === 1 ? lower[0] : `${lower.slice(0, -1).join(', ')} and ${lower[lower.length - 1]}`
-  if (place?.everywhere) return `${whoText} everywhere`
-  const named = [...(place?.regions ?? []), ...countryNames.map(countryInSentence)]
-  const where = named.length > 1 ? `${named.slice(0, -1).join(', ')} or ${named[named.length - 1]}` : named[0] ?? ''
-  return where ? `${whoText} who live in ${where}` : whoText
+  const whoText = everyone || lower.length === 0 ? tBrands('memberOffers.forLine.members') : joinWords(lower, 'conjunction')
+  if (place?.everywhere) return tBrands('memberOffers.forLine.everywhere', { who: whoText })
+  const named = [...(place?.regions ?? []).map(offerRegionLabel), ...countryNames.map(countryInSentence)]
+  const where = joinWords(named, 'disjunction')
+  return where ? tBrands('memberOffers.forLine.liveIn', { who: whoText, where }) : whoText
 }
 
 /** "northlinehockey.com/hockia" from the offer link (OD1 Store row). */
@@ -147,8 +164,8 @@ export function storeLabel(link: string): string {
 
 /** OD1 reason line (no approval step since 2026-10-25, so no "checked" claim). */
 export function detailReasonLine(countryName: string | null, everywhere = false): string | null {
-  if (everywhere) return 'You see this because it is for members everywhere.'
-  return countryName ? `You see this because you live in ${countryInSentence(countryName)}.` : null
+  if (everywhere) return tBrands('memberOffers.detailReason.everywhere')
+  return countryName ? tBrands('memberOffers.detailReason.liveIn', { country: countryInSentence(countryName) }) : null
 }
 
 // ── Hockia AI: which answers may carry an offer (founder default 2026-10-25) ─
@@ -162,6 +179,9 @@ const AI_TOPICS: { topic: string; re: RegExp }[] = [
   { topic: 'physio', re: /\b(physio\w*|injur\w*|rehab\w*|recovery|massage)\b/i },
 ]
 
+/** Topic tokens (also sent with events) to their catalog keys. */
+const AI_TOPIC_KEYS = { 'moving abroad': 'movingAbroad', gear: 'gear', kit: 'kit', training: 'training', camps: 'camps', physio: 'physio' } as const
+
 /** The topic of a member's question when it may carry an offer, else null. */
 export function hockiaAiOfferTopic(question: string | null | undefined): string | null {
   const q = (question ?? '').trim()
@@ -171,6 +191,8 @@ export function hockiaAiOfferTopic(question: string | null | undefined): string 
 
 /** H3 reason line: "Shown because you asked about moving to England. It did not change the answer." */
 export function hockiaAiReasonLine(topic: string, countryName: string | null): string {
-  const about = topic === 'moving abroad' && countryName ? `moving to ${countryInSentence(countryName)}` : topic
-  return `Shown because you asked about ${about}. It did not change the answer.`
+  const about = topic === 'moving abroad' && countryName
+    ? tBrands('memberOffers.aiTopic.movingTo', { country: countryInSentence(countryName) })
+    : hasKey(AI_TOPIC_KEYS, topic) ? tBrands(`memberOffers.aiTopic.${AI_TOPIC_KEYS[topic]}`) : topic
+  return tBrands('memberOffers.aiReason', { about })
 }

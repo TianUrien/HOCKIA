@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Flag, Trash2, Shield } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import ReportUserModal from '@/components/ReportUserModal'
-import { MENU_ICON_CLASS, REPORT_MENU_LABEL } from '@/lib/report'
+import { MENU_ICON_CLASS, reportMenuLabel } from '@/lib/report'
 import { MoreMenu, type MoreMenuItem } from '@/components/safety/MoreMenu'
 import { usePostInteractions } from '@/hooks/usePostInteractions'
 import { useUserPosts } from '@/hooks/useUserPosts'
@@ -15,6 +15,7 @@ import { PostInteractionBar } from '../PostInteractionBar'
 import { PostCommentsSection } from '../PostCommentsSection'
 import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import type { UserPostFeedItem, TransferMetadata } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface TransferAnnouncementCardProps {
   item: UserPostFeedItem
@@ -23,6 +24,7 @@ interface TransferAnnouncementCardProps {
 }
 
 export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: TransferAnnouncementCardProps) {
+  const t = useHomeT()
   const { user } = useAuthStore()
   const { toggleLike } = usePostInteractions()
   const { deletePost } = useUserPosts()
@@ -86,23 +88,23 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
   }, [item.has_liked, item.like_count, item.post_id, onLikeUpdate, toggleLike])
 
   const handleDelete = useCallback(async () => {
-    if (!confirm('Are you sure you want to delete this announcement?')) return
+    if (!confirm(t('cards.transfer.deleteConfirm'))) return
 
     const result = await deletePost(item.post_id)
     if (result.success) {
       onDelete?.(item.feed_item_id)
     }
-  }, [item.post_id, item.feed_item_id, deletePost, onDelete])
+  }, [item.post_id, item.feed_item_id, deletePost, onDelete, t])
 
   const handleCommentCountChange = useCallback((newCount: number) => {
     setLocalCommentCount(newCount)
   }, [])
 
   const menuItems: MoreMenuItem[] = isOwner
-    ? [{ key: 'delete', label: 'Delete post', icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, destructive: true, onSelect: () => void handleDelete() }]
-    : [{ key: 'report', label: REPORT_MENU_LABEL, icon: <Flag className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setShowReport(true) }]
+    ? [{ key: 'delete', label: t('cards.transfer.deletePost'), icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, destructive: true, onSelect: () => void handleDelete() }]
+    : [{ key: 'report', label: reportMenuLabel(), icon: <Flag className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setShowReport(true) }]
   const menu = user ? (
-    <MoreMenu items={menuItems} label="Post options" title={item.author_name ?? undefined} triggerClassName="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900" testId="post-more-menu" />
+    <MoreMenu items={menuItems} label={t('cards.transfer.menuLabel')} title={item.author_name ?? undefined} triggerClassName="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900" testId="post-more-menu" />
   ) : null
 
   const clubAvatar = (
@@ -129,7 +131,7 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
         profilePath={profilePath}
         right={menu}
       />
-      <FeedCardCaption icon={<ArrowRight />}>Transfer announcement</FeedCardCaption>
+      <FeedCardCaption icon={<ArrowRight />}>{t('cards.transfer.caption')}</FeedCardCaption>
 
       {/* Transfer visual: Player → Club */}
       <div className="px-4 pb-3 pt-1">
@@ -147,7 +149,7 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
             <div className="mt-2 flex min-h-[40px] items-start justify-center">
               <Link to={profilePath}>
                 <p className="line-clamp-2 text-sm font-semibold leading-5 text-gray-900">
-                  {item.author_name || 'Unknown'}
+                  {item.author_name || t('cards.transfer.unknownAuthor')}
                 </p>
               </Link>
             </div>
@@ -183,7 +185,7 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
         <FeedCardMedia>
           <FeedMediaGrid
             media={sortedImages}
-            altPrefix={item.author_name ? `Transfer announcement by ${item.author_name}` : 'Transfer announcement'}
+            altPrefix={item.author_name ? t('cards.transfer.altBy', { name: item.author_name }) : t('cards.transfer.alt')}
             onImageClick={handleImageClick}
           />
         </FeedCardMedia>

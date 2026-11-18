@@ -27,22 +27,24 @@ import {
   type ShortlistItemStatus,
   type ShortlistItemSummary,
 } from '@/hooks/useShortlists'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
-const STATUS_OPTIONS: { value: ShortlistItemStatus; label: string }[] = [
-  { value: 'unsorted', label: 'Unsorted' },
-  { value: 'good_fit', label: 'Top pick' },
-  { value: 'maybe', label: 'Maybe' },
-  { value: 'not_a_fit', label: 'Not a fit' },
-]
+const STATUS_OPTIONS = [
+  { value: 'unsorted', labelKey: 'shortlistDetail.statusUnsorted' },
+  { value: 'good_fit', labelKey: 'shortlistDetail.statusTopPick' },
+  { value: 'maybe', labelKey: 'shortlistDetail.statusMaybe' },
+  { value: 'not_a_fit', labelKey: 'shortlistDetail.statusNotAFit' },
+] as const satisfies readonly { value: ShortlistItemStatus; labelKey: string }[]
 
 export default function ShortlistDetailPage() {
+  const t = useRecruitingT()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [listName, setListName] = useState<string | null>(null)
   const [isDefault, setIsDefault] = useState(false)
 
-  useDocumentTitle(listName ?? 'Shortlist')
+  useDocumentTitle(listName ?? t('shortlistDetail.documentTitle'))
 
   const { items, loading, error, setStatus, setNote, remove, moveTo } = useShortlistItems(id ?? null)
 
@@ -68,7 +70,7 @@ export default function ShortlistDetailPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="max-w-3xl mx-auto px-4 pt-under-header-lg pb-12 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to view shortlist</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('shortlistDetail.signedOutTitle')}</h1>
         </div>
       </div>
     )
@@ -83,21 +85,21 @@ export default function ShortlistDetailPage() {
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
-          All shortlists
+          {t('shortlistDetail.allShortlists')}
         </Link>
 
         <header className="mb-6">
           <h1 className="flex flex-wrap items-center gap-2 text-title text-ink-1">
-            {listName ?? 'Shortlist'}
+            {listName ?? t('shortlistDetail.titleFallback')}
             {isDefault && (
               <span className="inline-flex items-center gap-0.5 rounded-full bg-hockia-soft px-2 py-0.5 font-sans text-caption font-semibold text-brand-text">
                 <Star className="w-3 h-3 fill-current" />
-                Default
+                {t('shortlistDetail.defaultBadge')}
               </span>
             )}
           </h1>
           <p className="mt-2 text-[17px] leading-[22px] text-ink-2">
-            {items.length} {items.length === 1 ? 'player' : 'players'} · only you see this.
+            {t('shortlistDetail.countLine', { count: items.length })}
           </p>
         </header>
 
@@ -149,6 +151,7 @@ interface RowProps {
 function ShortlistItemRow({
   item, currentShortlistId, onStatusChange, onNoteSave, onRemove, onMoveTo, onOpen,
 }: RowProps) {
+  const t = useRecruitingT()
   const [noteDraft, setNoteDraft] = useState(item.note ?? '')
   const [savingNote, setSavingNote] = useState(false)
   const [moveMenuOpen, setMoveMenuOpen] = useState(false)
@@ -173,12 +176,12 @@ function ShortlistItemRow({
     // user can remove it.
     return (
       <li className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500 italic flex items-center justify-between">
-        <span>Player no longer available</span>
+        <span>{t('shortlistDetail.unavailable')}</span>
         <button
           type="button"
           onClick={onRemove}
           className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-status-danger-soft hover:text-status-danger"
-          aria-label="Remove"
+          aria-label={t('shortlistDetail.remove')}
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -193,7 +196,7 @@ function ShortlistItemRow({
       <div className="flex items-start gap-3">
         <Avatar
           src={p.avatar_url}
-          alt={p.full_name ?? 'Player'}
+          alt={p.full_name ?? t('shortlistDetail.playerFallback')}
           initials={getInitials(p.full_name)}
           role="player"
           size="md"
@@ -232,11 +235,11 @@ function ShortlistItemRow({
 
           {/* Status (rebrand: Chip / Selectable — soft violet when chosen, 44 pt
               tall; status words carry the meaning, no red or green fills). */}
-          <div role="radiogroup" aria-label="Status" className="mb-2 flex flex-wrap gap-1.5">
+          <div role="radiogroup" aria-label={t('shortlistDetail.statusLabel')} className="mb-2 flex flex-wrap gap-1.5">
             {STATUS_OPTIONS.map((opt) => (
               <Chip
                 key={opt.value}
-                label={opt.label}
+                label={t(opt.labelKey)}
                 selected={item.status === opt.value}
                 role="radio"
                 aria-checked={item.status === opt.value}
@@ -253,11 +256,11 @@ function ShortlistItemRow({
             onChange={(e) => setNoteDraft(e.target.value)}
             onBlur={commitNote}
             rows={2}
-            placeholder="Add a private note…"
+            placeholder={t('shortlistDetail.notePlaceholder')}
             className="w-full text-xs px-2.5 py-2 border border-gray-200 rounded-lg focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none resize-none"
           />
           {savingNote && (
-            <p className="text-[10px] text-gray-400 mt-0.5">Saving…</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">{t('shortlistDetail.saving')}</p>
           )}
         </div>
 
@@ -266,8 +269,8 @@ function ShortlistItemRow({
             type="button"
             onClick={onOpen}
             className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-hockia-soft hover:text-hockia-primary"
-            aria-label="Open profile"
-            title="Open profile"
+            aria-label={t('shortlistDetail.openProfile')}
+            title={t('shortlistDetail.openProfile')}
           >
             <ExternalLink className="w-4 h-4" />
           </button>
@@ -275,8 +278,8 @@ function ShortlistItemRow({
             type="button"
             onClick={() => setMoveMenuOpen((v) => !v)}
             className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-hockia-soft hover:text-hockia-primary"
-            aria-label="Move to another shortlist"
-            title="Move to…"
+            aria-label={t('shortlistDetail.moveLabel')}
+            title={t('shortlistDetail.moveTo')}
           >
             <FolderInput className="w-4 h-4" />
           </button>
@@ -284,8 +287,8 @@ function ShortlistItemRow({
             type="button"
             onClick={onRemove}
             className="flex h-11 w-11 items-center justify-center rounded-full text-ink-3 hover:bg-status-danger-soft hover:text-status-danger"
-            aria-label="Remove from list"
-            title="Remove"
+            aria-label={t('shortlistDetail.removeFromList')}
+            title={t('shortlistDetail.remove')}
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -294,7 +297,7 @@ function ShortlistItemRow({
             onClose={() => setMoveMenuOpen(false)}
             onPick={(target, name) => onMoveTo(target, name)}
             currentShortlistId={currentShortlistId}
-            title="Move to…"
+            title={t('shortlistDetail.moveTo')}
           />
         </div>
       </div>
@@ -303,18 +306,19 @@ function ShortlistItemRow({
 }
 
 function EmptyState() {
+  const t = useRecruitingT()
   return (
     <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-8 text-center">
       <BookmarkCheck className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-      <h2 className="text-lg font-semibold text-gray-900 mb-1">No players yet</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-1">{t('shortlistDetail.emptyTitle')}</h2>
       <p className="text-sm text-gray-600 mb-4">
-        Save a player from Community, search, or any profile to add them here.
+        {t('shortlistDetail.emptyBody')}
       </p>
       <Link
         to="/community"
         className="inline-flex items-center px-4 py-2 rounded-lg bg-hockia-primary text-white text-sm font-semibold hover:bg-[#6b1de0]"
       >
-        Browse Community
+        {t('shortlistDetail.browseCommunity')}
       </Link>
     </div>
   )

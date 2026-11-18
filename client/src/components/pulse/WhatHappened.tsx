@@ -5,6 +5,7 @@ import { dayFirst } from '@/lib/dayFirst'
 import { getImageUrl } from '@/lib/imageUrl'
 import { STATUS_TONE_TEXT } from '@/lib/statusTone'
 import type { HappenedIcon, HappenedLine } from '@/lib/pulseWeek'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * "What happened" (Your week v2, Figma 42:276; row = List item / Activity
@@ -48,10 +49,11 @@ function LeadingVisual({ line }: { line: HappenedLine }) {
 }
 
 export function WhatHappened({ lines }: { lines: readonly HappenedLine[] }) {
+  const t = useCommunityT()
   if (lines.length === 0) return null
   return (
-    <section aria-label="What happened" data-testid="what-happened">
-      <h2 className="px-1 pb-2 text-body font-semibold text-ink-1">What happened</h2>
+    <section aria-label={t('pulse.happened.title')} data-testid="what-happened">
+      <h2 className="px-1 pb-2 text-body font-semibold text-ink-1">{t('pulse.happened.title')}</h2>
       <ol className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
         {lines.map((l) => {
           const inner = (

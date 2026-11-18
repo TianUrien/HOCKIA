@@ -19,7 +19,8 @@
 
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { getServiceClient } from '../_shared/supabase-client.ts'
-import { type Answers, clean, facts, leagueForTeam, sanitizeAnswers, stripPlaceholders, template } from '../_shared/role-description-copy.ts'
+import { type Answers, clean, facts, leagueForTeam, roleDescriptionSystem, sanitizeAnswers, stripPlaceholders, templateFor } from '../_shared/role-description-copy.ts'
+import { resolveAiLanguage, withOutputLanguage, type MemberLanguage } from '../_shared/ai-language.ts'
 import { checkUserRateLimit } from '../_shared/rate-limit.ts'
 import { recordAiUsage } from '../_shared/aiUsage.ts'
 import { captureException, setSentryUser } from '../_shared/sentry.ts'
@@ -53,27 +54,28 @@ Deno.serve(async (req) => {
     const p = prof as { role?: string; full_name?: string | null; mens_league_division?: string | null; womens_league_division?: string | null } | null
     if (!p || (p.role !== 'club' && p.role !== 'coach')) return json({ error: 'forbidden' }, 403)
 
-    let body: { answers?: unknown; mode?: unknown; text?: unknown }
+    let body: { answers?: unknown; mode?: unknown; text?: unknown; locale?: unknown }
     try {
       body = (await req.json()) as typeof body
     } catch {
       return json({ error: 'invalid_body' }, 400)
     }
+    const lang = await resolveAiLanguage(supabase, userId, body)
     if (body?.mode === 'from_text') {
       if (p.role !== 'club') return json({ error: 'forbidden' }, 403)
-      return await draftFromText(supabase, userId, cleanRoleText(body.text), json)
+      return await draftFromText(supabase, userId, cleanRoleText(body.text), json, lang)
     }
     const answers: Answers = sanitizeAnswers(body?.answers)
-    const clubName = clean(p.full_name) || 'Our club'
+    const clubName = clean(p.full_name) || (lang === 'es' ? 'Nuestro club' : 'Our club')
     // The client sends the pill label ("Women's"), so normalise before choosing the league.
     const league = leagueForTeam(answers.team, p.mens_league_division, p.womens_league_division)
 
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
-    if (!apiKey) return json({ description: template(answers, clubName), source: 'template' })
+    if (!apiKey) return json({ description: templateFor(answers, clubName, lang), source: 'template' })
 
     const limit = await checkUserRateLimit(supabase, userId, 'role_draft', DRAFT_LIMIT_PER_HOUR, 3600)
     if (limit.error) console.warn('[role-description-draft] rate limit check failed', limit.error)
-    if (!limit.allowed) return json({ description: template(answers, clubName), source: 'template' })
+    if (!limit.allowed) return json({ description: templateFor(answers, clubName, lang), source: 'template' })
 
     let usage: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number } | null = null
     try {
@@ -86,16 +88,7 @@ Deno.serve(async (req) => {
           system: [{
             type: 'text',
             cache_control: { type: 'ephemeral' },
-            text: [
-              'You write the "About the role" text for a field hockey club posting a role on Hockia.',
-              'Write as the club, first person plural ("we"), warm and plain. 3–5 short sentences, under 600 characters.',
-              'Use ONLY the facts given. Never invent training days, facilities, salaries, results or promises.',
-              'If a detail is missing, leave it out. Never write placeholders, brackets or blanks for the club to fill.',
-              'Write the team naturally, e.g. "a midfielder for our men\'s team", never "a Men midfielder".',
-              'No emoji, no hashtags, no headings, no bullet points.',
-              'Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.',
-              'Reply with the text only.',
-            ].join('\n'),
+            text: roleDescriptionSystem(lang),
           }],
           messages: [{ role: 'user', content: facts(answers, clubName, league).join('\n') }],
         }),
@@ -112,7 +105,7 @@ Deno.serve(async (req) => {
       return json({ description: text, source: 'ai' })
     } catch (err) {
       console.error('[role-description-draft]', String(err))
-      return json({ description: template(answers, clubName), source: 'template' })
+      return json({ description: templateFor(answers, clubName, lang), source: 'template' })
     } finally {
       if (usage) {
         await recordAiUsage(supabase, {
@@ -135,7 +128,7 @@ Deno.serve(async (req) => {
 
 type Json = (body: unknown, status?: number) => Response
 
-async function draftFromText(supabase: ReturnType<typeof getServiceClient>, userId: string, text: string, json: Json): Promise<Response> {
+async function draftFromText(supabase: ReturnType<typeof getServiceClient>, userId: string, text: string, json: Json, lang: MemberLanguage = 'en'): Promise<Response> {
   if (text.length < 3) return json({ error: 'text_required' }, 400)
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) return json({ draft: null, reason: 'unavailable' })
@@ -152,7 +145,7 @@ async function draftFromText(supabase: ReturnType<typeof getServiceClient>, user
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 900,
-        system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: ROLE_DRAFT_SYSTEM }],
+        system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: withOutputLanguage(ROLE_DRAFT_SYSTEM, lang) }],
         tools: [ROLE_DRAFT_TOOL],
         tool_choice: { type: 'tool', name: ROLE_DRAFT_TOOL.name },
         messages: [{ role: 'user', content: `Today is ${today.toISOString().slice(0, 10)}.\nThe club wrote:\n"""${text}"""` }],

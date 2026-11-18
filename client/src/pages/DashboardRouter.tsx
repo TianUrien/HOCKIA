@@ -9,6 +9,7 @@ import ClubDashboard from './ClubDashboard'
 import BrandDashboard from './BrandDashboard'
 import UmpireDashboard from './UmpireDashboard'
 import { ProfileSkeleton } from '@/components/ScreenSkeletons'
+import { useProfileT } from '@/i18n/ns/profile'
 
 // Module-level set so we only report each unrecognised role once per session.
 // The component re-renders on auth-store updates; without dedup we'd capture
@@ -29,6 +30,7 @@ const reportedUnknownRoles = new Set<string>()
  * Uses persistent state (hasCompletedOnboardingRedirect) to prevent redirect loops
  */
 export default function DashboardRouter() {
+  const t = useProfileT()
   const navigate = useNavigate()
   const { user, profile, loading, hasCompletedOnboardingRedirect, setHasCompletedOnboardingRedirect, profileStatus } = useAuthStore()
 
@@ -96,13 +98,13 @@ export default function DashboardRouter() {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <p className="text-gray-600 mb-2">Something went wrong loading your profile.</p>
-            <p className="text-sm text-gray-500 mb-4">Please try refreshing the page.</p>
+            <p className="text-gray-600 mb-2">{t('dashboardRouter.loadError.title')}</p>
+            <p className="text-sm text-gray-500 mb-4">{t('dashboardRouter.loadError.body')}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
             >
-              Refresh
+              {t('dashboardRouter.loadError.refresh')}
             </button>
           </div>
         </div>
@@ -111,12 +113,12 @@ export default function DashboardRouter() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">No profile found. Please complete your profile.</p>
+          <p className="text-gray-600 mb-4">{t('dashboardRouter.noProfile.body')}</p>
           <button
             onClick={() => navigate('/complete-profile')}
             className="px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
           >
-            Complete Profile
+            {t('dashboardRouter.noProfile.complete')}
           </button>
         </div>
       </div>
@@ -177,9 +179,9 @@ export default function DashboardRouter() {
   return (
     <div data-testid="dashboard-unknown-role" className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
       <div className="max-w-md text-center">
-        <p className="text-lg font-semibold text-gray-900">Something went wrong</p>
+        <p className="text-lg font-semibold text-gray-900">{t('dashboardRouter.unknownRole.title')}</p>
         <p className="mt-2 text-sm text-gray-600">
-          We couldn’t load your dashboard. Please refresh the page or contact support.
+          {t('dashboardRouter.unknownRole.body')}
         </p>
       </div>
     </div>

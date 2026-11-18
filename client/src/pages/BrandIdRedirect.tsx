@@ -3,6 +3,7 @@ import { useParams, Navigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 /**
  * BrandIdRedirect — resolves /brands/id/:id to the canonical /brands/:slug.
@@ -18,6 +19,7 @@ import { logger } from '@/lib/logger'
  */
 export default function BrandIdRedirect() {
   const { id } = useParams<{ id: string }>()
+  const t = useBrandsT()
   const [slug, setSlug] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
 
@@ -58,7 +60,7 @@ export default function BrandIdRedirect() {
   }
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-gray-400" aria-label="Loading brand" />
+      <Loader2 className="h-6 w-6 animate-spin text-gray-400" aria-label={t('idRedirect.loading')} />
     </div>
   )
 }

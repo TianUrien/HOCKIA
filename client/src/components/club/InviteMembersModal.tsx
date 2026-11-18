@@ -13,6 +13,8 @@ import {
 } from '@/lib/clubMembership'
 import { inviteErrorMessage } from '@/lib/clubSquadCopy'
 import { positionLabel } from '@/lib/identity'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
+import { placeText } from '@/i18n/countryNames'
 
 interface InviteMembersModalProps {
   isOpen: boolean
@@ -24,6 +26,7 @@ interface InviteMembersModalProps {
 type Tab = 'link' | 'person'
 
 export default function InviteMembersModal({ isOpen, onClose, onInvited }: InviteMembersModalProps) {
+  const t = useRecruitingT()
   const { addToast } = useToastStore()
   const [tab, setTab] = useState<Tab>('link')
 
@@ -39,9 +42,9 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
     if (res.success && res.token) {
       setToken(res.token)
     } else {
-      addToast(res.error ?? 'Could not create the invite link.', 'error')
+      addToast(res.error ?? t('inviteMembersModal.errors.createLink'), 'error')
     }
-  }, [addToast])
+  }, [addToast, t])
 
   // Get-or-create the link the first time the user opens the modal on the link tab.
   useEffect(() => {
@@ -69,7 +72,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
       setCopied(true)
       setTimeout(() => setCopied(false), 1800)
     } catch {
-      addToast('Could not copy. Long-press the link to copy it.', 'error')
+      addToast(t('inviteMembersModal.errors.copy'), 'error')
     }
   }
 
@@ -81,9 +84,9 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
     if (res.success && res.token) {
       setToken(res.token)
       setCopied(false)
-      addToast('New invite link generated. The old one no longer works.', 'success')
+      addToast(t('inviteMembersModal.regenerated'), 'success')
     } else {
-      addToast(res.error ?? 'Could not regenerate the link.', 'error')
+      addToast(res.error ?? t('inviteMembersModal.errors.regenerate'), 'error')
     }
   }
 
@@ -121,7 +124,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
     setInvitingId(null)
     if (res.success) {
       setInvited((prev) => new Set(prev).add(member.id))
-      addToast(`Invitation sent to ${member.full_name ?? 'member'}.`, 'success')
+      addToast(member.full_name ? t('inviteMembersModal.invitedToast', { name: member.full_name }) : t('inviteMembersModal.invitedToastNoName'), 'success')
       onInvited?.()
     } else {
       addToast(inviteErrorMessage(res), 'error')
@@ -132,21 +135,21 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-md w-full" showClose={false}>
       <div className="p-5">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-lg font-bold text-ink-1">Invite members</h2>
+          <h2 className="text-lg font-bold text-ink-1">{t('inviteMembersModal.title')}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('inviteMembersModal.close')}
             className="p-1.5 rounded-lg text-ink-4 hover:bg-surface-muted hover:text-ink-2 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <p className="text-sm text-ink-3 mb-4">Build your club’s roster. Players and coaches can accept to join.</p>
+        <p className="text-sm text-ink-3 mb-4">{t('inviteMembersModal.intro')}</p>
 
         {/* Segmented control */}
         <div className="flex p-1 mb-5 rounded-xl bg-surface-muted">
-          {([['link', 'Invite link', Link2], ['person', 'Invite a person', UserPlus]] as const).map(([key, label, Icon]) => (
+          {([['link', t('inviteMembersModal.tabLink'), Link2], ['person', t('inviteMembersModal.tabPerson'), UserPlus]] as const).map(([key, label, Icon]) => (
             <button
               key={key}
               type="button"
@@ -164,13 +167,13 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
         {tab === 'link' ? (
           <div>
             <p className="text-sm text-ink-2 mb-3">
-              Share this link with your team. Anyone who opens it can accept and join your club.
+              {t('inviteMembersModal.linkHelp')}
             </p>
             <div className="flex items-stretch gap-2">
               <div className="flex-1 min-w-0 flex items-center rounded-xl border border-line bg-surface-subtle px-3 py-2.5">
                 {linkLoading && !inviteUrl ? (
                   <span className="inline-flex items-center gap-2 text-sm text-ink-4">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Generating link…
+                    <Loader2 className="w-4 h-4 animate-spin" /> {t('inviteMembersModal.generating')}
                   </span>
                 ) : (
                   <span className="truncate text-sm text-ink-2" title={inviteUrl}>{inviteUrl}</span>
@@ -183,7 +186,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                 className="inline-flex items-center gap-1.5 rounded-xl bg-hockia-primary px-4 text-sm font-semibold text-white transition hover:bg-[#6B20D4] disabled:opacity-50"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? 'Copied' : 'Copy'}
+                {copied ? t('inviteMembersModal.copied') : t('inviteMembersModal.copy')}
               </button>
             </div>
             <button
@@ -193,7 +196,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
               className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-ink-3 hover:text-ink-2 disabled:opacity-50"
             >
               <RefreshCcw className={`w-3.5 h-3.5 ${linkLoading ? 'animate-spin' : ''}`} />
-              Generate a new link
+              {t('inviteMembersModal.regenerate')}
             </button>
           </div>
         ) : (
@@ -204,7 +207,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search players and coaches by name"
+                placeholder={t('inviteMembersModal.searchPlaceholder')}
                 autoFocus
                 className="w-full rounded-xl border border-line bg-white pl-9 pr-3 py-2.5 text-sm text-ink-1 outline-none focus:border-hockia-primary/40 focus-visible:ring-2 focus-visible:ring-hockia-primary/15"
               />
@@ -213,17 +216,17 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
             <div className="min-h-[160px] max-h-[320px] overflow-y-auto -mx-1 px-1">
               {searching ? (
                 <div className="flex items-center justify-center py-10 text-sm text-ink-4">
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" /> Searching…
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" /> {t('inviteMembersModal.searching')}
                 </div>
               ) : query.trim().length < 2 ? (
-                <p className="text-center text-sm text-ink-4 py-10">Type a name to find players and coaches.</p>
+                <p className="text-center text-sm text-ink-4 py-10">{t('inviteMembersModal.typeName')}</p>
               ) : results.length === 0 ? (
-                <p className="text-center text-sm text-ink-4 py-10">No players or coaches match “{query.trim()}”.</p>
+                <p className="text-center text-sm text-ink-4 py-10">{t('inviteMembersModal.noResults', { query: query.trim() })}</p>
               ) : (
                 <ul className="divide-y divide-line">
                   {results.map((m) => {
                     const isInvited = invited.has(m.id)
-                    const meta = [positionLabel(m.position), m.current_club || m.base_location].filter(Boolean).join(' · ')
+                    const meta = [positionLabel(m.position), m.current_club || placeText(m.base_location)].filter(Boolean).join(' · ')
                     return (
                       <li key={m.id} className="flex items-center gap-3 py-2.5">
                         <Avatar src={m.avatar_url} alt={m.full_name ?? ''} initials={m.full_name ? m.full_name.split(' ').map((n) => n[0]).join('') : '?'} size="md" role={m.role} />
@@ -249,7 +252,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                           ) : isInvited ? (
                             <Check className="w-3.5 h-3.5" />
                           ) : null}
-                          {isInvited ? 'Invited' : 'Invite'}
+                          {isInvited ? t('inviteMembersModal.invited') : t('inviteMembersModal.invite')}
                         </button>
                       </li>
                     )

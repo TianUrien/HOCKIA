@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { Shield } from 'lucide-react'
 import type { SearchClubResult as SearchClubResultType } from '@/hooks/useSearch'
+import { useWorldT } from '@/i18n/ns/world'
+import { countryLabel } from '@/i18n/countryNames'
 
 interface SearchClubResultProps {
   result: SearchClubResultType
@@ -11,6 +13,7 @@ function getFlagUrl(countryCode: string): string {
 }
 
 export function SearchClubResult({ result }: SearchClubResultProps) {
+  const t = useWorldT()
   const clubPath = result.claimed_profile_id
     ? `/clubs/id/${result.claimed_profile_id}`
     : null
@@ -33,12 +36,12 @@ export function SearchClubResult({ result }: SearchClubResultProps) {
             className="w-4 h-3 object-cover rounded-sm"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
-          <span className="text-xs text-gray-500">{result.country_name}</span>
+          <span className="text-xs text-gray-500">{countryLabel(result.country_name)}</span>
         </div>
       </div>
       {result.is_claimed && (
         <span className="text-[10px] font-medium text-hockia-primary bg-hockia-primary/10 px-2 py-0.5 rounded-full flex-shrink-0">
-          On Hockia
+          {t('searchResults.onHockia')}
         </span>
       )}
     </div>

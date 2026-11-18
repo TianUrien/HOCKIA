@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
+import { Trans } from 'react-i18next'
 import { Calendar as CalendarIcon, ImagePlus, Loader2, Shield, Trophy, Users, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { logger } from '@/lib/logger'
@@ -17,6 +18,11 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { deleteStorageObject } from '@/lib/storage'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
+
+// Proper names of hockey bodies, the same in every language.
+const ORGANIZER_EXAMPLE_APPOINTMENT = 'EuroHockey · FIH · England Hockey'
+const ORGANIZER_EXAMPLE_OTHER = 'FIH · USA Field Hockey · EuroHockey'
 import type {
   UmpireAppointment,
   UmpireAppointmentInput,
@@ -44,85 +50,99 @@ interface EntryTypeMeta {
   showLocation: boolean
   addTitle: string
   editTitle: string
+  namePlaceholder: string
+  notesPlaceholder: string
 }
 
-const ENTRY_TYPES: EntryTypeMeta[] = [
+type ProfileEditT = ReturnType<typeof useProfileEditT>
+
+/** Built at render time so the copy follows the interface language. */
+const getEntryTypes = (t: ProfileEditT): EntryTypeMeta[] => [
   {
     value: 'appointment',
-    label: 'Match',
+    label: t('umpireEntryTypes.appointmentLabel'),
     icon: CalendarIcon,
-    hint: 'A match, tournament, or event you officiated.',
+    hint: t('umpireEntryTypes.appointmentHint'),
     fields: {
-      event_name: 'Event name',
-      organizer: 'Organizer',
-      start_date: 'Start date',
-      end_date: 'End date',
+      event_name: t('umpireEntryTypes.appointmentEventName'),
+      organizer: t('umpireEntryTypes.appointmentOrganizer'),
+      start_date: t('umpireEntryTypes.appointmentStartDate'),
+      end_date: t('umpireEntryTypes.appointmentEndDate'),
     },
     showEndDate: true,
     showMatchDetails: true,
     showLocation: true,
-    addTitle: 'Add a match',
-    editTitle: 'Edit match',
+    addTitle: t('umpireEntryTypes.appointmentAdd'),
+    editTitle: t('umpireEntryTypes.appointmentEdit'),
+    // Event name: a proper noun, not translated.
+    namePlaceholder: 'EuroHockey Junior Championship 2026',
+    notesPlaceholder: t('umpireEntryTypes.appointmentNotesPlaceholder'),
   },
   {
     value: 'milestone',
-    label: 'Milestone',
+    label: t('umpireEntryTypes.milestoneLabel'),
     icon: Trophy,
-    hint: 'A career milestone: first international, 100th match, award.',
+    hint: t('umpireEntryTypes.milestoneHint'),
     fields: {
-      event_name: 'Title',
-      organizer: 'Sanctioning body',
-      start_date: 'Date',
+      event_name: t('umpireEntryTypes.milestoneEventName'),
+      organizer: t('umpireEntryTypes.milestoneOrganizer'),
+      start_date: t('umpireEntryTypes.milestoneStartDate'),
     },
     showEndDate: false,
     showMatchDetails: false,
     showLocation: true,
-    addTitle: 'Add a milestone',
-    editTitle: 'Edit milestone',
+    addTitle: t('umpireEntryTypes.milestoneAdd'),
+    editTitle: t('umpireEntryTypes.milestoneEdit'),
+    namePlaceholder: t('umpireEntryTypes.milestoneNamePlaceholder'),
+    notesPlaceholder: t('umpireEntryTypes.milestoneNotesPlaceholder'),
   },
   {
     value: 'certification',
-    label: 'Certification',
+    label: t('umpireEntryTypes.certificationLabel'),
     icon: Shield,
-    hint: 'A credential you earned or renewed.',
+    hint: t('umpireEntryTypes.certificationHint'),
     fields: {
-      event_name: 'Certification',
-      organizer: 'Issuing body',
-      start_date: 'Earned on',
+      event_name: t('umpireEntryTypes.certificationEventName'),
+      organizer: t('umpireEntryTypes.certificationOrganizer'),
+      start_date: t('umpireEntryTypes.certificationStartDate'),
     },
     showEndDate: false,
     showMatchDetails: false,
     showLocation: false,
-    addTitle: 'Add a certification',
-    editTitle: 'Edit certification',
+    addTitle: t('umpireEntryTypes.certificationAdd'),
+    editTitle: t('umpireEntryTypes.certificationEdit'),
+    namePlaceholder: t('umpireEntryTypes.certificationNamePlaceholder'),
+    notesPlaceholder: t('umpireEntryTypes.certificationNotesPlaceholder'),
   },
   {
     value: 'panel',
-    label: 'Panel',
+    label: t('umpireEntryTypes.panelLabel'),
     icon: Users,
-    hint: 'A panel or official board you joined.',
+    hint: t('umpireEntryTypes.panelHint'),
     fields: {
-      event_name: 'Panel name',
-      organizer: 'Federation',
-      start_date: 'Inducted on',
+      event_name: t('umpireEntryTypes.panelEventName'),
+      organizer: t('umpireEntryTypes.panelOrganizer'),
+      start_date: t('umpireEntryTypes.panelStartDate'),
     },
     showEndDate: false,
     showMatchDetails: false,
     showLocation: false,
-    addTitle: 'Add a panel entry',
-    editTitle: 'Edit panel entry',
+    addTitle: t('umpireEntryTypes.panelAdd'),
+    editTitle: t('umpireEntryTypes.panelEdit'),
+    // Panel name: a proper noun, not translated.
+    namePlaceholder: 'FIH World Panel',
+    notesPlaceholder: t('umpireEntryTypes.panelNotesPlaceholder'),
   },
 ]
 
-const metaFor = (type: EntryType): EntryTypeMeta =>
-  ENTRY_TYPES.find((m) => m.value === type) ?? ENTRY_TYPES[0]
+type MatchFormat = '' | 'outdoor_11v11' | 'indoor_5v5' | 'hockey5s' | 'other'
 
-const MATCH_FORMATS: Array<{ value: '' | 'outdoor_11v11' | 'indoor_5v5' | 'hockey5s' | 'other'; label: string }> = [
-  { value: '', label: 'Not specified' },
-  { value: 'outdoor_11v11', label: 'Outdoor 11v11' },
+const getMatchFormats = (t: ProfileEditT): Array<{ value: MatchFormat; label: string }> => [
+  { value: '', label: t('umpireMatchFormats.notSpecified') },
+  { value: 'outdoor_11v11', label: t('umpireMatchFormats.outdoor') },
   { value: 'hockey5s', label: 'Hockey5s' },
-  { value: 'indoor_5v5', label: 'Indoor' },
-  { value: 'other', label: 'Other' },
+  { value: 'indoor_5v5', label: t('umpireMatchFormats.indoor') },
+  { value: 'other', label: t('umpireMatchFormats.other') },
 ]
 
 interface UmpireAppointmentEditorProps {
@@ -137,7 +157,7 @@ interface FormState {
   event_name: string
   organizer: string
   match_level: string
-  match_format: '' | 'outdoor_11v11' | 'indoor_5v5' | 'hockey5s' | 'other'
+  match_format: MatchFormat
   location_city: string
   location_country: string
   start_date: string
@@ -180,6 +200,7 @@ export default function UmpireAppointmentEditor({
   onClose,
   onSave,
 }: UmpireAppointmentEditorProps) {
+  const t = useProfileEditT()
   const userId = useAuthStore((state) => state.user?.id ?? null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
@@ -202,7 +223,11 @@ export default function UmpireAppointmentEditor({
 
   if (!isOpen) return null
 
-  const meta = metaFor(form.entry_type)
+  const entryTypes = getEntryTypes(t)
+  const meta = entryTypes.find((m) => m.value === form.entry_type) ?? entryTypes[0]
+  const optional = (label: string) => (
+    <Trans t={t} i18nKey="umpireEditor.optionalField" values={{ label }} components={{ muted: <span className="text-gray-400 font-normal" /> }} />
+  )
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -212,7 +237,7 @@ export default function UmpireAppointmentEditor({
     setImageError(null)
     const validation = validateImage(file, { maxFileSizeMB: 5 })
     if (!validation.valid) {
-      setImageError(validation.error ?? 'Invalid image')
+      setImageError(validation.error ?? t('umpireEditor.invalidImage'))
       return
     }
 
@@ -238,7 +263,7 @@ export default function UmpireAppointmentEditor({
       setImageUrl(data.publicUrl)
     } catch (err) {
       logger.error('[UmpireAppointmentEditor] image upload failed:', err)
-      setImageError('Upload failed. Please try another image.')
+      setImageError(t('umpireEditor.uploadFailed'))
     } finally {
       setUploading(false)
     }
@@ -289,7 +314,7 @@ export default function UmpireAppointmentEditor({
       }
       const result = await onSave(input, appointment?.id)
       if (result === null) {
-        setError('Could not save. Please try again.')
+        setError(t('umpireEditor.saveFailed'))
         setSubmitting(false)
         return
       }
@@ -307,7 +332,7 @@ export default function UmpireAppointmentEditor({
       onClose()
     } catch (err) {
       logger.error('[UmpireAppointmentEditor] save failed:', err)
-      setError(err instanceof Error ? err.message : 'Could not save entry')
+      setError(err instanceof Error ? err.message : t('umpireEditor.saveEntryFailed'))
       setSubmitting(false)
     }
   }
@@ -340,8 +365,8 @@ export default function UmpireAppointmentEditor({
             onClick={handleClose}
             className="absolute top-4 right-4 p-1 rounded-lg hover:bg-gray-100 transition-colors"
             disabled={submitting}
-            aria-label="Close editor"
-            title="Close"
+            aria-label={t('umpireEditor.closeLabel')}
+            title={t('umpireEditor.closeTitle')}
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -355,18 +380,18 @@ export default function UmpireAppointmentEditor({
               churn on a row that's already persisted with specific fields. */}
           <div className="mb-5">
             <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-              Entry type
+              {t('umpireEditor.entryType')}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {ENTRY_TYPES.map((t) => {
-                const Icon = t.icon
-                const active = form.entry_type === t.value
+              {entryTypes.map((type) => {
+                const Icon = type.icon
+                const active = form.entry_type === type.value
                 const locked = Boolean(appointment) && !active
                 return (
                   <button
-                    key={t.value}
+                    key={type.value}
                     type="button"
-                    onClick={() => !locked && setForm({ ...form, entry_type: t.value })}
+                    onClick={() => !locked && setForm({ ...form, entry_type: type.value })}
                     disabled={locked || submitting}
                     className={`flex flex-col items-center gap-1 rounded-xl border px-3 py-3 text-xs font-medium transition-colors ${
                       active
@@ -375,10 +400,10 @@ export default function UmpireAppointmentEditor({
                           ? 'border-gray-100 bg-gray-50 text-gray-500 cursor-not-allowed'
                           : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                     }`}
-                    title={locked ? 'Create a new entry to change its type' : t.label}
+                    title={locked ? t('umpireEditor.lockedType') : type.label}
                   >
                     <Icon className="w-4 h-4" />
-                    {t.label}
+                    {type.label}
                   </button>
                 )
               })}
@@ -388,7 +413,7 @@ export default function UmpireAppointmentEditor({
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Photo <span className="text-gray-400 font-normal">(optional)</span>
+                {optional(t('umpireEditor.photo'))}
               </label>
               <input
                 ref={fileInputRef}
@@ -397,13 +422,13 @@ export default function UmpireAppointmentEditor({
                 onChange={handleFileChange}
                 className="hidden"
                 disabled={uploading || submitting}
-                aria-label="Upload entry photo"
+                aria-label={t('umpireEditor.uploadPhotoLabel')}
               />
               {imageUrl ? (
                 <div className="relative group">
                   <img
                     src={imageUrl}
-                    alt="Entry"
+                    alt={t('umpireEditor.photoAlt')}
                     className="w-full h-40 object-cover rounded-lg border border-gray-200"
                   />
                   <div className="mt-2 flex items-center gap-2">
@@ -413,7 +438,7 @@ export default function UmpireAppointmentEditor({
                       className="text-xs font-medium text-gray-600 hover:text-gray-900 underline"
                       disabled={uploading || submitting}
                     >
-                      Replace
+                      {t('umpireEditor.replacePhoto')}
                     </button>
                     <span className="text-gray-500">·</span>
                     <button
@@ -422,7 +447,7 @@ export default function UmpireAppointmentEditor({
                       className="text-xs font-medium text-red-600 hover:text-red-700 underline"
                       disabled={uploading || submitting}
                     >
-                      Remove
+                      {t('umpireEditor.removePhoto')}
                     </button>
                   </div>
                 </div>
@@ -436,12 +461,12 @@ export default function UmpireAppointmentEditor({
                   {uploading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Uploading…
+                      {t('umpireEditor.uploading')}
                     </>
                   ) : (
                     <>
                       <ImagePlus className="w-4 h-4" />
-                      Add a photo
+                      {t('umpireEditor.addPhoto')}
                     </>
                   )}
                 </button>
@@ -457,12 +482,7 @@ export default function UmpireAppointmentEditor({
                 type="text"
                 value={form.event_name}
                 onChange={(e) => setForm({ ...form, event_name: e.target.value })}
-                placeholder={
-                  meta.value === 'appointment' ? 'EuroHockey Junior Championship 2026' :
-                  meta.value === 'milestone' ? 'First international match' :
-                  meta.value === 'certification' ? 'FIH Level 2' :
-                  'FIH World Panel'
-                }
+                placeholder={meta.namePlaceholder}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                 disabled={submitting}
                 autoFocus
@@ -472,16 +492,13 @@ export default function UmpireAppointmentEditor({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {meta.fields.organizer} <span className="text-gray-400 font-normal">(optional)</span>
+                {optional(meta.fields.organizer)}
               </label>
               <input
                 type="text"
                 value={form.organizer}
                 onChange={(e) => setForm({ ...form, organizer: e.target.value })}
-                placeholder={
-                  meta.value === 'appointment' ? 'EuroHockey · FIH · England Hockey' :
-                  'FIH · USA Field Hockey · EuroHockey'
-                }
+                placeholder={meta.value === 'appointment' ? ORGANIZER_EXAMPLE_APPOINTMENT : ORGANIZER_EXAMPLE_OTHER}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                 disabled={submitting}
                 maxLength={120}
@@ -492,13 +509,13 @@ export default function UmpireAppointmentEditor({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Match level <span className="text-gray-400 font-normal">(optional)</span>
+                    {optional(t('umpireEditor.matchLevel'))}
                   </label>
                   <input
                     type="text"
                     value={form.match_level}
                     onChange={(e) => setForm({ ...form, match_level: e.target.value })}
-                    placeholder="U21 International · National League"
+                    placeholder={t('umpireEditor.matchLevelPlaceholder')}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                     disabled={submitting}
                     maxLength={80}
@@ -506,18 +523,18 @@ export default function UmpireAppointmentEditor({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Format
+                    {t('umpireEditor.format')}
                   </label>
                   <select
                     value={form.match_format}
                     onChange={(e) =>
-                      setForm({ ...form, match_format: e.target.value as FormState['match_format'] })
+                      setForm({ ...form, match_format: e.target.value as MatchFormat })
                     }
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent bg-white"
                     disabled={submitting}
-                    aria-label="Match format"
+                    aria-label={t('umpireEditor.formatLabel')}
                   >
-                    {MATCH_FORMATS.map((o) => (
+                    {getMatchFormats(t).map((o) => (
                       <option key={o.value} value={o.value}>
                         {o.label}
                       </option>
@@ -531,13 +548,13 @@ export default function UmpireAppointmentEditor({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    City, State/Province <span className="text-gray-400 font-normal">(optional)</span>
+                    {optional(t('umpireEditor.city'))}
                   </label>
                   <input
                     type="text"
                     value={form.location_city}
                     onChange={(e) => setForm({ ...form, location_city: e.target.value })}
-                    placeholder="e.g., Port Jervis, NY"
+                    placeholder={t('umpireEditor.cityPlaceholder')}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                     disabled={submitting}
                     maxLength={80}
@@ -545,13 +562,13 @@ export default function UmpireAppointmentEditor({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Country <span className="text-gray-400 font-normal">(optional)</span>
+                    {optional(t('umpireEditor.country'))}
                   </label>
                   <input
                     type="text"
                     value={form.location_country}
                     onChange={(e) => setForm({ ...form, location_country: e.target.value })}
-                    placeholder="Netherlands"
+                    placeholder={t('umpireEditor.countryPlaceholder')}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                     disabled={submitting}
                     maxLength={80}
@@ -585,31 +602,23 @@ export default function UmpireAppointmentEditor({
                     onChange={(e) => setForm({ ...form, end_date: e.target.value })}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent"
                     disabled={submitting}
-                    aria-label={meta.fields.end_date ?? 'End date'}
+                    aria-label={meta.fields.end_date ?? t('umpireEditor.endDateFallback')}
                   />
                 </div>
               )}
             </div>
             {meta.showEndDate && !dateOrderOk && (
-              <p className="text-xs text-red-600">End date can't be before start date.</p>
+              <p className="text-xs text-red-600">{t('umpireEditor.dateOrder')}</p>
             )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notes <span className="text-gray-400 font-normal">(optional)</span>
+                {optional(t('umpireEditor.notes'))}
               </label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder={
-                  meta.value === 'appointment'
-                    ? "What did you officiate: final, pool stage, specific matches?"
-                    : meta.value === 'milestone'
-                      ? 'What made this milestone memorable?'
-                      : meta.value === 'certification'
-                        ? 'Anything worth noting: exam details, assessors, score?'
-                        : 'Panel duties, tenure, role on the board?'
-                }
+                placeholder={meta.notesPlaceholder}
                 rows={3}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-purple-500 focus:border-transparent resize-none"
                 disabled={submitting}
@@ -626,7 +635,7 @@ export default function UmpireAppointmentEditor({
               className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
               disabled={submitting}
             >
-              Cancel
+              {t('umpireEditor.cancel')}
             </button>
             <button
               onClick={handleSubmit}
@@ -636,12 +645,12 @@ export default function UmpireAppointmentEditor({
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Saving...
+                  {t('umpireEditor.saving')}
                 </span>
               ) : appointment ? (
-                'Save changes'
+                t('umpireEditor.saveChanges')
               ) : (
-                'Add entry'
+                t('umpireEditor.addEntry')
               )}
             </button>
           </div>

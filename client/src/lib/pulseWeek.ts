@@ -2,6 +2,9 @@ import { differenceInCalendarDays } from 'date-fns'
 import { positionLabel } from '@/lib/identity'
 import { profilePath } from '@/lib/profileNavigation'
 import type { NotificationRecord } from '@/lib/api/notifications'
+import { tCommunity } from '@/i18n/ns/community'
+import { tEnums } from '@/i18n/ns/enums'
+import { intlLocale, isEnglish } from '@/i18n/format'
 
 /**
  * "Your week" (Pulse v2, Figma New-Hockia 42:276; founder rulings 2026-10-03).
@@ -15,7 +18,10 @@ import type { NotificationRecord } from '@/lib/api/notifications'
  * line in "What happened" is neutral grey — an expired application included.
  */
 
-const MONTH_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+/** "September" / "septiembre": the long month name in the interface language. */
+function monthLong(d: Date): string {
+  return new Intl.DateTimeFormat(intlLocale(), { month: 'long' }).format(d)
+}
 
 /** Monday 00:00 (local) of the week that contains `now`. */
 export function weekStart(now: Date = new Date()): Date {
@@ -32,13 +38,9 @@ export function weekRangeLabel(now: Date = new Date()): string {
   const start = weekStart(now)
   const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6)
   if (start.getMonth() === end.getMonth()) {
-    return `${start.getDate()}–${end.getDate()} ${MONTH_LONG[start.getMonth()]}`
+    return tCommunity('pulse.weekRange.sameMonth', { startDay: start.getDate(), endDay: end.getDate(), month: monthLong(start) })
   }
-  return `${start.getDate()} ${MONTH_LONG[start.getMonth()]} – ${end.getDate()} ${MONTH_LONG[end.getMonth()]}`
-}
-
-function count(n: number, one: string, many: string): string {
-  return `${n} ${n === 1 ? one : many}`
+  return tCommunity('pulse.weekRange.crossMonth', { startDay: start.getDate(), startMonth: monthLong(start), endDay: end.getDate(), endMonth: monthLong(end) })
 }
 
 export interface WeekViewCounts {
@@ -58,31 +60,34 @@ export interface WeekViewCounts {
  *   "No profile views yet this week"
  */
 export function viewersHeadline(c: WeekViewCounts): string {
-  if (c.views <= 0) return 'No profile views yet this week'
-  const parts: string[] = []
-  if (c.clubs > 0) parts.push(count(c.clubs, 'club', 'clubs'))
-  if (c.coaches > 0) parts.push(count(c.coaches, 'coach', 'coaches'))
-  if (parts.length === 0) {
-    const people = Math.max(1, c.uniqueViewers)
-    return `${count(people, 'person', 'people')} looked at your profile this week`
+  if (c.views <= 0) return tCommunity('pulse.headline.none')
+  if (c.clubs > 0 && c.coaches > 0) {
+    return tCommunity('pulse.headline.clubsAndCoaches', {
+      clubs: tCommunity('pulse.counts.clubs', { count: c.clubs }),
+      coaches: tCommunity('pulse.counts.coaches', { count: c.coaches }),
+    })
   }
-  return `${parts.join(' and ')} looked at your profile this week`
+  if (c.clubs > 0) return tCommunity('pulse.headline.clubs', { count: c.clubs })
+  if (c.coaches > 0) return tCommunity('pulse.headline.coaches', { count: c.coaches })
+  return tCommunity('pulse.headline.people', { count: Math.max(1, c.uniqueViewers) })
 }
 
 /** "4 more vs last week" · "2 fewer vs last week" · "Same as last week". */
 export function viewsDeltaLine(views: number, priorViews: number): string {
   const delta = views - priorViews
-  if (delta > 0) return `${delta} more vs last week`
-  if (delta < 0) return `${Math.abs(delta)} fewer vs last week`
-  return 'Same as last week'
+  if (delta > 0) return tCommunity('pulse.delta.more', { delta })
+  if (delta < 0) return tCommunity('pulse.delta.fewer', { delta: Math.abs(delta) })
+  return tCommunity('pulse.delta.same')
 }
 
 /** "3 clubs · 1 coach" · "2 clubs" · "None yet". */
 export function recruitersLine(clubs: number, coaches: number): string {
-  const parts: string[] = []
-  if (clubs > 0) parts.push(count(clubs, 'club', 'clubs'))
-  if (coaches > 0) parts.push(count(coaches, 'coach', 'coaches'))
-  return parts.length ? parts.join(' · ') : 'None yet'
+  const clubsText = tCommunity('pulse.counts.clubs', { count: clubs })
+  const coachesText = tCommunity('pulse.counts.coaches', { count: coaches })
+  if (clubs > 0 && coaches > 0) return tCommunity('pulse.recruiters.both', { clubs: clubsText, coaches: coachesText })
+  if (clubs > 0) return clubsText
+  if (coaches > 0) return coachesText
+  return tCommunity('pulse.recruiters.none')
 }
 
 /** "midfielder" → "midfielders" (lower case, for "2 for midfielders"). */
@@ -96,16 +101,19 @@ export function positionPlural(position: string | null | undefined): string | nu
 /** "2 for midfielders" · "None for midfielders" · "Open this week" (no position). */
 export function newRolesLine(forPosition: number, position: string | null | undefined): string {
   const plural = positionPlural(position)
-  if (!plural) return 'Open this week'
-  return forPosition > 0 ? `${forPosition} for ${plural}` : `None for ${plural}`
+  if (!plural) return tCommunity('pulse.newRoles.noPosition')
+  // English pluralises the position ("midfielders"); other languages name the
+  // position itself inside their own sentence ("el puesto de volante").
+  const group = isEnglish() ? plural : (positionLabel(position) ?? plural).toLowerCase()
+  return forPosition > 0 ? tCommunity('pulse.newRoles.some', { count: forPosition, group }) : tCommunity('pulse.newRoles.none', { group })
 }
 
 /** The club that answered: one name, "A and 2 more", or "No replies yet". */
 export function clubReplyLine(clubNames: Array<string | null | undefined>): string {
   const names = clubNames.filter((n): n is string => typeof n === 'string' && n.trim().length > 0)
-  if (names.length === 0) return clubNames.length > 0 ? 'A club replied' : 'No replies yet'
+  if (names.length === 0) return clubNames.length > 0 ? tCommunity('pulse.clubReply.unnamed') : tCommunity('pulse.clubReply.none')
   if (names.length === 1) return names[0]
-  return `${names[0]} and ${names.length - 1} more`
+  return tCommunity('pulse.clubReply.andMore', { name: names[0], count: names.length - 1 })
 }
 
 /**
@@ -113,17 +121,17 @@ export function clubReplyLine(clubNames: Array<string | null | undefined>): stri
  * Never been confirmed → the honest line, no date.
  */
 export function confirmedAgoLine(confirmedAt: string | null | undefined, now: Date = new Date()): string {
-  if (!confirmedAt) return 'You haven’t confirmed yet.'
+  if (!confirmedAt) return tCommunity('pulse.confirmed.never')
   const d = new Date(confirmedAt)
-  if (Number.isNaN(d.getTime())) return 'You haven’t confirmed yet.'
+  if (Number.isNaN(d.getTime())) return tCommunity('pulse.confirmed.never')
   const days = Math.max(0, differenceInCalendarDays(now, d))
-  if (days === 0) return 'You confirmed today.'
-  if (days === 1) return 'You last confirmed yesterday.'
-  if (days < 7) return `You last confirmed ${days} days ago.`
+  if (days === 0) return tCommunity('pulse.confirmed.today')
+  if (days === 1) return tCommunity('pulse.confirmed.yesterday')
+  if (days < 7) return tCommunity('pulse.confirmed.days', { count: days })
   const weeks = Math.round(days / 7)
-  if (days < 60) return `You last confirmed ${count(weeks, 'week', 'weeks')} ago.`
+  if (days < 60) return tCommunity('pulse.confirmed.weeks', { count: weeks })
   const months = Math.round(days / 30)
-  return `You last confirmed ${count(months, 'month', 'months')} ago.`
+  return tCommunity('pulse.confirmed.months', { count: months })
 }
 
 export interface CheckInCopy {
@@ -139,11 +147,11 @@ export interface CheckInCopy {
 export function checkInCopy(role: string | null | undefined, opts: { openToPlay: boolean; openToCoach: boolean; recruitsForTeam: boolean }): CheckInCopy | null {
   if (role === 'player') {
     if (!opts.openToPlay) return null
-    return { question: 'Are you still open to play?', rationale: 'Clubs filter by this before anything else.' }
+    return { question: tCommunity('pulse.checkIn.playerQuestion'), rationale: tCommunity('pulse.checkIn.rationale') }
   }
   if (role === 'coach') {
     if (opts.recruitsForTeam || !opts.openToCoach) return null
-    return { question: 'Still open to coaching opportunities?', rationale: 'Clubs filter by this before anything else.' }
+    return { question: tCommunity('pulse.checkIn.coachQuestion'), rationale: tCommunity('pulse.checkIn.rationale') }
   }
   return null
 }
@@ -176,8 +184,13 @@ export interface ViewerLine {
   path: string | null
 }
 
-export const HIDDEN_VIEWER_NAME = 'Private'
-export const HIDDEN_VIEWER_META = 'Browsing hidden'
+/** "Private" / "Browsing hidden": the masked viewer's name and caption. */
+export function hiddenViewerName(): string {
+  return tCommunity('pulse.viewers.hiddenName')
+}
+export function hiddenViewerMeta(): string {
+  return tCommunity('pulse.viewers.hiddenMeta')
+}
 
 /**
  * Rows for the list. Only club and coach rows are kept even if the server
@@ -188,15 +201,16 @@ export function viewerLines(rows: readonly WeekViewerRow[]): ViewerLine[] {
   const out: ViewerLine[] = []
   rows.forEach((r, i) => {
     if (r.is_hidden) {
-      out.push({ key: `hidden-${i}`, name: HIDDEN_VIEWER_NAME, meta: HIDDEN_VIEWER_META, role: null, avatarUrl: null, countryId: null, hidden: true, viewedAt: r.viewed_at, path: null })
+      out.push({ key: `hidden-${i}`, name: hiddenViewerName(), meta: hiddenViewerMeta(), role: null, avatarUrl: null, countryId: null, hidden: true, viewedAt: r.viewed_at, path: null })
       return
     }
     if (r.role !== 'club' && r.role !== 'coach') return
     if (!r.viewer_id) return
+    const roleName = tEnums(r.role === 'club' ? 'role.club' : 'role.coach')
     out.push({
       key: r.viewer_id,
-      name: r.full_name?.trim() || (r.role === 'club' ? 'Club' : 'Coach'),
-      meta: r.role === 'club' ? 'Club' : 'Coach',
+      name: r.full_name?.trim() || roleName,
+      meta: roleName,
       role: r.role,
       avatarUrl: r.avatar_url,
       countryId: r.country_id,
@@ -292,45 +306,45 @@ export function happenedLinesFromNotification(n: NotificationRecord, titles: Opp
       const named = ids.map((id) => titles.get(id)).filter((t): t is string => Boolean(t))
       const system = { ...base, actor: null, icon: 'briefcase' as const, path: MY_APPLICATIONS_CLOSED }
       if (named.length > 0) {
-        return named.map((title, i) => ({ ...system, key: `${n.id}-${i}`, text: `Your application to ${title} expired with no reply` }))
+        return named.map((title, i) => ({ ...system, key: `${n.id}-${i}`, text: tCommunity('pulse.happened.applicationExpired', { title }) }))
       }
       const c = typeof n.metadata?.count === 'number' ? n.metadata.count : 1
-      return [{ ...system, key: n.id, text: c === 1 ? 'An application expired with no reply' : `${c} applications expired with no reply` }]
+      return [{ ...system, key: n.id, text: tCommunity('pulse.happened.expiredCount', { count: c }) }]
     }
     case 'vacancy_application_status': {
       // The trigger writes `vacancy_title` (20260626150000); older rows may carry `opportunity_title`.
       const title = metaString(n, 'vacancy_title') ?? metaString(n, 'opportunity_title')
       const club = metaString(n, 'club_name') ?? actorName(n)
-      const who = club ?? 'A club'
+      const who = club ?? tCommunity('pulse.happened.aClub')
       const line = actor ?? (club ? { id: null, name: club, role: 'club', avatarUrl: null } : null)
-      return [{ ...base, actor: line, key: n.id, text: title ? `${who} replied on ${title}` : `${who} replied to your application`, path: clubThreadPath(n.actor?.id) ?? MY_APPLICATIONS }]
+      return [{ ...base, actor: line, key: n.id, text: title ? tCommunity('pulse.happened.repliedOn', { club: who, title }) : tCommunity('pulse.happened.repliedToApplication', { club: who }), path: clubThreadPath(n.actor?.id) ?? MY_APPLICATIONS }]
     }
     case 'recruiting_update': {
       const title = metaString(n, 'title')
       return title ? [{ ...base, icon: 'briefcase', key: n.id, text: title, path: n.targetUrl ?? null }] : []
     }
     case 'reference_request_accepted': {
-      const who = actorName(n) ?? 'Someone'
-      return [{ ...base, key: n.id, text: `${who} wrote you a reference`, path: '/dashboard/profile?tab=references' }]
+      const who = actorName(n) ?? tCommunity('pulse.happened.someone')
+      return [{ ...base, key: n.id, text: tCommunity('pulse.happened.wroteReference', { name: who }), path: '/dashboard/profile?tab=references' }]
     }
     case 'friend_request_accepted': {
       const who = actorName(n)
       if (!who) return []
-      return [{ ...base, key: n.id, text: `${who} accepted your friend request`, path: profilePath(n.actor?.role, n.actor?.username, n.actor?.id) }]
+      return [{ ...base, key: n.id, text: tCommunity('pulse.happened.acceptedFriend', { name: who }), path: profilePath(n.actor?.role, n.actor?.username, n.actor?.id) }]
     }
     case 'club_invitation_received': {
-      const who = actorName(n) ?? 'A club'
-      return [{ ...base, key: n.id, text: `${who} invited you to join their squad`, path: clubPath(n) }]
+      const who = actorName(n) ?? tCommunity('pulse.happened.aClub')
+      return [{ ...base, key: n.id, text: tCommunity('pulse.happened.invitedToSquad', { club: who }), path: clubPath(n) }]
     }
     case 'club_invitation_accepted': {
-      const who = actorName(n) ?? 'A club'
-      return [{ ...base, key: n.id, text: `You joined ${who}`, path: clubPath(n) }]
+      const who = actorName(n) ?? tCommunity('pulse.happened.aClub')
+      return [{ ...base, key: n.id, text: tCommunity('pulse.happened.joinedClub', { club: who }), path: clubPath(n) }]
     }
     case 'opportunity_published': {
       const title = metaString(n, 'opportunity_title')
-      const club = metaString(n, 'club_name') ?? actorName(n) ?? 'A club'
+      const club = metaString(n, 'club_name') ?? actorName(n) ?? tCommunity('pulse.happened.aClub')
       const line = actor ?? (metaString(n, 'club_name') ? { id: null, name: club, role: 'club', avatarUrl: null } : null)
-      return title ? [{ ...base, actor: line, icon: 'briefcase', key: n.id, text: `${club} posted ${title}`, path: n.targetUrl ?? '/opportunities' }] : []
+      return title ? [{ ...base, actor: line, icon: 'briefcase', key: n.id, text: tCommunity('pulse.happened.postedRole', { club, title }), path: n.targetUrl ?? '/opportunities' }] : []
     }
     default:
       return []

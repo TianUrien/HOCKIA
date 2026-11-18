@@ -10,6 +10,7 @@ import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { getImageUrl } from '@/lib/imageUrl'
 import { checkInCopy, confirmedAgoLine, type ViewerLine } from '@/lib/pulseWeek'
 import { cn } from '@/lib/utils'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * Check-in (Your week v2, Figma 42:276): the lavender card at the top.
@@ -46,6 +47,7 @@ export function CheckInCard({ headline, hasViews, viewers }: CheckInCardProps) {
   const setProfile = useAuthStore((s) => s.setProfile)
   const addToast = useToastStore((s) => s.addToast)
   const otp = useOpenToPlay()
+  const t = useCommunityT()
   const [busy, setBusy] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const [askOff, setAskOff] = useState(false)
@@ -69,7 +71,7 @@ export function CheckInCard({ headline, hasViews, viewers }: CheckInCardProps) {
       setConfirmed(true)
     } catch (err) {
       logger.error('[CheckInCard] confirm_availability failed', err)
-      addToast('Could not save that. Please try again.', 'error')
+      addToast(t('pulse.checkIn.saveFailed'), 'error')
     } finally {
       setBusy(false)
     }
@@ -79,20 +81,20 @@ export function CheckInCard({ headline, hasViews, viewers }: CheckInCardProps) {
     if (profile.role === 'player') {
       const result = await otp.save({ open: false, availableFrom: profile.available_from ?? null, duration: null })
       if (!result.ok) {
-        addToast('Could not save that. Please try again.', 'error')
+        addToast(t('pulse.checkIn.saveFailed'), 'error')
         throw new Error(result.outcome)
       }
-      addToast('Open to play is off', 'success')
+      addToast(t('pulse.checkIn.playOff'), 'success')
       return
     }
     const { error } = await supabase.from('profiles').update({ open_to_coach: false }).eq('id', profile.id)
     if (error) {
-      addToast('Could not save that. Please try again.', 'error')
+      addToast(t('pulse.checkIn.saveFailed'), 'error')
       throw error
     }
     const current = useAuthStore.getState().profile
     if (current) setProfile({ ...current, open_to_coach: false })
-    addToast('Open to coaching is off', 'success')
+    addToast(t('pulse.checkIn.coachOff'), 'success')
   }
 
   const stack = hasViews ? viewers.slice(0, 3) : []
@@ -126,8 +128,8 @@ export function CheckInCard({ headline, hasViews, viewers }: CheckInCardProps) {
             <Check className="h-[18px] w-[18px]" strokeWidth={2.5} aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-row font-semibold text-ink-1">Thanks, you’re confirmed.</span>
-            <span className="block text-secondary text-ink-2">Clubs see you as open for the next while. {confirmedAgoLine(new Date().toISOString())}</span>
+            <span className="block text-row font-semibold text-ink-1">{t('pulse.checkIn.thanks')}</span>
+            <span className="block text-secondary text-ink-2">{t('pulse.checkIn.openForNow', { confirmed: confirmedAgoLine(new Date().toISOString()) })}</span>
           </span>
         </div>
       ) : (
@@ -136,7 +138,7 @@ export function CheckInCard({ headline, hasViews, viewers }: CheckInCardProps) {
               web-title-3 token is the same 20/26/600 cut). */}
           <p className="mt-3 text-web-title-3 text-ink-1" data-testid="check-in-question">{copy.question}</p>
           <p className="mt-1 text-secondary text-ink-2">
-            {copy.rationale} {confirmedAgoLine(profile.availability_confirmed_at)}
+            {t('pulse.checkIn.rationaleLine', { rationale: copy.rationale, confirmed: confirmedAgoLine(profile.availability_confirmed_at) })}
           </p>
           <div className="mt-3.5 flex gap-2">
             <button
@@ -147,7 +149,7 @@ export function CheckInCard({ headline, hasViews, viewers }: CheckInCardProps) {
               data-testid="check-in-yes"
             >
               {!busy && <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />}
-              {busy ? 'Saving…' : 'Yes, I’m open'}
+              {busy ? t('pulse.checkIn.saving') : t('pulse.checkIn.yes')}
             </button>
             <button
               type="button"
@@ -156,7 +158,7 @@ export function CheckInCard({ headline, hasViews, viewers }: CheckInCardProps) {
               className="flex h-12 flex-1 items-center justify-center rounded-full bg-white text-[16px] font-semibold text-ink-1 disabled:opacity-60"
               data-testid="check-in-not-now"
             >
-              Not right now
+              {t('pulse.checkIn.notNow')}
             </button>
           </div>
           <ConfirmSheet
@@ -164,10 +166,10 @@ export function CheckInCard({ headline, hasViews, viewers }: CheckInCardProps) {
             onClose={() => setAskOff(false)}
             onConfirm={turnOff}
             tone="primary"
-            title={profile.role === 'coach' ? 'Turn off Open to coaching?' : 'Turn off Open to play?'}
-            message="Clubs stop seeing you as available. You can turn it back on any time from your profile."
-            confirmLabel="Turn off"
-            busyLabel="Saving…"
+            title={profile.role === 'coach' ? t('pulse.checkIn.offTitleCoach') : t('pulse.checkIn.offTitlePlayer')}
+            message={t('pulse.checkIn.offMessage')}
+            confirmLabel={t('pulse.checkIn.offConfirm')}
+            busyLabel={t('pulse.checkIn.saving')}
             testId="check-in-off"
           />
         </>

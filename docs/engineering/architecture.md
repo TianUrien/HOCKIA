@@ -86,9 +86,28 @@ Verified patterns:
   `app_version_requirements` table (`hooks/useAppUpdateCheck.ts`). The WebView
   origin is `https://app.inhockia.com` on both platforms so API-key referrer
   rules and CORS treat the app as a first-party client.
+- **Crawler contracts** (added 2026-11-18; source: the AI search visibility
+  audit of the same date): `/llms.txt` is a static text file
+  (`client/public/llms.txt`, `text/plain`, excluded from the service-worker
+  fallback). Private routes get `X-Robots-Tag: noindex, nofollow` from
+  `client/vercel.json`, in step with the `NOINDEX` list in
+  `src/lib/seo/routeMeta.ts` (`aiCrawlerStatics.test.ts` checks both);
+  `/signin` and `/signup/email` also carry the robots tag in their HTML.
 - **PWA**: `vite-plugin-pwa` with `autoUpdate`; `/app.html` is the SPA shell
   and `/index.html` the prerendered landing (`scripts/prerender-landing.mjs`).
   No runtime caching of `/rest/v1/` by design (user-scoped responses).
+- **Public pages for crawlers without JavaScript** (added 2026-11-18; source:
+  the AI search visibility audit of the same date): the Vercel edge functions
+  in `client/api/` (`page-head.ts`, `opportunity-page.ts`, `world-page.ts`)
+  serve the shell with a per-page head and a plain HTML block inside
+  `<div id="root">` (`src/lib/seo/serverBody.ts`): open roles on
+  `/opportunities`, countries on `/world`, clubs, leagues and regions on
+  `/world/:code`, place, leagues and open roles on a club page, the full
+  description on a role page. `createRoot().render()` replaces the block
+  when the app boots. Roles come only from the `public-opportunities`
+  function (its view applies the hidden-profile predicate) and the 90-day
+  rule; no people are listed. A club's roles are matched by organisation
+  name within its country, because the public API carries no club id.
 
 ### 2.2 Database (`supabase/migrations`)
 

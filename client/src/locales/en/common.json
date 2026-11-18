@@ -1,0 +1,375 @@
+{
+  "notFound": {
+    "documentTitle": "Page not found",
+    "title": "We can’t find that page",
+    "body": "The link may be old, or the page was removed.",
+    "goHome": "Go to Home",
+    "search": "Search Hockia"
+  },
+  "offline": {
+    "title": "You’re offline",
+    "body": "You can still read what’s loaded. Send messages or applications when you’re back online.",
+    "retry": "Try again"
+  },
+  "language": {
+    "label": "Language",
+    "english": "English",
+    "spanish": "Español"
+  },
+  "nav": {
+    "home": "Home",
+    "community": "Community",
+    "opportunities": "Opportunities",
+    "marketplace": "Marketplace",
+    "inbox": "Inbox",
+    "search": "Search",
+    "searchHint": "Search players, clubs, opportunities",
+    "notifications": "Notifications",
+    "askHockiaAi": "Ask Hockia AI",
+    "newPost": "New post",
+    "goHome": "Hockia, go home",
+    "unread": "Unread",
+    "logIn": "Log in",
+    "signIn": "Sign In",
+    "join": "Join Hockia"
+  },
+  "accountMenu": {
+    "open": "Open account menu",
+    "tabLabel": "Dashboard",
+    "fallbackName": "Your account",
+    "dashboard": "Your dashboard",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "signOutFailed": "Could not sign out. Please try again."
+  },
+  "dashboardMenu": {
+    "open": "Open menu",
+    "close": "Close menu",
+    "settings": "Settings",
+    "signOut": "Sign Out",
+    "signOutFailed": "Could not sign out. Please try again."
+  },
+  "breadcrumbs": {
+    "label": "Breadcrumb"
+  },
+  "confirmModal": {
+    "close": "Close modal",
+    "cancel": "Cancel",
+    "processing": "Processing..."
+  },
+  "confirmDialog": {
+    "close": "Close dialog",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "working": "Working…"
+  },
+  "cookies": {
+    "label": "Cookie consent",
+    "body": "We use cookies and analytics to improve your experience. <privacyLink>Privacy Policy</privacyLink>",
+    "decline": "Decline",
+    "accept": "Accept"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "body": "We're sorry, but something unexpected happened. Please try reloading the page.",
+    "reload": "Reload Page",
+    "retry": "Try Again",
+    "updatedTitle": "Hockia has just been updated",
+    "updatedBody": "A new version of the app is available. Please reload the page to continue using Hockia.",
+    "reloadApp": "Reload Hockia",
+    "details": "Error details"
+  },
+  "footer": {
+    "copyright": "© {{year}} Hockia",
+    "privacy": "Privacy Policy",
+    "terms": "Terms",
+    "termsLabel": "Terms of Service",
+    "developers": "For Developers",
+    "developersLabel": "Developer documentation and API",
+    "support": "Contact support",
+    "supportLabel": "Contact support via email"
+  },
+  "install": {
+    "dismiss": "Dismiss",
+    "title": "Install Hockia",
+    "iosBody": "Add to your home screen for the best experience",
+    "iosStepShare": "Tap <icon/> Share",
+    "iosStepAdd": "Tap <icon/> Add to Home Screen",
+    "body": "Get quick access from your home screen",
+    "button": "Install App"
+  },
+  "bottomNav": {
+    "home": "Home",
+    "community": "Community",
+    "opportunities": "Opportunities",
+    "inbox": "Inbox",
+    "profile": "Profile",
+    "unread": "Unread",
+    "mainLabel": "Main",
+    "guestLabel": "Explore Hockia",
+    "createProfile": "Create a profile",
+    "join": "Join"
+  },
+  "modal": {
+    "close": "Close modal"
+  },
+  "nativeUpdate": {
+    "requiredTitle": "Update required",
+    "requiredBody": "Please update Hockia to continue. This version is no longer supported.",
+    "updateApp": "Update Hockia",
+    "dismiss": "Dismiss",
+    "availableTitle": "Update available",
+    "availableBody": "A new version of Hockia is available with the latest improvements.",
+    "updateNow": "Update now",
+    "later": "Later"
+  },
+  "publicNav": {
+    "world": "Hockey World",
+    "opportunities": "Opportunities",
+    "community": "Community",
+    "signIn": "Sign In",
+    "join": "Join Now",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "contact": "Contact Us"
+  },
+  "pullToRefresh": {
+    "refreshing": "Refreshing"
+  },
+  "pushAsk": {
+    "title": "Stay in the loop",
+    "body": "Get notified about messages, applications and opportunities, even when the app is closed.",
+    "enable": "Turn on notifications",
+    "notNow": "Not now"
+  },
+  "toast": {
+    "close": "Close notification"
+  },
+  "updatePrompt": {
+    "ready": "A new version of Hockia is ready",
+    "reload": "Reload",
+    "dismiss": "Dismiss"
+  },
+  "settingsSheet": {
+    "trigger": "Settings",
+    "fallbackName": "Your account",
+    "settings": "Settings",
+    "feedback": "Send feedback",
+    "signOut": "Sign out",
+    "signOutFailed": "Could not sign out. Please try again."
+  },
+  "actionSheet": {
+    "label": "Actions",
+    "cancel": "Cancel"
+  },
+  "activityRow": {
+    "unread": "Unread"
+  },
+  "confirmSheet": {
+    "cancel": "Cancel",
+    "working": "Working…"
+  },
+  "friendRow": {
+    "ask": "Ask for reference",
+    "requested": "Requested",
+    "friends": "Friends",
+    "add": "Add",
+    "addLabel": "{{action}} {{name}}",
+    "wroteYou": "Wrote you a reference",
+    "wroteReference": "Wrote a reference"
+  },
+  "nationality": {
+    "euBadge": "EU",
+    "euBadgeLabel": "EU passport",
+    "euPassportTag": "EU passport",
+    "tileTitle": "Nationalities, passports & permits",
+    "notGiven": "Not given",
+    "addPassport": "Add passport",
+    "addAnother": "Add another"
+  },
+  "documentTitle": {
+    "default": "Hockia – Where field hockey sticks together."
+  },
+  "backLabel": {
+    "myApplications": "My applications",
+    "opportunities": "Opportunities",
+    "role": "Role",
+    "home": "Home",
+    "inbox": "Inbox",
+    "community": "Community",
+    "notifications": "Notifications",
+    "search": "Search",
+    "profile": "Profile"
+  },
+  "appVersion": {
+    "platform": {
+      "iosNative": "iOS app",
+      "androidNative": "Android app",
+      "pwa": "Web app (installed)",
+      "web": "Web (browser)"
+    }
+  },
+  "timeAgo": {
+    "justNow": "Just now",
+    "compactMinutes": "{{count}}m ago",
+    "compactHours": "{{count}}h ago",
+    "compactDays": "{{count}}d ago",
+    "minutes_one": "{{count}} minute ago",
+    "minutes_other": "{{count}} minutes ago",
+    "hours_one": "{{count}} hour ago",
+    "hours_other": "{{count}} hours ago",
+    "days_one": "{{count}} day ago",
+    "days_other": "{{count}} days ago",
+    "weeks_one": "{{count}} week ago",
+    "weeks_other": "{{count}} weeks ago"
+  },
+  "technicalErrors": {
+    "notAccepting": "This person isn't accepting requests.",
+    "permission": "You don't have permission to do that.",
+    "duplicate": "This already exists. Try refreshing the page.",
+    "invalidData": "Some of the data provided is invalid. Please review and try again.",
+    "missingRelated": "A related record is missing or was deleted.",
+    "notFound": "The item was not found. It may have been deleted.",
+    "rateLimit": "Too many requests. Please wait a moment and try again.",
+    "timeout": "The request timed out. Please try again.",
+    "network": "Network error. Please check your connection and try again.",
+    "sessionExpired": "Your session has expired. Please sign in again."
+  },
+  "inAppBrowser": {
+    "metaSteps": "Tap {{menu}} at the top right, then “Open in external browser”.",
+    "whatsappSteps": "Tap {{menu}} at the top right, then “Open in browser”.",
+    "tiktokSteps": "Tap ⋯ at the top right, then “Open in browser”.",
+    "linkedinSteps": "Tap {{menu}}, then “Open in browser”.",
+    "genericSteps": "Use the app’s menu to open this page in your browser, or copy the link and paste it into Safari or Chrome."
+  },
+  "skeletons": {
+    "opportunity": "Loading opportunity",
+    "profile": "Loading profile",
+    "activity": "Loading activity",
+    "conversation": "Loading conversation",
+    "applicants": "Loading applicants",
+    "backToConversations": "Back to conversations",
+    "page": "Loading...",
+    "launch": "Loading Hockia"
+  },
+  "storeBadges": {
+    "appStore": "Download Hockia on the App Store",
+    "googlePlay": "Get Hockia on Google Play"
+  },
+  "detailNav": {
+    "backTo": "Back to {{parent}}"
+  },
+  "segmented": {
+    "withCount": "{{label}} · {{count}}",
+    "newLabel": "{{label}}, new"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "subtitle": "Navigate Hockia faster with your keyboard",
+    "then": "then",
+    "footer": "Shortcuts are disabled when typing in forms or when modals are open",
+    "groups": {
+      "navigation": "Navigation",
+      "search": "Search",
+      "help": "Help"
+    },
+    "goCommunity": "Go to Community",
+    "goOpportunities": "Go to Opportunities",
+    "goWorld": "Go to World Directory",
+    "goMarketplace": "Go to Marketplace",
+    "goMessages": "Go to Messages",
+    "goDashboard": "Go to Dashboard",
+    "focusSearch": "Focus search on current page",
+    "showHelp": "Show keyboard shortcuts"
+  },
+  "errors": {
+    "recruiterMinor": "This member can't be contacted by clubs or coaches.",
+    "saveFailed": "Could not save that. Please try again.",
+    "feedLoadFailed": "Failed to load feed",
+    "contentBlocked": "Your message contains language that violates our community guidelines. Please revise and try again."
+  },
+  "upload": {
+    "errors": {
+      "tooLarge100": "This file is too large. Videos must be under 100 MB.",
+      "typeNotSupported": "This file type is not supported. Use MP4, MOV, or WebM.",
+      "network": "Network error. Please check your connection and try again.",
+      "unavailable": "Video uploads are temporarily unavailable. Please try again later.",
+      "hourlyLimit": "You’ve started a lot of uploads in the last hour. Please try again a little later.",
+      "invalidVideo": "Invalid video",
+      "couldNotStart": "Could not start the upload. Please try again.",
+      "stillProcessing": "Still processing. Check back in a few minutes.",
+      "processingFailed": "Cloudflare could not process this video. Try a different file.",
+      "failed": "Upload failed",
+      "nativeType": "Please upload an MP4, MOV, WebM or M4V video.",
+      "nativeTooLarge": "Video is larger than 1 GB. Please trim or compress it first.",
+      "interrupted": "The upload was interrupted. Please try again.",
+      "invalidFileName": "Invalid file name",
+      "videoTypes": "Only MP4, MOV, or WebM videos are allowed.",
+      "videoTooLarge": "Video is too large. Max {{maxMb}}MB.",
+      "videoTooLong": "Video must be {{maxMinutes}} minutes or less. Current: {{seconds}}s.",
+      "unreadableVideo": "Could not read video metadata. The file may be corrupted.",
+      "imageTypes": "Only JPG/JPEG or PNG images are allowed.",
+      "imageTooLarge": "Please upload an image smaller than {{maxMb}} MB."
+    }
+  },
+  "avatar": {
+    "openPreview": "Open profile image preview",
+    "alt": "Avatar"
+  },
+  "socials": {
+    "follow": "Follow Hockia on social media",
+    "link": "Hockia on {{network}} (opens in a new tab)"
+  },
+  "savedLists": {
+    "contextsLoadFailed": "Could not load recruiting contexts",
+    "contextSwitchFailed": "Could not switch context",
+    "contextClearFailed": "Could not clear recruiting context",
+    "contextSaveFailed": "Could not save context",
+    "contextScopeFailed": "Could not scope to this opportunity",
+    "contextUpdateFailed": "Could not update context",
+    "contextDeleteFailed": "Could not delete context",
+    "signInToSave": "Sign in to save profiles",
+    "removeSavedFailed": "Could not remove from saved",
+    "createSavedListFailed": "Could not create your saved list",
+    "saveProfileFailed": "Could not save profile",
+    "savedToast": "Saved. See your saved list in the dashboard",
+    "savedLoadFailed": "Could not load saved players",
+    "shortlistsLoadFailed": "Could not load shortlists",
+    "shortlistNameRequired": "Name your shortlist",
+    "shortlistCreateFailed": "Could not create shortlist",
+    "shortlistRenameFailed": "Could not rename shortlist",
+    "shortlistDefaultFirst": "Promote another list to default before deleting this one",
+    "shortlistDeleteFailed": "Could not delete shortlist",
+    "shortlistDefaultFailed": "Could not change default list",
+    "itemsLoadFailed": "Could not load items",
+    "itemAddFailed": "Could not add to shortlist",
+    "itemRemoveFailed": "Could not remove item",
+    "itemStatusFailed": "Could not update status",
+    "markedUnsorted": "Marked Unsorted",
+    "markedTopPick": "Marked Top pick",
+    "markedMaybe": "Marked Maybe",
+    "markedNotAFit": "Marked Not a fit",
+    "noteSaveFailed": "Could not save note",
+    "noteCleared": "Note cleared",
+    "noteSaved": "Note saved",
+    "itemAlreadyThere": "That player is already in the destination list",
+    "itemMoveFailed": "Could not move item",
+    "movedOther": "Moved to other list",
+    "movedTo": "Moved to {{name}}"
+  },
+  "clubInvite": {
+    "accepted": "You joined the club.",
+    "declined": "Club invitation declined.",
+    "unavailable": "This invitation is no longer available.",
+    "error": "Could not update the club invitation. Please try again."
+  },
+  "getReady": {
+    "aria": "Get ready for {{where}}",
+    "sent": "Application sent to {{club}}",
+    "title": "Get ready for {{where}}",
+    "body": "Things players sort out before moving. Only if they help you.",
+    "offerSuffix": " · Offer for members",
+    "seeAll": "See everything for {{where}}",
+    "notNow": "Not now"
+  }
+}

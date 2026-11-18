@@ -50,11 +50,14 @@ import {
   inCommonCountLabel, rolePreviewGradient, teamLabel,
 } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
+import { tCommunity, useCommunityT } from '@/i18n/ns/community'
+import { useEnumsT } from '@/i18n/ns/enums'
 import type { Profile } from '../PeopleListView'
 
 // Recruiters' "Why this fit" on the desktop deck: its own chunk (verdict + Hockia AI opinion).
 const RecruiterFitExplain = lazy(() => import('@/components/recruiting/RecruiterFitExplain'))
 import { FitBadge } from '@/components/ui/FitBadge'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Member preview, full screen (Figma Community P7–P12, P16, P22–P24). Opens
@@ -89,7 +92,6 @@ interface MemberFullPreviewProps {
 }
 
 const GLASS_BUTTON = `flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[rgba(15,15,20,0.35)] text-white ${GLASS} ${PRESS}`
-const UNDER_18_MESSAGE = 'Under-18 accounts can’t message clubs or coaches.'
 
 function profilePath(m: Profile): string {
   if (m.role === 'brand') return m.brand_slug ? `/brands/${m.brand_slug}?ref=community_preview` : `/brands/id/${m.id}?ref=community_preview`
@@ -112,8 +114,8 @@ function ageFromDob(dob: string | null | undefined, now = new Date()): number | 
 /** Every nationality, named ("🇦🇷 Argentina · 🇮🇹 Italy"), + EU when either passport is EU. */
 function passportText(passports: Country[]): string | null {
   if (passports.length === 0) return null
-  const names = passports.map((c) => [c.flag_emoji, c.common_name || c.name].filter(Boolean).join(' ')).join(' · ')
-  return passports.some((c) => isEuCountryCode(c.code)) ? `${names} · EU` : names
+  const names = passports.map((c) => [c.flag_emoji, countryLabel(c.common_name || c.name)].filter(Boolean).join(' ')).join(' · ')
+  return passports.some((c) => isEuCountryCode(c.code)) ? tCommunity('fullPreview.passportWithEu', { names }) : names
 }
 
 interface MemberPreviewBodyProps extends MemberFullPreviewProps {
@@ -135,6 +137,8 @@ interface MemberPreviewBodyProps extends MemberFullPreviewProps {
 
 /** The preview's content — photo area, summary panel and action bar — for one member. */
 function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, crestColor: crestProp = null, onBlocked, framed = false, onNestedModal, active = true, immersive = false, contextLabel, onDetailsChange, desktop = false }: MemberPreviewBodyProps) {
+  const t = useCommunityT()
+  const tEnums = useEnumsT()
   const { user, profile: viewer } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
@@ -160,7 +164,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const isBrand = member.role === 'brand'
   const isOrg = isClub || isBrand
   const isPerson = !isOrg
-  const name = member.full_name?.trim() || 'Hockia member'
+  const name = member.full_name?.trim() || t('fullPreview.fallbackName')
   const firstName = name.split(/\s+/)[0]
 
   const friendship = useFriendship(member.id)
@@ -242,7 +246,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       navigate(route, { state: { returnTo: location.pathname + location.search, messageOrigin: 'Community' } })
     } catch (err) {
       logger.error('[MemberFullPreview] message failed', err)
-      addToast('Could not open the conversation. Please try again.', 'error')
+      addToast(t('fullPreview.errors.messageFailed'), 'error')
     } finally {
       setSending(false)
     }
@@ -256,11 +260,11 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
         return
       }
       await navigator.clipboard.writeText(url)
-      addToast('Link copied', 'success')
+      addToast(t('fullPreview.linkCopied'), 'success')
     } catch {
       /* the member closed the share sheet */
     }
-  }, [member, name, addToast])
+  }, [member, name, addToast, t])
 
   // ── Messaging rules (founder ruling 2026-10-06): an under-18 can't start a
   // conversation with a club or a coach who recruits, and the reverse. The
@@ -268,8 +272,8 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const viewerAge = ageFromDob((viewer as { date_of_birth?: string | null } | null)?.date_of_birth)
   const targetRecruits = isClub || (member.role === 'coach' && member.coach_recruits_for_team === true)
   const messageBlockedReason =
-    typeof viewerAge === 'number' && viewerAge < 18 && targetRecruits ? UNDER_18_MESSAGE
-      : viewerRecruits && typeof age === 'number' && age < 18 ? 'This member can’t be contacted by clubs or coaches.'
+    typeof viewerAge === 'number' && viewerAge < 18 && targetRecruits ? t('fullPreview.messageBlocked.under18')
+      : viewerRecruits && typeof age === 'number' && age < 18 ? t('fullPreview.messageBlocked.minor')
         : null
 
   // ── Identity lines
@@ -281,15 +285,15 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const coachTeam = member.coaching_categories?.length === 1 ? teamLabel(member.coaching_categories[0]) : null
   const subParts = (() => {
     switch (member.role) {
-      case 'player': return [positionLabel(member.position) ?? 'Player', teamLabel(member.playing_category)]
-      case 'coach': return [coachSpecialtyLabel(member.coach_specialization, member.coach_specialization_custom) ?? 'Coach', coachTeam]
-      case 'umpire': return ['Umpire', member.umpire_level]
-      case 'club': return ['Club', league]
-      default: return ['Brand', brandCategoryLabel(member.brand_category)]
+      case 'player': return [positionLabel(member.position) ?? tEnums('role.player'), teamLabel(member.playing_category)]
+      case 'coach': return [coachSpecialtyLabel(member.coach_specialization, member.coach_specialization_custom) ?? tEnums('role.coach'), coachTeam]
+      case 'umpire': return [tEnums('role.umpire'), member.umpire_level]
+      case 'club': return [tEnums('role.club'), league]
+      default: return [tEnums('role.brand'), brandCategoryLabel(member.brand_category)]
     }
   })()
   const subLine = [...subParts, place || null].filter(Boolean).join(' · ')
-  const title = isPerson && typeof age === 'number' ? `${name}, ${age}` : name
+  const title = isPerson && typeof age === 'number' ? t('fullPreview.nameWithAge', { name, age }) : name
 
   // ── Key facts (three per role; a missing value drops its tile)
   const passports = [member.nationality_country_id, member.nationality2_country_id]
@@ -302,23 +306,23 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
     switch (member.role) {
       case 'player':
       case 'coach':
-        list.push({ label: member.role === 'coach' ? 'Coaches at' : 'Plays at', value: member.current_club?.trim() || null })
-        list.push({ label: 'Passport', value: passportText(passports) })
-        list.push({ label: 'Available', value: availableLabel(member) })
+        list.push({ label: member.role === 'coach' ? t('fullPreview.facts.coachesAt') : t('fullPreview.facts.playsAt'), value: member.current_club?.trim() || null })
+        list.push({ label: t('fullPreview.facts.passport'), value: passportText(passports) })
+        list.push({ label: t('fullPreview.facts.available'), value: availableLabel(member) })
         break
       case 'umpire':
-        list.push({ label: 'Level', value: member.umpire_level?.trim() || null })
-        list.push({ label: 'Passport', value: passportText(passports) })
-        list.push({ label: 'Based in', value: city })
+        list.push({ label: t('fullPreview.facts.level'), value: member.umpire_level?.trim() || null })
+        list.push({ label: t('fullPreview.facts.passport'), value: passportText(passports) })
+        list.push({ label: t('fullPreview.facts.basedIn'), value: city })
         break
       case 'club':
-        list.push(league ? { label: 'League', value: league } : { label: 'Founded', value: member.year_founded ? String(member.year_founded) : null })
-        list.push({ label: 'Based in', value: city })
-        if (atClub.linked && user) list.push({ label: 'Friends here', value: atClub.loading ? null : String(atClub.people.length) })
+        list.push(league ? { label: t('fullPreview.facts.league'), value: league } : { label: t('fullPreview.facts.founded'), value: member.year_founded ? String(member.year_founded) : null })
+        list.push({ label: t('fullPreview.facts.basedIn'), value: city })
+        if (atClub.linked && user) list.push({ label: t('fullPreview.facts.friendsHere'), value: atClub.loading ? null : String(atClub.people.length) })
         break
       default:
-        list.push({ label: 'Category', value: brandCategoryLabel(member.brand_category) })
-        list.push({ label: 'Based in', value: city })
+        list.push({ label: t('fullPreview.facts.category'), value: brandCategoryLabel(member.brand_category) })
+        list.push({ label: t('fullPreview.facts.basedIn'), value: city })
     }
     return list.filter((f): f is { label: string; value: string } => Boolean(f.value))
   })()
@@ -331,7 +335,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
     if (isClub) return friendsHereLabel(atClub.people.length)
     if (friendship.isFriend) {
       const since = friendsSinceLabel(friendship.relationship?.accepted_at ?? null)
-      const common = inCommon.count > 0 ? `${inCommon.count} in common` : null
+      const common = inCommon.count > 0 ? t('fullPreview.inCommonShort', { count: inCommon.count }) : null
       return [since, common].filter(Boolean).join(' · ') || null
     }
     return inCommonCountLabel(inCommon.count)
@@ -342,7 +346,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const fitState = fit ?? recruiterView.fit?.state ?? null
   const fitLabel = fitChipLabel(fitState)
   const fitPillText = fitLabel
-  const fitSuffix = fitLabel && recruiterView.fitRole ? `for ${recruiterView.fitRole.title}` : null
+  const fitSuffix = fitLabel && recruiterView.fitRole ? t('fullPreview.fitFor', { role: recruiterView.fitRole.title }) : null
   const onShortlist = () => {
     trackAction('shortlist')
     void hapticLight()
@@ -379,7 +383,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       className={variant === 'primary' && !messageBlockedReason ? primary : secondary}
       data-testid="member-preview-message"
     >
-      <MessageSquare className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> Message
+      <MessageSquare className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> {t('fullPreview.actions.message')}
     </button>
   )
 
@@ -388,7 +392,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
     if (isClub) {
       return (member.open_role_count ?? 0) > 0 ? (
         <>
-          <button type="button" onClick={openRoles} className={primary} data-testid="member-preview-open-roles">See open opportunities</button>
+          <button type="button" onClick={openRoles} className={primary} data-testid="member-preview-open-roles">{t('fullPreview.actions.seeOpenOpportunities')}</button>
           {messageButton('secondary')}
         </>
       ) : messageButton('primary')
@@ -417,11 +421,11 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
         <>
           {recruiterView.shortlisted ? (
             <button type="button" disabled className={muted} data-testid="member-preview-shortlist">
-              <Check className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" /> Shortlisted
+              <Check className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" /> {t('fullPreview.actions.shortlisted')}
             </button>
           ) : (
             <button type="button" onClick={onShortlist} disabled={recruiterView.busy} className={primary} data-testid="member-preview-shortlist">
-              <Star className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> Shortlist
+              <Star className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> {t('fullPreview.actions.shortlist')}
             </button>
           )}
           {messageButton('secondary')}
@@ -432,16 +436,16 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       return (
         <>
           <button type="button" onClick={() => void friendship.acceptRequest()} disabled={friendship.mutating} className={primary} data-testid="member-preview-friend">
-            <Check className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" /> Accept
+            <Check className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" /> {t('fullPreview.actions.accept')}
           </button>
           <button type="button" onClick={() => void friendship.rejectRequest()} disabled={friendship.mutating} className={secondary} data-testid="member-preview-decline">
-            <X className="h-5 w-5" strokeWidth={2} aria-hidden="true" /> Decline
+            <X className="h-5 w-5" strokeWidth={2} aria-hidden="true" /> {t('fullPreview.actions.decline')}
           </button>
           <button
             type="button"
             onClick={() => void message()}
             disabled={sending || Boolean(messageBlockedReason)}
-            aria-label="Message"
+            aria-label={t('fullPreview.actions.message')}
             className={iconSquare}
             data-testid="member-preview-message"
           >
@@ -455,7 +459,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
         <>
           {messageButton('primary')}
           <button type="button" disabled className={`${secondary} disabled:text-ink-1`} data-testid="member-preview-friend">
-            <Check className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" /> Friends
+            <Check className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" /> {t('fullPreview.actions.friends')}
           </button>
         </>
       )
@@ -464,7 +468,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       return (
         <>
           <button type="button" disabled className={muted} data-testid="member-preview-friend">
-            <Check className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" /> Request sent
+            <Check className="h-5 w-5" strokeWidth={2.4} aria-hidden="true" /> {t('fullPreview.actions.requestSent')}
           </button>
           {messageButton('primary')}
         </>
@@ -479,7 +483,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
           className={primary}
           data-testid="member-preview-friend"
         >
-          <UserPlus className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> Add friend
+          <UserPlus className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> {t('fullPreview.actions.addFriend')}
         </button>
         {messageButton('secondary')}
       </>
@@ -520,7 +524,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             targetId={member.id}
             targetName={name}
             actionName={firstName}
-            leadingItems={[{ key: 'share', label: 'Share profile', onSelect: () => void share() }]}
+            leadingItems={[{ key: 'share', label: t('fullPreview.shareProfile'), onSelect: () => void share() }]}
             onBlocked={() => { onClose(); onBlocked?.(member) }}
             triggerClassName={IMMERSIVE_GLASS_BUTTON}
             iconClassName="h-[22px] w-[22px] text-white"
@@ -541,7 +545,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
           const club = member.current_club?.trim() || null
           if (!club) return null
           const team = member.role === 'player' ? teamLabel(member.playing_category) : coachTeam
-          return { label: member.role === 'coach' ? 'Coaches at' : 'Plays at', value: [club, team].filter(Boolean).join(' · '), detail: getPlayerLeagueName(member.current_world_club_id, null) }
+          return { label: member.role === 'coach' ? t('fullPreview.facts.coachesAt') : t('fullPreview.facts.playsAt'), value: [club, team].filter(Boolean).join(' · '), detail: getPlayerLeagueName(member.current_world_club_id, null) }
         })(),
       references: isPerson ? member.accepted_reference_count ?? 0 : 0,
       hasHighlights: isPerson && Boolean(member.highlight_video_url),
@@ -580,7 +584,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             <SignInPromptModal
               isOpen={signIn !== null}
               onClose={() => setSignIn(null)}
-              title={signIn === 'message' ? 'Sign in to message' : signIn === 'connect' ? 'Sign in to add friends' : 'Sign in to view profile'}
+              title={signIn === 'message' ? t('fullPreview.signIn.message') : signIn === 'connect' ? t('fullPreview.signIn.connect') : t('fullPreview.signIn.view')}
               action={signIn ?? undefined}
             />
           </>
@@ -636,8 +640,8 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
           {/* Tap left / right for the previous / next photo */}
           {shown.length > 1 && (
             <>
-              <button type="button" aria-label="Previous photo" onClick={() => stepPhoto(-1)} className="absolute inset-y-0 left-0 w-1/3" />
-              <button type="button" aria-label="Next photo" onClick={() => stepPhoto(1)} className="absolute inset-y-0 right-0 w-1/3" />
+              <button type="button" aria-label={t('fullPreview.previousPhoto')} onClick={() => stepPhoto(-1)} className="absolute inset-y-0 left-0 w-1/3" />
+              <button type="button" aria-label={t('fullPreview.nextPhoto')} onClick={() => stepPhoto(1)} className="absolute inset-y-0 right-0 w-1/3" />
               <div aria-hidden="true" className={`absolute inset-x-4 flex gap-1 ${framed ? 'top-3' : 'top-[calc(env(safe-area-inset-top)+3px)]'}`}>
                 {shown.map((p, i) => (
                   <span key={p} className={`h-[3px] flex-1 rounded-[2px] ${i === photoIndex ? 'bg-white' : 'bg-white/40'}`} />
@@ -647,7 +651,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
           )}
 
           <div className={`absolute inset-x-4 flex items-center justify-between ${framed ? 'top-6' : 'top-[calc(env(safe-area-inset-top)+17px)]'}`}>
-            <button type="button" onClick={onClose} aria-label="Close preview" className={GLASS_BUTTON} data-testid="member-preview-close">
+            <button type="button" onClick={onClose} aria-label={t('fullPreview.close')} className={GLASS_BUTTON} data-testid="member-preview-close">
               <ChevronDown className="h-[22px] w-[22px]" strokeWidth={2} />
             </button>
             {user && !friendship.isOwnProfile && (
@@ -655,7 +659,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
                 targetId={member.id}
                 targetName={name}
                 actionName={firstName}
-                leadingItems={[{ key: 'share', label: 'Share profile', onSelect: () => void share() }]}
+                leadingItems={[{ key: 'share', label: t('fullPreview.shareProfile'), onSelect: () => void share() }]}
                 onBlocked={() => { onClose(); onBlocked?.(member) }}
                 triggerClassName={GLASS_BUTTON}
                 iconClassName="h-[22px] w-[22px] text-white"
@@ -672,7 +676,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             {!fitPillText && friendship.isIncomingRequest && !recruiterActions && (
               <span className={`inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,20,0.55)] px-2.5 py-[5px] ${GLASS}`}>
                 <span className="h-[7px] w-[7px] rounded-full bg-[#b79cff]" aria-hidden="true" />
-                <span className="text-[12px] font-semibold leading-4 text-white">Sent you a friend request</span>
+                <span className="text-[12px] font-semibold leading-4 text-white">{t('fullPreview.sentFriendRequest')}</span>
               </span>
             )}
             <h2 className="line-clamp-2 text-[28px] font-bold leading-[34px] tracking-[-0.01em] text-white">{title}</h2>
@@ -732,7 +736,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
           className="mx-auto mt-1.5 flex min-h-[44px] items-center gap-1 px-2 text-[14px] font-semibold text-hockia-primary"
           data-testid="member-preview-full-profile"
         >
-          See full profile <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+          {t('fullPreview.seeFullProfile')} <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         </button>
       </div>
 
@@ -749,7 +753,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       <SignInPromptModal
         isOpen={signIn !== null}
         onClose={() => setSignIn(null)}
-        title={signIn === 'message' ? 'Sign in to message' : signIn === 'connect' ? 'Sign in to add friends' : 'Sign in to view profile'}
+        title={signIn === 'message' ? t('fullPreview.signIn.message') : signIn === 'connect' ? t('fullPreview.signIn.connect') : t('fullPreview.signIn.view')}
         action={signIn ?? undefined}
       />
     </div>
@@ -794,6 +798,7 @@ export function MemberFullPreview(props: MemberFullPreviewProps & { deck?: Membe
 }
 
 function ClassicMemberPreview(props: MemberFullPreviewProps & { deck?: MemberPreviewDeck }) {
+  const t = useCommunityT()
   const { deck, onClose, onBlocked } = props
   const containerRef = useRef<HTMLDivElement>(null)
   const [nested, setNested] = useState(false)
@@ -844,7 +849,7 @@ function ClassicMemberPreview(props: MemberFullPreviewProps & { deck?: MemberPre
   }, [])
   const stopHint = useCallback((seen = false) => {
     if (seen && hintTimers.current.length > 0) markHintSeen()
-    hintTimers.current.forEach((t) => window.clearTimeout(t))
+    hintTimers.current.forEach((timer) => window.clearTimeout(timer))
     hintTimers.current = []
     setHint(false)
   }, [markHintSeen])
@@ -1015,7 +1020,7 @@ function ClassicMemberPreview(props: MemberFullPreviewProps & { deck?: MemberPre
       ref={containerRef}
       role="dialog"
       aria-modal="true"
-      aria-label={member ? `${member.full_name?.trim() || 'Member'} — preview, ${index + 1} of ${members.length}` : 'End of the list'}
+      aria-label={member ? t('fullPreview.deck.cardLabel', { name: member.full_name?.trim() || t('fullPreview.deck.memberFallback'), position: index + 1, total: members.length }) : t('fullPreview.deck.endLabel')}
       tabIndex={-1}
       data-testid="member-preview"
       className="fixed inset-0 z-50 flex flex-col items-center overflow-hidden bg-surface-inverse animate-fade-in"
@@ -1048,18 +1053,18 @@ function ClassicMemberPreview(props: MemberFullPreviewProps & { deck?: MemberPre
         {hint && (
           <div ref={hintRef} className="pointer-events-none absolute left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-lg animate-fade-in" style={{ top: hintTop ?? 84 }} role="status">
             <ArrowLeft className="h-4 w-4 text-hockia-primary" strokeWidth={2.2} aria-hidden="true" />
-            <span className="whitespace-nowrap text-[15px] font-semibold text-ink-1">Swipe for the next member</span>
+            <span className="whitespace-nowrap text-[15px] font-semibold text-ink-1">{t('fullPreview.deck.swipeHint')}</span>
           </div>
         )}
       </div>
 
       {/* Pager ‹ 3 of N › */}
       <div className="flex shrink-0 items-center gap-3 pb-[max(env(safe-area-inset-bottom),12px)] pt-3.5" data-testid="member-deck-pager">
-        <button type="button" onClick={() => go(-1)} disabled={index === 0} aria-label="Previous member" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.14] text-white disabled:text-white/30">
+        <button type="button" onClick={() => go(-1)} disabled={index === 0} aria-label={t('fullPreview.deck.previousMember')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.14] text-white disabled:text-white/30">
           <ChevronLeft className="h-5 w-5" strokeWidth={2} />
         </button>
-        <p className="min-w-[72px] text-center text-[13px] font-semibold leading-[18px] tabular-nums text-white/90">{Math.min(index + 1, members.length)} of {members.length}</p>
-        <button type="button" onClick={() => go(1)} disabled={atEnd} aria-label="Next member" className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.14] text-white disabled:text-white/30">
+        <p className="min-w-[72px] text-center text-[13px] font-semibold leading-[18px] tabular-nums text-white/90">{t('fullPreview.deck.pager', { position: Math.min(index + 1, members.length), total: members.length })}</p>
+        <button type="button" onClick={() => go(1)} disabled={atEnd} aria-label={t('fullPreview.deck.nextMember')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.14] text-white disabled:text-white/30">
           <ChevronRight className="h-5 w-5" strokeWidth={2} />
         </button>
       </div>
@@ -1069,7 +1074,7 @@ function ClassicMemberPreview(props: MemberFullPreviewProps & { deck?: MemberPre
       ref={containerRef}
       role="dialog"
       aria-modal="true"
-      aria-label={`${props.member.full_name?.trim() || 'Member'} — preview`}
+      aria-label={t('fullPreview.deck.singleLabel', { name: props.member.full_name?.trim() || t('fullPreview.deck.memberFallback') })}
       tabIndex={-1}
       data-testid="member-preview"
       className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white animate-slide-in-up"
@@ -1207,6 +1212,7 @@ interface ImmersivePageProps {
  * same actions and See full profile. Tap the photo or drag the panel down to close it.
  */
 function ImmersivePage(p: ImmersivePageProps) {
+  const t = useCommunityT()
   const panelRef = useRef<HTMLDivElement>(null)
   useSquircle(panelRef, { tl: 28, tr: 28 })
   // Drag the panel down (from its top, content not scrolled) to close it.
@@ -1278,14 +1284,14 @@ function ImmersivePage(p: ImmersivePageProps) {
       {/* Tap the left / right half for the previous / next photo (vertical swipes are members). */}
       {p.shownCount > 1 && (
         <>
-          <button type="button" aria-label="Previous photo" onClick={() => p.stepPhoto(-1)} className="absolute inset-y-0 left-0 w-1/2" />
-          <button type="button" aria-label="Next photo" onClick={() => p.stepPhoto(1)} className="absolute inset-y-0 right-0 w-1/2" />
+          <button type="button" aria-label={t('fullPreview.previousPhoto')} onClick={() => p.stepPhoto(-1)} className="absolute inset-y-0 left-0 w-1/2" />
+          <button type="button" aria-label={t('fullPreview.nextPhoto')} onClick={() => p.stepPhoto(1)} className="absolute inset-y-0 right-0 w-1/2" />
         </>
       )}
 
       {/* Top row and photo progress */}
       <div className="absolute inset-x-4 top-[calc(env(safe-area-inset-top)+4px)] flex h-11 items-center gap-2">
-        <button type="button" onClick={p.onClose} aria-label="Close preview" className={IMMERSIVE_GLASS_BUTTON} data-testid="member-preview-close">
+        <button type="button" onClick={p.onClose} aria-label={t('fullPreview.close')} className={IMMERSIVE_GLASS_BUTTON} data-testid="member-preview-close">
           <ChevronDown className="h-[22px] w-[22px]" strokeWidth={2} />
         </button>
         <p className="min-w-0 flex-1 truncate text-center text-[13px] font-semibold leading-[18px] text-white/[0.92]" data-testid="member-deck-context">{p.contextLabel}</p>
@@ -1309,7 +1315,7 @@ function ImmersivePage(p: ImmersivePageProps) {
           {p.incomingRequest && (
             <span className={`inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,20,0.55)] px-2.5 py-[5px] ${GLASS}`}>
               <span className="h-[7px] w-[7px] rounded-full bg-[#b79cff]" aria-hidden="true" />
-              <span className="text-[12px] font-semibold leading-4 text-white">Sent you a friend request</span>
+              <span className="text-[12px] font-semibold leading-4 text-white">{t('fullPreview.sentFriendRequest')}</span>
             </span>
           )}
           <h2 className="line-clamp-2 text-[30px] font-bold leading-9 tracking-[-0.015em] text-white">{p.title}</h2>
@@ -1324,13 +1330,13 @@ function ImmersivePage(p: ImmersivePageProps) {
               {hasEuPassport(p.nationalities) && <EuBadge surface="photo" className="h-7 rounded-full px-2.5 text-[13px] leading-[18px]" />}
             </div>
           )}
-          {p.isPerson && p.place && <p className="line-clamp-2 text-[13px] leading-[18px] text-white/80">Based in {p.place}</p>}
+          {p.isPerson && p.place && <p className="line-clamp-2 text-[13px] leading-[18px] text-white/80">{t('fullPreview.basedInPlace', { place: p.place })}</p>}
         </div>
         <div className="flex justify-center pt-1.5">
           <button
             type="button"
             onClick={() => p.setDetails(true)}
-            aria-label={`More about ${p.firstName}`}
+            aria-label={t('fullPreview.moreAbout', { name: p.firstName })}
             aria-expanded={p.details}
             className="pointer-events-auto flex h-11 w-16 items-center justify-center text-white"
             data-testid="member-vdeck-more"
@@ -1349,11 +1355,11 @@ function ImmersivePage(p: ImmersivePageProps) {
       {/* Details panel (Figma V3) */}
       {p.details && (
         <div className="absolute inset-0 z-10" data-vdeck-panel="">
-          <button type="button" aria-label="Close details" onClick={() => p.setDetails(false)} className="absolute inset-0 bg-black/[0.35] animate-fade-in" />
+          <button type="button" aria-label={t('fullPreview.closeDetails')} onClick={() => p.setDetails(false)} className="absolute inset-0 bg-black/[0.35] animate-fade-in" />
           <div
             ref={panelRef}
             role="region"
-            aria-label={`About ${p.name}`}
+            aria-label={t('fullPreview.aboutLabel', { name: p.name })}
             className="absolute inset-x-0 bottom-0 flex max-h-[78%] flex-col gap-3 overflow-y-auto overscroll-contain rounded-t-[28px] bg-white px-5 pb-[max(env(safe-area-inset-bottom),12px)] pt-2 animate-slide-in-up"
             style={{ transform: panelDy > 0 ? `translateY(${panelDy}px)` : undefined, transition: panelDy > 0 ? 'none' : 'transform 0.2s ease-out' }}
             onTouchStart={onPanelTouchStart}
@@ -1381,26 +1387,26 @@ function ImmersivePage(p: ImmersivePageProps) {
                 )}
                 {p.nationalities.length > 0 && (
                   <div className="flex flex-col gap-[3px] rounded-[14px] bg-surface-muted px-3.5 py-2.5">
-                    <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-ink-2">Nationalities and passports</span>
+                    <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-ink-2">{t('fullPreview.nationalitiesTile')}</span>
                     <span className="text-[16px] leading-[22px] text-ink-1">{nationalityNames}</span>
                     {hasEuPassport(p.nationalities) && (
-                      <span className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 text-ink-2"><EuBadge surface="light" /> EU passport</span>
+                      <span className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 text-ink-2"><EuBadge surface="light" /> {t('fullPreview.euPassport')}</span>
                     )}
                   </div>
                 )}
-                {p.place && <DetailTile label="Based in" value={p.place} />}
+                {p.place && <DetailTile label={t('fullPreview.facts.basedIn')} value={p.place} />}
                 {(p.references > 0 || p.hasHighlights) && (
                   <div className="flex gap-2">
                     {p.references > 0 && (
                       <div className="flex min-w-0 flex-1 flex-col gap-[3px] rounded-[14px] bg-gold-soft px-3.5 py-2.5" data-testid="member-vdeck-references">
-                        <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-gold">References</span>
-                        <span className="text-[16px] leading-[22px] text-ink-1">{p.references} accepted</span>
+                        <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-gold">{t('fullPreview.references')}</span>
+                        <span className="text-[16px] leading-[22px] text-ink-1">{t('fullPreview.referencesAccepted', { count: p.references })}</span>
                       </div>
                     )}
                     {p.hasHighlights && (
                       <button type="button" onClick={p.onViewProfile} className="flex min-w-0 flex-1 flex-col items-start gap-[3px] rounded-[14px] bg-hockia-soft px-3.5 py-2.5 text-left text-hockia-primary" data-testid="member-vdeck-highlights">
-                        <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em]">Highlights</span>
-                        <span className="flex items-center gap-1.5 text-[16px] leading-[22px]"><Play className="h-4 w-4 fill-current" strokeWidth={0} aria-hidden="true" /> Watch</span>
+                        <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em]">{t('fullPreview.highlights')}</span>
+                        <span className="flex items-center gap-1.5 text-[16px] leading-[22px]"><Play className="h-4 w-4 fill-current" strokeWidth={0} aria-hidden="true" /> {t('fullPreview.watch')}</span>
                       </button>
                     )}
                   </div>
@@ -1417,7 +1423,7 @@ function ImmersivePage(p: ImmersivePageProps) {
               className="mx-auto flex min-h-[44px] items-center gap-1 px-2 text-[14px] font-semibold text-hockia-primary"
               data-testid="member-preview-full-profile"
             >
-              See full profile <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+              {t('fullPreview.seeFullProfile')} <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -1444,6 +1450,7 @@ function DetailTile({ label, value, detail = null }: { label: string; value: str
 
 /** One member on the desktop deck: photo column + details + footer actions. */
 function DesktopPage(p: ImmersivePageProps) {
+  const t = useCommunityT()
   const [whyOpen, setWhyOpen] = useState(false)
   const nationalityNames = p.nationalities.map((c) => [c.flag, c.name].filter(Boolean).join(' ')).join(' · ')
   return (
@@ -1481,8 +1488,8 @@ function DesktopPage(p: ImmersivePageProps) {
         <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[120px]" style={{ backgroundImage: TOP_SCRIM }} />
         {p.shownCount > 1 && (
           <>
-            <button type="button" aria-label="Previous photo" onClick={() => p.stepPhoto(-1)} className="absolute inset-y-0 left-0 w-1/2 cursor-w-resize" />
-            <button type="button" aria-label="Next photo" onClick={() => p.stepPhoto(1)} className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize" />
+            <button type="button" aria-label={t('fullPreview.previousPhoto')} onClick={() => p.stepPhoto(-1)} className="absolute inset-y-0 left-0 w-1/2 cursor-w-resize" />
+            <button type="button" aria-label={t('fullPreview.nextPhoto')} onClick={() => p.stepPhoto(1)} className="absolute inset-y-0 right-0 w-1/2 cursor-e-resize" />
             <div aria-hidden="true" className="absolute inset-x-4 top-4 flex gap-1">
               {Array.from({ length: p.shownCount }, (_, i) => (
                 <span key={i} className={`h-[3px] flex-1 rounded-[2px] ${i === p.photoIndex ? 'bg-white/95' : 'bg-white/[0.35]'}`} />
@@ -1497,7 +1504,7 @@ function DesktopPage(p: ImmersivePageProps) {
             {p.incomingRequest && (
               <span className={`inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,20,0.55)] px-2.5 py-[5px] ${GLASS}`}>
                 <span className="h-[7px] w-[7px] rounded-full bg-brand-soft" aria-hidden="true" />
-                <span className="text-[12px] font-semibold leading-4 text-white">Sent you a friend request</span>
+                <span className="text-[12px] font-semibold leading-4 text-white">{t('fullPreview.sentFriendRequest')}</span>
               </span>
             )}
           </div>
@@ -1526,7 +1533,7 @@ function DesktopPage(p: ImmersivePageProps) {
                 data-testid="member-desktop-why-toggle"
               >
                 <FitBadge state={p.fitState} />
-                <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-ink-1">Why this fit</span>
+                <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-ink-1">{t('fullPreview.whyThisFit')}</span>
                 <ChevronDown className={`h-5 w-5 shrink-0 text-ink-3 transition-transform ${whyOpen ? 'rotate-180' : ''}`} strokeWidth={2} aria-hidden="true" />
               </button>
               {whyOpen && p.fitExplain}
@@ -1537,26 +1544,26 @@ function DesktopPage(p: ImmersivePageProps) {
               {p.playsAt && <DetailTile label={p.playsAt.label} value={p.playsAt.value} detail={p.playsAt.detail} />}
               {p.nationalities.length > 0 && (
                 <div className="flex flex-col gap-[3px] rounded-[14px] bg-surface-muted px-3.5 py-2.5">
-                  <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-ink-2">Nationalities and passports</span>
+                  <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-ink-2">{t('fullPreview.nationalitiesTile')}</span>
                   <span className="text-[16px] leading-[22px] text-ink-1">{nationalityNames}</span>
                   {hasEuPassport(p.nationalities) && (
-                    <span className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 text-ink-2"><EuBadge surface="light" /> EU passport</span>
+                    <span className="mt-0.5 flex items-center gap-1.5 text-[12px] leading-4 text-ink-2"><EuBadge surface="light" /> {t('fullPreview.euPassport')}</span>
                   )}
                 </div>
               )}
-              {p.place && <DetailTile label="Based in" value={p.place} />}
+              {p.place && <DetailTile label={t('fullPreview.facts.basedIn')} value={p.place} />}
               {(p.references > 0 || p.hasHighlights) && (
                 <div className="flex gap-2">
                   {p.references > 0 && (
                     <div className="flex min-w-0 flex-1 flex-col gap-[3px] rounded-[14px] bg-gold-soft px-3.5 py-2.5" data-testid="member-desktop-references">
-                      <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-gold">References</span>
-                      <span className="text-[16px] leading-[22px] text-ink-1">{p.references} accepted</span>
+                      <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em] text-gold">{t('fullPreview.references')}</span>
+                      <span className="text-[16px] leading-[22px] text-ink-1">{t('fullPreview.referencesAccepted', { count: p.references })}</span>
                     </div>
                   )}
                   {p.hasHighlights && (
                     <button type="button" onClick={p.onViewProfile} className="flex min-h-[44px] min-w-0 flex-1 flex-col items-start gap-[3px] rounded-[14px] bg-hockia-soft px-3.5 py-2.5 text-left text-hockia-primary">
-                      <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em]">Highlights</span>
-                      <span className="flex items-center gap-1.5 text-[16px] leading-[22px]"><Play className="h-4 w-4 fill-current" strokeWidth={0} aria-hidden="true" /> Watch</span>
+                      <span className="text-[12px] font-semibold uppercase leading-4 tracking-[0.04em]">{t('fullPreview.highlights')}</span>
+                      <span className="flex items-center gap-1.5 text-[16px] leading-[22px]"><Play className="h-4 w-4 fill-current" strokeWidth={0} aria-hidden="true" /> {t('fullPreview.watch')}</span>
                     </button>
                   )}
                 </div>
@@ -1576,7 +1583,7 @@ function DesktopPage(p: ImmersivePageProps) {
               className={`flex h-12 shrink-0 items-center gap-1 rounded-full px-4 text-[15px] font-semibold text-hockia-primary hover:bg-brand-soft ${p.panelActions ? '' : 'mx-auto'}`}
               data-testid="member-preview-full-profile"
             >
-              See full profile <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+              {t('fullPreview.seeFullProfile')} <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
             </button>
           </div>
           {p.messageBlockedReason && (
@@ -1596,6 +1603,7 @@ function DesktopPage(p: ImmersivePageProps) {
  * "You've seen everyone". Same DB events as the phone deck.
  */
 function DesktopMemberDeck(props: MemberFullPreviewProps & { deck?: MemberPreviewDeck }) {
+  const t = useCommunityT()
   const { onClose, onBlocked } = props
   const deck = props.deck
   const members = useMemo(() => deck?.members ?? [props.member], [deck?.members, props.member])
@@ -1655,7 +1663,7 @@ function DesktopMemberDeck(props: MemberFullPreviewProps & { deck?: MemberPrevie
       ref={containerRef}
       role="dialog"
       aria-modal="true"
-      aria-label={member ? `${member.full_name?.trim() || 'Member'} preview${paged ? `, ${index + 1} of ${members.length}` : ''}` : 'End of the list'}
+      aria-label={member ? (paged ? t('fullPreview.deck.desktopPagedLabel', { name: member.full_name?.trim() || t('fullPreview.deck.memberFallback'), position: index + 1, total: members.length }) : t('fullPreview.deck.desktopLabel', { name: member.full_name?.trim() || t('fullPreview.deck.memberFallback') })) : t('fullPreview.deck.endLabel')}
       tabIndex={-1}
       data-testid="member-preview"
       data-deck="desktop"
@@ -1667,7 +1675,7 @@ function DesktopMemberDeck(props: MemberFullPreviewProps & { deck?: MemberPrevie
       )}
       <div className="pointer-events-none relative flex w-full items-center justify-center gap-4">
         {paged && (
-          <button type="button" onClick={() => go(-1)} disabled={index === 0} aria-label="Previous member" className={`pointer-events-auto ${arrow}`} data-testid="member-deck-prev">
+          <button type="button" onClick={() => go(-1)} disabled={index === 0} aria-label={t('fullPreview.deck.previousMember')} className={`pointer-events-auto ${arrow}`} data-testid="member-deck-prev">
             <ChevronLeft className="h-6 w-6" strokeWidth={2} />
           </button>
         )}
@@ -1693,19 +1701,19 @@ function DesktopMemberDeck(props: MemberFullPreviewProps & { deck?: MemberPrevie
               <DeckEnd onAdjustFilters={() => { onClose(); deck?.onAdjustFilters?.() }} onBack={onClose} />
             </div>
           )}
-          <button type="button" onClick={onClose} aria-label="Close preview" className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-surface-muted text-ink-1 hover:bg-line" data-testid="member-preview-close">
+          <button type="button" onClick={onClose} aria-label={t('fullPreview.close')} className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-surface-muted text-ink-1 hover:bg-line" data-testid="member-preview-close">
             <X className="h-5 w-5" strokeWidth={2} />
           </button>
         </div>
         {paged && (
-          <button type="button" onClick={() => go(1)} disabled={atEnd} aria-label="Next member" className={`pointer-events-auto ${arrow}`} data-testid="member-deck-next">
+          <button type="button" onClick={() => go(1)} disabled={atEnd} aria-label={t('fullPreview.deck.nextMember')} className={`pointer-events-auto ${arrow}`} data-testid="member-deck-next">
             <ChevronRight className="h-6 w-6" strokeWidth={2} />
           </button>
         )}
       </div>
       {paged && (
         <p className="relative text-[13px] font-semibold leading-[18px] tabular-nums text-white/90" data-testid="member-deck-pager" aria-live="polite">
-          {Math.min(index + 1, members.length)} of {members.length}
+          {t('fullPreview.deck.pager', { position: Math.min(index + 1, members.length), total: members.length })}
         </p>
       )}
     </div>,
@@ -1728,6 +1736,7 @@ const VDECK_CLOSE_DISTANCE = 110
  * Android: the system back closes the deck.
  */
 function VerticalMemberDeck(props: MemberFullPreviewProps & { deck: MemberPreviewDeck }) {
+  const t = useCommunityT()
   const { deck, onClose, onBlocked } = props
   const members = deck.members
   const containerRef = useRef<HTMLDivElement>(null)
@@ -1911,7 +1920,7 @@ function VerticalMemberDeck(props: MemberFullPreviewProps & { deck: MemberPrevie
       ref={containerRef}
       role="dialog"
       aria-modal="true"
-      aria-label={member ? `${member.full_name?.trim() || 'Member'} preview, ${index + 1} of ${members.length}` : 'End of the list'}
+      aria-label={member ? t('fullPreview.deck.desktopPagedLabel', { name: member.full_name?.trim() || t('fullPreview.deck.memberFallback'), position: index + 1, total: members.length }) : t('fullPreview.deck.endLabel')}
       tabIndex={-1}
       data-testid="member-preview"
       data-deck="vertical"
@@ -1962,7 +1971,7 @@ function VerticalMemberDeck(props: MemberFullPreviewProps & { deck: MemberPrevie
       {hint && (
         <div className="pointer-events-none absolute left-1/2 top-[calc(env(safe-area-inset-top)+72px)] z-20 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg animate-fade-in" role="status" data-testid="member-vdeck-hint">
           <ChevronUp className="h-4 w-4 text-hockia-primary" strokeWidth={2.2} aria-hidden="true" />
-          <span className="whitespace-nowrap text-[13px] font-semibold leading-[18px] text-ink-1">Swipe up for the next member</span>
+          <span className="whitespace-nowrap text-[13px] font-semibold leading-[18px] text-ink-1">{t('fullPreview.deck.swipeUpHint')}</span>
         </div>
       )}
     </div>,
@@ -1972,18 +1981,19 @@ function VerticalMemberDeck(props: MemberFullPreviewProps & { deck: MemberPrevie
 
 /** Past the last member (Figma P21). */
 function DeckEnd({ onAdjustFilters, onBack }: { onAdjustFilters: () => void; onBack: () => void }) {
+  const t = useCommunityT()
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-8 text-center" data-testid="member-deck-end">
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
         <Users className="h-7 w-7" strokeWidth={1.8} aria-hidden="true" />
       </span>
-      <h2 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">You’ve seen everyone</h2>
-      <p className="mt-2 text-row text-ink-2">New members join every day. Change your filters or come back later.</p>
+      <h2 className="mt-4 text-[22px] font-bold leading-7 text-ink-1">{t('fullPreview.deckEnd.title')}</h2>
+      <p className="mt-2 text-row text-ink-2">{t('fullPreview.deckEnd.body')}</p>
       <button type="button" onClick={onAdjustFilters} className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">
-        Adjust filters
+        {t('fullPreview.deckEnd.adjustFilters')}
       </button>
       <button type="button" onClick={onBack} className="mt-2 min-h-[44px] px-3 text-[14px] font-semibold text-hockia-primary">
-        Back to Community
+        {t('fullPreview.deckEnd.back')}
       </button>
     </div>
   )

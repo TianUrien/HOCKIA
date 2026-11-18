@@ -14,10 +14,11 @@
  * Store builds that predate this file don't call the function at all.
  */
 
-import { getCaptchaToken, CAPTCHA_FAILED_COPY } from '@/lib/captcha'
+import { getCaptchaToken, captchaFailedCopy } from '@/lib/captcha'
 import { getAnonymousId } from '@/lib/analyticsIdentity'
 import { getAppVersion, getRuntimePlatform } from '@/lib/appVersion'
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase'
+import { tAuth } from '@/i18n/ns/auth'
 
 export type GuardKind = 'oauth_start' | 'password_signin' | 'signup' | 'magic_link' | 'password_reset'
 
@@ -81,15 +82,14 @@ async function post(body: Record<string, unknown>, keepalive = false): Promise<u
 /** "Too many attempts" with the wait the server gave, rounded up to minutes. */
 export function rateLimitedCopy(retryAfterSeconds: number | null | undefined): string {
   const minutes = Math.ceil((retryAfterSeconds ?? 0) / 60)
-  if (minutes <= 1) return 'Too many attempts. Please try again in a minute.'
-  return `Too many attempts. Please try again in ${minutes} minutes.`
+  return tAuth('errors.rateLimited', { count: Math.max(1, minutes) })
 }
 
 function decide(answer: unknown): GuardDecision | 'captcha_required' {
   const a = answer as { allowed?: boolean; reason?: string; retryAfter?: number | null } | null
   if (!a || a.allowed !== false) return ALLOWED
   if (a.reason === 'captcha_required') return 'captcha_required'
-  if (a.reason === 'captcha_failed') return { allowed: false, reason: 'captcha_failed', message: CAPTCHA_FAILED_COPY }
+  if (a.reason === 'captcha_failed') return { allowed: false, reason: 'captcha_failed', message: captchaFailedCopy() }
   if (a.reason === 'rate_limited') return { allowed: false, reason: 'rate_limited', message: rateLimitedCopy(a.retryAfter) }
   return ALLOWED
 }
@@ -105,7 +105,7 @@ export async function guardCheck(kind: GuardKind, provider?: string): Promise<Gu
     const first = decide(await post({ action: 'check', kind, provider, client }))
     if (first !== 'captcha_required') return first
     const captchaToken = await getCaptchaToken('guard')
-    if (!captchaToken) return { allowed: false, reason: 'captcha_failed', message: CAPTCHA_FAILED_COPY }
+    if (!captchaToken) return { allowed: false, reason: 'captcha_failed', message: captchaFailedCopy() }
     const second = decide(await post({ action: 'check', kind, provider, captchaToken, client }))
     return second === 'captcha_required' ? ALLOWED : second
   } catch {

@@ -1,0 +1,294 @@
+{
+  "actorFallback": "Alguien de Hockia",
+  "applicationStatus": {
+    "clubFallback": "El club",
+    "positionFallback": "la oportunidad",
+    "filledRoleFallback": "La oportunidad",
+    "shortlistedTitle": "{{club}} te sumó a su preselección",
+    "shortlistedBody": "Tu perfil está en consideración para {{role}}.",
+    "maybeTitle": "{{club}} respondió a tu postulación",
+    "maybeBody": "Abre tu postulación para {{position}} y mira la novedad.",
+    "rejectedTitle": "{{club}} actualizó tu postulación",
+    "rejectedBody": "Esta vez no se dio para {{position}}.",
+    "filledTitle": "{{club}} cubrió la oportunidad",
+    "filledBody": "Ya se cubrió {{role}}. Gracias por postularte. Hay nuevas oportunidades abiertas.",
+    "updatedTitle": "{{club}} actualizó tu postulación",
+    "updatedBody": "Tu postulación para {{position}} tiene una actualización."
+  },
+  "kinds": {
+    "default": {
+      "badge": "Notificación",
+      "title": "Tienes una novedad"
+    },
+    "friendRequestReceived": {
+      "badge": "Solicitud de conexión",
+      "title": "{{name}} te envió una solicitud de conexión"
+    },
+    "friendRequestAccepted": {
+      "badge": "Conexión aceptada",
+      "title": "{{name}} aceptó tu solicitud de conexión",
+      "description": "Ahora cada quien puede ver la actividad de la otra persona."
+    },
+    "profileCommentCreated": {
+      "badge": "Comentario en el perfil",
+      "title": "{{name}} comentó en tu perfil"
+    },
+    "userPostCommentReceived": {
+      "badge": "Comentario en publicación",
+      "title": "{{name}} comentó tu publicación"
+    },
+    "feedItemCommentReceived": {
+      "badge": "Comentario en referencia",
+      "title": "{{name}} comentó tu referencia"
+    },
+    "congratsReceived": {
+      "badge": "Felicitaciones",
+      "title": "{{name}} te felicitó",
+      "titleWithOthers_one": "{{name}} y {{count}} persona más te felicitaron",
+      "titleWithOthers_other": "{{name}} y {{count}} personas más te felicitaron",
+      "titleWithOthers_many": "{{name}} y {{count}} personas más te felicitaron"
+    },
+    "signingTagged": {
+      "badge": "Nueva incorporación",
+      "title": "{{name}} publicó tu incorporación 🎉",
+      "description": "Toca para ver la publicación. Puedes quitar tu etiqueta desde su menú ⋯."
+    },
+    "contentRemoved": {
+      "badge": "Normas de la comunidad",
+      "titleComment": "Se eliminó tu comentario por incumplir las normas de la comunidad",
+      "titlePost": "Se eliminó tu publicación por incumplir las normas de la comunidad",
+      "titleVideo": "Se eliminó tu video por incumplir las normas de la comunidad"
+    },
+    "profileCommentReply": {
+      "badge": "Respuesta a comentario",
+      "title": "{{name}} respondió a un comentario de perfil"
+    },
+    "profileCommentLike": {
+      "badge": "Me gusta en comentario",
+      "title": "A {{name}} le gustó tu comentario de perfil",
+      "description": "¡Que siga la conversación!"
+    },
+    "referenceRequestReceived": {
+      "badge": "Solicitud de referencia",
+      "title": "{{name}} pidió una referencia"
+    },
+    "referenceRequestAccepted": {
+      "badge": "Referencia aceptada",
+      "title": "{{name}} aceptó tu solicitud de referencia"
+    },
+    "referenceRequestRejected": {
+      "badge": "Novedad de referencia",
+      "title": "{{name}} rechazó tu solicitud de referencia"
+    },
+    "referenceUpdated": {
+      "badge": "Referencia actualizada",
+      "title": "{{name}} actualizó su referencia"
+    },
+    "messageReceived": {
+      "badge": "Mensaje",
+      "title": "{{name}} te envió un mensaje",
+      "titleMany_one": "{{name}} envió {{count}} mensaje nuevo",
+      "titleMany_other": "{{name}} envió {{count}} mensajes nuevos",
+      "titleMany_many": "{{name}} envió {{count}} mensajes nuevos"
+    },
+    "conversationStarted": {
+      "badge": "Conversación",
+      "title": "{{name}} inició una conversación"
+    },
+    "opportunityPublished": {
+      "badge": "Nueva oportunidad",
+      "title": "{{club}} publicó: {{title}}",
+      "clubFallback": "Un club",
+      "titleNoRole": "Se publicó una nueva oportunidad"
+    },
+    "vacancyApplicationReceived": {
+      "badge": "Nueva postulación",
+      "title": "Nueva postulación para {{title}}",
+      "titleNoRole": "Nueva postulación a una oportunidad"
+    },
+    "vacancyApplicationStatus": {
+      "badge": "Novedad de postulación"
+    },
+    "applicationsExpired": {
+      "badge": "Novedad de postulación",
+      "title_one": "Una postulación ya no está activa",
+      "title_other": "{{count}} postulaciones ya no están activas",
+      "title_many": "{{count}} postulaciones ya no están activas",
+      "description": "Las postulaciones se cierran automáticamente después de un tiempo sin novedades en Hockia. Nunca es un juicio sobre tu perfil. Hay oportunidades nuevas abiertas."
+    },
+    "applicantLastCall": {
+      "badge": "Última llamada",
+      "title": "Último día para responder una postulación",
+      "description": "Una postulación se cierra mañana."
+    },
+    "applicantsClosingSoon": {
+      "badge": "Cierre próximo",
+      "title": "Hay deportistas esperando tu respuesta",
+      "description": "Algunas postulaciones se cierran pronto."
+    },
+    "profileCompleted": {
+      "badge": "Hito del perfil",
+      "title": "Tu perfil está completo",
+      "description": "Buen trabajo. Mantenlo al día para que te encuentren las personas indicadas."
+    },
+    "accountVerified": {
+      "badge": "Cuenta verificada",
+      "title": "Tu cuenta fue verificada",
+      "description": "Ya tienes acceso completo a la plataforma Hockia."
+    },
+    "ambassadorRequestReceived": {
+      "badge": "Invitación como embajador/a",
+      "title": "{{name}} te invitó a ser embajador/a de marca",
+      "description": "Revisa la invitación y responde."
+    },
+    "ambassadorRequestAccepted": {
+      "badge": "Novedad de embajador/a",
+      "title": "{{name}} aceptó tu invitación como embajador/a",
+      "description": "Ya aparece en el perfil de tu marca."
+    },
+    "brandOfferApproved": {
+      "badge": "Oferta publicada",
+      "title": "Tu oferta está publicada",
+      "titleChange": "Tus cambios están publicados",
+      "description": "\"{{title}}\" ya se muestra a la comunidad.",
+      "descriptionNoTitle": "Ya se muestra a la comunidad."
+    },
+    "brandOfferNotApproved": {
+      "badge": "Oferta retirada",
+      "title": "Tu oferta necesita un cambio",
+      "titleTakedown": "Tu oferta fue retirada",
+      "takedownHead": "\"{{title}}\" fue retirada.",
+      "takedownHeadNoTitle": "Tu oferta fue retirada.",
+      "rejectedHead": "\"{{title}}\" no fue aprobada.",
+      "rejectedHeadNoTitle": "Tu oferta no fue aprobada.",
+      "withReason": "{{head}} Motivo: {{reason}}. Edítala y vuelve a publicarla."
+    },
+    "clubInvitationReceived": {
+      "badge": "Invitación de club",
+      "title": "{{name}} te invitó a unirte a su club"
+    },
+    "clubInvitationAccepted": {
+      "badge": "Novedad del club",
+      "title": "{{name}} se unió a tu club",
+      "description": "Ya aparece entre quienes integran tu club."
+    },
+    "profileViewed": {
+      "badge": "Visitas al perfil",
+      "title": "{{name}} vio tu perfil",
+      "titleMany_one": "{{count}} persona vio tu perfil hoy",
+      "titleMany_other": "{{count}} personas vieron tu perfil hoy",
+      "titleMany_many": "{{count}} personas vieron tu perfil hoy",
+      "totalViews_one": "{{count}} visita en total",
+      "totalViews_other": "{{count}} visitas en total",
+      "totalViews_many": "{{count}} visitas en total"
+    },
+    "recruitingUpdate": {
+      "badge": "Reclutamiento",
+      "title": "Novedad de reclutamiento"
+    },
+    "systemAnnouncement": {
+      "badge": "Anuncio",
+      "title": "Novedad de Hockia"
+    }
+  },
+  "store": {
+    "friendRequestFailed": "No se pudo actualizar la solicitud de conexión. Intenta de nuevo."
+  },
+  "badge": {
+    "unread_one": "{{count}} notificación sin leer",
+    "unread_other": "{{count}} notificaciones sin leer",
+    "unread_many": "{{count}} notificaciones sin leer"
+  },
+  "drawer": {
+    "title": "Notificaciones",
+    "subtitle": "Toda la actividad de tu red, en un solo lugar.",
+    "search": "Buscar notificaciones",
+    "settings": "Ajustes de notificaciones",
+    "close": "Cerrar notificaciones",
+    "markAllRead": "Marcar todo como leído",
+    "filters": {
+      "all": "Todas",
+      "unread": "Sin leer"
+    },
+    "sections": {
+      "new": "Nuevas",
+      "earlier": "Anteriores"
+    },
+    "memberFallback": "Integrante de Hockia",
+    "viewProfile": "Ver el perfil de {{name}}",
+    "moreOptions": "Más opciones",
+    "emptyUnread": "No tienes notificaciones nuevas por ahora.",
+    "emptySection": "Estás al día. Te avisamos cuando llegue algo nuevo.",
+    "emptyAll": "Estás al día. Te avisamos cuando pase algo.",
+    "friendRequest": {
+      "confirm": "Confirmar",
+      "remove": "Eliminar"
+    },
+    "ambassador": {
+      "accept": "Aceptar",
+      "decline": "Rechazar"
+    },
+    "clubInvite": {
+      "accept": "Aceptar",
+      "decline": "Rechazar"
+    },
+    "toasts": {
+      "friendRequestFailed": "No se pudo actualizar la solicitud de conexión. Intenta de nuevo.",
+      "friendRequestAccepted": "Solicitud de conexión aceptada.",
+      "friendRequestDeclined": "Solicitud de conexión rechazada.",
+      "ambassadorFailed": "No se pudo actualizar la solicitud de embajador/a. Intenta de nuevo.",
+      "ambassadorAccepted": "Invitación como embajador/a aceptada.",
+      "ambassadorDeclined": "Invitación como embajador/a rechazada."
+    }
+  },
+  "age": {
+    "now": "ahora",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "minutes_many": "{{count}} min",
+    "hours_one": "{{count}} h",
+    "hours_other": "{{count}} h",
+    "hours_many": "{{count}} h",
+    "days_one": "{{count}} d",
+    "days_other": "{{count}} d",
+    "days_many": "{{count}} d"
+  },
+  "recruitingTitles": {
+    "inviteReceived": "{{name}} te invitó a postularte",
+    "inviteDeclined": "{{name}} no aceptó tu invitación",
+    "offerSent": "{{name}} te envió una oferta",
+    "offerUpdated": "{{name}} actualizó su oferta",
+    "offerWithdrawn": "{{name}} retiró su oferta",
+    "offerAccepted": "{{name}} aceptó tu oferta",
+    "offerDeclined": "{{name}} no aceptó tu oferta",
+    "offerExpired": "Venció tu oferta a {{name}}",
+    "applicationWithdrawn": "{{name}} retiró su postulación",
+    "signingMarked": "Confirma tu incorporación con {{name}}",
+    "signingUndone": "{{name}} deshizo la incorporación",
+    "signingConfirmed": "{{name}} confirmó la incorporación",
+    "signingExpired": "{{name}} no confirmó la incorporación en 14 días",
+    "names": {
+      "aClub": "Un club",
+      "theClub": "El club",
+      "theClubLower": "el club",
+      "aPlayer": "Una persona",
+      "aPlayerLower": "una persona",
+      "thePlayer": "La persona"
+    },
+    "noName": {
+      "inviteReceived": "Te invitaron a postularte",
+      "inviteDeclined": "No aceptaron tu invitación",
+      "offerSent": "Recibiste una oferta",
+      "offerUpdated": "Se actualizó la oferta que recibiste",
+      "offerWithdrawn": "Se retiró la oferta",
+      "offerAccepted": "Aceptaron tu oferta",
+      "offerDeclined": "No aceptaron tu oferta",
+      "offerExpired": "Venció tu oferta",
+      "applicationWithdrawn": "Se retiró una postulación",
+      "signingMarked": "Confirma tu incorporación",
+      "signingUndone": "Se deshizo la incorporación",
+      "signingConfirmed": "Se confirmó la incorporación",
+      "signingExpired": "La incorporación no se confirmó en 14 días"
+    }
+  }
+}

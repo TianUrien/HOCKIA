@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Sparkles } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
+import { useOnboardingT } from '@/i18n/ns/onboarding.core'
 
 const STORAGE_KEY_PREFIX = 'hockia-welcome-card-dismissed-v1'
 
@@ -22,6 +23,7 @@ const STORAGE_KEY_PREFIX = 'hockia-welcome-card-dismissed-v1'
  * a stack of nudges.
  */
 export default function WelcomeValueCard() {
+  const t = useOnboardingT()
   const userId = useAuthStore((s) => s.user?.id)
   const storageKey = userId ? `${STORAGE_KEY_PREFIX}:${userId}` : null
 
@@ -47,21 +49,21 @@ export default function WelcomeValueCard() {
     <div
       className="relative flex items-start gap-3 rounded-2xl border border-hockia-primary/15 bg-gradient-to-br from-hockia-primary/5 via-white to-hockia-secondary/5 px-4 py-3 sm:px-5 sm:py-4"
       role="region"
-      aria-label="Welcome to Hockia"
+      aria-label={t('welcomeCard.title')}
     >
       <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary/10 text-hockia-primary">
         <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1 pr-6">
-        <p className="text-sm font-semibold text-gray-900">Welcome to Hockia</p>
+        <p className="text-sm font-semibold text-gray-900">{t('welcomeCard.title')}</p>
         <p className="mt-0.5 text-sm text-gray-600">
-          Build your hockey profile, get discovered by clubs and coaches, and share your profile externally.
+          {t('welcomeCard.body')}
         </p>
       </div>
       <button
         type="button"
         onClick={handleDismiss}
-        aria-label="Dismiss welcome message"
+        aria-label={t('welcomeCard.dismiss')}
         className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
       >
         <X className="h-4 w-4" aria-hidden="true" />

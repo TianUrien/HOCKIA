@@ -103,8 +103,13 @@ jobs:
         working-directory: ./client
         run: npx eslint . --max-warnings=0
 
+      # tsc -b peaked at Node's default 2 GB heap and ran out of memory on a
+      # staging push (2026-11-17); the same commit passed on a re-run. The
+      # runner has the memory, so give the type check a 4 GB heap.
       - name: Run TypeScript type check
         working-directory: ./client
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
         run: npm run typecheck
 
       # Dead code and dependency hygiene (Knip, added 2026-10-23; blocking since
@@ -337,16 +342,34 @@ jobs:
           # Budget bumped 5500KB → 5800KB on 2026-11-11 (founder-approved) — library
           # updates that load on demand only (posthog-js, recharts; about +165KB raw).
           # First-load gate is unchanged (511KB).
+          # Budget bumped 5800KB → 6000KB on 2026-11-16 (founder-approved) — the
+          # Spanish interface: the translation runtime (about +63KB raw) and the
+          # player and coach path moved to catalogs (about +111KB raw: each
+          # string now also carries its key). Raw is 5847KB. Spanish text itself
+          # is JSON loaded on demand and is not counted. First-load gate is
+          # unchanged (547KB of 560KB).
+          # Budget bumped 6000KB → 6300KB on 2026-11-16 (founder-approved) — Spanish
+          # stage 2: profile, community, inbox, notifications and World moved to
+          # catalogs (about +250KB raw of English catalogs and keys), and App.tsx
+          # stopped importing the components barrel, which kept every component
+          # with a top-level effect in the start-up chunk (about +100KB raw of
+          # chunk boundaries, -33KB first load). Raw is 6150KB. First-load gate
+          # is unchanged (514KB of 560KB).
+          # Budget bumped 6300KB → 6600KB on 2026-11-16 (founder-approved) — Spanish
+          # stage 3: club side, recruiting, brands and Hockia AI moved to catalogs
+          # (about +145KB raw of English catalogs and keys). Raw is 6299KB. Start-up
+          # code imports no screen catalog (checked with a source-map build). First-
+          # load gate is unchanged (526KB of 560KB).
           # TODO(bundle): retire the v1 club desktop screens once desktop adopts
           # Club v2 (they are still reachable at >=1024px), then lower this gate.
           echo "RAW_TOTAL_BYTES=${TOTAL_JS}" >> "$GITHUB_ENV"
-          if [ "$TOTAL_JS" -gt 5836800 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 5800KB ($(( TOTAL_KB * 100 / 5800 ))%)"
+          if [ "$TOTAL_JS" -gt 6656000 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 6600KB ($(( TOTAL_KB * 100 / 6600 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 5.8MB
-          if [ "$TOTAL_JS" -gt 5939200 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 5800KB"
+          # Secondary gate: raw total must stay under 6.6MB
+          if [ "$TOTAL_JS" -gt 6758400 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 6600KB"
             exit 1
           fi
 

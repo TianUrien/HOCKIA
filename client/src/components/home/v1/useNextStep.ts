@@ -13,6 +13,7 @@ import { useCoachPulseMode } from '@/hooks/useCoachPulseMode'
 import { useSearchAppearances } from '@/hooks/useSearchAppearances'
 import { positionLabel } from '@/lib/identity'
 import { OWN_PROFILE_EDIT_PATH } from '@/lib/profileNavigation'
+import { useHomeT } from '@/i18n/ns/home'
 
 /** Who viewed you: Your activity with the viewer list open (players, coaches). */
 export const VIEWERS_PATH = '/pulse?viewers=1'
@@ -51,9 +52,9 @@ export interface NextStep {
 }
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 export function useNextStep() {
+  const t = useHomeT()
   const profile = useAuthStore((s) => s.profile)
   const setProfile = useAuthStore((s) => s.setProfile)
   const role = profile?.role ?? null
@@ -82,14 +83,14 @@ export function useNextStep() {
     const hasPhoto = Boolean(profile.avatar_url)
 
     if (isTalent || role === 'umpire') {
-      if (!hasPhoto) out.push({ key: 'photo', title: 'Add a photo', subtitle: 'So clubs and players know it’s you.', cta: 'Add', visual: { kind: 'placeholder', role: role ?? 'player' }, to: OWN_PROFILE_EDIT_PATH })
+      if (!hasPhoto) out.push({ key: 'photo', title: t('nextStep.photo.title'), subtitle: t('nextStep.photo.subtitle'), cta: t('nextStep.photo.cta'), visual: { kind: 'placeholder', role: role ?? 'player' }, to: OWN_PROFILE_EDIT_PATH })
       const checkIn = pulse.items.find((p) => p.item_type === 'availability_check_in' && !p.action_completed_at && !p.dismissed_at)
       if (checkIn && role !== 'umpire') {
         out.push({
           key: `checkin:${checkIn.id}`,
-          title: role === 'coach' ? 'Still open to coaching?' : 'Still open to play?',
-          subtitle: 'Clubs see this on your profile',
-          cta: 'Yes',
+          title: role === 'coach' ? t('nextStep.checkIn.titleCoach') : t('nextStep.checkIn.titlePlayer'),
+          subtitle: t('nextStep.checkIn.subtitle'),
+          cta: t('nextStep.checkIn.cta'),
           visual: { kind: 'icon', icon: 'check' },
           action: 'confirm_availability',
         })
@@ -101,9 +102,9 @@ export function useNextStep() {
       if (replied.length > 0) {
         out.push({
           key: 'replied',
-          title: replied.length === 1 ? `${replied[0].club_name ?? 'A club'} replied` : `${replied.length} clubs replied`,
+          title: replied.length === 1 ? t('nextStep.replied.titleOne', { club: replied[0].club_name ?? t('nextStep.replied.clubFallback') }) : t('nextStep.replied.titleMany', { total: replied.length }),
           subtitle: replied[0].opportunity_title,
-          cta: 'Open',
+          cta: t('nextStep.replied.cta'),
           visual: { kind: 'icon', icon: 'check' },
           to: '/opportunities/applications',
         })
@@ -112,25 +113,25 @@ export function useNextStep() {
       if (matched.length > 0) {
         out.push({
           key: 'roles',
-          title: matched.length === 1 ? '1 opportunity matches you' : `${matched.length} opportunities match you`,
+          title: t('nextStep.roles.title', { count: matched.length }),
           subtitle: [positionLabel(profile.position) || null, matched[0].club_name].filter(Boolean).join(' · ') || null,
-          cta: 'See',
+          cta: t('nextStep.roles.cta'),
           visual: { kind: 'crests', urls: matched.slice(0, 3).map((o) => o.club_avatar_url) },
           to: '/opportunities',
         })
       }
       if (views > 0) {
         // A views card opens who viewed you (ruling 2026-10-16): "View", never another action.
-        out.push({ key: 'views', title: plural(views, 'profile view', 'profile views'), subtitle: 'This week', cta: 'View', visual: { kind: 'icon', icon: 'chart' }, to: VIEWERS_PATH })
+        out.push({ key: 'views', title: t('nextStep.views.title', { count: views }), subtitle: t('nextStep.views.subtitle'), cta: t('nextStep.views.cta'), visual: { kind: 'icon', icon: 'chart' }, to: VIEWERS_PATH })
       }
       // No clubs on the profile yet: Hockia AI reads a CV or a few lines (founder 2026-11-15:
       // 22% of players and coaches had a career; the reader had 5 users in three weeks).
       if ((profile.career_entry_count ?? 0) === 0) {
-        out.push({ key: 'career', title: 'Add your clubs', subtitle: 'From your CV or a few lines', cta: 'Start', visual: { kind: 'icon', icon: 'file' }, action: 'fill_profile' })
+        out.push({ key: 'career', title: t('nextStep.career.title'), subtitle: t('nextStep.career.subtitle'), cta: t('nextStep.career.cta'), visual: { kind: 'icon', icon: 'file' }, action: 'fill_profile' })
       }
       const pct = profile.profile_completeness_pct ?? 100
       if (hasPhoto && pct < 80) {
-        out.push({ key: 'complete', title: 'Complete your profile', subtitle: `${pct}% done · clubs filter on it`, cta: 'Edit', visual: { kind: 'icon', icon: 'user' }, to: OWN_PROFILE_EDIT_PATH })
+        out.push({ key: 'complete', title: t('nextStep.complete.title'), subtitle: t('nextStep.complete.subtitle', { percent: pct }), cta: t('nextStep.complete.cta'), visual: { kind: 'icon', icon: 'user' }, to: OWN_PROFILE_EDIT_PATH })
       }
     }
 
@@ -140,50 +141,50 @@ export function useNextStep() {
       if (roles.totals.pending > 0) {
         out.push({
           key: 'applicants',
-          title: plural(roles.totals.pending, 'applicant', 'applicants'),
+          title: t('nextStep.applicants.title', { count: roles.totals.pending }),
           subtitle: pendingRole ? pendingRole.title : null,
-          cta: 'Review',
+          cta: t('nextStep.applicants.cta'),
           visual: { kind: 'icon', icon: 'user' },
           to: pendingRole ? `/dashboard/opportunities/${pendingRole.opportunity_id}/applicants` : mine,
         })
       }
       const quiet = roles.roles.find((r) => r.applicant_count === 0 && Date.now() - new Date(r.created_at).getTime() > WEEK_MS)
       if (quiet) {
-        out.push({ key: `quiet:${quiet.opportunity_id}`, title: `${quiet.title} has no applicants yet`, subtitle: 'Share it with your network', cta: 'Open', visual: { kind: 'icon', icon: 'stick' }, to: `/opportunities/${quiet.opportunity_id}` })
+        out.push({ key: `quiet:${quiet.opportunity_id}`, title: t('nextStep.quiet.title', { title: quiet.title }), subtitle: t('nextStep.quiet.subtitle'), cta: t('nextStep.quiet.cta'), visual: { kind: 'icon', icon: 'stick' }, to: `/opportunities/${quiet.opportunity_id}` })
       }
       const fits = scoped.matches.filter((m) => m.inScope)
       if (fits.length > 0) {
         out.push({
           key: 'available',
-          title: plural(fits.length, 'player available', 'players available'),
-          subtitle: 'Open to play · fit your team',
-          cta: 'See',
+          title: t('nextStep.available.title', { count: fits.length }),
+          subtitle: t('nextStep.available.subtitle'),
+          cta: t('nextStep.available.cta'),
           visual: { kind: 'faces', people: fits.slice(0, 3).map((m) => ({ url: m.avatar_url, name: m.full_name, role: m.role })) },
           to: '/community',
         })
       }
-      if (!hasPhoto && role === 'club') out.push({ key: 'crest', title: 'Add your club crest', subtitle: 'Players look for it first', cta: 'Add', visual: { kind: 'placeholder', role: 'club' }, to: OWN_PROFILE_EDIT_PATH })
+      if (!hasPhoto && role === 'club') out.push({ key: 'crest', title: t('nextStep.crest.title'), subtitle: t('nextStep.crest.subtitle'), cta: t('nextStep.crest.cta'), visual: { kind: 'placeholder', role: 'club' }, to: OWN_PROFILE_EDIT_PATH })
       // A coach who recruits skips the talent branch: the photo step goes here (founder 2026-10-26).
-      if (!hasPhoto && recruitingCoach) out.push({ key: 'photo', title: 'Add a photo', subtitle: 'So clubs and players know it’s you.', cta: 'Add', visual: { kind: 'placeholder', role: 'coach' }, to: OWN_PROFILE_EDIT_PATH })
+      if (!hasPhoto && recruitingCoach) out.push({ key: 'photo', title: t('nextStep.photo.title'), subtitle: t('nextStep.photo.subtitle'), cta: t('nextStep.photo.cta'), visual: { kind: 'placeholder', role: 'coach' }, to: OWN_PROFILE_EDIT_PATH })
     }
 
     if (role === 'brand') {
       // No logo yet: the brand placeholder and "Add your logo" lead (founder 2026-10-26).
-      if (!hasPhoto) out.push({ key: 'logo', title: 'Add your logo', subtitle: 'Athletes recognise brands by it', cta: 'Add', visual: { kind: 'placeholder', role: 'brand' }, to: OWN_PROFILE_EDIT_PATH })
+      if (!hasPhoto) out.push({ key: 'logo', title: t('nextStep.logo.title'), subtitle: t('nextStep.logo.subtitle'), cta: t('nextStep.logo.cta'), visual: { kind: 'placeholder', role: 'brand' }, to: OWN_PROFILE_EDIT_PATH })
       const searches = search.summary?.total ?? 0
       out.push({
         key: 'brand',
-        title: plural(views, 'profile view', 'profile views'),
-        subtitle: searches > 0 ? `This week · in ${plural(searches, 'search', 'searches')}` : 'This week',
+        title: t('nextStep.views.title', { count: views }),
+        subtitle: searches > 0 ? t('nextStep.brand.subtitleSearches', { count: searches }) : t('nextStep.views.subtitle'),
         // Opens who viewed the brand + search appearances (ruling 2026-10-16), never the composer.
-        cta: 'View',
+        cta: t('nextStep.views.cta'),
         visual: { kind: 'icon', icon: 'chart' },
         to: BRAND_VIEWERS_PATH,
       })
     }
 
     if (role === 'umpire' && !(profile as { umpire_level?: string | null }).umpire_level) {
-      out.push({ key: 'umpire', title: 'Add your umpiring level', subtitle: 'Clubs and leagues look for it', cta: 'Add', visual: { kind: 'icon', icon: 'stick' }, to: OWN_PROFILE_EDIT_PATH })
+      out.push({ key: 'umpire', title: t('nextStep.umpire.title'), subtitle: t('nextStep.umpire.subtitle'), cta: t('nextStep.umpire.cta'), visual: { kind: 'icon', icon: 'stick' }, to: OWN_PROFILE_EDIT_PATH })
     }
 
     const open = out.filter((s) => !done.has(s.key))
@@ -191,15 +192,15 @@ export function useNextStep() {
       // H5 "Everyone · nothing pending → your week".
       open.push({
         key: 'week',
-        title: views > 0 ? plural(views, 'profile view', 'profile views') : 'Your week',
-        subtitle: views > 0 ? 'This week' : 'See your activity',
-        cta: views > 0 ? 'View' : 'Activity',
+        title: views > 0 ? t('nextStep.views.title', { count: views }) : t('nextStep.week.title'),
+        subtitle: views > 0 ? t('nextStep.views.subtitle') : t('nextStep.week.subtitle'),
+        cta: views > 0 ? t('nextStep.views.cta') : t('nextStep.week.cta'),
         visual: { kind: 'icon', icon: 'chart' },
         to: views > 0 ? VIEWERS_PATH : '/pulse',
       })
     }
     return open
-  }, [profile, role, isTalent, isClubSide, recruitingCoach, vis.visibility, pulse.items, apps.applications, opps.mode, opps.items, roles.roles, roles.totals.pending, scoped.matches, search.summary, done])
+  }, [profile, role, isTalent, isClubSide, recruitingCoach, vis.visibility, pulse.items, apps.applications, opps.mode, opps.items, roles.roles, roles.totals.pending, scoped.matches, search.summary, done, t])
 
   /** Resolving a card shows the next (spec): the check-in "Yes". */
   const run = useCallback(async (step: NextStep): Promise<boolean> => {

@@ -317,3 +317,45 @@ Deno.test('round 5: roles exist where asked but none the viewer can apply to →
   assertEquals(ok.landed, 'original')
   assertEquals(ok.ineligibleInAsked, 0)
 })
+
+Deno.test('Spanish: countries named in Spanish are understood, with or without accents', () => {
+  const viewer: Viewer = { role: 'player', gender: 'women', euEligible: true, position: null, secondaryPosition: null }
+  const england = parseOpportunityQuery('¿Qué oportunidades hay para volantes en Inglaterra?', viewer, COUNTRIES, 'es')
+  assertEquals(england.countryLabel, 'Inglaterra')
+  assert(england.countryNames.includes('england'))
+  assert(england.countryNames.includes('united kingdom'))
+  assertEquals(england.positions, ['midfielder'])
+
+  assertEquals(parseOpportunityQuery('oportunidades en paises bajos', viewer, COUNTRIES, 'es').countryLabel, 'Países Bajos')
+  assertEquals(parseOpportunityQuery('oportunidades en Holanda', viewer, COUNTRIES, 'es').countryLabel, 'Países Bajos')
+  assertEquals(parseOpportunityQuery('oportunidades en España', viewer, COUNTRIES, 'es').countryLabel, 'España')
+  // A Spanish question on an English interface still filters; the label stays English.
+  const alemania = parseOpportunityQuery('oportunidades en Alemania', viewer, COUNTRIES, 'en')
+  assertEquals(alemania.countryLabel, 'Germany')
+  assert(alemania.countryNames.includes('germany'))
+  // English questions are unchanged.
+  assertEquals(parseOpportunityQuery('open roles in England', viewer, COUNTRIES, 'en').countryLabel, 'England')
+  assertEquals(parseOpportunityQuery('open roles for midfielders', viewer, COUNTRIES, 'en').countryNames, [])
+})
+
+Deno.test('Spanish: team categories are understood', () => {
+  const viewer: Viewer = { role: 'player', gender: 'women', euEligible: true, position: null, secondaryPosition: null }
+  assertEquals(parseOpportunityQuery('oportunidades para damas', viewer, COUNTRIES, 'es').genders, ['Women'])
+  assertEquals(parseOpportunityQuery('equipos de caballeros', viewer, COUNTRIES, 'es').genders, ['Men'])
+  assertEquals(parseOpportunityQuery('un plantel mixto', viewer, COUNTRIES, 'es').genders, ['Mixed'])
+})
+
+Deno.test('Spanish: regions are understood and named in Spanish', () => {
+  const viewer: Viewer = { role: 'player', gender: 'women', euEligible: true, position: null, secondaryPosition: null }
+  assertEquals(parseOpportunityQuery('oportunidades en Europa', viewer, COUNTRIES, 'es').regionLabel, 'Europe')
+  assertEquals(parseOpportunityQuery('oportunidades en Sudamérica', viewer, COUNTRIES, 'es').regionLabel, 'South America')
+  assertEquals(parseOpportunityQuery('oportunidades en América del Sur', viewer, COUNTRIES, 'es').regionLabel, 'South America')
+  assertEquals(parseOpportunityQuery('oportunidades en Oceanía', viewer, COUNTRIES, 'es').regionLabel, 'Oceania')
+  assertEquals(parseOpportunityQuery('roles in Europe', viewer, COUNTRIES, 'en').regionLabel, 'Europe')
+
+  const criteria = parseOpportunityQuery('oportunidades en Europa', viewer, COUNTRIES, 'es')
+  assert(buildOpportunityMessage(2, criteria, 'Europe', 'es').includes('en Europa'))
+  assert(buildNoOpportunitiesMessage(criteria, 'Europe', 'es').includes('en Europa'))
+  assert(buildIneligibleMessage(criteria, 'Inglaterra', { count: 1, region: 'Europe' }, 'es').includes('en otra parte de Europa'))
+  assert(buildOpportunityMessage(2, criteria, 'Europe', 'en').includes('in Europe'))
+})

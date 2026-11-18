@@ -1,4 +1,6 @@
 import { positionLabel } from '@/lib/identity'
+import { formatList, isEnglish } from '@/i18n/format'
+import { tInbox } from '@/i18n/ns/inbox'
 
 /**
  * D3 · Invite to apply (Figma page 400:4; brief 402:83; DEV NOTES 394:98,
@@ -40,46 +42,76 @@ export function isInvitablePlayer(p: { role?: string | null; open_to_play?: bool
 
 /** "Daily limit reached → button disabled with the reason" (brief). */
 export function inviteLimitReason(limit: number): string {
-  return `You’ve sent ${limit} invites today, the daily limit. You can invite again tomorrow.`
+  return tInbox('invites.limitReason', { count: limit })
 }
 
 /** The sheet footer (D3.2): what the player sees and what happens if they apply. Gender-neutral. */
 export function inviteSheetFooter(firstName: string): string {
-  return `${firstName} sees the opportunity and your note in Inbox. If they apply, they go straight to To review, marked Invited.`
+  return tInbox('invites.sheetFooter', { name: firstName })
 }
 
-export function firstNameOf(fullName: string | null | undefined, fallback = 'this player'): string {
+export function firstNameOf(fullName: string | null | undefined, fallback: string = tInbox('invites.thisPlayer')): string {
   return fullName?.trim().split(/\s+/)[0] || fallback
 }
 
 // ── The note (D3.2): drafted from the role fields and the club name only ──
 
-const BENEFIT_WORDS: Record<string, string> = {
-  housing: 'housing',
-  flights: 'flights',
-  insurance: 'insurance',
-  job: 'a job',
-  bonuses: 'bonuses',
-  visa: 'visa support',
-  car: 'a car',
-  equipment: 'equipment',
-  meals: 'meals',
-  education: 'education',
+const BENEFIT_ORDER = ['housing', 'flights', 'insurance', 'job', 'bonuses', 'visa', 'car', 'equipment', 'meals', 'education'] as const
+type Benefit = (typeof BENEFIT_ORDER)[number]
+const isBenefit = (b: string): b is Benefit => (BENEFIT_ORDER as readonly string[]).includes(b)
+
+/** A benefit inside the drafted note ("a job", "visa support"). */
+function benefitWord(b: Benefit): string {
+  switch (b) {
+    case 'housing': return tInbox('invites.note.benefits.housing')
+    case 'flights': return tInbox('invites.note.benefits.flights')
+    case 'insurance': return tInbox('invites.note.benefits.insurance')
+    case 'job': return tInbox('invites.note.benefits.job')
+    case 'bonuses': return tInbox('invites.note.benefits.bonuses')
+    case 'visa': return tInbox('invites.note.benefits.visa')
+    case 'car': return tInbox('invites.note.benefits.car')
+    case 'equipment': return tInbox('invites.note.benefits.equipment')
+    case 'meals': return tInbox('invites.note.benefits.meals')
+    case 'education': return tInbox('invites.note.benefits.education')
+  }
 }
-const BENEFIT_ORDER = ['housing', 'flights', 'insurance', 'job', 'bonuses', 'visa', 'car', 'equipment', 'meals', 'education']
+
+/** A benefit on the role card ("Housing", "Visa"). */
+function benefitTile(b: Benefit): string {
+  switch (b) {
+    case 'housing': return tInbox('invites.offerLine.housing')
+    case 'flights': return tInbox('invites.offerLine.flights')
+    case 'insurance': return tInbox('invites.offerLine.insurance')
+    case 'job': return tInbox('invites.offerLine.job')
+    case 'bonuses': return tInbox('invites.offerLine.bonuses')
+    case 'visa': return tInbox('invites.offerLine.visa')
+    case 'car': return tInbox('invites.offerLine.car')
+    case 'equipment': return tInbox('invites.offerLine.equipment')
+    case 'meals': return tInbox('invites.offerLine.meals')
+    case 'education': return tInbox('invites.offerLine.education')
+  }
+}
+
+/** A known benefit token as a card label ("Housing"); null for free text. */
+export function benefitLabel(token: string): string | null {
+  const b = token.trim().toLowerCase()
+  return isBenefit(b) ? benefitTile(b) : null
+}
 
 function teamWord(gender: string | null | undefined): string | null {
   switch (gender?.trim().toLowerCase()) {
-    case 'men': return 'Men’s'
-    case 'women': return 'Women’s'
-    case 'mixed': return 'Mixed'
-    case 'boys': return 'Boys'
-    case 'girls': return 'Girls'
+    case 'men': return tInbox('invites.note.team.men')
+    case 'women': return tInbox('invites.note.team.women')
+    case 'mixed': return tInbox('invites.note.team.mixed')
+    case 'boys': return tInbox('invites.note.team.boys')
+    case 'girls': return tInbox('invites.note.team.girls')
     default: return null
   }
 }
 
+/** "a, b and c" in English (no serial comma, as before); Intl elsewhere. */
 function listWords(words: string[]): string {
+  if (!isEnglish()) return formatList(words)
   if (words.length <= 1) return words.join('')
   return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`
 }
@@ -101,10 +133,10 @@ export interface InviteRole {
 export function roleOfferLine(r: Pick<InviteRole, 'compensation' | 'benefits'>): string | null {
   const c = (r.compensation ?? '').toLowerCase()
   const paid = c === 'paid' || c === 'either'
-  const benefits = (r.benefits ?? []).map((b) => b.toLowerCase()).filter((b, i, a) => BENEFIT_WORDS[b] && a.indexOf(b) === i)
+  const benefits = (r.benefits ?? []).map((b) => b.toLowerCase()).filter((b, i, a): b is Benefit => isBenefit(b) && a.indexOf(b) === i)
     .sort((a, b) => BENEFIT_ORDER.indexOf(a) - BENEFIT_ORDER.indexOf(b))
-    .map((b) => b.charAt(0).toUpperCase() + b.slice(1))
-  const parts = [paid ? 'Paid' : null, ...benefits].filter(Boolean) as string[]
+    .map(benefitTile)
+  const parts = [paid ? tInbox('invites.offerLine.paid') : null, ...benefits].filter(Boolean) as string[]
   return parts.length ? parts.join(' · ') : null
 }
 
@@ -113,7 +145,7 @@ export function inviteRoleLabel(r: Pick<InviteRole, 'title' | 'position' | 'oppo
   const pos = r.opportunity_type !== 'coach' && r.position ? positionLabel(r.position) : null
   const title = r.title?.trim() || null
   if (pos && title && title.toLowerCase() !== pos.toLowerCase()) return `${pos} · ${title}`
-  return title || pos || 'Role'
+  return title || pos || tInbox('invites.roleFallback')
 }
 
 /**
@@ -123,59 +155,69 @@ export function inviteRoleLabel(r: Pick<InviteRole, 'title' | 'position' | 'oppo
  */
 export function draftInviteNote(opts: { firstName: string; clubName: string | null | undefined; role: InviteRole }): string {
   const { role } = opts
-  const club = opts.clubName?.trim() || 'our club'
+  const club = opts.clubName?.trim() || tInbox('invites.note.clubFallback')
   const pos = role.opportunity_type !== 'coach' && role.position ? positionLabel(role.position)?.toLowerCase() ?? null : null
-  const what = pos ? `${/^[aeiou]/i.test(pos) ? 'an' : 'a'} ${pos}` : `for ${role.title.trim() || 'an opportunity'}`
   const team = teamWord(role.gender)
-  const where = team ? `${club}’s ${team} team` : club
-  const recruiting = pos ? `we’re recruiting ${what} for ${where}` : `${where} is recruiting ${what}`
+  const where = team ? tInbox('invites.note.clubTeam', { club, team }) : club
+  const firstName = opts.firstName
+  const greeting = pos
+    ? (/^[aeiou]/i.test(pos)
+      ? tInbox('invites.note.greetingPositionAn', { firstName, position: pos, where })
+      : tInbox('invites.note.greetingPositionA', { firstName, position: pos, where }))
+    : tInbox('invites.note.greetingRole', { firstName, where, title: role.title.trim() || tInbox('invites.note.titleFallback') })
   const c = (role.compensation ?? '').toLowerCase()
   const offer = [
-    c === 'paid' || c === 'either' ? 'pay' : null,
-    ...(role.benefits ?? []).map((b) => b.toLowerCase()).filter((b, i, a) => BENEFIT_WORDS[b] && a.indexOf(b) === i)
+    c === 'paid' || c === 'either' ? tInbox('invites.note.benefits.pay') : null,
+    ...(role.benefits ?? []).map((b) => b.toLowerCase()).filter((b, i, a): b is Benefit => isBenefit(b) && a.indexOf(b) === i)
       .sort((a, b) => BENEFIT_ORDER.indexOf(a) - BENEFIT_ORDER.indexOf(b))
-      .map((b) => BENEFIT_WORDS[b]),
+      .map(benefitWord),
   ].filter(Boolean) as string[]
   const lines = [
-    `Hi ${opts.firstName}, ${recruiting}, and your profile stood out.`,
-    offer.length ? `The opportunity includes ${listWords(offer)}.` : null,
-    'Would you like to apply?',
+    greeting,
+    offer.length ? tInbox('invites.note.includes', { list: listWords(offer) }) : null,
+    tInbox('invites.note.question'),
   ].filter(Boolean)
   return lines.join(' ').slice(0, INVITE_NOTE_MAX)
 }
 
 // ── Server errors → what the club reads ──
 
+/** The server's refusals (English, matched by prefix) and what the club reads.
+ *  The server still says "role"; members read "opportunity" (rebrand 2026-10-25). */
 const PASS_THROUGH = [
-  'This player passed on this role',
-  'This person can’t be invited to this role',
-  'This person can\'t be invited to this role',
-  'This player has already applied to one of your roles',
-  'This player already has an open invite from you',
-  'This role is not open',
-  'The note can be up to 500 characters',
-  'You can only invite players to your own roles',
-]
+  ['This player passed on this role', 'invites.errors.passed'],
+  ['This person can’t be invited to this role', 'invites.errors.cannotInvite'],
+  ['This person can\'t be invited to this role', 'invites.errors.cannotInvite'],
+  ['This player has already applied to one of your roles', 'invites.errors.alreadyApplied'],
+  ['This player already has an open invite from you', 'invites.errors.alreadyInvited'],
+  ['This role is not open', 'invites.errors.roleNotOpen'],
+  ['The note can be up to 500 characters', 'invites.errors.noteTooLong'],
+  ['You can only invite players to your own roles', 'invites.errors.ownRolesOnly'],
+] as const
 
-/** The fallback copy — the only invite refusal that is worth reporting to Sentry. */
+/** The fallback copy, in English — the only invite refusal that is worth reporting to Sentry. */
 export const INVITE_GENERIC_ERROR = 'Couldn’t send the invite. Please try again.'
+
+/** The fallback copy in the interface language (what inviteErrorMessage returns). */
+export function inviteGenericError(): string {
+  return tInbox('invites.errors.generic')
+}
 
 export function inviteErrorMessage(err: unknown): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''
   const limit = /Daily invite limit reached \((\d+) per day\)/.exec(msg)
   if (limit) return inviteLimitReason(Number(limit[1]))
-  if (msg.startsWith('This person can')) return 'This player can’t be invited to this opportunity.'
-  const hit = PASS_THROUGH.find((p) => msg.startsWith(p))
-  // The server still says "role"; members read "opportunity" (rebrand 2026-10-25).
-  if (hit) return `${hit.replaceAll('\'', '’').replace(/\broles\b/g, 'opportunities').replace(/\brole\b/g, 'opportunity')}.`
-  return INVITE_GENERIC_ERROR
+  if (msg.startsWith('This person can')) return tInbox('invites.errors.cannotInvite')
+  const hit = PASS_THROUGH.find(([prefix]) => msg.startsWith(prefix))
+  if (hit) return tInbox(hit[1])
+  return inviteGenericError()
 }
 
 export function respondErrorMessage(err: unknown): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''
-  if (msg.startsWith('This invite has expired')) return 'This invitation has expired.'
-  if (msg.startsWith('This invite has already been answered')) return 'You’ve already answered this invitation.'
-  return 'Couldn’t update the invitation. Please try again.'
+  if (msg.startsWith('This invite has expired')) return tInbox('invites.respondErrors.expired')
+  if (msg.startsWith('This invite has already been answered')) return tInbox('invites.respondErrors.answered')
+  return tInbox('invites.respondErrors.generic')
 }
 
 // ── The card in the chat (D3.3) ──
@@ -211,18 +253,18 @@ export function inviteCardState(opts: {
   const now = opts.now ?? new Date()
   const lapsed = opts.status === 'sent' && ((opts.expiresAt && new Date(opts.expiresAt).getTime() <= now.getTime()) || !opts.roleOpen)
   const status: InviteStatus = lapsed ? 'expired' : opts.status
-  const who = opts.playerFirstName || 'The player'
+  const who = opts.playerFirstName || tInbox('invites.card.playerFallback')
   if (status === 'applied') {
-    return { muted: false, actionable: false, line: opts.viewer === 'player' ? 'Applied' : `${who} applied`, tone: 'grey' }
+    return { muted: false, actionable: false, line: opts.viewer === 'player' ? tInbox('invites.card.appliedPlayer') : tInbox('invites.card.appliedClub', { name: who }), tone: 'grey' }
   }
   if (status === 'declined') {
-    return { muted: true, actionable: false, line: opts.viewer === 'player' ? 'You passed on this opportunity' : `${who} passed on this opportunity`, tone: 'grey' }
+    return { muted: true, actionable: false, line: opts.viewer === 'player' ? tInbox('invites.card.passedPlayer') : tInbox('invites.card.passedClub', { name: who }), tone: 'grey' }
   }
   if (status === 'expired') {
-    const line = !opts.roleOpen ? 'This opportunity is closed' : 'This invitation has expired'
+    const line = !opts.roleOpen ? tInbox('invites.card.closed') : tInbox('invites.card.expired')
     return { muted: true, actionable: false, line, tone: 'grey' }
   }
   return opts.viewer === 'player'
     ? { muted: false, actionable: true, line: null, tone: 'grey' }
-    : { muted: false, actionable: false, line: 'Invitation pending', tone: 'grey' }
+    : { muted: false, actionable: false, line: tInbox('invites.card.pending'), tone: 'grey' }
 }

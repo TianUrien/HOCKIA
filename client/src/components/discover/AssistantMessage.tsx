@@ -3,9 +3,7 @@ import type { DiscoverChatMessage, SuggestedAction } from '@/hooks/useDiscover'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import { useAuthStore } from '@/lib/auth'
 import {
-  CAP_REACHED_COPY,
-  CONNECTION_ERROR_COPY,
-  SEARCHING_LABEL,
+  hockiaAiCopy,
   cantAnswerChips,
   capReachedChips,
   errorChips,
@@ -31,8 +29,8 @@ interface AssistantMessageProps {
  */
 export function SearchingIndicator() {
   return (
-    <div role="status" aria-label={SEARCHING_LABEL} className="flex items-center gap-1.5 text-row text-ink-2" data-testid="ai-searching">
-      <span>{SEARCHING_LABEL}</span>
+    <div role="status" aria-label={hockiaAiCopy.searching} className="flex items-center gap-1.5 text-row text-ink-2" data-testid="ai-searching">
+      <span>{hockiaAiCopy.searching}</span>
       <span className="inline-flex items-center gap-[3px]" aria-hidden="true">
         {[0, 1, 2].map(i => (
           <span
@@ -81,7 +79,7 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
       // neutral card as backend soft errors, with the recovery chips below.
       return (
         <SoftErrorCard
-          message={CONNECTION_ERROR_COPY}
+          message={hockiaAiCopy.connectionError}
           suggestedActions={errorChips(viewerRole)}
           onAction={handleAction}
         />
@@ -92,7 +90,7 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
       case 'cap_reached':
         return (
           <SoftErrorCard
-            message={content || CAP_REACHED_COPY}
+            message={content || hockiaAiCopy.capReached}
             suggestedActions={capReachedChips(viewerRole)}
             onAction={handleAction}
           />

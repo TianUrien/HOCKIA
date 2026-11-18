@@ -9,6 +9,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { tBrands } from '@/i18n/ns/brands'
 
 export interface BrandPost {
   id: string
@@ -65,7 +66,7 @@ export function useBrandPosts(brandId: string | null | undefined): UseBrandPosts
       setPosts(Array.isArray(parsed) ? parsed : [])
     } catch (err) {
       logger.error('[useBrandPosts] Error fetching posts:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load posts')
+      setError(err instanceof Error ? err.message : tBrands('hookErrors.postsLoad'))
       setPosts([])
     } finally {
       setIsLoading(false)
@@ -73,7 +74,7 @@ export function useBrandPosts(brandId: string | null | undefined): UseBrandPosts
   }, [brandId])
 
   const createPost = useCallback(async (data: CreatePostInput) => {
-    if (!brandId) return { success: false, error: 'No brand ID' }
+    if (!brandId) return { success: false, error: tBrands('hookErrors.postsNoBrand') }
 
     try {
       const { data: result, error: rpcError } = await supabase.rpc('create_brand_post', {
@@ -97,7 +98,7 @@ export function useBrandPosts(brandId: string | null | undefined): UseBrandPosts
       logger.error('[useBrandPosts] Error creating post:', err)
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to create post',
+        error: err instanceof Error ? err.message : tBrands('hookErrors.postCreate'),
       }
     }
   }, [brandId, fetchPosts])
@@ -124,7 +125,7 @@ export function useBrandPosts(brandId: string | null | undefined): UseBrandPosts
       logger.error('[useBrandPosts] Error updating post:', err)
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to update post',
+        error: err instanceof Error ? err.message : tBrands('hookErrors.postUpdate'),
       }
     }
   }, [fetchPosts])
@@ -150,7 +151,7 @@ export function useBrandPosts(brandId: string | null | undefined): UseBrandPosts
       logger.error('[useBrandPosts] Error deleting post:', err)
       return {
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to delete post',
+        error: err instanceof Error ? err.message : tBrands('hookErrors.postDelete'),
       }
     }
   }, [fetchPosts])

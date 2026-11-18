@@ -2,6 +2,9 @@
 // Kept here, not in the function's index.ts, so the deno test suite in
 // _shared covers the grammar and the no-placeholder rule.
 
+import { spanishList, spanishPositionLabel } from './member-language.ts'
+import { withOutputLanguage, type MemberLanguage } from './ai-language.ts'
+
 export type Answers = {
   type?: string
   position?: string | null
@@ -138,4 +141,96 @@ export function template(a: Answers, clubName: string): string {
     ? 'Tell us about your coaching so far and when you are available.'
     : 'Tell us about your season so far and when you are available.')
   return lines.join(' ')
+}
+
+// ============================================================================
+// Spanish (Stage 3, 2026-11-16): the club's posting in its interface language
+// ============================================================================
+
+/** The "About the role" system prompt (moved from index.ts; English unchanged). */
+export const ROLE_DESCRIPTION_SYSTEM = [
+  'You write the "About the role" text for a field hockey club posting a role on Hockia.',
+  'Write as the club, first person plural ("we"), warm and plain. 3–5 short sentences, under 600 characters.',
+  'Use ONLY the facts given. Never invent training days, facilities, salaries, results or promises.',
+  'If a detail is missing, leave it out. Never write placeholders, brackets or blanks for the club to fill.',
+  'Write the team naturally, e.g. "a midfielder for our men\'s team", never "a Men midfielder".',
+  'No emoji, no hashtags, no headings, no bullet points.',
+  'Never use em dashes (—) in your answers; use a period, a colon, a comma or parentheses.',
+  'Reply with the text only.',
+].join('\n')
+
+export function roleDescriptionSystem(lang: MemberLanguage = 'en'): string {
+  return withOutputLanguage(ROLE_DESCRIPTION_SYSTEM, lang)
+}
+
+const TEAM_ES: Record<string, string> = {
+  men: 'el equipo de Caballeros',
+  women: 'el equipo de Damas',
+  mixed: 'el equipo mixto',
+  boys: 'Juveniles caballeros',
+  girls: 'Juveniles damas',
+}
+
+const PACKAGE_ES: Record<string, string> = {
+  housing: 'alojamiento',
+  flights: 'pasajes',
+  insurance: 'seguro',
+  job: 'trabajo',
+  car: 'auto',
+  visa: 'visa',
+  bonuses: 'premios',
+  equipment: 'equipamiento',
+}
+
+/** "volante para el equipo de Damas" / "entrenador/a asistente". */
+export function lookingForEs(a: Answers): string {
+  const raw = clean(a.position).toLowerCase()
+  const noun = raw
+    ? (spanishPositionLabel(raw) ?? human(raw)).toLowerCase()
+    : a.type === 'coach' ? 'entrenador/a' : 'jugador/a'
+  const key = teamKey(a.team)
+  return `${noun}${key ? ` para ${TEAM_ES[key]}` : ''}`
+}
+
+/** Spanish duration words for the form's DURATIONS; unknown values as given. */
+export function durationEs(value: string): string {
+  const v = value.trim()
+  const m = /^(\d+) months?$/i.exec(v)
+  if (m) return m[1] === '1' ? '1 mes' : `${m[1]} meses`
+  if (/^full season$/i.test(v)) return 'toda la temporada'
+  if (/^permanent$/i.test(v)) return 'tiempo indefinido'
+  return v
+}
+
+const MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+
+/** "el 1 de enero de 2027" (ISO date), "en enero de 2027" (ISO month), else "en <as given>". */
+export function startEs(value: string): string {
+  const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (d && MONTHS_ES[Number(d[2]) - 1]) return `el ${Number(d[3])} de ${MONTHS_ES[Number(d[2]) - 1]} de ${d[1]}`
+  const m = /^(\d{4})-(\d{2})$/.exec(value)
+  if (m && MONTHS_ES[Number(m[2]) - 1]) return `en ${MONTHS_ES[Number(m[2]) - 1]} de ${m[1]}`
+  return `en ${value}`
+}
+
+/** The Spanish template (same facts and shape as template). */
+export function templateEs(a: Answers, clubName: string): string {
+  const place = clean(a.city) || clean(a.country)
+  const lines = [`${clubName} busca ${lookingForEs(a)}${place ? `, con base en ${place}` : ''}.`]
+  const start = clean(a.start)
+  const duration = clean(a.duration)
+  if (start && duration) lines.push(`Comienza ${startEs(start)} y es por ${durationEs(duration)}.`)
+  else if (start) lines.push(`Comienza ${startEs(start)}.`)
+  else if (duration) lines.push(`Es por ${durationEs(duration)}.`)
+  const pkg = (a.package ?? []).map((s) => clean(s)).filter(Boolean).map((s) => PACKAGE_ES[s.toLowerCase()] ?? human(s))
+  if (pkg.length) lines.push(`Ofrecemos ${spanishList(pkg)}.`)
+  lines.push(a.type === 'coach'
+    ? 'Nos interesa conocer tu experiencia como entrenador/a y tu disponibilidad.'
+    : 'Nos interesa saber cómo viene tu temporada y cuál es tu disponibilidad.')
+  return lines.join(' ')
+}
+
+/** template in the club's language. */
+export function templateFor(a: Answers, clubName: string, lang: MemberLanguage = 'en'): string {
+  return lang === 'es' ? templateEs(a, clubName) : template(a, clubName)
 }

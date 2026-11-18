@@ -5,9 +5,10 @@ import { supabase, AUTH_STORAGE_KEY } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
-import { oauthErrorMessage, NO_EMAIL_MESSAGE } from '@/lib/oauthErrorMessage'
+import { oauthErrorMessage, noEmailMessage } from '@/lib/oauthErrorMessage'
 import { detectInAppBrowser, getExternalBrowserInstructions } from '@/lib/inAppBrowser'
 import { consumeCarriedRedirect } from '@/lib/redirectIntentCarry'
+import { tAuth, useAuthT } from '@/i18n/ns/auth'
 
 /**
  * AuthCallback - Handles email verification redirect from Supabase
@@ -36,8 +37,13 @@ import { consumeCarriedRedirect } from '@/lib/redirectIntentCarry'
  */
 export default function AuthCallback() {
   const navigate = useNavigate()
+  const t = useAuthT()
   const [error, setError] = useState<string | null>(null)
-  const [status, setStatus] = useState<string>('Verifying your email...')
+  /** The provider returned no email (Facebook by phone number): its own screen, below. */
+  const [noEmail, setNoEmail] = useState(false)
+  // The effect below runs once and outlives renders, so it translates with
+  // tAuth (reads the active language when called) rather than the hook's `t`.
+  const [status, setStatus] = useState<string>(() => tAuth('callback.verifyingEmail'))
   const isMountedRef = useRef(true)
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const navigationRef = useRef(false)
@@ -91,7 +97,9 @@ export default function AuthCallback() {
       const errorParam = hashParams.get('error') || queryParams.get('error')
       const errorDescription = hashParams.get('error_description') || queryParams.get('error_description')
       logger.error('[AUTH_CALLBACK] Error in URL:', errorParam)
-      setError(oauthErrorMessage(errorDescription, 'Verification failed. Please try again.'))
+      const message = oauthErrorMessage(errorDescription, tAuth('callback.failed'))
+      setNoEmail(message === noEmailMessage())
+      setError(message)
       return
     }
 
@@ -111,19 +119,19 @@ export default function AuthCallback() {
       }
 
       if (state.profile && state.profile.full_name) {
-        setStatus('Welcome back! Redirecting to your dashboard...')
+        setStatus(tAuth('callback.welcomeBack'))
         finalizeNavigation('/dashboard/profile', reason)
         return
       }
 
       if (state.profile && !state.profile.full_name) {
-  setStatus("Let's finish setting up your profile...")
+  setStatus(tAuth('callback.finishProfile'))
         finalizeNavigation('/complete-profile', reason)
         return
       }
 
       if (state.profileStatus === 'missing' || (!state.loading && state.user)) {
-  setStatus("Let's finish setting up your profile...")
+  setStatus(tAuth('callback.finishProfile'))
         finalizeNavigation('/complete-profile', reason)
       }
     }
@@ -136,7 +144,7 @@ export default function AuthCallback() {
       hasAttemptedExchangeRef.current = true
       logger.debug('[AUTH_CALLBACK] Attempting direct PKCE code exchange')
       if (isMountedRef.current) {
-        setStatus('Verifying your code...')
+        setStatus(tAuth('callback.verifyingCode'))
       }
 
       try {
@@ -259,7 +267,7 @@ export default function AuthCallback() {
       const elapsed = timelineRef.current.sessionDetectedAt - timelineRef.current.mountedAt
       logger.info('[AUTH_CALLBACK] Session detected', { source, elapsed })
 
-      setStatus('Session verified! Finalizing your account...')
+      setStatus(tAuth('callback.sessionVerified'))
       evaluateRoutingDecision(`session-${source}`)
       startFallbackTimer()
     }
@@ -330,7 +338,7 @@ export default function AuthCallback() {
 
           // Update status every 2 seconds
           if (attempt % 4 === 0 && isMountedRef.current) {
-            setStatus(`Still verifying... (${attempt * 500}ms)`)
+            setStatus(tAuth('callback.stillVerifying', { ms: attempt * 500 }))
             logger.debug(`[AUTH_CALLBACK] Still checking... (${attempt * 500}ms elapsed)`)
           }
         }
@@ -348,7 +356,7 @@ export default function AuthCallback() {
         if (accessToken && refreshToken) {
           logger.debug('[AUTH_CALLBACK] Implicit flow tokens found, setting session...')
           if (isMountedRef.current) {
-            setStatus('Establishing session...')
+            setStatus(tAuth('callback.establishing'))
           }
 
           Sentry.addBreadcrumb({
@@ -369,7 +377,7 @@ export default function AuthCallback() {
               feature: 'auth_flow',
               operation: 'session_resume'
             })
-            setError('Failed to establish session. Please try again.')
+            setError(tAuth('callback.sessionFailed'))
             return
           }
 
@@ -397,7 +405,7 @@ export default function AuthCallback() {
         // No session found
         logger.error('[AUTH_CALLBACK] Verification failed - link may be expired')
         if (isMountedRef.current) {
-          setError('Verification link expired or already used. Please request a new one.')
+          setError(tAuth('callback.linkExpired'))
         }
 
       } catch (err) {
@@ -407,7 +415,7 @@ export default function AuthCallback() {
             feature: 'auth_flow',
             operation: 'session_check'
           })
-          setError('Verification failed. Please try again.')
+          setError(tAuth('callback.failed'))
         }
       }
     }
@@ -447,25 +455,25 @@ export default function AuthCallback() {
   const browserInfo = detectInAppBrowser()
   const isInAppBrowserIssue = browserInfo.isInAppBrowser && error
 
-  if (error === NO_EMAIL_MESSAGE) {
+  if (error && noEmail) {
     // Facebook account without an email: retrying never helps, so offer email sign-up.
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4" data-testid="auth-no-email">
         <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Couldn’t sign you in</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('callback.noEmailTitle')}</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <div className="space-y-3">
             <button
               onClick={() => navigate('/signup/email')}
               className="w-full px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
             >
-              Sign up with email
+              {t('callback.noEmailSignUp')}
             </button>
             <button
               onClick={() => navigate('/')}
               className="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
-              Back to Sign In
+              {t('callback.noEmailBack')}
             </button>
           </div>
         </div>
@@ -482,15 +490,15 @@ export default function AuthCallback() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Verification Error</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('callback.errorTitle')}</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           
           {/* Show in-app browser specific guidance */}
           {isInAppBrowserIssue && (
             <div className="mb-6 rounded-lg bg-gray-50 p-4 text-left ring-1 ring-inset ring-gray-200">
-              <p className="mb-1 text-sm font-medium text-gray-900">Try it in your browser</p>
+              <p className="mb-1 text-sm font-medium text-gray-900">{t('callback.inAppTitle')}</p>
               <p className="text-sm text-gray-600">
-                {getExternalBrowserInstructions(browserInfo.browserName)} Or use “Copy link” below and paste it into Safari or Chrome.
+                {t('callback.inAppBody', { instructions: getExternalBrowserInstructions(browserInfo.browserName) })}
               </p>
             </div>
           )}
@@ -500,24 +508,24 @@ export default function AuthCallback() {
               onClick={() => window.location.reload()}
               className="w-full px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
             >
-              Try Again
+              {t('callback.tryAgain')}
             </button>
             <button
               onClick={() => navigate('/')}
               className="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
-              Back to Sign In
+              {t('callback.backToSignIn')}
             </button>
             <button
               onClick={() => {
                 // Copy the verification link for user to paste in real browser
                 navigator.clipboard.writeText(window.location.href)
-                  .then(() => alert('Link copied! Paste it in Safari or Chrome.'))
-                  .catch(() => alert('Please copy this link manually: ' + window.location.href))
+                  .then(() => alert(t('callback.copied')))
+                  .catch(() => alert(t('callback.copyManually', { url: window.location.href })))
               }}
               className="w-full px-6 py-3 text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium"
             >
-              Copy link
+              {t('callback.copyLink')}
             </button>
           </div>
         </div>
@@ -534,7 +542,7 @@ export default function AuthCallback() {
         {/* Show hint if in-app browser detected */}
         {browserInfo.isInAppBrowser && (
           <p className="text-sm text-gray-500 mt-4 max-w-xs mx-auto">
-            Taking a while? Try opening this page in Safari or Chrome.
+            {t('callback.inAppHint')}
           </p>
         )}
       </div>

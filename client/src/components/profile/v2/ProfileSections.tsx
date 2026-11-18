@@ -13,6 +13,7 @@ import { roleTitle } from '@/lib/homeEngagement'
 import { genderPill } from '@/lib/opportunityCopy'
 import { roleStatusLine } from '@/lib/profileV2'
 import type { ClubOpenRole } from '@/hooks/useClubProfileScrollData'
+import { useProfileT } from '@/i18n/ns/profile'
 
 const CommentsTab = lazy(() => import('@/components/CommentsTab'))
 
@@ -154,6 +155,7 @@ interface CommentRow { id: string; content: string; created_at: string; author: 
  * rule (friends comment, one per person, report, owner moderation).
  */
 export function CommentsPreview({ profileId, profileRole, owner }: { profileId: string; profileRole?: string | null; owner: boolean }) {
+  const t = useProfileT()
   const viewer = useAuthStore((s) => s.profile)
   const [rows, setRows] = useState<CommentRow[]>([])
   const [count, setCount] = useState(0)
@@ -180,26 +182,26 @@ export function CommentsPreview({ profileId, profileRole, owner }: { profileId: 
   if (owner && count === 0) return null
 
   return (
-    <Section id="comments" title={count > 0 ? `Comments · ${count}` : 'Comments'} action={count > 0 ? 'See all' : null} onAction={() => setOpen(true)}>
+    <Section id="comments" title={count > 0 ? t('profileSections.commentsTitleCount', { count }) : t('profileSections.commentsTitle')} action={count > 0 ? t('profileSections.commentsSeeAll') : null} onAction={() => setOpen(true)}>
       <div className="flex flex-col gap-3.5 px-4">
         {rows.map((c) => (
           <div key={c.id} className="flex items-start gap-2.5">
             <FaceCircle url={c.author?.avatar_url} name={c.author?.full_name} role={c.author?.role} size="avatar-sm" initialsClassName="text-[11px]" className="h-8 w-8" />
             <div className="min-w-0 flex-1">
-              <p className="text-secondary"><span className="font-semibold text-ink-1">{c.author?.full_name ?? 'Member'}</span> <span className="text-ink-3">{formatActivityAge(c.created_at)}</span></p>
+              <p className="text-secondary"><span className="font-semibold text-ink-1">{c.author?.full_name ?? t('profileSections.memberFallback')}</span> <span className="text-ink-3">{formatActivityAge(c.created_at)}</span></p>
               <p className="whitespace-pre-line break-words text-[14px] leading-[19px] text-ink-1">{c.content}</p>
             </div>
           </div>
         ))}
-        {!owner && count === 0 && <p className="text-secondary text-ink-3">No comments yet</p>}
+        {!owner && count === 0 && <p className="text-secondary text-ink-3">{t('profileSections.noComments')}</p>}
         {!owner && (
           <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-2.5 text-left" data-testid="profile-write-comment">
             <FaceCircle url={viewer?.avatar_url} name={viewer?.full_name ?? initialsOf(null)} role={viewer?.role} size="avatar-sm" initialsClassName="text-[11px]" className="h-8 w-8" />
-            <span className="flex min-h-[40px] flex-1 items-center rounded-[20px] bg-surface-muted px-3.5 text-[15px] text-ink-3">Write a comment…</span>
+            <span className="flex min-h-[40px] flex-1 items-center rounded-[20px] bg-surface-muted px-3.5 text-[15px] text-ink-3">{t('profileSections.writeComment')}</span>
           </button>
         )}
       </div>
-      <BottomSheet open={open} onClose={() => { setOpen(false); setNonce((n) => n + 1) }} ariaLabel="Comments" className="min-h-[55dvh]">
+      <BottomSheet open={open} onClose={() => { setOpen(false); setNonce((n) => n + 1) }} ariaLabel={t('profileSections.commentsSheet')} className="min-h-[55dvh]">
         <div className="px-4 pb-4">
           <Suspense fallback={<div className="h-40" />}>
             <CommentsTab profileId={profileId} profileRole={profileRole as never} />

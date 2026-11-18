@@ -14,7 +14,8 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 import { checkUserRateLimit } from '../_shared/rate-limit.ts'
 import { recordAiUsage } from '../_shared/aiUsage.ts'
 import { captureException, setSentryUser } from '../_shared/sentry.ts'
-import { BIO_FOCI, FOCUS_BRIEF, NOTE_MAX, PROFILE_BIO_SYSTEM, PROFILE_BIO_TOOL, bioFactLines, validateBioDrafts, yearsSpan, type BioFocus } from '../_shared/profile-bio.ts'
+import { resolveAiLanguage } from '../_shared/ai-language.ts'
+import { BIO_FOCI, FOCUS_BRIEF, NOTE_MAX, profileBioSystem, PROFILE_BIO_TOOL, bioFactLines, validateBioDrafts, yearsSpan, type BioFocus } from '../_shared/profile-bio.ts'
 
 const MODEL = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
 const LIMIT_PER_DAY = 10
@@ -34,11 +35,12 @@ Deno.serve(async (req) => {
     if (!userId) return json({ error: 'auth_required' }, 401)
     setSentryUser(userId)
 
-    let body: { focus?: unknown; note?: unknown }
+    let body: { focus?: unknown; note?: unknown; locale?: unknown }
     try { body = await req.json() } catch { return json({ error: 'invalid_body' }, 400) }
     const focus: BioFocus = BIO_FOCI.includes(body.focus as BioFocus) ? body.focus as BioFocus : 'experience'
     const note = typeof body.note === 'string' ? body.note.replace(/\s+/g, ' ').trim().slice(0, NOTE_MAX) : ''
     if (focus === 'custom' && !note) return json({ error: 'note_required' }, 400)
+    const lang = await resolveAiLanguage(supabase, userId, body)
 
     const { data: prof } = await supabase
       .from('profiles')
@@ -83,7 +85,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           model: MODEL,
           max_tokens: 900,
-          system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: PROFILE_BIO_SYSTEM }],
+          system: [{ type: 'text', cache_control: { type: 'ephemeral' }, text: profileBioSystem(lang) }],
           tools: [PROFILE_BIO_TOOL],
           tool_choice: { type: 'tool', name: PROFILE_BIO_TOOL.name },
           messages: [{ role: 'user', content: prompt }],
@@ -102,7 +104,7 @@ Deno.serve(async (req) => {
       if (usage) await recordAiUsage(supabase, { user_id: userId, function: 'profile-bio', provider: 'claude', model: MODEL, input_tokens: usage.input_tokens ?? null, output_tokens: usage.output_tokens ?? null, cached_tokens: usage.cache_read_input_tokens ?? null })
     }
 
-    const drafts = validateBioDrafts(raw)
+    const drafts = validateBioDrafts(raw, lang)
     // Counts only, never the text: a member's bio stays out of the logs.
     if (!drafts.length) console.warn('[profile-bio] every draft broke a rule', { keys: raw && typeof raw === 'object' ? Object.keys(raw as object).join(',') : typeof raw })
     return json(drafts.length ? { drafts } : { drafts: [], reason: 'unavailable' })

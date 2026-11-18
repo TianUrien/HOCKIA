@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { currentLanguage } from '@/i18n'
+import { tHockiaAi } from '@/i18n/ns/hockiaAi'
 import { invalidateProfile } from '@/lib/profile'
 import { optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { clearCoverPhotoCache } from '@/hooks/useCoverPhoto'
@@ -70,14 +72,14 @@ export function linksInText(text: string): string[] {
 
 /** A refused file, in plain words — or null when it's fine. */
 export function cvProblem(file: File): string | null {
-  if (!/pdf$/i.test(file.type) && !/\.pdf$/i.test(file.name)) return 'Please attach your CV as a PDF.'
-  if (file.size > CV_MAX_BYTES) return 'That PDF is over 4 MB. Try a smaller export of your CV.'
+  if (!/pdf$/i.test(file.type) && !/\.pdf$/i.test(file.name)) return tHockiaAi('builderLib.cvNotPdf')
+  if (file.size > CV_MAX_BYTES) return tHockiaAi('builderLib.cvTooBig')
   return null
 }
 
 export function photoProblem(file: File): string | null {
   const check = validateImage(file, { maxFileSizeMB: 10 })
-  return check.valid ? null : (check.error ?? 'Please use a JPG or PNG photo up to 10 MB.')
+  return check.valid ? null : (check.error ?? tHockiaAi('builderLib.photoInvalid'))
 }
 
 export function fileToBase64(file: Blob): Promise<string> {
@@ -105,7 +107,7 @@ export async function readForProfile(text: string, att: BuilderAttachments): Pro
     const links = [...new Set([...att.links, ...linksInText(text)])].slice(0, LINKS_MAX)
     const cv = att.cv ? { base64: await fileToBase64(att.cv), name: att.cv.name } : null
     const photos = await Promise.all(att.photos.slice(0, PHOTOS_MAX).map(async (f, index) => ({ index, ...(await photoThumb(f)) })))
-    const { data, error } = await supabase.functions.invoke('profile-builder', { body: { text: text.trim().slice(0, TEXT_MAX), links, cv, photos } })
+    const { data, error } = await supabase.functions.invoke('profile-builder', { body: { text: text.trim().slice(0, TEXT_MAX), links, cv, photos, locale: currentLanguage() } })
     if (error) {
       const status = (error as { context?: { status?: number } }).context?.status
       return { ok: false, reason: status === 413 ? 'cv_too_large' : status === 400 ? 'nothing' : 'error' }
@@ -121,10 +123,10 @@ export async function readForProfile(text: string, att: BuilderAttachments): Pro
 
 export function builderErrorCopy(reason: Exclude<BuilderResult, { ok: true }>['reason']): string {
   switch (reason) {
-    case 'limit': return 'You’ve used today’s profile reads. Everything else in Hockia works as usual. Try again tomorrow.'
-    case 'cv_too_large': return 'That CV is too large for me. Try a PDF under 4 MB.'
-    case 'nothing': return 'Write a few lines about your clubs and seasons, or attach your CV, photos or links.'
-    default: return 'Oops, I lost the signal for a second. Your message is safe. Tap to try again.'
+    case 'limit': return tHockiaAi('builderLib.errorLimit')
+    case 'cv_too_large': return tHockiaAi('builderLib.errorCvTooLarge')
+    case 'nothing': return tHockiaAi('builderLib.errorNothing')
+    default: return tHockiaAi('builderLib.errorDefault')
   }
 }
 
@@ -133,6 +135,7 @@ export function draftItemCount(d: ProfileDraft, keptPhotos: number): number {
   return d.career.length + d.passports.length + (d.date_of_birth ? 1 : 0) + (d.position ? 1 : 0) + (d.secondary_position ? 1 : 0) + d.videos.slice(0, 1).length + d.socials.length + keptPhotos
 }
 
+/** `failed` holds part tokens ('career', 'profile', 'date of birth', 'photos'); the screen names them. */
 export interface SaveOutcome { saved: number; failed: string[] }
 
 /**
@@ -251,10 +254,10 @@ export async function stillMissing(userId: string, role: string | null | undefin
   ])
   const q = (p ?? {}) as { position?: string | null; highlight_video_url?: string | null; avatar_url?: string | null; nationality_country_id?: number | null }
   const out: MissingItem[] = []
-  if (role === 'player' && !q.position) out.push({ key: 'position', title: 'Your position and best side', detail: 'One line is enough, e.g. “left back, strong on the reverse”' })
-  if (!career) out.push({ key: 'career', title: 'Your clubs and seasons', detail: 'Write them in your own words, or attach your CV' })
-  if (role === 'player' && !q.highlight_video_url) out.push({ key: 'video', title: 'A highlights video', detail: 'Paste a YouTube or Vimeo link' })
-  if (!q.avatar_url) out.push({ key: 'photo', title: 'A profile photo', detail: 'Add it from Edit profile' })
-  if (!q.nationality_country_id) out.push({ key: 'passport', title: 'Your passports', detail: 'Just the countries, never a document' })
+  if (role === 'player' && !q.position) out.push({ key: 'position', title: tHockiaAi('builderLib.missingPositionTitle'), detail: tHockiaAi('builderLib.missingPositionDetail') })
+  if (!career) out.push({ key: 'career', title: tHockiaAi('builderLib.missingCareerTitle'), detail: tHockiaAi('builderLib.missingCareerDetail') })
+  if (role === 'player' && !q.highlight_video_url) out.push({ key: 'video', title: tHockiaAi('builderLib.missingVideoTitle'), detail: tHockiaAi('builderLib.missingVideoDetail') })
+  if (!q.avatar_url) out.push({ key: 'photo', title: tHockiaAi('builderLib.missingPhotoTitle'), detail: tHockiaAi('builderLib.missingPhotoDetail') })
+  if (!q.nationality_country_id) out.push({ key: 'passport', title: tHockiaAi('builderLib.missingPassportTitle'), detail: tHockiaAi('builderLib.missingPassportDetail') })
   return out.slice(0, 3)
 }

@@ -1,4 +1,6 @@
 import { positionLabel } from '@/lib/identity'
+import { intlLocale } from '@/i18n/format'
+import { tHockiaAi } from '@/i18n/ns/hockiaAi'
 
 /**
  * D5 · Hockia suggests — the reason lines on a suggestion card (Figma
@@ -51,15 +53,14 @@ export interface ReasonLine {
 
 export const MAX_REASON_LINES = 4
 
-const CATEGORY_LABELS: Record<string, string> = {
-  adult_women: 'Women’s',
-  adult_men: 'Men’s',
-  girls: 'Girls’',
-  boys: 'Boys’',
-  mixed: 'Mixed',
+/** "Women’s player" and the like, per playing category token. */
+const CATEGORY_KEYS: Record<string, `reasons.category.${'adult_women' | 'adult_men' | 'girls' | 'boys' | 'mixed'}`> = {
+  adult_women: 'reasons.category.adult_women',
+  adult_men: 'reasons.category.adult_men',
+  girls: 'reasons.category.girls',
+  boys: 'reasons.category.boys',
+  mixed: 'reasons.category.mixed',
 }
-
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 /** "January 2027" from a date-only ISO string, without time-zone drift. */
 export function monthYear(iso: string | null | undefined): string | null {
@@ -68,7 +69,7 @@ export function monthYear(iso: string | null | undefined): string | null {
   if (!m) return null
   const month = Number(m[2])
   if (month < 1 || month > 12) return null
-  return `${MONTHS[month - 1]} ${m[1]}`
+  return new Intl.DateTimeFormat(intlLocale(), { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(Number(m[1]), month - 1, 1)))
 }
 
 function isPastOrToday(iso: string, now: Date): boolean {
@@ -76,7 +77,6 @@ function isPastOrToday(iso: string, now: Date): boolean {
   return iso.slice(0, 10) <= today
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 const lower = (s: string | null) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s)
 
 /** Normalise an evidence blob from the RPC (missing keys → honest absence). */
@@ -112,46 +112,46 @@ export function reasonCandidates(ev: SuggestionEvidence, role: SuggestionRoleCon
   const rolePosition = positionLabel(role.position)
 
   if (ev.position_match === 'primary' && rolePosition) {
-    met.push({ key: 'position', kind: 'met', text: `Plays ${lower(rolePosition)}`, weight: 100 })
+    met.push({ key: 'position', kind: 'met', text: tHockiaAi('reasons.playsPosition', { position: lower(rolePosition) }), weight: 100 })
   } else if (ev.position_match === 'secondary' && rolePosition) {
-    met.push({ key: 'position', kind: 'met', text: `${rolePosition} is a second position`, weight: 95 })
+    met.push({ key: 'position', kind: 'met', text: tHockiaAi('reasons.secondPosition', { position: rolePosition }), weight: 95 })
   }
 
   if (ev.eu_passport) {
-    met.push({ key: 'eu', kind: 'met', text: 'EU passport', weight: role.eu_passport_required ? 98 : 60 })
+    met.push({ key: 'eu', kind: 'met', text: tHockiaAi('reasons.euPassport'), weight: role.eu_passport_required ? 98 : 60 })
   } else if (role.eu_passport_required) {
-    missing.push({ key: 'eu', kind: 'missing', text: 'No EU passport on the profile', weight: 100 })
+    missing.push({ key: 'eu', kind: 'missing', text: tHockiaAi('reasons.noEuPassport'), weight: 100 })
   }
 
   if (ev.full_matches > 0) {
-    met.push({ key: 'full_matches', kind: 'met', text: `${plural(ev.full_matches, 'full match', 'full matches')} on the profile`, weight: 90 })
+    met.push({ key: 'full_matches', kind: 'met', text: tHockiaAi('reasons.fullMatches', { count: ev.full_matches }), weight: 90 })
   } else {
-    missing.push({ key: 'full_matches', kind: 'missing', text: 'No full match on the profile', weight: 70 })
+    missing.push({ key: 'full_matches', kind: 'missing', text: tHockiaAi('reasons.noFullMatch'), weight: 70 })
   }
 
   if (ev.league_name) {
-    met.push({ key: 'league', kind: 'met', text: `Plays in ${ev.league_name}${ev.league_self_reported ? ' (self-reported)' : ''}`, weight: 85 })
+    met.push({ key: 'league', kind: 'met', text: ev.league_self_reported ? tHockiaAi('reasons.playsInSelf', { league: ev.league_name }) : tHockiaAi('reasons.playsIn', { league: ev.league_name }), weight: 85 })
   }
 
   if (ev.available_from) {
-    const label = isPastOrToday(ev.available_from, now) ? 'Available now' : (() => {
+    const label = isPastOrToday(ev.available_from, now) ? tHockiaAi('reasons.availableNow') : (() => {
       const my = monthYear(ev.available_from)
-      return my ? `Available from ${my}` : null
+      return my ? tHockiaAi('reasons.availableFrom', { date: my }) : null
     })()
     if (label) met.push({ key: 'available', kind: 'met', text: label, weight: role.start_date ? 92 : 65 })
   } else if (role.start_date) {
-    missing.push({ key: 'available', kind: 'missing', text: 'No start date on the profile', weight: 90 })
+    missing.push({ key: 'available', kind: 'missing', text: tHockiaAi('reasons.noStartDate'), weight: 90 })
   } else {
-    missing.push({ key: 'available', kind: 'missing', text: 'No start date on the profile', weight: 40 })
+    missing.push({ key: 'available', kind: 'missing', text: tHockiaAi('reasons.noStartDate'), weight: 40 })
   }
 
-  if (ev.highlights > 0) met.push({ key: 'highlights', kind: 'met', text: 'Highlights on the profile', weight: 80 })
-  if (ev.active_30d) met.push({ key: 'active', kind: 'met', text: 'Active this month', weight: 70 })
-  if (ev.references > 0) met.push({ key: 'references', kind: 'met', text: plural(ev.references, 'reference', 'references'), weight: 55 })
-  if (ev.career_entries > 0) met.push({ key: 'career', kind: 'met', text: plural(ev.career_entries, 'career entry', 'career entries'), weight: 50 })
+  if (ev.highlights > 0) met.push({ key: 'highlights', kind: 'met', text: tHockiaAi('reasons.highlights'), weight: 80 })
+  if (ev.active_30d) met.push({ key: 'active', kind: 'met', text: tHockiaAi('reasons.active'), weight: 70 })
+  if (ev.references > 0) met.push({ key: 'references', kind: 'met', text: tHockiaAi('reasons.references', { count: ev.references }), weight: 55 })
+  if (ev.career_entries > 0) met.push({ key: 'career', kind: 'met', text: tHockiaAi('reasons.career', { count: ev.career_entries }), weight: 50 })
 
-  const category = ev.playing_category ? CATEGORY_LABELS[ev.playing_category] : null
-  if (category) met.push({ key: 'category', kind: 'met', text: `${category} player`, weight: 20 })
+  const categoryKey = ev.playing_category ? CATEGORY_KEYS[ev.playing_category] : null
+  if (categoryKey) met.push({ key: 'category', kind: 'met', text: tHockiaAi(categoryKey), weight: 20 })
 
   const byWeight = (a: { weight: number }, b: { weight: number }) => b.weight - a.weight
   return { met: met.sort(byWeight), missing: missing.sort(byWeight) }

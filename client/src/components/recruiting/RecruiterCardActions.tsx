@@ -17,6 +17,7 @@ import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { useFriendship } from '@/hooks/useFriendship'
 import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 interface RecruiterCardActionsProps {
   playerId: string
@@ -27,6 +28,7 @@ interface RecruiterCardActionsProps {
 }
 
 export default function RecruiterCardActions({ playerId, playerName, onMessage }: RecruiterCardActionsProps) {
+  const t = useRecruitingT()
   const navigate = useNavigate()
   const location = useLocation()
   const saved = useIsProfileSaved(playerId)
@@ -47,18 +49,18 @@ export default function RecruiterCardActions({ playerId, playerName, onMessage }
   return (
     <div className="flex items-stretch border-t border-gray-100">
       <ActionItem
-        label={saved.isSaved ? 'Saved' : 'Save'}
+        label={saved.isSaved ? t('recruiterCardActions.saved') : t('recruiterCardActions.save')}
         icon={saved.isSaved ? BookmarkCheck : Bookmark}
         active={saved.isSaved}
         disabled={saved.mutating}
         onClick={() => void saved.toggle()}
-        ariaLabel={saved.isSaved ? `Remove ${playerName} from saved` : `Save ${playerName}`}
+        ariaLabel={saved.isSaved ? t('recruiterCardActions.removeSavedLabel', { name: playerName }) : t('recruiterCardActions.saveLabel', { name: playerName })}
       />
       <ActionItem
-        label="Chat"
+        label={t('recruiterCardActions.chat')}
         icon={MessageSquare}
         onClick={handleMessage}
-        ariaLabel={`Message ${playerName}`}
+        ariaLabel={t('recruiterCardActions.messageLabel', { name: playerName })}
       />
       <AddFriendItem playerId={playerId} playerName={playerName} />
     </div>
@@ -68,6 +70,7 @@ export default function RecruiterCardActions({ playerId, playerName, onMessage }
 /** Add-friend action — its own component so useFriendship only fetches the
  *  relationship when this footer actually renders (not for every tile). */
 function AddFriendItem({ playerId, playerName }: { playerId: string; playerName: string }) {
+  const t = useRecruitingT()
   const { addToast } = useToastStore()
   const { loading, mutating, isAuthenticated, isOwnProfile, isFriend, isOutgoingRequest, sendRequest } =
     useFriendship(playerId)
@@ -75,26 +78,26 @@ function AddFriendItem({ playerId, playerName }: { playerId: string; playerName:
   if (isOwnProfile) return null
 
   if (loading) {
-    return <ActionItem label="Add friend" icon={Loader2} iconSpin disabled onClick={() => {}} ariaLabel="Loading friendship status" />
+    return <ActionItem label={t('recruiterCardActions.addFriend')} icon={Loader2} iconSpin disabled onClick={() => {}} ariaLabel={t('recruiterCardActions.loadingFriendship')} />
   }
   if (isFriend) {
-    return <ActionItem label="Friends" icon={UserCheck} active disabled onClick={() => {}} ariaLabel={`Friends with ${playerName}`} />
+    return <ActionItem label={t('recruiterCardActions.friends')} icon={UserCheck} active disabled onClick={() => {}} ariaLabel={t('recruiterCardActions.friendsLabel', { name: playerName })} />
   }
   if (isOutgoingRequest) {
-    return <ActionItem label="Requested" icon={Check} disabled onClick={() => {}} ariaLabel={`Friend request sent to ${playerName}`} />
+    return <ActionItem label={t('recruiterCardActions.requested')} icon={Check} disabled onClick={() => {}} ariaLabel={t('recruiterCardActions.requestedLabel', { name: playerName })} />
   }
   return (
     <ActionItem
-      label="Add friend"
+      label={t('recruiterCardActions.addFriend')}
       icon={UserPlus}
       disabled={mutating}
       iconSpin={mutating}
       onClick={() =>
         isAuthenticated
           ? void sendRequest()
-          : addToast('Sign in with your Hockia profile to connect.', 'error')
+          : addToast(t('recruiterCardActions.signInToConnect'), 'error')
       }
-      ariaLabel={`Add ${playerName} as a friend`}
+      ariaLabel={t('recruiterCardActions.addFriendLabel', { name: playerName })}
     />
   )
 }

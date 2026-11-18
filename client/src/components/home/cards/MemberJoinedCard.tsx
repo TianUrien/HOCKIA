@@ -3,6 +3,7 @@ import { positionLabel } from '@/lib/identity'
 import { NationalityCardDisplay } from '@/components'
 import { FeedCard, FeedCardAction, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, profilePathForRole } from '../FeedCard'
 import type { MemberJoinedFeedItem } from '@/types/homeFeed'
+import { useHomeT } from '@/i18n/ns/home'
 
 interface MemberJoinedCardProps {
   item: MemberJoinedFeedItem
@@ -14,6 +15,7 @@ interface MemberJoinedCardProps {
  * nationality and position.
  */
 export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
+  const t = useHomeT()
   const profilePath = profilePathForRole(item.role, item.profile_id)
   const hasDetails = Boolean(item.nationality_country_id || item.position)
 
@@ -27,7 +29,7 @@ export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
         createdAt={item.created_at}
         profilePath={profilePath}
       />
-      <FeedCardCaption icon={<UserPlus />}>Joined Hockia</FeedCardCaption>
+      <FeedCardCaption icon={<UserPlus />}>{t('cards.memberJoined.caption')}</FeedCardCaption>
 
       {hasDetails && (
         <FeedCardBody>
@@ -41,7 +43,7 @@ export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
       )}
 
       <FeedCardFooter>
-        <FeedCardAction to={profilePath}>View profile</FeedCardAction>
+        <FeedCardAction to={profilePath}>{t('cards.memberJoined.viewProfile')}</FeedCardAction>
       </FeedCardFooter>
     </FeedCard>
   )

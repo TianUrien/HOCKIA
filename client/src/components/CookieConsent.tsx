@@ -5,6 +5,8 @@ import { getConsentStatus, enableGA4 } from '@/lib/cookieConsent'
 import { initPostHog } from '@/lib/posthog'
 import { useBottomPrompt, useBottomPromptActive } from '@/lib/bottomPrompt'
 import { COOKIE_BANNER_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix } from '@/lib/overlaySequence'
+import { useCommonT } from '@/i18n/ns/common'
+import { Trans } from 'react-i18next'
 
 /**
  * GDPR cookie consent banner.
@@ -25,6 +27,7 @@ import { COOKIE_BANNER_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix } from '@
 const AUTH_FLOW_PREFIXES = ['/signup', '/signin', '/auth', '/verify-email', '/complete-profile', '/brands/onboarding', '/forgot-password', '/reset-password', '/email-action', '/juniors-waitlist']
 
 export default function CookieConsent() {
+  const t = useCommonT()
   const [visible, setVisible] = useState(false)
   // Mounted inside <BrowserRouter> (App.tsx, next to InstallPrompt).
   const location = useLocation()
@@ -88,14 +91,15 @@ export default function CookieConsent() {
     <div
       className="fixed inset-x-0 z-[9990] px-3 pb-3 sm:px-6 sm:pb-4 pointer-events-none bottom-[calc(env(safe-area-inset-bottom)+80px)] lg:bottom-0"
       role="region"
-      aria-label="Cookie consent"
+      aria-label={t('cookies.label')}
     >
       <div className="max-w-3xl mx-auto bg-white/95 backdrop-blur border border-gray-200 rounded-xl shadow-lg pointer-events-auto px-3 py-2.5 sm:px-4 sm:py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
         <p className="text-xs sm:text-sm text-gray-700 flex-1 leading-snug">
-          We use cookies and analytics to improve your experience.{' '}
-          <a href="/privacy-policy" className="text-hockia-primary underline hover:opacity-80 whitespace-nowrap">
-            Privacy Policy
-          </a>
+          <Trans
+            t={t}
+            i18nKey="cookies.body"
+            components={{ privacyLink: <a href="/privacy-policy" className="text-hockia-primary underline hover:opacity-80 whitespace-nowrap" /> }}
+          />
         </p>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
@@ -103,14 +107,14 @@ export default function CookieConsent() {
             onClick={handleDecline}
             className="px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
-            Decline
+            {t('cookies.decline')}
           </button>
           <button
             type="button"
             onClick={handleAccept}
             className="px-4 py-1.5 bg-hockia-primary text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-[#6b1fd4] transition-colors"
           >
-            Accept
+            {t('cookies.accept')}
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@ import Avatar from '@/components/Avatar'
 import { useAuthStore } from '@/lib/auth'
 import { recordReferenceNudgeDismiss } from '@/lib/referenceNudgeDismissal'
 import type { PulseItem } from '@/hooks/useMyPulse'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * FriendshipReferencePulseCard — Loop Layer L1 (v5 plan).
@@ -45,6 +46,7 @@ export function FriendshipReferencePulseCard({
   onClick,
   onDismiss,
 }: FriendshipReferencePulseCardProps) {
+  const t = useHomeT()
   const navigate = useNavigate()
   const profile = useAuthStore((state) => state.profile)
 
@@ -80,8 +82,8 @@ export function FriendshipReferencePulseCard({
   }
 
   const subtitle = friendName
-    ? `Ask ${firstName(friendName)} to vouch for you. References from connections build trust fast.`
-    : 'Ask your new connection to vouch for you. References from connections build trust fast.'
+    ? t('referenceAsk.bodyNamed', { name: firstName(friendName) })
+    : t('referenceAsk.body')
 
   return (
     <article
@@ -92,7 +94,7 @@ export function FriendshipReferencePulseCard({
         type="button"
         onClick={handleDismiss}
         className="absolute top-3 right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-        aria-label="Dismiss"
+        aria-label={t('referenceAsk.dismiss')}
       >
         <X className="w-4 h-4" />
       </button>
@@ -100,16 +102,16 @@ export function FriendshipReferencePulseCard({
       <div className="flex items-start gap-3 pr-6">
         <Avatar
           src={friendAvatar}
-          alt={friendName ?? 'New connection'}
+          alt={friendName ?? t('referenceAsk.eyebrow')}
           initials={getInitials(friendName)}
           size="md"
         />
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            New connection
+            {t('referenceAsk.eyebrow')}
           </p>
           <p className="text-sm font-semibold text-gray-900 mt-0.5">
-            {friendName ? `Ask ${firstName(friendName)} for a reference?` : 'Ask your new connection for a reference?'}
+            {friendName ? t('referenceAsk.titleNamed', { name: firstName(friendName) }) : t('referenceAsk.title')}
           </p>
           <p className="text-xs text-gray-600 mt-1 leading-relaxed">{subtitle}</p>
           <button
@@ -118,7 +120,7 @@ export function FriendshipReferencePulseCard({
             className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-primary px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
           >
             <Shield className="w-3 h-3" aria-hidden="true" />
-            Ask to vouch
+            {t('referenceAsk.cta')}
           </button>
         </div>
       </div>

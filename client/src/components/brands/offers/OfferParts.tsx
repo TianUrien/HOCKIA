@@ -11,6 +11,7 @@ import {
   type OfferPillTone,
 } from '@/lib/brandOffers'
 import { useCountryNames } from '@/hooks/useCountryNames'
+import { useBrandsT } from '@/i18n/ns/brands'
 
 /**
  * Shared pieces of the brand Offers screens (Figma "08 · Brands", P1: B1 rows,
@@ -52,6 +53,7 @@ interface OfferRowProps {
 
 /** One offer in the brand's list (Figma B1 row card). */
 export function OfferRow({ offer, onOpen, onMenu, selected = false }: OfferRowProps) {
+  const t = useBrandsT()
   const names = useCountryNames()
   const shown = offerShownFields(offer)
   return (
@@ -63,14 +65,14 @@ export function OfferRow({ offer, onOpen, onMenu, selected = false }: OfferRowPr
         <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-start gap-3 text-left">
           <OfferThumb url={shown.image_url} className="h-14 w-14 shrink-0 rounded-[14px]" />
           <span className="min-w-0 flex-1 pt-0.5">
-            <span className="block truncate text-body font-semibold text-ink-1">{shown.title || 'Untitled offer'}</span>
-            <span className="mt-0.5 block text-row text-ink-2">{audienceLine(names(shown.country_ids), shown.roles, { everywhere: shown.everywhere, regions: shown.regions }) || 'No audience yet'}</span>
+            <span className="block truncate text-body font-semibold text-ink-1">{shown.title || t('offerParts.untitled')}</span>
+            <span className="mt-0.5 block text-row text-ink-2">{audienceLine(names(shown.country_ids), shown.roles, { everywhere: shown.everywhere, regions: shown.regions }) || t('offerParts.noAudience')}</span>
           </span>
         </button>
         <button
           type="button"
           onClick={onMenu}
-          aria-label={`Actions for ${shown.title || 'offer'}`}
+          aria-label={shown.title ? t('offerParts.actionsFor', { title: shown.title }) : t('offerParts.actionsForUntitled')}
           className="-mr-2 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-2 active:bg-surface-muted"
           data-testid="offer-row-menu"
         >
@@ -100,24 +102,25 @@ interface OfferPreviewCardProps {
  * nationality), See offer and Not useful. Inert here: it is a preview.
  */
 export function OfferPreviewCard({ fields, brandName, reasonCountry, reasonRole, className }: OfferPreviewCardProps) {
+  const t = useBrandsT()
   return (
     <div className={cn('overflow-hidden rounded-[24px] bg-white shadow-[0_1px_3px_rgba(15,15,20,0.08)]', className)} data-testid="offer-preview">
       <div className="relative aspect-[16/9] w-full">
         <OfferThumb url={fields.image_url} className="absolute inset-0 h-full w-full" />
-        <span className="absolute left-3 top-3 rounded-full bg-black/35 px-2.5 py-1 text-secondary font-semibold text-white backdrop-blur-sm">From brands</span>
+        <span className="absolute left-3 top-3 rounded-full bg-black/35 px-2.5 py-1 text-secondary font-semibold text-white backdrop-blur-sm">{t('offerParts.fromBrands')}</span>
       </div>
       <div className="p-4">
         <p className="text-secondary text-ink-2">{brandName}</p>
         {fields.perk?.trim() ? <span className="mt-1 inline-block rounded-full bg-brand-soft px-2.5 py-0.5 text-caption font-semibold text-brand-primary">{fields.perk.trim()}</span> : null}
-        <p className="mt-0.5 text-body font-semibold text-ink-1">{fields.title?.trim() || 'Your title'}</p>
-        <p className="mt-1 text-row text-ink-2">{fields.body?.trim() || 'What members get'}</p>
+        <p className="mt-0.5 text-body font-semibold text-ink-1">{fields.title?.trim() || t('offerParts.yourTitle')}</p>
+        <p className="mt-1 text-row text-ink-2">{fields.body?.trim() || t('offerParts.whatMembersGet')}</p>
         <p className="mt-3 flex gap-2 rounded-[14px] bg-surface-subtle p-3 text-secondary text-ink-2">
           <Info className="mt-px h-4 w-4 shrink-0 text-brand-primary" aria-hidden="true" />
           {offerReasonLine(reasonCountry ?? null, reasonRole, fields.everywhere ?? false)}
         </p>
         <div className="mt-3 flex items-center justify-between">
-          <span className="inline-flex h-9 items-center rounded-full bg-brand-soft px-4 text-row font-semibold text-brand-primary">See offer</span>
-          <span className="text-row text-ink-2">Not useful</span>
+          <span className="inline-flex h-9 items-center rounded-full bg-brand-soft px-4 text-row font-semibold text-brand-primary">{t('offerParts.seeOffer')}</span>
+          <span className="text-row text-ink-2">{t('offerParts.notUseful')}</span>
         </div>
       </div>
     </div>

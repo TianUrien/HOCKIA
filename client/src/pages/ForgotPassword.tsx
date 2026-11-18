@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Mail } from 'lucide-react'
+import { Trans } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { AuthShell, FormError } from '@/components/auth/authUi'
 import { fieldInput, fieldLabel } from '@/components/ui/fieldClasses'
@@ -8,8 +9,9 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/siteUrl'
 import { checkPasswordResetRateLimit, formatRateLimitError } from '@/lib/rateLimit'
-import { guardCheck } from '@/lib/authGuard'
+import { guardCheck, rateLimitedCopy } from '@/lib/authGuard'
 import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, warmCaptcha } from '@/lib/captcha'
+import { useAuthT } from '@/i18n/ns/auth'
 
 /**
  * ForgotPassword - Request password reset email
@@ -22,6 +24,7 @@ import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, warmCaptch
  */
 export default function ForgotPassword() {
   const navigate = useNavigate()
+  const t = useAuthT()
   // Get the bot check ready while the member types (lib/captcha).
   useEffect(() => { warmCaptcha('reset') }, [])
   const [email, setEmail] = useState('')
@@ -43,7 +46,7 @@ export default function ForgotPassword() {
         return
       }
       if (!guard.allowed) {
-        setError(guard.message ?? 'Too many attempts. Please try again in a minute.')
+        setError(guard.message ?? rateLimitedCopy(null))
         setLoading(false)
         return
       }
@@ -62,7 +65,7 @@ export default function ForgotPassword() {
       setSuccess(true)
     } catch (err) {
       logger.error('[FORGOT_PASSWORD] Error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to send reset email')
+      setError(err instanceof Error ? err.message : t('forgot.sendFailed'))
     } finally {
       setLoading(false)
     }
@@ -70,32 +73,32 @@ export default function ForgotPassword() {
 
   // Rebrand page 26 · Forgot password: the white auth page, one field, one action.
   return (
-    <AuthShell back={{ parent: 'Log in', onBack: () => navigate('/signin') }}>
+    <AuthShell back={{ parent: t('shell.parentLogIn'), onBack: () => navigate('/signin') }}>
       {success ? (
         <div className="flex flex-1 flex-col items-center justify-center text-center">
           <span className="flex h-[88px] w-[88px] items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
             <Mail className="h-9 w-9" strokeWidth={1.75} aria-hidden="true" />
           </span>
-          <h1 className="mt-8 text-title text-ink-1">Check your inbox</h1>
+          <h1 className="mt-8 text-title text-ink-1">{t('forgot.sentTitle')}</h1>
           <p className="mt-3 text-[17px] leading-[22px] text-ink-2">
-            We sent a reset link to <span className="font-semibold text-ink-1">{email}</span>. It works once, for a limited time.
+            <Trans t={t} i18nKey="forgot.sentBody" values={{ email }} components={{ email: <span className="font-semibold text-ink-1" /> }} />
           </p>
           <div className="mt-auto w-full space-y-3 pt-8">
-            <Button block variant="secondary" onClick={() => setSuccess(false)}>Use a different email</Button>
+            <Button block variant="secondary" onClick={() => setSuccess(false)}>{t('forgot.differentEmail')}</Button>
           </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} noValidate className="flex flex-1 flex-col pt-2">
-          <h1 className="text-title text-ink-1">Reset your password</h1>
-          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">Enter the email you joined with and we’ll send you a link to choose a new one.</p>
+          <h1 className="text-title text-ink-1">{t('forgot.title')}</h1>
+          <p className="mt-3 text-[17px] leading-[22px] text-ink-2">{t('forgot.subtitle')}</p>
           <div className="mt-6">
-            <label htmlFor="reset-email" className={fieldLabel}>Email</label>
+            <label htmlFor="reset-email" className={fieldLabel}>{t('fields.email')}</label>
             <input
               id="reset-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('fields.emailPlaceholder')}
               className={fieldInput}
               autoComplete="email"
               inputMode="email"
@@ -105,7 +108,7 @@ export default function ForgotPassword() {
           </div>
           {error && <div className="mt-4"><FormError>{error}</FormError></div>}
           <div className="mt-auto pt-8">
-            <Button type="submit" block loading={loading} disabled={!email.trim()}>Send reset link</Button>
+            <Button type="submit" block loading={loading} disabled={!email.trim()}>{t('forgot.submit')}</Button>
           </div>
         </form>
       )}

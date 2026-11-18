@@ -2,17 +2,27 @@ import { Link } from 'react-router-dom'
 import { Briefcase, MapPin } from 'lucide-react'
 import { positionLabel } from '@/lib/identity'
 import type { SearchOpportunityResult as SearchOpportunityResultType } from '@/hooks/useSearch'
+import { useEnumsT } from '@/i18n/ns/enums'
+import { countryLabel } from '@/i18n/countryNames'
+
+/** Separator between facts; punctuation, not copy. */
+const DOT = '·'
 
 interface SearchOpportunityResultProps {
   result: SearchOpportunityResultType
 }
 
 export function SearchOpportunityResult({ result }: SearchOpportunityResultProps) {
-  const location = [result.location_city, result.location_country]
+  const location = [result.location_city, countryLabel(result.location_country)]
     .filter(Boolean)
     .join(', ')
 
   const position = positionLabel(result.position)
+  const tEnums = useEnumsT()
+  // The type is a role token (player / coach): its label comes from the shared enums catalog.
+  const typeLabel = result.opportunity_type === 'player' || result.opportunity_type === 'coach'
+    ? tEnums(`role.${result.opportunity_type}`)
+    : result.opportunity_type
 
   return (
     <Link
@@ -33,7 +43,7 @@ export function SearchOpportunityResult({ result }: SearchOpportunityResultProps
             <span className="text-xs text-gray-500 truncate">{result.club_name}</span>
             {location && (
               <>
-                <span className="text-xs text-gray-500">&middot;</span>
+                <span className="text-xs text-gray-500">{DOT}</span>
                 <span className="text-xs text-gray-400 truncate flex items-center gap-0.5">
                   <MapPin className="w-3 h-3" />
                   {location}
@@ -42,14 +52,14 @@ export function SearchOpportunityResult({ result }: SearchOpportunityResultProps
             )}
             {position && (
               <>
-                <span className="text-xs text-gray-500">&middot;</span>
+                <span className="text-xs text-gray-500">{DOT}</span>
                 <span className="text-xs text-gray-400">{position}</span>
               </>
             )}
           </div>
         </div>
         <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full flex-shrink-0 capitalize">
-          {result.opportunity_type}
+          {typeLabel}
         </span>
       </div>
     </Link>

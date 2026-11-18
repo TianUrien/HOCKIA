@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useGalleryCount } from '@/hooks/useGalleryCount'
+import { useProfileT } from '@/i18n/ns/profile'
 import type { Profile } from '@/lib/supabase'
 
 export type ProfileStrengthBucket = {
@@ -88,6 +89,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
   // as the others — no extra query needed.
   const fullGameVideoCount: number = profile?.full_game_video_count ?? 0
 
+  const t = useProfileT()
   const { count, loading, refresh } = useGalleryCount(profile?.id)
   const galleryCount = count ?? 0
 
@@ -104,56 +106,56 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
     return [
       {
         id: 'basic-info',
-        label: 'Add your nationality and location',
-        description: 'Add your nationality and base location',
-        unlockCopy: 'Clubs filter by location when they search for players.',
+        label: t('useProfileStrength.basicInfo.label'),
+        description: t('useProfileStrength.basicInfo.description'),
+        unlockCopy: t('useProfileStrength.basicInfo.unlockCopy'),
         weight: 10,
         completed: isBasicInfoComplete(profile),
         action: { type: 'edit-profile' },
       },
       {
         id: 'position',
-        label: 'Add your playing position',
-        description: 'Set your primary position so clubs can scout you',
-        unlockCopy: 'Recruiters filter by position. Set it to appear in their searches.',
+        label: t('useProfileStrength.position.label'),
+        description: t('useProfileStrength.position.description'),
+        unlockCopy: t('useProfileStrength.position.unlockCopy'),
         weight: 5,
         completed: Boolean(profile.position?.trim()),
         action: { type: 'edit-profile' },
       },
       {
         id: 'profile-photo',
-        label: 'Add a profile photo',
-        description: 'Help clubs recognize you with a profile picture',
-        unlockCopy: 'Helps clubs put a face to your name.',
+        label: t('useProfileStrength.photo.label'),
+        description: t('useProfileStrength.photo.description'),
+        unlockCopy: t('useProfileStrength.photo.unlockCopy'),
         weight: 10,
         completed: hasProfilePhoto(profile),
         action: { type: 'edit-profile' },
       },
       {
         id: 'bio',
-        label: 'Write a short bio',
-        noun: 'a bio',
-        description: 'Tell clubs about your game in your own words',
-        unlockCopy: 'A short bio lets clubs hear about your game from you.',
+        label: t('useProfileStrength.bio.label'),
+        noun: t('useProfileStrength.bio.noun'),
+        description: t('useProfileStrength.bio.description'),
+        unlockCopy: t('useProfileStrength.bio.unlockCopy'),
         weight: 5,
         completed: Boolean(profile.bio?.trim()),
         action: { type: 'edit-profile' },
       },
       {
         id: 'current-club',
-        label: 'Add your current club',
-        description: 'Show clubs where you currently play',
-        unlockCopy: 'Shows recruiters your current level and team.',
+        label: t('useProfileStrength.currentClub.label'),
+        description: t('useProfileStrength.currentClub.description'),
+        unlockCopy: t('useProfileStrength.currentClub.unlockCopy'),
         weight: 5,
         completed: Boolean(profile.current_club?.trim()),
         action: { type: 'edit-profile' },
       },
       {
         id: 'highlight-video',
-        label: 'Add your highlight video',
-        noun: 'a highlight video',
-        description: 'Show clubs what you can do on the pitch',
-        unlockCopy: 'Clubs see how you play, not just read about it.',
+        label: t('useProfileStrength.highlightVideo.label'),
+        noun: t('useProfileStrength.highlightVideo.noun'),
+        description: t('useProfileStrength.highlightVideo.description'),
+        unlockCopy: t('useProfileStrength.highlightVideo.unlockCopy'),
         weight: 15,
         completed: hasHighlightVideo(profile),
         action: { type: 'add-video' },
@@ -164,28 +166,28 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         // — beyond a curated reel. Action routes to the Media tab where
         // FullGameVideosSection lives (inside MediaTab).
         id: 'full-match-footage',
-        label: 'Upload full match footage',
-        noun: 'full match footage',
-        description: 'Add at least one full game video so recruiters can see you play across a whole match',
-        unlockCopy: 'Recruiters value full match footage above curated reels. It shows your work over a real game.',
+        label: t('useProfileStrength.fullMatch.label'),
+        noun: t('useProfileStrength.fullMatch.noun'),
+        description: t('useProfileStrength.fullMatch.description'),
+        unlockCopy: t('useProfileStrength.fullMatch.unlockCopy'),
         weight: 10,
         completed: fullGameVideoCount > 0,
         action: { type: 'tab', tab: 'media' },
       },
       {
         id: 'journey',
-        label: 'Add to your career history',
-        description: 'Add your clubs, milestones, or achievements',
-        unlockCopy: 'Shows where you have played and what you have achieved.',
+        label: t('useProfileStrength.journey.label'),
+        description: t('useProfileStrength.journey.description'),
+        unlockCopy: t('useProfileStrength.journey.unlockCopy'),
         weight: 10,
         completed: journeyCount > 0,
         action: { type: 'tab', tab: 'journey' },
       },
       {
         id: 'media-gallery',
-        label: 'Add a photo or video to your Gallery',
-        description: 'Build your visual portfolio for clubs to see',
-        unlockCopy: 'A visual portfolio beyond a single highlight clip.',
+        label: t('useProfileStrength.gallery.label'),
+        description: t('useProfileStrength.gallery.description'),
+        unlockCopy: t('useProfileStrength.gallery.unlockCopy'),
         weight: 5,
         completed: galleryCount > 0,
         // Gallery lives in MediaTab now (was inline in the old Profile
@@ -194,22 +196,22 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
       },
       {
         id: 'friends',
-        label: 'Make your first connection',
-        description: 'Add a friend to start building your trusted circle',
-        unlockCopy: 'Coaches and clubs can see the teammates you play with.',
+        label: t('useProfileStrength.friends.label'),
+        description: t('useProfileStrength.friends.description'),
+        unlockCopy: t('useProfileStrength.friends.unlockCopy'),
         weight: 5,
         completed: friendCount > 0,
         action: { type: 'tab', tab: 'friends' },
       },
       {
         id: 'references',
-        label: 'Get a trusted reference',
+        label: t('useProfileStrength.references.label'),
         // Plural noun reads naturally in "Profiles with trusted references
         // tend to..." — the imperative label would render as "Profiles with
         // get a trusted reference tend to..." which is ungrammatical.
-        noun: 'trusted references',
-        description: 'Ask a coach or teammate to vouch for you',
-        unlockCopy: 'A coach or teammate vouching for you carries weight with clubs.',
+        noun: t('useProfileStrength.references.noun'),
+        description: t('useProfileStrength.references.description'),
+        unlockCopy: t('useProfileStrength.references.unlockCopy'),
         weight: 15,
         completed: referenceCount > 0,
         // Routes to the dedicated References tab. Previously pointed to
@@ -228,15 +230,15 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         // of leaving it as the default false. Action routes to the
         // Profile tab where AvailabilityToggleStrip lives.
         id: 'availability',
-        label: 'Mark yourself open to play',
-        description: 'Let clubs and coaches know you\'re open to play',
-        unlockCopy: 'Recruiters filter for "Open to Play". Without it, you may not appear in their searches.',
+        label: t('useProfileStrength.availability.label'),
+        description: t('useProfileStrength.availability.description'),
+        unlockCopy: t('useProfileStrength.availability.unlockCopy'),
         weight: 5,
         completed: profile.open_to_play === true,
         action: { type: 'tab', tab: 'profile' },
       },
     ]
-  }, [profile, journeyCount, galleryCount, friendCount, referenceCount, fullGameVideoCount])
+  }, [profile, journeyCount, galleryCount, friendCount, referenceCount, fullGameVideoCount, t])
 
   const percentage = useMemo(() => {
     if (buckets.length === 0) return 0

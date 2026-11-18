@@ -9,6 +9,8 @@ import type { Database } from '@/lib/database.types'
 import { profilePath } from '@/lib/profileNavigation'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
+import { useProfileT } from '@/i18n/ns/profile'
+import { placeText } from '@/i18n/countryNames'
 
 /**
  * PublicConnectionsPage — the dedicated visitor Connections screen behind
@@ -31,14 +33,14 @@ type ConnectionRow =
 const PAGE_SIZE = 24
 const SEARCH_DEBOUNCE_MS = 300
 
-const ROLE_FILTERS: Array<{ value: string | null; label: string }> = [
-  { value: null, label: 'All' },
-  { value: 'player', label: 'Players' },
-  { value: 'coach', label: 'Coaches' },
-  { value: 'club', label: 'Clubs' },
-  { value: 'umpire', label: 'Umpires' },
-  { value: 'brand', label: 'Brands' },
-]
+const ROLE_FILTERS = [
+  { value: null, key: 'all' },
+  { value: 'player', key: 'players' },
+  { value: 'coach', key: 'coaches' },
+  { value: 'club', key: 'clubs' },
+  { value: 'umpire', key: 'umpires' },
+  { value: 'brand', key: 'brands' },
+] as const satisfies ReadonlyArray<{ value: string | null; key: string }>
 
 interface PublicConnectionsPageProps {
   profileId: string
@@ -46,6 +48,7 @@ interface PublicConnectionsPageProps {
 }
 
 export default function PublicConnectionsPage({ profileId, profileName }: PublicConnectionsPageProps) {
+  const t = useProfileT()
   const navigate = useNavigate()
   const [rows, setRows] = useState<ConnectionRow[]>([])
   const [total, setTotal] = useState<number | null>(null)
@@ -59,11 +62,11 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
   const fetchSeq = useRef(0)
 
   useEffect(() => {
-    const t = window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       const trimmed = searchInput.trim()
       setSearch(trimmed.length > 0 ? trimmed : null)
     }, SEARCH_DEBOUNCE_MS)
-    return () => window.clearTimeout(t)
+    return () => window.clearTimeout(timer)
   }, [searchInput])
 
   const fetchPage = useCallback(
@@ -105,7 +108,7 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
   }, [fetchPage])
 
   const hasMore = total !== null && rows.length < total
-  const firstName = profileName?.trim().split(/\s+/)[0] ?? 'this member'
+  const firstName = profileName?.trim().split(/\s+/)[0] ?? null
   const isFiltered = search !== null || roleFilter !== null
 
   return (
@@ -113,11 +116,11 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
           <Users className="h-5 w-5 text-hockia-primary" />
-          Connections
+          {t('publicConnectionsPage.title')}
         </h2>
         {total !== null && !loading && (
           <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 tabular-nums">
-            {total} {total === 1 ? 'connection' : 'connections'}
+            {t('publicConnectionsPage.count', { count: total })}
           </span>
         )}
       </div>
@@ -128,16 +131,16 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
           type="search"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search by name"
-          aria-label="Search connections by name"
+          placeholder={t('publicConnectionsPage.searchPlaceholder')}
+          aria-label={t('publicConnectionsPage.searchLabel')}
           className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/20"
         />
       </div>
 
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filter connections by role">
+      <div className="flex flex-wrap gap-2" role="group" aria-label={t('publicConnectionsPage.filterLabel')}>
         {ROLE_FILTERS.map((f) => (
           <button
-            key={f.label}
+            key={f.key}
             type="button"
             onClick={() => setRoleFilter(f.value)}
             aria-pressed={roleFilter === f.value}
@@ -146,7 +149,7 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
               chipTone(roleFilter === f.value)
             )}
           >
-            {f.label}
+            {t(`publicConnectionsPage.filters.${f.key}`)}
           </button>
         ))}
       </div>
@@ -166,15 +169,17 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
       ) : rows.length === 0 ? (
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-8 text-center text-sm text-gray-600">
           {isFiltered
-            ? 'No connections match your search.'
-            : `${firstName} has no connections to show yet.`}
+            ? t('publicConnectionsPage.noMatch')
+            : firstName
+              ? t('publicConnectionsPage.emptyNamed', { firstName })
+              : t('publicConnectionsPage.emptyAnon')}
         </div>
       ) : (
         <>
           <ul className="space-y-2">
             {rows.map((row) => {
               const path = profilePath(row.role, row.username, row.id)
-              const subtitle = row.current_club || row.base_location || null
+              const subtitle = row.current_club || placeText(row.base_location) || null
               return (
                 <li key={row.id}>
                   <button
@@ -190,7 +195,7 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-gray-900">
-                        {row.full_name ?? 'Hockia member'}
+                        {row.full_name ?? t('publicConnectionsPage.memberFallback')}
                       </p>
                       {subtitle && (
                         <p className="truncate text-xs text-gray-500">{subtitle}</p>
@@ -211,7 +216,7 @@ export default function PublicConnectionsPage({ profileId, profileName }: Public
                 onClick={() => void fetchPage(rows.length, true)}
                 className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
               >
-                {loadingMore ? 'Loading…' : `Show more (${rows.length} of ${total})`}
+                {loadingMore ? t('publicConnectionsPage.loadingMore') : t('publicConnectionsPage.showMore', { shown: rows.length, total })}
               </button>
             </div>
           )}

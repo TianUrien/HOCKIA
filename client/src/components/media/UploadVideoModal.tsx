@@ -8,6 +8,7 @@ import { useNativeVideoUpload } from '@/hooks/useNativeVideoUpload'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { fullMatchVisibilityOf } from '@/lib/recruiter'
+import { useMediaT } from '@/i18n/ns/media'
 
 /**
  * UploadVideoModal — native highlight-video upload (Cloudflare Stream).
@@ -23,6 +24,7 @@ interface UploadVideoModalProps {
 }
 
 export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = 'highlight' }: UploadVideoModalProps) {
+  const t = useMediaT()
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -63,10 +65,10 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
   useEffect(() => {
     if (phase === 'ready') {
       // small beat so the user sees the success state
-      const t = setTimeout(() => {
+      const timer = setTimeout(() => {
         onClose()
       }, 900)
-      return () => clearTimeout(t)
+      return () => clearTimeout(timer)
     }
   }, [phase, onClose])
 
@@ -100,12 +102,12 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <h2 id={titleId} className="flex items-center gap-2 text-lg font-bold text-gray-900">
             <Film className="h-5 w-5 text-hockia-primary" />
-            {kind === 'full_match' ? 'Upload full match' : 'Upload highlight video'}
+            {kind === 'full_match' ? t('uploadVideo.titleFullMatch') : t('uploadVideo.titleHighlight')}
           </h2>
           <button
             type="button"
             onClick={() => { if (busy) cancel(); onClose() }}
-            aria-label="Close"
+            aria-label={t('uploadVideo.close')}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           >
             <X className="h-5 w-5" />
@@ -116,28 +118,28 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
           {phase === 'ready' ? (
             <div className="flex flex-col items-center gap-3 py-6 text-center">
               <CheckCircle2 className="h-12 w-12 text-emerald-500" />
-              <p className="font-semibold text-gray-900">Video uploaded!</p>
-              <p className="text-sm text-gray-500">It's ready on your profile.</p>
+              <p className="font-semibold text-gray-900">{t('uploadVideo.readyTitle')}</p>
+              <p className="text-sm text-gray-500">{t('uploadVideo.readyBody')}</p>
             </div>
           ) : phase === 'processing' ? (
             <div className="flex flex-col items-center gap-3 py-6 text-center">
               <Loader2 className="h-10 w-10 animate-spin text-hockia-primary" />
-              <p className="font-semibold text-gray-900">Processing your video…</p>
-              <p className="text-sm text-gray-500">Cloudflare is preparing it for smooth playback. This can take a minute or two. You can keep using Hockia.</p>
+              <p className="font-semibold text-gray-900">{t('uploadVideo.processingTitle')}</p>
+              <p className="text-sm text-gray-500">{t('uploadVideo.processingBody')}</p>
             </div>
           ) : phase === 'uploading' || phase === 'creating' ? (
             <div className="py-4">
               <div className="mb-2 flex items-center justify-between text-sm">
                 <span className="font-medium text-gray-700">
-                  {phase === 'creating' ? 'Starting upload…' : 'Uploading…'}
+                  {phase === 'creating' ? t('uploadVideo.starting') : t('uploadVideo.uploading')}
                 </span>
-                <span className="tabular-nums text-gray-500">{progress}%</span>
+                <span className="tabular-nums text-gray-500">{t('uploadVideo.percent', { progress })}</span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
                 <div className="h-full rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary transition-all" style={{ width: `${progress}%` }} />
               </div>
               <button type="button" onClick={() => { cancel(); reset() }} className="mt-3 text-xs text-gray-500 hover:text-gray-700 hover:underline">
-                Cancel
+                {t('uploadVideo.cancelUpload')}
               </button>
             </div>
           ) : (
@@ -150,33 +152,33 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
               >
                 <UploadCloud className="h-8 w-8 text-hockia-primary" />
                 <span className="text-sm font-semibold text-gray-900">
-                  {file ? file.name : 'Choose a video file'}
+                  {file ? file.name : t('uploadVideo.chooseFile')}
                 </span>
-                <span className="text-xs text-gray-500">MP4, MOV, WebM · up to 1 GB · up to 10 min</span>
+                <span className="text-xs text-gray-500">{t('uploadVideo.fileLimits')}</span>
               </button>
               <input ref={fileInputRef} type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v" className="hidden" onChange={onPickFile} />
 
               <div>
-                <label htmlFor="video-title" className="mb-1 block text-sm font-medium text-gray-700">Title</label>
-                <Input id="video-title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 120))} placeholder="e.g. 2026 Season Highlights" />
+                <label htmlFor="video-title" className="mb-1 block text-sm font-medium text-gray-700">{t('uploadVideo.titleLabel')}</label>
+                <Input id="video-title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 120))} placeholder={t('uploadVideo.titlePlaceholder')} />
               </div>
 
               <div>
-                <label htmlFor="video-desc" className="mb-1 block text-sm font-medium text-gray-700">Description <span className="text-gray-400">(optional)</span></label>
+                <label htmlFor="video-desc" className="mb-1 block text-sm font-medium text-gray-700">{t('uploadVideo.descriptionLabel')} <span className="text-gray-400">{t('uploadVideo.optional')}</span></label>
                 <textarea
                   id="video-desc"
                   value={description}
                   onChange={(e) => setDescription(e.target.value.slice(0, 500))}
                   rows={2}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-hockia-primary"
-                  placeholder="A few words about this video"
+                  placeholder={t('uploadVideo.descriptionPlaceholder')}
                 />
               </div>
 
               <div>
-                <span className="mb-1 block text-sm font-medium text-gray-700">Who can watch</span>
+                <span className="mb-1 block text-sm font-medium text-gray-700">{t('uploadVideo.whoCanWatch')}</span>
                 <div className="grid grid-cols-2 gap-2">
-                  {([['public', 'Everyone'], ['recruiters', 'Clubs & coaches']] as const).map(([val, label]) => (
+                  {([['public', t('uploadVideo.everyone')], ['recruiters', t('uploadVideo.clubsAndCoaches')]] as const).map(([val, label]) => (
                     <button
                       key={val}
                       type="button"
@@ -193,21 +195,21 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
                   {visibility === 'recruiters'
-                    ? 'Only clubs and coaches who recruit can play this video.'
-                    : 'Anyone viewing your profile can play this video.'}
+                    ? t('uploadVideo.recruitersHint')
+                    : t('uploadVideo.publicHint')}
                 </p>
               </div>
 
               {(error || phase === 'error') && (
                 <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                   <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                  <span>{error ?? 'Something went wrong. Please try again.'}</span>
+                  <span>{error ?? t('uploadVideo.genericError')}</span>
                 </div>
               )}
 
               <div className="flex justify-end gap-2 pt-1">
-                <Button variant="outline" onClick={onClose}>Cancel</Button>
-                <Button onClick={handleSubmit} disabled={!file || !title.trim()}>Upload</Button>
+                <Button variant="outline" onClick={onClose}>{t('uploadVideo.cancel')}</Button>
+                <Button onClick={handleSubmit} disabled={!file || !title.trim()}>{t('uploadVideo.upload')}</Button>
               </div>
             </>
           )}

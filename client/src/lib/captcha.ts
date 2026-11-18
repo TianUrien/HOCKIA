@@ -27,6 +27,7 @@
  */
 
 import * as Sentry from '@sentry/react'
+import { tAuth } from '@/i18n/ns/auth'
 
 type TurnstileApi = {
   render: (el: HTMLElement, opts: Record<string, unknown>) => string
@@ -287,11 +288,19 @@ export function reportCaptchaCoverage(action: CaptchaAction): void {
   } catch { /* never block sign-in on reporting */ }
 }
 
-/** "We couldn't run the bot check" in plain words: what happened and what to do. */
+/**
+ * "We couldn't run the bot check" in plain words: what happened and what to do.
+ * @deprecated English only, kept for callers not yet translated; use `captchaFailedCopy()`.
+ */
 export const CAPTCHA_FAILED_COPY = 'We couldn’t finish the security check. Check your connection and try again.'
+
+/** The same message in the interface language. */
+export function captchaFailedCopy(): string {
+  return tAuth('captcha.failed')
+}
 
 /** Supabase's refusal when the token is missing or invalid, in plain words (null for other errors). */
 export function captchaErrorMessage(message: string | undefined): string | null {
   if (!message) return null
-  return /captcha/i.test(message) ? CAPTCHA_FAILED_COPY : null
+  return /captcha/i.test(message) ? captchaFailedCopy() : null
 }

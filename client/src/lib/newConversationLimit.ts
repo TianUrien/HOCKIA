@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { tInbox } from '@/i18n/ns/inbox'
 
 /**
  * Daily allowance for NEW conversations (the first message to someone the
@@ -10,6 +11,12 @@ import { logger } from '@/lib/logger'
 export const NEW_CONVERSATION_LIMIT_MESSAGE =
   "You've started a lot of new conversations today. You can start more tomorrow."
 export const NEW_CONVERSATION_LIMIT_CODE = 'new_conversation_limit'
+
+/** The refusal as a member reads it, in the interface language. The constant
+ *  above stays English: it is the database's text, used to recognise the error. */
+export function newConversationLimitMessage(): string {
+  return tInbox('newConversationLimit.message')
+}
 
 type ErrorLike = { message?: unknown; details?: unknown } | null | undefined
 

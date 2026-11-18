@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Plus, Check, Loader2 } from 'lucide-react'
 import { useShortlists } from '@/hooks/useShortlists'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 interface MoveToShortlistMenuProps {
   /** Anchor — picker renders inside the parent so position it with
@@ -40,8 +41,10 @@ export default function MoveToShortlistMenu({
   onClose,
   onPick,
   currentShortlistId,
-  title = 'Move to…',
+  title: titleProp,
 }: MoveToShortlistMenuProps) {
+  const t = useRecruitingT()
+  const title = titleProp ?? t('moveToShortlist.defaultTitle')
   const { lists, loading, create } = useShortlists()
   const [creating, setCreating] = useState(false)
   const [draft, setDraft] = useState('')
@@ -106,11 +109,11 @@ export default function MoveToShortlistMenu({
         {loading && lists.length === 0 ? (
           <div className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            Loading lists…
+            {t('moveToShortlist.loading')}
           </div>
         ) : lists.length === 0 ? (
           <p className="px-3 py-3 text-xs text-gray-500 italic">
-            No lists yet. Create one below.
+            {t('moveToShortlist.empty')}
           </p>
         ) : (
           lists.map((list) => {
@@ -132,12 +135,12 @@ export default function MoveToShortlistMenu({
                   {list.name}
                   {list.is_default && (
                     <span className="ml-1.5 text-[9px] uppercase tracking-wider text-hockia-primary font-bold">
-                      default
+                      {t('moveToShortlist.defaultTag')}
                     </span>
                   )}
                 </span>
                 {isCurrent ? (
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400">current</span>
+                  <span className="text-[10px] uppercase tracking-wider text-gray-400">{t('moveToShortlist.currentTag')}</span>
                 ) : (
                   <span className="text-[10px] text-gray-400">{list.item_count}</span>
                 )}
@@ -159,7 +162,7 @@ export default function MoveToShortlistMenu({
                 if (e.key === 'Enter') void handleCreateAndPick()
                 if (e.key === 'Escape') { setCreating(false); setDraft('') }
               }}
-              placeholder="New list name"
+              placeholder={t('moveToShortlist.namePlaceholder')}
               className="flex-1 min-w-0 px-2 py-1.5 border border-gray-200 rounded text-xs focus-visible:ring-2 focus-visible:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
             />
             <button
@@ -167,7 +170,7 @@ export default function MoveToShortlistMenu({
               onClick={handleCreateAndPick}
               disabled={busy || !draft.trim()}
               className="p-1.5 rounded text-hockia-primary hover:bg-hockia-primary/10 disabled:opacity-40"
-              aria-label="Create and add"
+              aria-label={t('moveToShortlist.createAndAdd')}
             >
               <Check className="w-4 h-4" />
             </button>
@@ -179,7 +182,7 @@ export default function MoveToShortlistMenu({
             className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-hockia-primary hover:bg-hockia-primary/5 rounded"
           >
             <Plus className="w-3.5 h-3.5" />
-            New list
+            {t('moveToShortlist.newList')}
           </button>
         )}
       </div>

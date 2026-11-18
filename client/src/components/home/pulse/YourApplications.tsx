@@ -4,6 +4,7 @@ import { useMyApplications } from '@/hooks/useMyApplications'
 import { SectionHeader } from './SectionHeader'
 import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
 import { applicationStatusPill } from '@/lib/opportunityCopy'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * "Your applications" (Home redesign V2, player Pulse). The anxiety-loop
@@ -28,6 +29,7 @@ function statusPill(status: string, appliedAt: string | null, roleOpen: boolean,
 }
 
 export function YourApplications({ enabled }: { enabled: boolean }) {
+  const t = useHomeT()
   const navigate = useNavigate()
   const { applications, loading } = useMyApplications(enabled)
   const ref = useImpressionOnce(() => recordModuleImpression(MODULE_ID, POSITION))
@@ -39,8 +41,8 @@ export function YourApplications({ enabled }: { enabled: boolean }) {
   return (
     <section ref={ref} className="mb-6">
       <SectionHeader
-        title="Your applications"
-        chip={{ label: `${applications.length} active`, tone: 'new' }}
+        title={t('yourApplications.title')}
+        chip={{ label: t('yourApplications.activeChip', { count: applications.length }), tone: 'new' }}
       />
       <div className="space-y-2">
         {applications.map((app) => {

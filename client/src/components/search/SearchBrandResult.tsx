@@ -1,25 +1,24 @@
 import { Link } from 'react-router-dom'
 import { Store, BadgeCheck } from 'lucide-react'
 import type { SearchBrandResult as SearchBrandResultType } from '@/hooks/useSearch'
+import { useWorldT } from '@/i18n/ns/world'
+import { useEnumsT } from '@/i18n/ns/enums'
+
+/** Separator between facts; punctuation, not copy. */
+const DOT = '·'
 
 interface SearchBrandResultProps {
   result: SearchBrandResultType
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  equipment: 'Equipment',
-  apparel: 'Apparel',
-  accessories: 'Accessories',
-  nutrition: 'Nutrition',
-  technology: 'Technology',
-  coaching: 'Coaching & Training',
-  recruiting: 'Recruiting',
-  media: 'Media',
-  services: 'Services',
-  other: 'Other',
-}
+/** Categories with a label in the shared enums catalog (enums:brandCategory.*). */
+const CATEGORIES = ['equipment', 'apparel', 'accessories', 'nutrition', 'technology', 'coaching', 'recruiting', 'media', 'services', 'other'] as const
+type Category = (typeof CATEGORIES)[number]
+const isCategory = (value: string): value is Category => (CATEGORIES as readonly string[]).includes(value)
 
 export function SearchBrandResult({ result }: SearchBrandResultProps) {
+  const t = useWorldT()
+  const tEnums = useEnumsT()
   return (
     <Link
       to={`/brands/${result.brand_slug}`}
@@ -37,17 +36,17 @@ export function SearchBrandResult({ result }: SearchBrandResultProps) {
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-semibold text-gray-900 truncate">{result.brand_name}</span>
             {result.brand_is_verified && (
-              <BadgeCheck className="w-4 h-4 text-positive flex-shrink-0" aria-label="Verified brand" />
+              <BadgeCheck className="w-4 h-4 text-positive flex-shrink-0" aria-label={t('searchResults.verifiedBrand')} />
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
             {result.brand_category && (
               <span className="text-xs text-gray-500">
-                {CATEGORY_LABELS[result.brand_category] || result.brand_category}
+                {isCategory(result.brand_category) ? tEnums(`brandCategory.${result.brand_category}`) : result.brand_category}
               </span>
             )}
             {result.brand_bio && result.brand_category && (
-              <span className="text-xs text-gray-500">&middot;</span>
+              <span className="text-xs text-gray-500">{DOT}</span>
             )}
             {result.brand_bio && (
               <span className="text-xs text-gray-400 truncate">
@@ -57,7 +56,7 @@ export function SearchBrandResult({ result }: SearchBrandResultProps) {
           </div>
         </div>
         <span className="text-[10px] font-medium text-[#be123c] bg-[#E11D48]/10 px-2 py-0.5 rounded-full flex-shrink-0">
-          Brand
+          {tEnums('role.brand')}
         </span>
       </div>
     </Link>

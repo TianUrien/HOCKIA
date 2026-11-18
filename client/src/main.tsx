@@ -20,6 +20,8 @@ import { showUpdatePrompt } from './lib/updatePromptRoot'
 import { Capacitor } from '@capacitor/core'
 import { hasAnalyticsConsent, enableGA4 } from './lib/cookieConsent'
 import { initPostHog } from './lib/posthog'
+import { applyResolvedLanguage, startupNeedsCatalogs } from './i18n'
+import { LanguageBoundary } from './i18n/LanguageBoundary'
 
 // Register the service worker (production builds only; the dev server has no
 // /sw.js). Prompt-based updates — the page never reloads on its own on the
@@ -118,7 +120,9 @@ export function RootApp() {
         <QueryClientProvider client={queryClient}>
           {/* The cookie banner lives inside App's router (next to
               InstallPrompt) so it can stay off the auth and onboarding routes. */}
-          <App />
+          <LanguageBoundary>
+            <App />
+          </LanguageBoundary>
           {/* Last sibling: releases the native launch splash once the first
               frame is real (see components/LaunchSplashController). */}
           <LaunchSplashController />
@@ -137,6 +141,15 @@ warmLaunchArtwork()
 // commit (no white home-indicator band under the in-app splash on iOS).
 paintBootLaunchCanvas()
 
-createRoot(document.getElementById('root')!).render(<RootApp />)
+// Interface language: English renders at once. Any other stored choice waits
+// for its catalogs (bundled on native, cached on the web) so the first frame
+// is already in that language; after 2 s it starts in English and switches
+// when they arrive.
+const mount = () => createRoot(document.getElementById('root')!).render(<RootApp />)
+if (startupNeedsCatalogs()) {
+  void Promise.race([applyResolvedLanguage(), new Promise((resolve) => setTimeout(resolve, 2000))]).finally(mount)
+} else {
+  mount()
+}
 
 export default RootApp

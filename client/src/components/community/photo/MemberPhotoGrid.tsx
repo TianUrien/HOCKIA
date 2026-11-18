@@ -21,6 +21,7 @@ import { MemberPhotoCard } from './MemberPhotoCard'
 import { ClubWideCard } from './ClubWideCard'
 import { packWideCards } from '@/lib/communityGridPack'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useCommunityT } from '@/i18n/ns/community'
 
 const MemberFullPreview = lazy(() => import('./MemberFullPreview'))
 
@@ -56,7 +57,9 @@ interface BlockedToast {
 
 const UNDO_MS = 5000
 
-export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, contextLabel = 'All members', onAdjustFilters }: MemberPhotoGridProps) {
+export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, contextLabel: contextLabelProp, onAdjustFilters }: MemberPhotoGridProps) {
+  const t = useCommunityT()
+  const contextLabel = contextLabelProp ?? t('photoGrid.allMembers')
   const { countries } = useCountries()
   const viewerId = useAuthStore((s) => s.user?.id ?? null)
   const addToast = useToastStore((s) => s.addToast)
@@ -89,8 +92,8 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
 
   useEffect(() => {
     if (!blocked) return
-    const t = window.setTimeout(() => setBlocked(null), Math.max(0, UNDO_MS - (Date.now() - blocked.at)))
-    return () => window.clearTimeout(t)
+    const timer = window.setTimeout(() => setBlocked(null), Math.max(0, UNDO_MS - (Date.now() - blocked.at)))
+    return () => window.clearTimeout(timer)
   }, [blocked])
 
   const undoBlock = async () => {
@@ -105,7 +108,7 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
       invalidateFriendshipEdges()
     } catch (err) {
       logger.error('[MemberPhotoGrid] undo block failed', err)
-      addToast('Couldn’t undo the block. You can unblock in Settings.', 'error')
+      addToast(t('photoGrid.undoBlockFailed'), 'error')
     }
   }
 
@@ -133,7 +136,7 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
             return (
               <div key={m.id} className="col-span-full" data-testid="community-club-wide">
                 <ClubWideCard
-                  name={m.full_name?.trim() || 'Club'}
+                  name={m.full_name?.trim() || t('photoGrid.clubFallbackName')}
                   meta={meta}
                   coverUrl={batch.isPending(m.id) ? null : cover}
                   crestUrl={m.avatar_url}
@@ -190,9 +193,9 @@ export function MemberPhotoGrid({ members, fitById, openProfile, deckMembers, co
       {blocked && (
         <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+76px)] z-50 flex justify-center px-4" role="status" aria-live="polite">
           <div className="pointer-events-auto flex w-full max-w-[361px] items-center justify-between gap-3 rounded-2xl bg-ink-1 py-3 pl-4 pr-2 text-white shadow-lg" data-testid="block-undo-toast">
-            <span className="min-w-0 truncate text-row">{blocked.member.full_name?.trim() || 'Member'} is blocked</span>
+            <span className="min-w-0 truncate text-row">{t('photoGrid.blocked', { name: blocked.member.full_name?.trim() || t('photoGrid.memberFallbackName') })}</span>
             <button type="button" onClick={() => void undoBlock()} className="shrink-0 rounded-full px-3 py-1.5 text-row font-semibold text-white">
-              Undo
+              {t('photoGrid.undo')}
             </button>
           </div>
         </div>

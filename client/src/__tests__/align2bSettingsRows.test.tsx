@@ -68,8 +68,9 @@ describe('Settings · hub rows', () => {
     const privacy = rowOf('Privacy')
     expect(privacy.textContent).toContain('Clubs & coaches')
     expect(privacy.querySelector('.rounded-tile')).not.toBeNull()
-    // The app Language row is gone (founder 2026-10-26, rebrand page 23); "Languages" spoken stays.
-    expect(screen.queryByText('Language')).toBeNull()
+    // The interface language switch is back as its own group (Spanish beta, 2026-11-16); "Languages" spoken stays.
+    expect(screen.getByText('Language')).toBeTruthy()
+    expect(screen.getByTestId('language-switch')).toBeTruthy()
     const account = rowOf('Email & sign-in')
     expect(account.textContent).toContain('Google')
     expect(account.querySelector('svg.lucide-chevron-right')).not.toBeNull()

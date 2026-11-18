@@ -26,6 +26,9 @@
  *     bug fixed on 2026-08-13, where the grid and the copy disagreed.
  */
 
+import { currentAiLanguage, type MemberLanguage } from './ai-language.ts'
+import { spanishPlaceName } from './country-names-es.ts'
+
 export type GeoSofteningStep = 'city' | 'region' | 'worldwide'
 
 /**
@@ -143,7 +146,8 @@ export interface SofteningCopyInput {
  * The sentence that tells the user we widened, and how far. Always shown —
  * this is the honesty half of the feature, not decoration.
  */
-export function describeSoftening(step: GeoSofteningStep, o: SofteningCopyInput): string {
+export function describeSoftening(step: GeoSofteningStep, o: SofteningCopyInput, lang: MemberLanguage = currentAiLanguage()): string {
+  if (lang === 'es') return describeSofteningEs(step, o)
   const city = safeLabel(o.cityLabel)
   const country = safeLabel(o.countryLabel)
   const region = safeLabel(o.regionLabel)
@@ -171,5 +175,32 @@ export function describeSoftening(step: GeoSofteningStep, o: SofteningCopyInput)
         : `No ${o.noun} in ${asked} on HOCKIA yet, but ${found} nearby.`
     case 'worldwide':
       return `No ${o.noun} in ${asked} on HOCKIA yet, but ${found} from elsewhere in the world.`
+  }
+}
+
+/** Spanish copy (Stage 3); `noun` / `nounSingular` arrive already in Spanish. */
+function describeSofteningEs(step: GeoSofteningStep, o: SofteningCopyInput): string {
+  const city = safeLabel(o.cityLabel)
+  // Countries and regions arrive as the table stores them (English).
+  const countryRaw = safeLabel(o.countryLabel)
+  const regionRaw = safeLabel(o.regionLabel)
+  const country = countryRaw ? spanishPlaceName(countryRaw) : countryRaw
+  const region = regionRaw ? spanishPlaceName(regionRaw) : regionRaw
+  const noun = o.count === 1 ? (o.nounSingular ?? o.noun) : o.noun
+  const found = `hay ${o.count} ${noun}`
+  const asked = city ?? country ?? 'esa zona'
+  switch (step) {
+    case 'city': {
+      const sameLabel = !city || !country || city.toLowerCase() === country.toLowerCase()
+      return sameLabel
+        ? `Hay ${o.count} ${noun} en ${country ?? asked}.`
+        : `No hay ${o.noun} en la ciudad de ${city}, pero ${found} en otra parte de ${country}.`
+    }
+    case 'region':
+      return region
+        ? `Todavía no hay ${o.noun} en ${asked} en Hockia, pero ${found} en otra parte de ${region}.`
+        : `Todavía no hay ${o.noun} en ${asked} en Hockia, pero ${found} cerca.`
+    case 'worldwide':
+      return `Todavía no hay ${o.noun} en ${asked} en Hockia, pero ${found} en otras partes del mundo.`
   }
 }

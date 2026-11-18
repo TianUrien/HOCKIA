@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { DECLINE_REASON_CHIPS } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
+import { currentLanguage } from '@/i18n'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * Decline sheet (Figma 04 Club · Decline 326:528; DEV NOTE 327:576). The
@@ -30,6 +32,7 @@ interface DeclineSheetProps {
 const MAX = 600
 
 export function DeclineSheet({ open, applicationId, firstName, hasName = true, onCancel, onSend, initialReason = null }: DeclineSheetProps) {
+  const t = useRecruitingT()
   const [reason, setReason] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [edited, setEdited] = useState(false)
@@ -50,7 +53,7 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
     setDrafting(true)
     void (async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('application-feedback', { body: { mode: 'draft', application_id: applicationId, reason } })
+        const { data, error } = await supabase.functions.invoke('application-feedback', { body: { mode: 'draft', application_id: applicationId, reason, locale: currentLanguage() } })
         if (req !== reqRef.current) return
         if (error) throw error
         const msg = (data as { message?: string } | null)?.message ?? ''
@@ -68,13 +71,13 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
   const canSend = Boolean(reason) && note.trim().length > 0 && note.length <= MAX && !drafting
 
   return (
-    <BottomSheet open={open} onClose={onCancel} ariaLabel={`${firstName} is not a fit`}>
+    <BottomSheet open={open} onClose={onCancel} ariaLabel={t('declineSheet.ariaLabel', { name: firstName })}>
       <div className="flex flex-col gap-3.5 px-5 pb-6 pt-1" data-testid="decline-sheet">
         <div className="pt-1">
-          <h2 className="text-[22px] font-bold leading-7 tracking-[-0.11px] text-ink-1">Not a fit: {firstName}</h2>
-          <p className="mt-1 text-[14px] leading-5 text-ink-2">{hasName ? `Pick a reason. Hockia writes ${firstName} a kind note from it. Change anything before it goes.` : 'Pick a reason. Hockia turns it into a kind note. Change anything before it goes.'}</p>
+          <h2 className="text-[22px] font-bold leading-7 tracking-[-0.11px] text-ink-1">{t('declineSheet.title', { name: firstName })}</h2>
+          <p className="mt-1 text-[14px] leading-5 text-ink-2">{hasName ? t('declineSheet.intro', { name: firstName }) : t('declineSheet.introNoName')}</p>
         </div>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Reason">
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t('declineSheet.reasonLabel')}>
           {DECLINE_REASON_CHIPS.map((r) => (
             <button
               key={r.code}
@@ -92,32 +95,32 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
           <div className="flex flex-col gap-2 rounded-card bg-surface-grouped p-3.5 focus-within:ring-2 focus-within:ring-focus-ring">
             {showsAiDraft ? (
               <span className="flex items-center gap-1.5 text-caption font-semibold text-hockia-primary" data-testid="decline-note-ai">
-                <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> {drafting ? 'Drafting with Hockia AI…' : 'Drafted by Hockia AI · tap to edit'}
+                <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> {drafting ? t('declineSheet.drafting') : t('declineSheet.drafted')}
               </span>
             ) : (
-              <span className="text-caption font-semibold text-ink-2" data-testid="decline-note-own">Your note</span>
+              <span className="text-caption font-semibold text-ink-2" data-testid="decline-note-own">{t('declineSheet.ownNote')}</span>
             )}
             <textarea
               value={note}
               onChange={(e) => { setNote(e.target.value); setEdited(true) }}
               rows={Math.max(4, Math.ceil(note.length / 40))}
               maxLength={MAX}
-              aria-label={`Note to ${firstName}`}
-              placeholder={drafting ? '' : `Write a short note to ${firstName}`}
+              aria-label={t('declineSheet.noteLabel', { name: firstName })}
+              placeholder={drafting ? '' : t('declineSheet.notePlaceholder', { name: firstName })}
               className="w-full resize-none bg-transparent text-[15px] leading-[21px] text-ink-1 outline-none focus-visible:outline-none placeholder:text-ink-3"
             />
           </div>
         )}
-        <p className="text-caption text-ink-3">This note appears on the application and in the email about it.</p>
+        <p className="text-caption text-ink-3">{t('declineSheet.footer')}</p>
         <button
           type="button"
           disabled={!canSend}
           onClick={() => reason && onSend(reason, note.trim())}
           className="flex h-12 w-full items-center justify-center rounded-full bg-status-danger text-body font-semibold text-white active:bg-status-danger-strong disabled:opacity-40"
         >
-          Send the note
+          {t('declineSheet.send')}
         </button>
-        <button type="button" onClick={onCancel} className="flex min-h-11 w-full items-center justify-center text-body font-semibold text-hockia-primary">Cancel</button>
+        <button type="button" onClick={onCancel} className="flex min-h-11 w-full items-center justify-center text-body font-semibold text-hockia-primary">{t('declineSheet.cancel')}</button>
       </div>
     </BottomSheet>
   )

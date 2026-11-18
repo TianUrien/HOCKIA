@@ -52,11 +52,13 @@ import { useProfileVideoTotal } from '@/hooks/useProfileVideoTotal'
 import { useClubViewOfPlayer } from '@/hooks/useClubViewOfPlayer'
 import { useCountries } from '@/hooks/useCountries'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
-import { RECRUITER_MINOR_MESSAGE, recruiterCannotStartWith } from '@/lib/recruiterMinor'
+import { recruiterMinorMessage, recruiterCannotStartWith } from '@/lib/recruiterMinor'
 import type { KeyFactAction, KeyFactsViewer } from '@/lib/keyFacts'
 import type { ChecklistKey } from '@/lib/openToPlayScreen'
 import PlayerProfileV2 from '@/components/profile/v2/PlayerProfileV2'
 import { roleTitle } from '@/lib/homeEngagement'
+import { useProfileT } from '@/i18n/ns/profile'
+import { countryLabel } from '@/i18n/countryNames'
 
 // D2 owner leaves — lazy so they stay out of the profile chunk until opened.
 const PassportsPermitsScreen = lazy(() => import('@/components/profile/mobile/PassportsPermitsScreen'))
@@ -138,6 +140,7 @@ interface PlayerDashboardProps {
 }
 
 export default function PlayerDashboard({ profileData, readOnly = false, isOwnProfile = false, viewerRole }: PlayerDashboardProps) {
+  const t = useProfileT()
   const { profile: authProfile, user } = useAuthStore()
   const profile = (profileData ?? authProfile) as PlayerProfileShape | null
   const navigate = useNavigate()
@@ -187,38 +190,38 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   // "My Network" to disambiguate from the global /community route.
   const visitedName = readOnly ? profile?.full_name : null
   const ownerTabTitle: Record<TabType, string> = {
-    profile: 'Player dashboard',
-    edit: 'Edit profile',
-    media: 'Media',
-    videos: 'Videos',
-    gallery: 'Photos',
-    journey: 'Career history',
-    references: 'References',
-    friends: 'Connections',
-    comments: 'Comments',
-    posts: 'Posts',
-    community: 'My Network',
-    passports: 'Passports & permits',
-    'open-to-play': 'Open to play',
+    profile: t('playerDashboard.ownerTitle.profile'),
+    edit: t('playerDashboard.ownerTitle.edit'),
+    media: t('playerDashboard.ownerTitle.media'),
+    videos: t('playerDashboard.ownerTitle.videos'),
+    gallery: t('playerDashboard.ownerTitle.gallery'),
+    journey: t('playerDashboard.ownerTitle.journey'),
+    references: t('playerDashboard.ownerTitle.references'),
+    friends: t('playerDashboard.ownerTitle.friends'),
+    comments: t('playerDashboard.ownerTitle.comments'),
+    posts: t('playerDashboard.ownerTitle.posts'),
+    community: t('playerDashboard.ownerTitle.community'),
+    passports: t('playerDashboard.ownerTitle.passports'),
+    'open-to-play': t('playerDashboard.ownerTitle.openToPlay'),
   }
   const visitorTabSuffix: Record<TabType, string | null> = {
     profile: null,
     edit: null,
-    media: 'Media',
-    videos: 'Videos',
-    gallery: 'Photos',
-    journey: 'Career history',
-    references: 'References',
-    friends: 'Connections',
-    comments: 'Comments',
-    posts: 'Posts',
-    community: 'Community',
+    media: t('playerDashboard.visitorTitle.media'),
+    videos: t('playerDashboard.visitorTitle.videos'),
+    gallery: t('playerDashboard.visitorTitle.gallery'),
+    journey: t('playerDashboard.visitorTitle.journey'),
+    references: t('playerDashboard.visitorTitle.references'),
+    friends: t('playerDashboard.visitorTitle.friends'),
+    comments: t('playerDashboard.visitorTitle.comments'),
+    posts: t('playerDashboard.visitorTitle.posts'),
+    community: t('playerDashboard.visitorTitle.community'),
     passports: null,
     'open-to-play': null,
   }
   const computedTitle = visitedName
     ? visitorTabSuffix[activeTab]
-      ? `${visitedName} · ${visitorTabSuffix[activeTab]}`
+      ? t('playerDashboard.visitorTitle.withSection', { name: visitedName, section: visitorTabSuffix[activeTab] })
       : visitedName
     : ownerTabTitle[activeTab]
   useDocumentTitle(computedTitle)
@@ -490,7 +493,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     }
     if (!profileData) return
     if (user.id === profileData.id) {
-      addToast('You cannot message yourself.', 'error')
+      addToast(t('playerDashboard.message.self'), 'error')
       return
     }
 
@@ -517,13 +520,13 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       } else if (recruiterCannotStartWith(authProfile, profileData.server_age)) {
         // Founder ruling 2026-10-06: clubs and recruiting coaches cannot start a
         // conversation with an under-18 (existing conversations still open above).
-        addToast(RECRUITER_MINOR_MESSAGE, 'info')
+        addToast(recruiterMinorMessage(), 'info')
       } else {
         navigate(`/messages?new=${profileData.id}`, { state: { returnTo, messageOrigin: 'Profile' } })
       }
     } catch (error) {
       logger.error('Error starting conversation:', error)
-      addToast('Failed to start conversation. Please try again.', 'error')
+      addToast(t('playerDashboard.message.failed'), 'error')
     } finally {
       setSendingMessage(false)
     }
@@ -675,7 +678,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             className="hidden items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors lg:flex"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Back</span>
+            <span className="text-sm font-medium">{t('playerDashboard.nav.back')}</span>
           </button>
         )}
 
@@ -694,7 +697,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">
-              {readOnly ? 'Back to profile' : 'Back to dashboard'}
+              {readOnly ? t('playerDashboard.nav.backToProfile') : t('playerDashboard.nav.backToDashboard')}
             </span>
           </button>
         )}
@@ -820,13 +823,13 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 return (
                   <PermitAttentionRow
                     key={permit.id}
-                    permit={{ id: permit.id, type: permit.type, expires_on: permit.expires_on, status: permit.status, countryName: c ? c.common_name || c.name : 'Your', flag: c?.flag_emoji ?? null }}
+                    permit={{ id: permit.id, type: permit.type, expires_on: permit.expires_on, status: permit.status, countryName: c ? countryLabel(c.common_name || c.name) : t('playerDashboard.keyFacts.permitFallbackOwner'), flag: c?.flag_emoji ?? null }}
                     onClick={() => openOwnerLeaf('passports')}
                   />
                 )
               })}
               {!readOnly && (
-                <p className="text-caption text-ink-2" data-testid="key-facts-hint">Clubs see these six first. Complete profiles are suggested to clubs more often.</p>
+                <p className="text-caption text-ink-2" data-testid="key-facts-hint">{t('playerDashboard.keyFacts.hint')}</p>
               )}
             </div>
           ) : null}
@@ -893,18 +896,18 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               hasPreviewBanner={readOnly && isOwnProfile}
               sections={[
                 ...(((profile as Profile).career_entry_count ?? 0) > 0
-                  ? [{ id: 'portfolio-journey', label: 'Career' }]
+                  ? [{ id: 'portfolio-journey', label: t('playerDashboard.portfolioNav.career') }]
                   : []),
                 ...(((profile as Profile).accepted_reference_count ?? 0) > 0
-                  ? [{ id: 'community-references', label: 'References' }]
+                  ? [{ id: 'community-references', label: t('playerDashboard.portfolioNav.references') }]
                   : []),
-                { id: 'portfolio-media', label: 'Media' },
+                { id: 'portfolio-media', label: t('playerDashboard.portfolioNav.media') },
                 ...(((profile as Profile).accepted_friend_count ?? 0) > 0
-                  ? [{ id: 'community-connections', label: 'Connections' }]
+                  ? [{ id: 'community-connections', label: t('playerDashboard.portfolioNav.connections') }]
                   : []),
-                { id: 'community-comments', label: 'Comments' },
+                { id: 'community-comments', label: t('playerDashboard.portfolioNav.comments') },
                 ...(((profile as Profile).post_count ?? 0) > 0
-                  ? [{ id: 'community-posts', label: 'Posts' }]
+                  ? [{ id: 'community-posts', label: t('playerDashboard.portfolioNav.posts') }]
                   : []),
               ]}
             />
@@ -920,7 +923,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                   profileId={profile.id}
                   readOnly
                   variant="inline"
-                  title="Career history"
+                  title={t('playerDashboard.careerTitle')}
                 />
               </div>
             </div>
@@ -1002,7 +1005,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                   <JourneyTab
                     profileId={profile.id}
                     readOnly={readOnly}
-                    {...(readOnly ? { variant: 'inline' as const, title: 'Career history' } : {})}
+                    {...(readOnly ? { variant: 'inline' as const, title: t('playerDashboard.careerTitle') } : {})}
                   />
                 </div>
               )}
@@ -1030,14 +1033,16 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                     // system (reconciled Connections design).
                     <div className="flex flex-col items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-6">
                       <p className="text-sm text-gray-600">
-                        Sign in to see {profile.full_name ?? 'this member'}&apos;s connections.
+                        {profile.full_name
+                          ? t('playerDashboard.friendsSignIn.body', { name: profile.full_name })
+                          : t('playerDashboard.friendsSignIn.bodyNoName')}
                       </p>
                       <button
                         type="button"
                         onClick={() => navigate('/signin')}
                         className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                       >
-                        Sign in
+                        {t('playerDashboard.friendsSignIn.button')}
                       </button>
                     </div>
                   ) : readOnly ? (
@@ -1130,8 +1135,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
-        title="Sign in to message"
-        message="Sign in to message this player and see more about their profile."
+        title={t('playerDashboard.signInPrompt.title')}
+        message={t('playerDashboard.signInPrompt.message')}
       />
     </div>
   )

@@ -205,7 +205,7 @@ Deno.serve(async (req: Request) => {
     const templateVars = {
       opportunity_title: opportunity.title,
       applicant_name: applicant.full_name?.trim() || 'Player',
-      applicant_position: positions.join(' \u2022 '),
+      applicant_position: positions.join(', '),
       applicant_location: applicant.base_location?.trim() || '',
       applicant_avatar_url: applicant.avatar_url || '',
       avatar_role: applicant.role || '',

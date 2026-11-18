@@ -13,6 +13,7 @@ import {
   trackPushPromptShown,
   trackPushPromptDismiss,
 } from '@/lib/analytics'
+import { useCommonT } from '@/i18n/ns/common'
 
 /**
  * Routes where the push ask must NEVER render (onboarding QA 2026-10-04):
@@ -29,6 +30,7 @@ const PUSH_PROMPT_HIDDEN_PREFIXES = [
   '/reset-password',
 ] as const
 
+/** The English source text of pushAsk.title / pushAsk.body in the common catalog (kept for the tests that import them). */
 export const PUSH_ASK_TITLE = 'Stay in the loop'
 export const PUSH_ASK_BODY = 'Get notified about messages, applications and opportunities, even when the app is closed.'
 
@@ -41,6 +43,7 @@ export const PUSH_ASK_BODY = 'Get notified about messages, applications and oppo
  * The permission and subscription logic is unchanged (usePushSubscription).
  */
 export default function PushPrompt() {
+  const t = useCommonT()
   const push = usePushSubscription()
   const location = useLocation()
   // Signed in AND onboarding complete, from the live session.
@@ -81,12 +84,12 @@ export default function PushPrompt() {
   // (Terms gate, cookie banner) wins first; the cleanup cancels it then.
   useEffect(() => {
     if (!visible || open) return
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       trackPushPromptShown()
       markPushAskDone(userId)
       setOpen(true)
     }, 0)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timer)
   }, [visible, open, userId])
 
   const close = () => {
@@ -115,19 +118,19 @@ export default function PushPrompt() {
   if (typeof window !== 'undefined' && (window as unknown as { __PRERENDER__?: boolean }).__PRERENDER__) return null
 
   return (
-    <BottomSheet open={open} onClose={handleDismiss} ariaLabel={PUSH_ASK_TITLE} initialFocus="panel">
+    <BottomSheet open={open} onClose={handleDismiss} ariaLabel={t('pushAsk.title')} initialFocus="panel">
       <div className="flex flex-col items-center gap-3 px-6 pb-4 pt-3 text-center" data-testid="push-ask-sheet">
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand-primary" aria-hidden="true">
           <Bell className="h-7 w-7" strokeWidth={2} />
         </span>
-        <h2 className="text-title text-ink-1">{PUSH_ASK_TITLE}</h2>
-        <p className="text-row text-ink-2">{PUSH_ASK_BODY}</p>
+        <h2 className="text-title text-ink-1">{t('pushAsk.title')}</h2>
+        <p className="text-row text-ink-2">{t('pushAsk.body')}</p>
         <div className="mt-2 flex w-full flex-col gap-2">
           <Button variant="primary" size="large" block onClick={() => void handleEnable()} loading={push.loading}>
-            Turn on notifications
+            {t('pushAsk.enable')}
           </Button>
           <Button variant="tertiary" size="large" block onClick={handleDismiss}>
-            Not now
+            {t('pushAsk.notNow')}
           </Button>
         </div>
       </div>

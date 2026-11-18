@@ -1,5 +1,6 @@
 import { ShieldCheck, Users, Sparkles, Plus } from 'lucide-react'
 import Button from '../Button'
+import { useCommunityT } from '@/i18n/ns/community'
 
 /**
  * Top summary card on the player Community hub. Surfaces the three
@@ -40,6 +41,7 @@ export default function CredibilityNetworkCard({
   onManageFriends,
   addReferenceDisabled = false,
 }: CredibilityNetworkCardProps) {
+  const t = useCommunityT()
   return (
     <section
       data-testid="credibility-network-card"
@@ -47,26 +49,26 @@ export default function CredibilityNetworkCard({
     >
       <header className="flex items-center gap-2.5 mb-4">
         <ShieldCheck className="h-5 w-5 text-emerald-500" aria-hidden="true" />
-        <h2 className="text-base font-semibold text-gray-900">Your credibility network</h2>
+        <h2 className="text-base font-semibold text-gray-900">{t('credibility.title')}</h2>
       </header>
 
       {/* 3-up metric grid */}
       <div className="grid grid-cols-3 gap-2.5 mb-5">
         <Stat
           icon={Users}
-          label="References"
+          label={t('credibility.references')}
           value={`${referencesUsed} / ${referencesMax}`}
           accent="emerald"
         />
         <Stat
           icon={Users}
-          label="Connections"
+          label={t('credibility.connections')}
           value={connectionsCount.toString()}
           accent="gray"
         />
         <Stat
           icon={Sparkles}
-          label="Pending"
+          label={t('credibility.pending')}
           value={pendingCount.toString()}
           accent="purple"
         />
@@ -83,14 +85,14 @@ export default function CredibilityNetworkCard({
           className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-primary text-white px-4 py-3 text-sm font-semibold shadow-sm hover:bg-brand-primary transition-colors disabled:opacity-60 disabled:hover:bg-brand-primary"
         >
           <Plus className="h-4 w-4" />
-          Add Reference
+          {t('credibility.addReference')}
         </button>
         <Button
           variant="outline"
           onClick={onManageFriends}
           className="!h-auto !rounded-xl py-3 text-sm font-semibold"
         >
-          Manage Friends
+          {t('credibility.manageFriends')}
         </Button>
       </div>
     </section>

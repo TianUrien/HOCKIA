@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { withLazyText } from '@/lib/opportunityLazyText'
+import { tBrands } from '@/i18n/ns/brands'
 
 /**
  * Marketplace by need and place (founder 2026-10-25; Figma page 08, P6:
@@ -10,15 +12,16 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 
 export type Need = 'gear' | 'moving_abroad' | 'training_recovery' | 'for_clubs'
 
+/** The four needs. Labels are read through getters so they follow the interface language. */
 export const NEEDS: { key: Need; label: string; subtitle: string; pageSubtitle: string }[] = [
-  { key: 'gear', label: 'Gear', subtitle: 'Sticks, protection, kit', pageSubtitle: 'Sticks, protection, footwear, kit and goalkeeping.' },
-  { key: 'moving_abroad', label: 'Moving abroad', subtitle: 'Insurance, housing, language, visas', pageSubtitle: 'What players sort out before a season in another country.' },
-  { key: 'training_recovery', label: 'Training and recovery', subtitle: 'Physio, camps, coaching, strength', pageSubtitle: 'Physio, camps, coaching, strength and nutrition.' },
-  { key: 'for_clubs', label: 'For clubs', subtitle: 'Team kit, equipment, travel', pageSubtitle: 'Team kit, club equipment, team travel and club services.' },
+  withLazyText({ key: 'gear' as Need }, { label: () => tBrands('needs.gear'), subtitle: () => tBrands('needSubtitles.gear'), pageSubtitle: () => tBrands('needPageSubtitles.gear') }),
+  withLazyText({ key: 'moving_abroad' as Need }, { label: () => tBrands('needs.moving_abroad'), subtitle: () => tBrands('needSubtitles.moving_abroad'), pageSubtitle: () => tBrands('needPageSubtitles.moving_abroad') }),
+  withLazyText({ key: 'training_recovery' as Need }, { label: () => tBrands('needs.training_recovery'), subtitle: () => tBrands('needSubtitles.training_recovery'), pageSubtitle: () => tBrands('needPageSubtitles.training_recovery') }),
+  withLazyText({ key: 'for_clubs' as Need }, { label: () => tBrands('needs.for_clubs'), subtitle: () => tBrands('needSubtitles.for_clubs'), pageSubtitle: () => tBrands('needPageSubtitles.for_clubs') }),
 ]
 
 export function needLabel(need: string | null | undefined): string {
-  return NEEDS.find((n) => n.key === need)?.label ?? 'Gear'
+  return NEEDS.find((n) => n.key === need)?.label ?? tBrands('needs.gear')
 }
 
 export function isNeed(v: string | null | undefined): v is Need {

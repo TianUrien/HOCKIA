@@ -4,38 +4,44 @@
  * ScoutingCard so the read-only labels never drift. The enum vocabularies
  * mirror the CHECK constraints in 20260603140000_candidate_intent_fields.
  */
+import { tRecruiting } from '@/i18n/ns/recruiting'
+import { intlLocale, isEnglish } from '@/i18n/format'
+import { lazyTextRecord } from './opportunityLazyText'
+import { countryLabel } from '@/i18n/countryNames'
 
-export const RELOCATION_LABEL: Record<string, string> = {
-  relocate: 'Open to relocating',
-  home_only: 'Staying in home country',
-  open_to_discuss: 'Open to discuss',
-}
+// Labels are read through getters, so each read follows the interface language.
+export const RELOCATION_LABEL: Record<string, string> = /* @__PURE__ */ lazyTextRecord({
+  relocate: () => tRecruiting('candidateIntent.relocation.relocate'),
+  home_only: () => tRecruiting('candidateIntent.relocation.homeOnly'),
+  open_to_discuss: () => tRecruiting('candidateIntent.relocation.openToDiscuss'),
+})
 
-export const LEVEL_TARGET_LABEL: Record<string, string> = {
-  top: 'Highest level',
-  competitive: 'Competitive',
-  development: 'Development',
-  any: 'Any level',
-}
+export const LEVEL_TARGET_LABEL: Record<string, string> = /* @__PURE__ */ lazyTextRecord({
+  top: () => tRecruiting('candidateIntent.levelTarget.top'),
+  competitive: () => tRecruiting('candidateIntent.levelTarget.competitive'),
+  development: () => tRecruiting('candidateIntent.levelTarget.development'),
+  any: () => tRecruiting('candidateIntent.levelTarget.any'),
+})
 
-export const OPPORTUNITY_PREF_LABEL: Record<string, string> = {
-  paid: 'Paid',
-  development: 'Development',
-  either: 'Paid or development',
-}
+export const OPPORTUNITY_PREF_LABEL: Record<string, string> = /* @__PURE__ */ lazyTextRecord({
+  paid: () => tRecruiting('candidateIntent.preference.paid'),
+  development: () => tRecruiting('candidateIntent.preference.development'),
+  either: () => tRecruiting('candidateIntent.preference.either'),
+})
 
-export const DURATION_LABEL: Record<string, string> = {
-  full_season: 'Full season',
-  half_season: 'Half season',
-  short_term: 'Short term',
-  flexible: 'Flexible',
-}
+export const DURATION_LABEL: Record<string, string> = /* @__PURE__ */ lazyTextRecord({
+  full_season: () => tRecruiting('candidateIntent.duration.fullSeason'),
+  half_season: () => tRecruiting('candidateIntent.duration.halfSeason'),
+  short_term: () => tRecruiting('candidateIntent.duration.shortTerm'),
+  flexible: () => tRecruiting('candidateIntent.duration.flexible'),
+})
 
 /** "2026-09-01" → "Sep 2026". Falls back to the raw string if unparseable. */
 export function formatAvailableFrom(date: string): string {
   const d = new Date(`${date}T00:00:00`)
   if (Number.isNaN(d.getTime())) return date
-  return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+  // English keeps the browser's own locale (unchanged output); other languages use the interface language.
+  return d.toLocaleDateString(isEnglish() ? undefined : intlLocale(), { month: 'short', year: 'numeric' })
 }
 
 export interface CandidateIntentInput {
@@ -68,36 +74,39 @@ export function summarizeCandidateIntent(
   if (p.relocation_willingness) {
     rows.push({
       key: 'relocation',
-      label: 'Relocation',
+      label: tRecruiting('candidateIntent.rows.relocation'),
       value: RELOCATION_LABEL[p.relocation_willingness] ?? p.relocation_willingness,
     })
   }
 
   const availability = p.available_from
-    ? `From ${formatAvailableFrom(p.available_from)}${
-        p.availability_duration ? ` · ${DURATION_LABEL[p.availability_duration] ?? ''}` : ''
-      }`
+    ? p.availability_duration
+      ? tRecruiting('candidateIntent.availableFromFor', {
+          date: formatAvailableFrom(p.available_from),
+          duration: DURATION_LABEL[p.availability_duration] ?? '',
+        })
+      : tRecruiting('candidateIntent.availableFrom', { date: formatAvailableFrom(p.available_from) })
     : p.availability_duration
       ? (DURATION_LABEL[p.availability_duration] ?? null)
       : null
-  if (availability) rows.push({ key: 'availability', label: 'Availability', value: availability })
+  if (availability) rows.push({ key: 'availability', label: tRecruiting('candidateIntent.rows.availability'), value: availability })
 
   if (p.level_target) {
-    rows.push({ key: 'level', label: 'Level target', value: LEVEL_TARGET_LABEL[p.level_target] ?? p.level_target })
+    rows.push({ key: 'level', label: tRecruiting('candidateIntent.rows.level'), value: LEVEL_TARGET_LABEL[p.level_target] ?? p.level_target })
   }
   if (p.opportunity_preference) {
     rows.push({
       key: 'preference',
-      label: 'Looking for',
+      label: tRecruiting('candidateIntent.rows.lookingFor'),
       value: OPPORTUNITY_PREF_LABEL[p.opportunity_preference] ?? p.opportunity_preference,
     })
   }
 
-  const open = (p.relocation_countries_open ?? []).map(countryName).filter((n): n is string => Boolean(n))
-  if (open.length > 0) rows.push({ key: 'open', label: 'Open to countries', value: open.join(', ') })
+  const open = (p.relocation_countries_open ?? []).map(countryName).filter((n): n is string => Boolean(n)).map((n) => countryLabel(n))
+  if (open.length > 0) rows.push({ key: 'open', label: tRecruiting('candidateIntent.rows.openCountries'), value: open.join(', ') })
 
-  const excluded = (p.relocation_countries_excluded ?? []).map(countryName).filter((n): n is string => Boolean(n))
-  if (excluded.length > 0) rows.push({ key: 'excluded', label: 'Would not consider', value: excluded.join(', ') })
+  const excluded = (p.relocation_countries_excluded ?? []).map(countryName).filter((n): n is string => Boolean(n)).map((n) => countryLabel(n))
+  if (excluded.length > 0) rows.push({ key: 'excluded', label: tRecruiting('candidateIntent.rows.excludedCountries'), value: excluded.join(', ') })
 
   return { rows, hasAny: rows.length > 0 }
 }

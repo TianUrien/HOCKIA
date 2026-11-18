@@ -6,6 +6,9 @@
  * good matches naturally falls back to newest open, never forced bad ones).
  */
 
+import { type MemberLanguage, spanishPositionLabel } from './member-language.ts'
+import { spanishCountryName } from './country-names-es.ts'
+
 export interface OpportunitySuggestion {
   opportunity_id: string
   title: string
@@ -36,34 +39,63 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
-function suggestionMeta(s: OpportunitySuggestion): string {
-  return [
-    s.position_text ? s.position_text.replace(/_/g, ' ') : null,
-    s.gender,
-    [s.location_city, s.location_country].filter(Boolean).join(', ') || null,
-    s.publisher_name,
-  ].filter(Boolean).join(' · ')
+/** opportunities.gender values in Spanish (enums.json category). */
+const GENDER_ES: Record<string, string> = {
+  men: 'Caballeros',
+  women: 'Damas',
+  boys: 'Juveniles caballeros',
+  girls: 'Juveniles damas',
+  mixed: 'Mixto',
 }
 
-export function suggestionsHtml(suggestions: OpportunitySuggestion[], baseUrl: string): string {
+/** "Berlin (Germany)"; Spanish readers get the country's Spanish name. */
+function suggestionPlace(s: OpportunitySuggestion, language: MemberLanguage): string | null {
+  const city = s.location_city?.trim() || null
+  const rawCountry = s.location_country?.trim() || null
+  const country = rawCountry && language === 'es' ? spanishCountryName(rawCountry) : rawCountry
+  if (city && country) return `${city} (${country})`
+  return city ?? country
+}
+
+/** "Midfielder, Women, Berlin (Germany), Club Test": commas only, no dot separators. */
+function suggestionMeta(s: OpportunitySuggestion, language: MemberLanguage = 'en'): string {
+  const es = language === 'es'
+  const position = s.position_text
+    ? (es ? spanishPositionLabel(s.position_text) : null) ?? s.position_text.replace(/_/g, ' ')
+    : null
+  const category = s.gender
+    ? (es ? GENDER_ES[s.gender.trim().toLowerCase()] : null) ?? s.gender
+    : null
+  return [position, category, suggestionPlace(s, language), s.publisher_name].filter(Boolean).join(', ')
+}
+
+export function suggestionsHtml(
+  suggestions: OpportunitySuggestion[],
+  baseUrl: string,
+  language: MemberLanguage = 'en',
+): string {
   if (suggestions.length === 0) return ''
   const rows = suggestions.map((s) => `
     <tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f2;">
       <a href="${baseUrl}/opportunities/${s.opportunity_id}" style="font-size:14px;font-weight:600;color:#6d28d9;text-decoration:none;">${escapeHtml(s.title)}</a>
-      <div style="font-size:12.5px;color:#6b7280;margin-top:2px;">${escapeHtml(suggestionMeta(s))}</div>
+      <div style="font-size:12.5px;color:#6b7280;margin-top:2px;">${escapeHtml(suggestionMeta(s, language))}</div>
     </td></tr>`).join('')
   return `
     <div style="margin-top:20px;">
-      <div style="font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.4px;">Open opportunities for you</div>
+      <div style="font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.4px;">${language === 'es' ? 'Oportunidades abiertas que pueden interesarte' : 'Open opportunities for you'}</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
     </div>`
 }
 
-export function suggestionsText(suggestions: OpportunitySuggestion[], baseUrl: string): string {
+export function suggestionsText(
+  suggestions: OpportunitySuggestion[],
+  baseUrl: string,
+  language: MemberLanguage = 'en',
+): string {
   if (suggestions.length === 0) return ''
   return [
     '',
-    'Open opportunities for you:',
-    ...suggestions.map((s) => `- ${s.title} (${suggestionMeta(s)}): ${baseUrl}/opportunities/${s.opportunity_id}`),
+    language === 'es' ? 'Oportunidades abiertas que pueden interesarte:' : 'Open opportunities for you:',
+    ...suggestions.map((s) => `- ${s.title} (${suggestionMeta(s, language)}): ${baseUrl}/opportunities/${s.opportunity_id}`),
   ].join('\n')
 }

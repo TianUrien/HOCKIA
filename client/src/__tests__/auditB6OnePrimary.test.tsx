@@ -66,7 +66,7 @@ describe('Home and Inbox on desktop', () => {
 
   it('Inbox: New message is an icon button, no gradient "+ New" Primary', () => {
     const messages = read('pages/MessagesPage.tsx')
-    expect(messages).toContain('<IconButton label="New message"')
+    expect(messages).toContain("<IconButton label={t('messagesPage.newMessage')}")
     expect(messages).not.toMatch(/from-hockia-primary to-hockia-secondary[^\n]*\n[^\n]*aria-label="New message"/)
     expect(messages).not.toMatch(/>\s*New\s*</)
   })

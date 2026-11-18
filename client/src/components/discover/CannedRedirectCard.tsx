@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import type { DiscoverCta } from '@/hooks/useDiscover'
 import { Chip } from '@/components/ui/Chip'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 interface CannedRedirectCardProps {
   message: string
@@ -19,14 +20,15 @@ interface CannedRedirectCardProps {
  */
 export default function CannedRedirectCard({ message, cta: explicitCta }: CannedRedirectCardProps) {
   const navigate = useNavigate()
+  const t = useHockiaAiT()
 
   let cta: { label: string; path: string } | null = null
   if (explicitCta?.route) {
     cta = { label: explicitCta.label, path: explicitCta.route }
   } else if (message.includes('/opportunities')) {
-    cta = { label: 'Browse opportunities', path: '/opportunities' }
+    cta = { label: t('discover.browseOpportunities'), path: '/opportunities' }
   } else if (message.includes('/marketplace')) {
-    cta = { label: 'Open Brands', path: '/community/brands' }
+    cta = { label: t('discover.openBrands'), path: '/community/brands' }
   }
 
   return (

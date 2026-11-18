@@ -3,6 +3,7 @@ import { ChevronDown, Plus, Loader2 } from 'lucide-react'
 import type { DiscoverResult, ParsedFilters } from '@/hooks/useDiscover'
 import DiscoverResultCard from '@/components/DiscoverResultCard'
 import DiscoverFilterChips from '@/components/DiscoverFilterChips'
+import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 
 interface SearchResultsResponseProps {
   message: string
@@ -50,6 +51,7 @@ export default function SearchResultsResponse({
 }: SearchResultsResponseProps) {
   // Compound results auto-expand: every requested role must be visible so
   // "3 players and 1 coach" doesn't hide the lone coach behind "Show all".
+  const t = useHockiaAiT()
   const [expanded, setExpanded] = useState(isCompound)
   const containerRef = useRef<HTMLDivElement>(null)
   const visible = expanded ? results : results.slice(0, COLLAPSED_COUNT)
@@ -107,7 +109,7 @@ export default function SearchResultsResponse({
                   className={`w-3.5 h-3.5 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
                   aria-hidden="true"
                 />
-                {expanded ? 'Show less' : `Show all ${results.length} results`}
+                {expanded ? t('discover.showLess') : t('discover.showAllResults', { count: results.length })}
               </button>
             )}
             {showLoadMore && (
@@ -120,12 +122,12 @@ export default function SearchResultsResponse({
                 {loadingMore ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                    Searching…
+                    {t('discover.searching')}
                   </>
                 ) : (
                   <>
                     <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-                    Show more results
+                    {t('discover.showMore')}
                   </>
                 )}
               </button>

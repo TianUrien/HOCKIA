@@ -2,6 +2,7 @@
 declare const Deno: { env: { get(key: string): string | undefined } }
 import { escapeHtml, safeHttpsUrl } from './html-escape.ts'
 import { EMAIL_LOGO_HTML } from './email-brand.ts'
+import { type MemberLanguage, FOOTER_ES } from './member-language.ts'
 
 /**
  * Shared Email Template for Message Digest Notifications
@@ -60,12 +61,61 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-function getFirstName(fullName: string | null): string {
-  if (!fullName?.trim()) return 'there'
+function getFirstName(fullName: string | null, language: MemberLanguage = 'en'): string {
+  if (!fullName?.trim()) return language === 'es' ? DIGEST_NAME_FALLBACK_ES : 'there'
   return fullName.trim().split(' ')[0]
 }
 
-function buildConversationCardHtml(conv: ConversationDigest): string {
+/** Greeting name when the member has no name ("Hola, integrante."). */
+export const DIGEST_NAME_FALLBACK_ES = 'integrante'
+
+/** "1 new message" / "3 new messages" in the member's language. */
+export function newMessagesLabel(count: number, language: MemberLanguage = 'en'): string {
+  if (language === 'es') return count === 1 ? '1 mensaje nuevo' : `${count} mensajes nuevos`
+  return count === 1 ? '1 new message' : `${count} new messages`
+}
+
+/** Fallback sender name when the sender has no name. */
+export function unnamedSender(language: MemberLanguage = 'en'): string {
+  return language === 'es' ? 'Alguien' : 'Someone'
+}
+
+/**
+ * Template variables built in code for the message_digest DB template
+ * (notify-message-digest). English is exactly what the function built before.
+ */
+export function messageDigestTemplateVars(
+  fullName: string | null,
+  conversations: ConversationDigest[],
+  baseUrl: string,
+  language: MemberLanguage = 'en',
+): Record<string, string> {
+  const es = language === 'es'
+  const totalMessages = conversations.reduce((sum, c) => sum + c.message_count, 0)
+  // Spanish without a name: the template greeting drops it ("Hola."), see email-renderer namelessGreeting.
+  const firstName = fullName?.split(' ')[0]?.trim() || (es ? '' : 'there')
+  const heading = conversations.length === 1
+    ? (es ? `Nuevo mensaje de ${conversations[0].sender_name}` : `New message from ${conversations[0].sender_name}`)
+    : es
+    ? (totalMessages === 1 ? 'Hay 1 mensaje nuevo' : `Hay ${totalMessages} mensajes nuevos`)
+    : `You have ${totalMessages} new message${totalMessages === 1 ? '' : 's'}`
+  return {
+    first_name: firstName,
+    heading,
+    message_count: String(totalMessages),
+    conversations: JSON.stringify(conversations),
+    conversations_text: conversations
+      .map(c => es
+        ? `${c.sender_name}: ${newMessagesLabel(c.message_count, 'es')}`
+        : `${c.sender_name}: ${c.message_count} new message${c.message_count === 1 ? '' : 's'}`)
+      .join('\n'),
+    cta_url: `${baseUrl}/messages`,
+    cta_label: es ? 'Ver mensajes' : 'View messages',
+    settings_url: `${baseUrl}/settings`,
+  }
+}
+
+function buildConversationCardHtml(conv: ConversationDigest, language: MemberLanguage = 'en'): string {
   const initials = getInitials(conv.sender_name)
 
   const avatarSrc = safeHttpsUrl(conv.sender_avatar_url)
@@ -77,9 +127,7 @@ function buildConversationCardHtml(conv: ConversationDigest): string {
         </tr>
       </table>`
 
-  const messageLabel = conv.message_count === 1
-    ? '1 new message'
-    : `${conv.message_count} new messages`
+  const messageLabel = newMessagesLabel(conv.message_count, language)
 
   return `
     <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px;">
@@ -99,26 +147,30 @@ function buildConversationCardHtml(conv: ConversationDigest): string {
 
 export function generateEmailHtml(
   recipient: RecipientData,
-  conversations: ConversationDigest[]
+  conversations: ConversationDigest[],
+  language: MemberLanguage = 'en',
 ): string {
-  const firstName = getFirstName(recipient.full_name)
+  const es = language === 'es'
+  const firstName = getFirstName(recipient.full_name, language)
   const isSingle = conversations.length === 1
 
   const heading = isSingle
-    ? `New message from ${conversations[0].sender_name}`
-    : 'You have new messages'
+    ? (es ? `Nuevo mensaje de ${conversations[0].sender_name}` : `New message from ${conversations[0].sender_name}`)
+    : (es ? 'Mensajes nuevos' : 'You have new messages')
 
   const ctaUrl = isSingle
     ? `${HOCKIA_BASE_URL}/messages?conversation=${conversations[0].conversation_id}`
     : `${HOCKIA_BASE_URL}/messages`
 
-  const ctaLabel = isSingle ? 'View conversation' : 'Open messages'
+  const ctaLabel = isSingle
+    ? (es ? 'Ver conversación' : 'View conversation')
+    : (es ? 'Abrir mensajes' : 'Open messages')
 
-  const conversationCards = conversations.map(buildConversationCardHtml).join('\n')
+  const conversationCards = conversations.map(conv => buildConversationCardHtml(conv, language)).join('\n')
 
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -132,7 +184,7 @@ export function generateEmailHtml(
   <div style="padding: 0 0 24px 0;">
 
     <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${escapeHtml(heading)}</h1>
-    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">Hi ${escapeHtml(firstName)}, you have unread messages on Hockia.</p>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es ? `Hola, ${escapeHtml(firstName)}. Tienes mensajes sin leer en Hockia.` : `Hi ${escapeHtml(firstName)}, you have unread messages on Hockia.`}</p>
 
     <div style="margin-bottom: 24px;">
       ${conversationCards}
@@ -146,8 +198,8 @@ export function generateEmailHtml(
 
   <div style="border-top: 1px solid #e6e3ee; padding: 16px 0 0 0; text-align: left;">
     <p style="color: #73707c; font-size: 12px; margin: 0;">
-      You're receiving this because you have a Hockia account.<br>
-      <a href="${UNSUBSCRIBE_URL}" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
+      ${es ? FOOTER_ES.reason : "You're receiving this because you have a Hockia account."}<br>
+      <a href="${UNSUBSCRIBE_URL}" style="color: #6c2bd9; text-decoration: none;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
     </p>
   </div>
 
@@ -157,24 +209,24 @@ export function generateEmailHtml(
 
 export function generateEmailText(
   recipient: RecipientData,
-  conversations: ConversationDigest[]
+  conversations: ConversationDigest[],
+  language: MemberLanguage = 'en',
 ): string {
-  const firstName = getFirstName(recipient.full_name)
+  const es = language === 'es'
+  const firstName = getFirstName(recipient.full_name, language)
   const isSingle = conversations.length === 1
 
   const lines = [
     isSingle
-      ? `New message from ${conversations[0].sender_name}`
-      : 'You have new messages on Hockia',
+      ? (es ? `Nuevo mensaje de ${conversations[0].sender_name}` : `New message from ${conversations[0].sender_name}`)
+      : (es ? 'Mensajes nuevos en Hockia' : 'You have new messages on Hockia'),
     '',
-    `Hi ${firstName},`,
+    es ? `Hola, ${firstName}:` : `Hi ${firstName},`,
     '',
   ]
 
   for (const conv of conversations) {
-    const messageLabel = conv.message_count === 1
-      ? '1 new message'
-      : `${conv.message_count} new messages`
+    const messageLabel = newMessagesLabel(conv.message_count, language)
     lines.push(`${conv.sender_name}: ${messageLabel}`)
   }
 
@@ -184,12 +236,14 @@ export function generateEmailText(
 
   lines.push(
     '',
-    isSingle ? 'View conversation:' : 'Open messages:',
+    isSingle
+      ? (es ? 'Ver conversación:' : 'View conversation:')
+      : (es ? 'Abrir mensajes:' : 'Open messages:'),
     ctaUrl,
     '',
     '---',
-    "You're receiving this because you're on Hockia.",
-    `Manage preferences: ${UNSUBSCRIBE_URL}`
+    es ? FOOTER_ES.reason : "You're receiving this because you're on Hockia.",
+    `${es ? FOOTER_ES.manage : 'Manage preferences: '}${UNSUBSCRIBE_URL}`
   )
 
   return lines.join('\n')

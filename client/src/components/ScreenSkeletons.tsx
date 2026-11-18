@@ -10,14 +10,16 @@
  * is cheap to pull into any route chunk.
  */
 import Skeleton from './Skeleton'
+import { useCommonT } from '@/i18n/ns/common'
 
 const BAR = 'bg-white/25'
 
 /** Role page (OpportunityDetailMobile: 440 px cover hero, identity card, key facts, sticky action bar;
  *  desktop: OpportunityDetailDesktop's two columns). */
 export function RoleDetailSkeleton() {
+  const t = useCommonT()
   return (
-    <div className="min-h-screen bg-white lg:bg-gray-50" data-testid="role-detail-skeleton" aria-busy="true" aria-label="Loading opportunity">
+    <div className="min-h-screen bg-white lg:bg-gray-50" data-testid="role-detail-skeleton" aria-busy="true" aria-label={t('skeletons.opportunity')}>
       <div className="lg:mx-auto lg:grid lg:max-w-[1200px] lg:grid-cols-[420px_minmax(0,1fr)] lg:gap-10 lg:px-6 lg:pt-24">
         <div className="relative h-[440px] w-full animate-pulse bg-ink-3/40 motion-reduce:animate-none lg:rounded-[24px]">
           <div className="absolute inset-x-4 bottom-5 flex flex-col gap-2.5">
@@ -66,8 +68,9 @@ export function RoleDetailSkeleton() {
 /** Own and public profiles (ProfileHero 540 px person hero, ClubHero 480 px with crest tile; ProfileLayout columns). */
 export function ProfileSkeleton({ variant = 'person' }: { variant?: 'person' | 'club' }) {
   const club = variant === 'club'
+  const t = useCommonT()
   return (
-    <div className="min-h-screen bg-white" data-testid="profile-skeleton" aria-busy="true" aria-label="Loading profile">
+    <div className="min-h-screen bg-white" data-testid="profile-skeleton" aria-busy="true" aria-label={t('skeletons.profile')}>
       <div className="lg:mx-auto lg:grid lg:max-w-[1200px] lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start lg:gap-12 lg:px-6 lg:pt-24 xl:grid-cols-[480px_680px] xl:justify-center">
         <div className={`relative w-full animate-pulse bg-ink-3/40 motion-reduce:animate-none lg:overflow-hidden lg:rounded-[24px] ${club ? 'h-[480px]' : 'h-[540px]'}`}>
           <div className="absolute inset-x-4 bottom-6 flex flex-col gap-2">
@@ -103,8 +106,9 @@ export function ProfileSkeleton({ variant = 'person' }: { variant?: 'person' | '
 
 /** Inbox Activity rows (ActivityRow: 40 px avatar, text, detail, age; hairline between rows). */
 export function ActivityListSkeleton({ rows = 6 }: { rows?: number }) {
+  const t = useCommonT()
   return (
-    <ul aria-busy="true" aria-label="Loading activity" data-testid="activity-skeleton">
+    <ul aria-busy="true" aria-label={t('skeletons.activity')} data-testid="activity-skeleton">
       {Array.from({ length: rows }, (_, i) => (
         <li key={i} className="flex items-start gap-3 pl-4">
           <span className="shrink-0 py-3.5"><Skeleton variant="circular" width={40} height={40} /></span>
@@ -120,17 +124,18 @@ export function ActivityListSkeleton({ rows = 6 }: { rows?: number }) {
 }
 
 /** A message thread while its conversation loads: header row and fixed-width bubbles (no random widths, so no jitter). */
-export function ThreadSkeleton({ onBack, backLabel = 'Back to conversations' }: { onBack?: () => void; backLabel?: string }) {
+export function ThreadSkeleton({ onBack, backLabel }: { onBack?: () => void; backLabel?: string }) {
+  const t = useCommonT()
   const bubbles: Array<{ own: boolean; w: number; h: number }> = [
     { own: false, w: 220, h: 44 }, { own: true, w: 180, h: 44 }, { own: false, w: 260, h: 64 },
     { own: true, w: 200, h: 44 }, { own: false, w: 150, h: 44 },
   ]
   return (
-    <div className="flex h-full flex-col bg-white" data-testid="thread-skeleton" aria-busy="true" aria-label="Loading conversation">
+    <div className="flex h-full flex-col bg-white" data-testid="thread-skeleton" aria-busy="true" aria-label={t('skeletons.conversation')}>
       <div className="flex h-14 items-center gap-3 border-b border-line px-4">
         {onBack && (
           <button type="button" onClick={onBack} className="-ml-2 flex h-11 items-center px-2 text-secondary font-semibold text-brand-primary">
-            {backLabel}
+            {backLabel ?? t('skeletons.backToConversations')}
           </button>
         )}
         <Skeleton variant="circular" width={36} height={36} />
@@ -168,8 +173,9 @@ export function ClubRoleCardSkeleton() {
 
 /** Applicant rows (ApplicantsScreen / ApplicantsDesktop: 16 px radius card, 48 px avatar, name, role line, days left). */
 export function ApplicantRowsSkeleton({ rows = 4 }: { rows?: number }) {
+  const t = useCommonT()
   return (
-    <div className="flex flex-col gap-2.5" aria-busy="true" aria-label="Loading applicants" data-testid="applicants-skeleton">
+    <div className="flex flex-col gap-2.5" aria-busy="true" aria-label={t('skeletons.applicants')} data-testid="applicants-skeleton">
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="flex items-center gap-3 rounded-[16px] bg-surface-subtle p-3">
           <Skeleton variant="circular" width={48} height={48} />

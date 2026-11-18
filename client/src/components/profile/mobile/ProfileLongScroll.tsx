@@ -26,6 +26,9 @@ import { buttonClassName } from '@/components/ui/buttonClasses'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 import type { UserPostFeedItem } from '@/types/homeFeed'
 import { VideoLockBadge } from './VideoLockBadge'
+import { useProfileT } from '@/i18n/ns/profile'
+import { intlLocale, isEnglish } from '@/i18n/format'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Phone profile long scroll under the identity block and the six key facts
@@ -68,6 +71,7 @@ function monthYear(iso: string | null | undefined): string | null {
   if (!iso) return null
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return null
+  if (!isEnglish()) return new Intl.DateTimeFormat(intlLocale(), { month: 'short', year: 'numeric' }).format(d)
   return `${MONTH[d.getMonth()]} ${d.getFullYear()}`
 }
 function duration(s: number | null | undefined): string | null {
@@ -93,7 +97,8 @@ function SectionHeader({ title, count, action, onAction }: { title: string; coun
 }
 
 function LinkTile({ link }: { link: ScrollFullGameLink }) {
-  const title = link.match_title?.trim() || (link.opponent_team ? `vs ${link.opponent_team}` : 'Full match')
+  const t = useProfileT()
+  const title = link.match_title?.trim() || (link.opponent_team ? t('profileLongScroll.versus', { team: link.opponent_team }) : t('profileLongScroll.fullMatch'))
   return (
     <a
       href={safeVideoHref(link.video_url) ?? undefined}
@@ -129,8 +134,9 @@ function VideoRow({ label, count, lockLabel, children }: { label: string; count:
 }
 
 export function ReferenceCard({ reference, onOpen }: { reference: PublicReferenceCard; onOpen: () => void }) {
+  const t = useProfileT()
   const p = reference.profile
-  const name = p?.fullName?.trim() || 'Hockia member'
+  const name = p?.fullName?.trim() || t('profileLongScroll.memberFallback')
   const detail = p?.role === 'player' ? p.position : p?.role === 'coach' ? [humanizeToken(reference.relationshipType), p.currentClub].filter(Boolean).join(' · ') : humanizeToken(reference.relationshipType)
   const avatar = p?.avatarUrl ? getImageUrl(p.avatarUrl, 'avatar-md') ?? p.avatarUrl : null
   return (
@@ -145,7 +151,7 @@ export function ReferenceCard({ reference, onOpen }: { reference: PublicReferenc
       </div>
       {reference.endorsementText && <p className="mt-2.5 line-clamp-4 text-row leading-[21px] text-ink-1" data-testid="reference-quote">“{reference.endorsementText}”</p>}
       <div className="mt-2.5 flex items-center justify-between">
-        <span className="flex items-center gap-1 text-caption font-semibold text-gold"><Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Verified · written on Hockia</span>
+        <span className="flex items-center gap-1 text-caption font-semibold text-gold"><Check className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('profileLongScroll.verifiedReference')}</span>
         {reference.acceptedAt && <span className="text-caption text-ink-3">{dayFirst(reference.acceptedAt, { year: 'always' })}</span>}
       </div>
     </button>
@@ -153,13 +159,14 @@ export function ReferenceCard({ reference, onOpen }: { reference: PublicReferenc
 }
 
 export function CareerRow({ entry, last, flag, locationFlag = null }: { entry: ScrollCareerEntry; last: boolean; /** Represented country (national team). */ flag: string | null; /** The entry's own country (location_country) — wins over the linked world club's. */ locationFlag?: string | null }) {
+  const t = useProfileT()
   const isNow = isCurrentEntry(entry)
   const isRep = entry.entryType === 'national_team'
   const span = careerSpan(entry)
   const metaFlag = locationFlag ?? entry.worldClub?.flag ?? flag
-  const metaText = [entry.locationCity?.trim() || entry.locationCountry?.trim() || null, span].filter(Boolean).join(' · ')
+  const metaText = [entry.locationCity?.trim() || countryLabel(entry.locationCountry?.trim()) || null, span].filter(Boolean).join(' · ')
   const meta = [metaFlag, metaText].filter(Boolean).join(' ')
-  const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? 'representative team' : entry.divisionLeague?.trim() || null].filter(Boolean).join(' · ')
+  const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? t('profileLongScroll.representativeTeam') : entry.divisionLeague?.trim() || null].filter(Boolean).join(' · ')
   const crest = entry.worldClub?.avatar_url ? getImageUrl(entry.worldClub.avatar_url, 'avatar-sm') ?? entry.worldClub.avatar_url : null
   return (
     <div className={cn('flex gap-3', !last && 'pb-3')} data-testid="career-row" data-current={isNow || undefined}>
@@ -205,6 +212,7 @@ function FactRow({ label, value }: { label: string; value: string | null }) {
 }
 
 export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVideos, onManageVideos, onOpenReferences, onOpenReference, onOpenCareer, onOpenPhotos, onOpenPosts, onOpenFriends, onEditSkills, onVideoCounts, topSlot, afterVideosSlot }: ProfileLongScrollProps) {
+  const t = useProfileT()
   const navigate = useNavigate()
   const owner = !readOnly
   const profileId = profile.id ?? null
@@ -277,32 +285,32 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
 
       {showVideo && (
         <section className="flex flex-col gap-4" data-testid="profile-video-section">
-          <SectionHeader title="Videos" action={videoTotal > 0 ? `See all ${videoTotal}` : owner ? 'Manage' : null} onAction={videoTotal > 0 ? onOpenVideos : onManageVideos} />
-          {videoTotal === 0 && !data.loading && empty('Add your first highlight', onManageVideos)}
+          <SectionHeader title={t('profileLongScroll.videos.title')} action={videoTotal > 0 ? t('profileLongScroll.videos.seeAll', { count: videoTotal }) : owner ? t('profileLongScroll.videos.manage') : null} onAction={videoTotal > 0 ? onOpenVideos : onManageVideos} />
+          {videoTotal === 0 && !data.loading && empty(t('profileLongScroll.videos.addFirst'), onManageVideos)}
           {highlightCount > 0 && (
-            <VideoRow label="Highlights" count={highlightCount}>
+            <VideoRow label={t('profileLongScroll.videos.highlights')} count={highlightCount}>
               {data.highlights.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} priority={i === 0} onOpen={() => openVideo(v, v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
               {linkedHighlight && canOpenLinkedHighlight && (
                 <a href={linkedHighlight} target="_blank" rel="noopener noreferrer" data-testid="linked-highlight" className="relative flex h-[126px] w-[224px] shrink-0 snap-start flex-col justify-end rounded-card bg-gradient-to-br from-ink-1 to-ink-2 p-2.5">
                   <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
-                  <span className="text-secondary font-semibold text-white">Linked highlight</span>
+                  <span className="text-secondary font-semibold text-white">{t('profileLongScroll.videos.linkedHighlight')}</span>
                 </a>
               )}
               {linkedHighlight && !canOpenLinkedHighlight && (
-                <LockedVideoTile label="Highlight" onOpen={showLocked} className="h-[126px] w-[224px] shrink-0 snap-start" />
+                <LockedVideoTile label={t('profileLongScroll.videos.highlight')} onOpen={showLocked} className="h-[126px] w-[224px] shrink-0 snap-start" />
               )}
-              {Array.from({ length: lockedHighlights }, (_, i) => <LockedVideoTile key={`locked-h-${i}`} label="Highlight" onOpen={showLocked} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
+              {Array.from({ length: lockedHighlights }, (_, i) => <LockedVideoTile key={`locked-h-${i}`} label={t('profileLongScroll.videos.highlight')} onOpen={showLocked} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
             </VideoRow>
           )}
           {fullMatchCount > 0 && (
-            <VideoRow label="Full matches" count={fullMatchCount} lockLabel={lockFullMatches ? 'Clubs & coaches' : null}>
+            <VideoRow label={t('profileLongScroll.videos.fullMatches')} count={fullMatchCount} lockLabel={lockFullMatches ? t('profileLongScroll.videos.clubsAndCoaches') : null}>
               {data.fullMatches.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
               {data.fullGameLinks.map((l) => <LinkTile key={l.id} link={l} />)}
               {Array.from({ length: lockedFull }, (_, i) => <LockedVideoTile key={`locked-f-${i}`} onOpen={showLocked} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
             </VideoRow>
           )}
           {data.reels.length > 0 && (
-            <VideoRow label="Reels" count={data.reels.length}>
+            <VideoRow label={t('profileLongScroll.videos.reels')} count={data.reels.length}>
               {data.reels.map((v, i) => <ProfileVideoTile key={v.id} video={v} portrait eager={i < 3} onOpen={() => openVideo(v, false)} className="h-[164px] w-[124px] shrink-0 snap-start" />)}
             </VideoRow>
           )}
@@ -313,8 +321,8 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
 
       {showCareer && (
         <section className="flex flex-col gap-4" data-testid="profile-career-section">
-          <SectionHeader title="Career" action={careerCount > 0 ? `See all ${careerCount}` : null} onAction={onOpenCareer} />
-          {careerCount === 0 && !data.loading && empty('Add your first club', onOpenCareer)}
+          <SectionHeader title={t('profileLongScroll.career.title')} action={careerCount > 0 ? t('profileLongScroll.career.seeAll', { count: careerCount }) : null} onAction={onOpenCareer} />
+          {careerCount === 0 && !data.loading && empty(t('profileLongScroll.career.addFirst'), onOpenCareer)}
           {data.career.length > 0 && (
             <div className="flex flex-col">
               {data.career.map((entry, i) => <CareerRow key={entry.id} entry={entry} last={i === data.career.length - 1} flag={entry.representedCountryId ? countries.find((c) => c.id === entry.representedCountryId)?.flag_emoji ?? null : null} locationFlag={flagForCountryName(countries, entry.locationCountry)} />)}
@@ -325,8 +333,8 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
 
       {showSkills && (
         <section className="flex flex-col gap-3" data-testid="profile-skills-section">
-          <SectionHeader title="Specialist skills" action={owner && skills.length > 0 ? 'Edit' : null} onAction={onEditSkills} />
-          {skills.length === 0 && owner && onEditSkills && empty('Add your specialist skills', onEditSkills)}
+          <SectionHeader title={t('profileLongScroll.skills.title')} action={owner && skills.length > 0 ? t('profileLongScroll.skills.edit') : null} onAction={onEditSkills} />
+          {skills.length === 0 && owner && onEditSkills && empty(t('profileLongScroll.skills.add'), onEditSkills)}
           {skills.length > 0 && (
             <div className="flex flex-wrap gap-x-3.5 gap-y-2">
               {skills.map((skill) => (
@@ -342,14 +350,14 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
 
       {showReferences && (
         <section className="flex flex-col gap-3" data-testid="profile-references-section">
-          <SectionHeader title="References" count={referenceCount > 0 ? referenceCount : null} action={referenceCount > 0 ? `See all ${referenceCount}` : null} onAction={onOpenReferences} />
+          <SectionHeader title={t('profileLongScroll.references.title')} count={referenceCount > 0 ? referenceCount : null} action={referenceCount > 0 ? t('profileLongScroll.references.seeAll', { count: referenceCount }) : null} onAction={onOpenReferences} />
           {referenceCount === 0 && !refsLoading && (owner
-            ? empty('Ask for a reference', onOpenReferences)
-            : <p className="text-row leading-[21px] text-ink-2">No references yet. References come from friends on Hockia. Coaches and teammates can write one.</p>)}
+            ? empty(t('profileLongScroll.references.ask'), onOpenReferences)
+            : <p className="text-row leading-[21px] text-ink-2">{t('profileLongScroll.references.empty')}</p>)}
           {acceptedReferences.slice(0, 2).map((r) => <ReferenceCard key={r.id} reference={r} onOpen={() => onOpenReference(r.id)} />)}
           {referenceCount > 2 && (
             <button type="button" onClick={onOpenReferences} className={buttonClassName({ variant: 'secondary', size: 'large', radius: 'rounded-full', block: true })} data-testid="see-all-references">
-              See all {referenceCount} references
+              {t('profileLongScroll.references.seeAllButton', { count: referenceCount })}
             </button>
           )}
         </section>
@@ -357,7 +365,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
 
       {showFriends && (
         <button type="button" onClick={onOpenFriends} className="flex h-[52px] w-full items-center gap-3 rounded-card bg-surface-grouped px-4 text-left" data-testid="profile-friends-row">
-          <span className="flex-1 text-row font-semibold text-ink-1">Friends</span>
+          <span className="flex-1 text-row font-semibold text-ink-1">{t('profileLongScroll.friends')}</span>
           <span className="text-row text-ink-2 tabular-nums">{friendCount}</span>
           <ChevronRight className="h-4 w-4 text-ink-4" strokeWidth={2} />
         </button>
@@ -365,12 +373,12 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
 
       {showPhotos && (
         <section className="flex flex-col gap-3" data-testid="profile-photos-section">
-          <SectionHeader title="Photos" action={data.photoCount > 0 ? `See all ${data.photoCount}` : null} onAction={onOpenPhotos} />
-          {data.photos.length === 0 && !data.loading && empty('Add photos', owner ? onManageVideos : onOpenPhotos)}
+          <SectionHeader title={t('profileLongScroll.photos.title')} action={data.photoCount > 0 ? t('profileLongScroll.photos.seeAll', { count: data.photoCount }) : null} onAction={onOpenPhotos} />
+          {data.photos.length === 0 && !data.loading && empty(t('profileLongScroll.photos.add'), owner ? onManageVideos : onOpenPhotos)}
           {data.photos.length > 0 && (
             <div className="grid h-[248px] grid-cols-2 grid-rows-2 gap-1.5">
               {data.photos.map((p, i) => (
-                <button key={p.id} type="button" onClick={() => setPhotoIndex(i)} aria-label={p.caption || `Photo ${i + 1}`} className={cn('overflow-hidden rounded-card bg-surface-grouped', i === 0 && 'row-span-2')}>
+                <button key={p.id} type="button" onClick={() => setPhotoIndex(i)} aria-label={p.caption || t('profileLongScroll.photos.photoNumber', { number: i + 1 })} className={cn('overflow-hidden rounded-card bg-surface-grouped', i === 0 && 'row-span-2')}>
                   <SmoothImage src={getImageUrl(p.url, 'gallery') ?? p.url} srcSet={getImageSrcSet(p.url, 'gallery') ?? undefined} sizes="50vw" alt="" eager className="object-cover" />
                 </button>
               ))}
@@ -381,8 +389,8 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
 
       {showPosts && (
         <section className="flex flex-col gap-3" data-testid="profile-posts-section">
-          <SectionHeader title="Posts" action={data.postCount > 0 ? `See all ${data.postCount}` : null} onAction={onOpenPosts} />
-          {data.posts.length === 0 && !data.loading && empty('New post', () => setComposer(true))}
+          <SectionHeader title={t('profileLongScroll.posts.title')} action={data.postCount > 0 ? t('profileLongScroll.posts.seeAll', { count: data.postCount }) : null} onAction={onOpenPosts} />
+          {data.posts.length === 0 && !data.loading && empty(t('profileLongScroll.posts.newPost'), () => setComposer(true))}
           {data.posts.length > 0 && (
             <div className="-mx-5 flex snap-x scroll-pl-5 gap-2.5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {data.posts.map((p) => <PostTile key={p.post_id} post={p} onOpen={() => navigate(`/post/${p.post_id}`)} />)}
@@ -393,11 +401,11 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
 
       {(owner || hasAbout) && (
         <section className="flex flex-col gap-2" data-testid="profile-about-section">
-          <SectionHeader title="About" action={owner ? 'Edit' : null} onAction={onEdit} />
-          {bio ? <p className="whitespace-pre-line text-row leading-[21px] text-ink-1">{bio}</p> : owner && empty('Write a short bio', onEdit)}
+          <SectionHeader title={t('profileLongScroll.about.title')} action={owner ? t('profileLongScroll.about.edit') : null} onAction={onEdit} />
+          {bio ? <p className="whitespace-pre-line text-row leading-[21px] text-ink-1">{bio}</p> : owner && empty(t('profileLongScroll.about.writeBio'), onEdit)}
           <div className="divide-y divide-line border-y border-line">
-            <FactRow label="Category" value={category} />
-            <FactRow label="Relocation" value={relocation} />
+            <FactRow label={t('profileLongScroll.about.category')} value={category} />
+            <FactRow label={t('profileLongScroll.about.relocation')} value={relocation} />
           </div>
         </section>
       )}
@@ -407,7 +415,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
           images={[{ video_id: player.id, media_type: 'video', duration: player.durationSeconds, order: 0 }]}
           initialIndex={0}
           onClose={() => setPlayer(null)}
-          videoLabel={player.kind === 'highlight' ? 'Highlight' : player.kind === 'full_match' ? 'Full match' : 'Reel'}
+          videoLabel={player.kind === 'highlight' ? t('profileLongScroll.videos.highlight') : player.kind === 'full_match' ? t('profileLongScroll.fullMatch') : t('profileLongScroll.videos.reel')}
           isOwner={owner}
           caption={[player.title, duration(player.durationSeconds)].filter(Boolean).join(' · ')}
         />

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Play, Loader2, AlertCircle } from 'lucide-react'
 import { PlaybackTokenError, getPlaybackToken, sizedThumbnail } from '@/lib/playbackToken'
 import { logger } from '@/lib/logger'
+import { useMediaT } from '@/i18n/ns/media'
 
 /**
  * NativeVideoPlayer — click-to-load player for a natively-uploaded
@@ -62,6 +63,7 @@ export default function NativeVideoPlayer({
   isOwner = false,
   feed,
 }: NativeVideoPlayerProps) {
+  const t = useMediaT()
   const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'error'>('idle')
   const [hlsUrl, setHlsUrl] = useState<string | null>(null)
   const [iframeUrl, setIframeUrl] = useState<string | null>(null)
@@ -69,7 +71,8 @@ export default function NativeVideoPlayer({
   // Feed blur-up (Motion spec 95:1012 §2): a 24 px poster, blurred, until the real one decodes.
   const [lqipThumb, setLqipThumb] = useState<string | null>(null)
   const [thumbLoaded, setThumbLoaded] = useState(false)
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  // Which message the error state shows (translated where it is rendered).
+  const [errorMsg, setErrorMsg] = useState<'gated' | 'unavailableNow' | 'unavailable' | null>(null)
   // Transient failures (404 deleted / 409 processing / 5xx / network) are
   // retryable; the recruiters-only gate is not.
   const [canRetry, setCanRetry] = useState(false)
@@ -145,7 +148,7 @@ export default function NativeVideoPlayer({
           return
         }
         if ((code === 403 || code === 401) && !isOwner) {
-          setErrorMsg('Visible to clubs and coaches who recruit.')
+          setErrorMsg('gated')
           setCanRetry(false)
           setState('error')
           return
@@ -154,7 +157,7 @@ export default function NativeVideoPlayer({
         // provider/5xx failure: surface it. A silent return here left the
         // player permanently on a spinner after tap — no error, no retry.
         logger.error('[NativeVideoPlayer] token mint failed', err)
-        setErrorMsg('This video is unavailable right now.')
+        setErrorMsg('unavailableNow')
         setCanRetry(true)
         setState('error')
       }
@@ -207,7 +210,7 @@ export default function NativeVideoPlayer({
           preload="metadata"
           poster={signedThumb ?? undefined}
           className="absolute inset-0 h-full w-full bg-black"
-          title={title ?? 'Player video'}
+          title={title ?? t('player.frameTitle')}
         />
       ) : state === 'playing' && iframeUrl ? (
         // Fallback (desktop / Android Chrome — no native HLS): Cloudflare's
@@ -218,14 +221,14 @@ export default function NativeVideoPlayer({
           className="absolute inset-0 h-full w-full border-0"
           allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen;"
           allowFullScreen
-          title={title ?? 'Player video'}
+          title={title ?? t('player.frameTitle')}
         />
       ) : (
         <button
           type="button"
           onClick={activate}
           disabled={state === 'loading'}
-          aria-label="Play video"
+          aria-label={t('player.play')}
           className="group absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden text-white"
         >
           {/* ONLY the SIGNED thumbnail is ever rendered. The stored
@@ -250,7 +253,7 @@ export default function NativeVideoPlayer({
                 // row outlived its video. Say so — never a play button that
                 // leads to a spinner or a black frame.
                 setSignedThumb(null)
-                setErrorMsg('Video unavailable')
+                setErrorMsg('unavailable')
                 setCanRetry(true)
                 setState('error')
               }}
@@ -268,10 +271,10 @@ export default function NativeVideoPlayer({
           ) : state === 'error' ? (
             <>
               <AlertCircle className="relative h-8 w-8 text-white/90" />
-              <span className="relative max-w-[80%] text-center text-xs text-white/90">{errorMsg}</span>
+              <span className="relative max-w-[80%] text-center text-xs text-white/90">{errorMsg === 'gated' ? t('player.gated') : errorMsg === 'unavailableNow' ? t('player.unavailableNow') : errorMsg === 'unavailable' ? t('player.unavailable') : null}</span>
               {canRetry && (
                 <span className="relative rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold text-white">
-                  Tap to retry
+                  {t('player.retry')}
                 </span>
               )}
             </>

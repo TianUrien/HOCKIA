@@ -6,6 +6,7 @@ import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
+import { emailPositionLabel, readMemberLanguage, spanishPositionLabel } from '../_shared/member-language.ts'
 
 /**
  * ============================================================================
@@ -157,6 +158,12 @@ Deno.serve(async (req: Request) => {
       return json(200, { message: 'Ignored - digest disabled' })
     }
 
+    // The publisher's interface language (profiles.ui_language), read on its
+    // own and failing to English. Spanish copy: client/src/locales/glossary.md.
+    const language = await readMemberLanguage(supabase, publisher.id)
+    const es = language === 'es'
+    const dayWord = (n: number) => es ? `${n} día${n === 1 ? '' : 's'}` : `${n} day${n === 1 ? '' : 's'}`
+
     // ── Idempotency: one send per (publisher, week) ──
     const { count: alreadySent } = await supabase
       .from('email_sends')
@@ -206,9 +213,11 @@ Deno.serve(async (req: Request) => {
         id: a.id,
         applicant_id: a.applicant?.id ?? null,
         opportunity_id: a.opportunity?.id ?? null,
-        applicant_name: a.applicant?.full_name?.trim() || 'An applicant',
-        position: a.applicant?.position ?? null,
-        opportunity_title: a.opportunity?.title ?? 'your opportunity',
+        applicant_name: a.applicant?.full_name?.trim() || (es ? 'Postulante' : 'An applicant'),
+        position: es && a.applicant?.position
+          ? spanishPositionLabel(a.applicant.position) ?? emailPositionLabel(a.applicant.position)
+          : a.applicant?.position ? emailPositionLabel(a.applicant.position) : null,
+        opportunity_title: a.opportunity?.title ?? (es ? 'tu oportunidad' : 'your opportunity'),
         days_waiting: Math.max(0, Math.floor((nowMs - new Date(a.applied_at).getTime()) / 86_400_000)),
       }))
       .sort((a, b) => b.days_waiting - a.days_waiting)
@@ -224,9 +233,15 @@ Deno.serve(async (req: Request) => {
 
     // ── Compose ──
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
-    const firstName = publisher.full_name?.split(' ')[0]?.trim() || 'there'
+    const firstName = publisher.full_name?.split(' ')[0]?.trim() || (es ? '' : 'there')
+    // Spanish greeting without a name is "Hola:" (glossary).
+    const greetingEs = firstName ? `Hola, ${firstName}:` : 'Hola:'
     const oldest = rows[0].days_waiting
-    const subject = rows.length === 1
+    const subject = es
+      ? rows.length === 1
+        ? 'Tienes 1 postulación esperando tu respuesta en Hockia'
+        : `Tienes ${rows.length} postulaciones esperando tu respuesta en Hockia`
+      : rows.length === 1
       ? '1 applicant is waiting for your response on Hockia'
       : `${rows.length} applicants are waiting for your response on Hockia`
 
@@ -235,9 +250,9 @@ Deno.serve(async (req: Request) => {
 
     const rowsHtml = shown
       .map((r) => {
-        const meta = [r.position, `waiting ${r.days_waiting} day${r.days_waiting === 1 ? '' : 's'}`]
+        const meta = [r.position, es ? `esperando hace ${dayWord(r.days_waiting)}` : `waiting ${r.days_waiting} day${r.days_waiting === 1 ? '' : 's'}`]
           .filter(Boolean)
-          .join(' · ')
+          .join(', ')
         // Flow-investigation fixes (2026-07-14): recruiters won't triage an
         // applicant they can't SEE — the name + an explicit link open the
         // public profile (logged-out friendly, not AASA-claimed), and the
@@ -261,11 +276,12 @@ Deno.serve(async (req: Request) => {
           <td style="padding:14px 0;border-bottom:1px solid #e6e3ee;">
             <div style="font-size:15px;font-weight:600;color:#0e0b1a;">${nameHtml}${
               profileUrl
-                ? ` &nbsp;<a href="${profileUrl}" style="font-size:13px;font-weight:600;color:#6c2bd9;text-decoration:none;">View profile &rarr;</a>`
+                ? ` &nbsp;<a href="${profileUrl}" style="font-size:13px;font-weight:600;color:#6c2bd9;text-decoration:none;">${es ? 'Ver perfil' : 'View profile'} &rarr;</a>`
                 : ''
             }</div>
-            <div style="font-size:13px;color:#6b6878;margin:2px 0 8px;">${escapeHtml(meta)} · ${titleHtml}</div>
-            ${reviewUrl ? `<div>${btn(reviewUrl, 'Review')}</div>` : ''}
+            <div style="font-size:13px;color:#6b6878;margin:2px 0 2px;">${escapeHtml(meta)}</div>
+            <div style="font-size:13px;color:#6b6878;margin:0 0 8px;">${titleHtml}</div>
+            ${reviewUrl ? `<div>${btn(reviewUrl, es ? 'Revisar' : 'Review')}</div>` : ''}
           </td>
         </tr>`
       })
@@ -280,48 +296,78 @@ Deno.serve(async (req: Request) => {
     // exactly the bounce this link was rewritten to avoid.
     const dashboardUrl = `${HOCKIA_BASE_URL}/home?tab=pulse`
     const fallbackHtml = `<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html lang="${es ? 'es' : 'en'}"><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
         ${EMAIL_LOGO_HTML}
-        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Hi ${escapeHtml(firstName)},</div>
-        <p style="font-size:15px;color:#3f3c4d;line-height:1.5;">
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${es ? escapeHtml(greetingEs) : `Hi ${escapeHtml(firstName)},`}</div>
+        ${es ? `<p style="font-size:15px;color:#3f3c4d;line-height:1.5;">
+          Tienes <strong>${rows.length} ${rows.length === 1 ? 'postulación' : 'postulaciones'}</strong> esperando tu respuesta.
+          La más antigua espera hace <strong>${dayWord(oldest)}</strong>.
+          Abre una para responder: marcarla como &ldquo;No encaja&rdquo; lleva un solo toque, y Hockia AI redacta una nota amable que puedes editar.
+        </p>` : `<p style="font-size:15px;color:#3f3c4d;line-height:1.5;">
           You have <strong>${rows.length} application${rows.length === 1 ? '' : 's'}</strong> waiting for your response.
           The oldest has been waiting <strong>${oldest} day${oldest === 1 ? '' : 's'}</strong>.
           Open one to answer: marking it &ldquo;Not a fit&rdquo; takes one tap, and Hockia AI drafts a kind note you can edit.
-        </p>
+        </p>`}
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowsHtml}</table>
-        ${overflow > 0 ? `<p style="font-size:13px;color:#6b6878;">+ ${overflow} more waiting in Hockia.</p>` : ''}
+        ${overflow > 0 ? `<p style="font-size:13px;color:#6b6878;">${es ? `+ ${overflow} más esperando en Hockia.` : `+ ${overflow} more waiting in Hockia.`}</p>` : ''}
         <div style="margin-top:20px;">
-          <a href="${dashboardUrl}" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;text-decoration:none;">Review in Hockia</a>
+          <a href="${dashboardUrl}" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;text-decoration:none;">${es ? 'Revisar en Hockia' : 'Review in Hockia'}</a>
         </div>
-        <p style="font-size:12px;color:#73707c;margin-top:24px;">
+        ${es ? `<p style="font-size:12px;color:#73707c;margin-top:24px;">
+          Quienes se postularon reciben un aviso cuando respondes. Una respuesta rápida, aunque sea un no, es mejor que el silencio.
+          Recibes este resumen semanal solo mientras haya postulaciones esperando.
+          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">Elige qué emails recibes en Ajustes &rarr; Notificaciones.</a>
+        </p>` : `<p style="font-size:12px;color:#73707c;margin-top:24px;">
           Applicants are notified when you respond. A quick answer, even a no, beats silence.
           You receive this weekly summary only while applications are waiting.
           <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">Change emails in Settings &rarr; Notifications.</a>
-        </p>
+        </p>`}
       </td></tr>
     </table>
   </td></tr></table>
 </body></html>`
 
-    const fallbackText = [
+    const fallbackText = es
+      ? [
+        greetingEs,
+        '',
+        `Tienes ${rows.length} ${rows.length === 1 ? 'postulación' : 'postulaciones'} esperando tu respuesta (la más antigua: ${dayWord(oldest)}).`,
+        '',
+        ...shown.map((r) =>
+          `- ${r.applicant_name}${r.position ? ` (${r.position})` : ''}, ${r.opportunity_title}, esperando hace ${dayWord(r.days_waiting)}`
+        ),
+        overflow > 0 ? `+ ${overflow} más esperando en Hockia.` : '',
+        '',
+        'Abre una para responder: marcarla como "No encaja" lleva un solo toque, y Hockia AI redacta una nota amable que puedes editar.',
+        `Revisar en Hockia: ${dashboardUrl}`,
+        '---',
+        'Quienes se postularon reciben un aviso cuando respondes. Una respuesta rápida, aunque sea un no, es mejor que el silencio. Recibes este resumen semanal solo mientras haya postulaciones esperando.',
+        `Ajustes de notificaciones: ${HOCKIA_BASE_URL}/settings`,
+      ].filter((l) => l !== '').join('\n')
+      : [
       `Hi ${firstName},`,
       '',
       `You have ${rows.length} application${rows.length === 1 ? '' : 's'} waiting for your response (oldest: ${oldest} day${oldest === 1 ? '' : 's'}).`,
       '',
       ...shown.map((r) =>
-        `- ${r.applicant_name}${r.position ? ` (${r.position})` : ''} · ${r.opportunity_title} · waiting ${r.days_waiting} day${r.days_waiting === 1 ? '' : 's'}`
+        `- ${r.applicant_name}${r.position ? ` (${r.position})` : ''}, ${r.opportunity_title}, waiting ${r.days_waiting} day${r.days_waiting === 1 ? '' : 's'}`
       ),
-      overflow > 0 ? `...and ${overflow} more.` : '',
+      overflow > 0 ? `+ ${overflow} more waiting in Hockia.` : '',
       '',
+      'Open one to answer: marking it "Not a fit" takes one tap, and Hockia AI drafts a kind note you can edit.',
       `Review in Hockia: ${dashboardUrl}`,
+      '---',
+      'Applicants are notified when you respond. A quick answer, even a no, beats silence. You receive this weekly summary only while applications are waiting.',
+      `Notification settings: ${HOCKIA_BASE_URL}/settings`,
     ].filter((l) => l !== '').join('\n')
 
     // DB template can override the layout later without a redeploy; the
     // hardcoded fallback above is what runs until one exists.
-    const rendered = await renderTemplate(supabase, 'application_digest', {
+    // Used only when it is in the publisher's language.
+    const renderedAny = await renderTemplate(supabase, 'application_digest', {
       first_name: firstName,
       application_count: String(rows.length),
       oldest_days: String(oldest),
@@ -329,7 +375,8 @@ Deno.serve(async (req: Request) => {
       rows_text: fallbackText,
       cta_url: dashboardUrl,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
-    })
+    }, language)
+    const rendered = renderedAny && renderedAny.language === language ? renderedAny : null
 
     const result = await sendTrackedEmail({
       supabase,

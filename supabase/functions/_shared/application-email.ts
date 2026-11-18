@@ -2,6 +2,7 @@
 declare const Deno: { env: { get(key: string): string | undefined } }
 import { escapeHtml } from './html-escape.ts'
 import { EMAIL_LOGO_HTML, emailAvatarHtml } from './email-brand.ts'
+import { type MemberLanguage, emailPositionLabel, FOOTER_ES } from './member-language.ts'
 
 /**
  * Shared Email Template for Application Notifications (to Clubs)
@@ -64,25 +65,30 @@ export interface ApplicationPayload {
   old_record: ApplicationRecord | null
 }
 
-function capitalizeFirst(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1)
+/** "Midfielder, Forward" (English capitalises the token, Spanish uses the agreed word). */
+export function applicantPositionsText(
+  applicant: Pick<ApplicantData, 'position' | 'secondary_position'>,
+  language: MemberLanguage = 'en',
+): string | null {
+  const positions: string[] = []
+  if (applicant.position) {
+    positions.push(emailPositionLabel(applicant.position, language))
+  }
+  if (applicant.secondary_position && applicant.secondary_position !== applicant.position) {
+    positions.push(emailPositionLabel(applicant.secondary_position, language))
+  }
+  return positions.length > 0 ? positions.join(', ') : null
 }
 
 export function generateEmailHtml(
   applicant: ApplicantData,
   opportunity: OpportunityData,
+  language: MemberLanguage = 'en',
 ): string {
-  const displayName = applicant.full_name?.trim() || 'Player'
-  
-  // Build positions string
-  const positions: string[] = []
-  if (applicant.position) {
-    positions.push(capitalizeFirst(applicant.position))
-  }
-  if (applicant.secondary_position && applicant.secondary_position !== applicant.position) {
-    positions.push(capitalizeFirst(applicant.secondary_position))
-  }
-  const positionsText = positions.length > 0 ? positions.join(' • ') : null
+  const es = language === 'es'
+  const displayName = applicant.full_name?.trim() || (es ? 'Jugador/a' : 'Player')
+
+  const positionsText = applicantPositionsText(applicant, language)
   
   const location = applicant.base_location?.trim() || null
   
@@ -106,7 +112,7 @@ export function generateEmailHtml(
   }
 
   if (location) {
-    detailItems.push(`<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">📍 ${escapeHtml(location)}</span>`)
+    detailItems.push(`<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(location)}</span>`)
   }
 
   
@@ -114,7 +120,7 @@ export function generateEmailHtml(
 
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -127,16 +133,16 @@ export function generateEmailHtml(
 
   <div style="padding: 0 0 24px 0;">
 
-    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">New application received</h1>
-    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">Someone applied to one of your opportunities.</p>
+    <h1 style="color: #0e0b1a; margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">${es ? 'Nueva postulación recibida' : 'New application received'}</h1>
+    <p style="color: #6b6878; margin: 0 0 24px 0; font-size: 16px;">${es ? 'Alguien se postuló a una de tus oportunidades.' : 'Someone applied to one of your opportunities.'}</p>
 
     <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;">
-      <p style="color: #6b6878; margin: 0 0 4px 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Opportunity</p>
+      <p style="color: #6b6878; margin: 0 0 4px 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${es ? 'Oportunidad' : 'Opportunity'}</p>
       <h2 style="color: #0e0b1a; margin: 0; font-size: 18px; font-weight: 600;">${escapeHtml(opportunity.title)}</h2>
     </div>
 
     <div style="background: #fbfafd; border: 1px solid #e6e3ee; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-      <p style="color: #6b6878; margin: 0 0 12px 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Applicant</p>
+      <p style="color: #6b6878; margin: 0 0 12px 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${es ? 'Postulante' : 'Applicant'}</p>
 
       <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
         <tr>
@@ -152,18 +158,18 @@ export function generateEmailHtml(
     </div>
 
     <p style="margin: 0 0 8px 0;">
-      <a href="${escapeHtml(applicantsUrl)}" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">Review applicants &rarr;</a>
+      <a href="${escapeHtml(applicantsUrl)}" style="color: #6c2bd9; font-weight: 600; text-decoration: none;">${es ? 'Revisar postulaciones' : 'Review applicants'} &rarr;</a>
     </p>
 
     <p style="color: #73707c; font-size: 14px; margin: 0;">
-      <a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">View ${escapeHtml(displayName)}'s profile</a>
+      <a href="${escapeHtml(profileUrl)}" style="color: #6c2bd9; text-decoration: none;">${es ? `Ver el perfil de ${escapeHtml(displayName)}` : `View ${escapeHtml(displayName)}'s profile`}</a>
     </p>
   </div>
 
   <div style="border-top: 1px solid #e6e3ee; padding: 16px 0 0 0; text-align: left;">
     <p style="color: #73707c; font-size: 12px; margin: 0;">
-      You're receiving this because you have a Hockia account.<br>
-      <a href="${HOCKIA_BASE_URL}/settings" style="color: #6c2bd9; text-decoration: none;">Notification settings</a>
+      ${es ? FOOTER_ES.reason : "You're receiving this because you have a Hockia account."}<br>
+      <a href="${HOCKIA_BASE_URL}/settings" style="color: #6c2bd9; text-decoration: none;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
     </p>
   </div>
 
@@ -175,18 +181,12 @@ export function generateEmailHtml(
 export function generateEmailText(
   applicant: ApplicantData,
   opportunity: OpportunityData,
+  language: MemberLanguage = 'en',
 ): string {
-  const displayName = applicant.full_name?.trim() || 'Player'
-  
-  // Build positions string
-  const positions: string[] = []
-  if (applicant.position) {
-    positions.push(capitalizeFirst(applicant.position))
-  }
-  if (applicant.secondary_position && applicant.secondary_position !== applicant.position) {
-    positions.push(capitalizeFirst(applicant.secondary_position))
-  }
-  const positionsText = positions.length > 0 ? positions.join(' • ') : null
+  const es = language === 'es'
+  const displayName = applicant.full_name?.trim() || (es ? 'Jugador/a' : 'Player')
+
+  const positionsText = applicantPositionsText(applicant, language)
   
   const location = applicant.base_location?.trim() || null
   
@@ -199,36 +199,36 @@ export function generateEmailText(
 
   // Build text content
   const lines: string[] = [
-    "New application received on Hockia",
+    es ? 'Nueva postulación recibida en Hockia' : "New application received on Hockia",
     '',
-    'You have a new application for one of your opportunities.',
+    es ? 'Llegó una nueva postulación a una de tus oportunidades.' : 'You have a new application for one of your opportunities.',
     '',
-    'OPPORTUNITY:',
+    es ? 'OPORTUNIDAD:' : 'OPPORTUNITY:',
     opportunity.title,
     '',
-    'APPLICANT:',
+    es ? 'POSTULANTE:' : 'APPLICANT:',
     displayName,
   ]
 
   if (positionsText) {
-    lines.push(`Position: ${positionsText}`)
+    lines.push(`${es ? 'Posición' : 'Position'}: ${positionsText}`)
   }
 
   if (location) {
-    lines.push(`Location: ${location}`)
+    lines.push(`${es ? 'Ubicación' : 'Location'}: ${location}`)
   }
 
   lines.push(
     '',
-    'Review applicants:',
+    es ? 'Revisar postulaciones:' : 'Review applicants:',
     applicantsUrl,
     '',
-    `View ${displayName}'s profile:`,
+    es ? `Ver el perfil de ${displayName}:` : `View ${displayName}'s profile:`,
     profileUrl,
     '',
     '---',
-    "You're receiving this because you're on Hockia.",
-    `Manage preferences: ${HOCKIA_BASE_URL}/settings`
+    es ? FOOTER_ES.reason : "You're receiving this because you're on Hockia.",
+    `${es ? FOOTER_ES.manage : 'Manage preferences: '}${HOCKIA_BASE_URL}/settings`
   )
 
   return lines.join('\n')

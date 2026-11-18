@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { useGooglePlaces, type PlacePrediction } from '@/hooks/useGooglePlaces'
 import { useCountries } from '@/hooks/useCountries'
 import Input from './Input'
+import { useProfileEditT } from '@/i18n/ns/profileEdit'
 import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel } from '@/components/ui/fieldClasses'
 
 export interface LocationSelection {
@@ -41,7 +42,7 @@ export default function LocationAutocomplete({
   onLocationSelect,
   onLocationClear,
   isSelected,
-  placeholder = 'Where are you currently based?',
+  placeholder: placeholderProp,
   required,
   error,
   disabled,
@@ -49,6 +50,8 @@ export default function LocationAutocomplete({
   appearance = 'default',
   suggestionsPlacement = 'overlay',
 }: LocationAutocompleteProps) {
+  const t = useProfileEditT()
+  const placeholder = placeholderProp ?? t('location.placeholder')
   const isField = appearance === 'field'
   const inputId = useId()
   const { isLoaded, loadError, getAutocompletePredictions, getPlaceDetails } = useGooglePlaces()
@@ -236,7 +239,7 @@ export default function LocationAutocomplete({
           onFocus={() => { if (value.trim().length >= 2 && !isSelected) searchLocations(value) }}
           onKeyDown={handleKeyDown}
           disabled={disabled || !isLoaded}
-          placeholder={isLoaded ? placeholder : 'Loading...'}
+          placeholder={isLoaded ? placeholder : t('location.loading')}
           autoComplete="off"
           className={isField
             ? cn(fieldInputBase, 'pl-10 pr-11', error && fieldErrorRing)
@@ -260,7 +263,7 @@ export default function LocationAutocomplete({
             className={isField
               ? 'absolute right-0.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-ink-3'
               : 'absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors'}
-            aria-label="Clear location"
+            aria-label={t('location.clear')}
           >
             <X className="w-4 h-4" />
           </button>
@@ -302,7 +305,7 @@ export default function LocationAutocomplete({
           <div className="border-t border-gray-100 px-3 py-1.5 flex justify-end">
             <img
               src="https://maps.gstatic.com/mapfiles/api-3/images/powered-by-google-on-white3_hdpi.png"
-              alt="Powered by Google"
+              alt={t('location.poweredByGoogle')}
               className="h-4"
             />
           </div>

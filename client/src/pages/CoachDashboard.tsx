@@ -43,9 +43,10 @@ import { KeyFactsGrid } from '@/components/profile/KeyFactsGrid'
 import { ShortlistRoleSheet } from '@/components/profile/ClubViewCards'
 import PlayerProfileV2 from '@/components/profile/v2/PlayerProfileV2'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
-import { RECRUITER_MINOR_MESSAGE, recruiterCannotStartWith } from '@/lib/recruiterMinor'
+import { recruiterMinorMessage, recruiterCannotStartWith } from '@/lib/recruiterMinor'
 import type { KeyFactsViewer } from '@/lib/keyFacts'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
+import { useProfileT } from '@/i18n/ns/profile'
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
 // for notifications and shareable URLs. Mirrors PlayerDashboard so
@@ -150,6 +151,7 @@ export default function CoachDashboard({
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const { addToast } = useToastStore()
+  const t = useProfileT()
 
   /** Visitor-view back button. See matching handler + comment in
    *  PlayerDashboard — when location.key === 'default' the user
@@ -191,30 +193,31 @@ export default function CoachDashboard({
   // from the global /community marketplace route.
   const visitedName = readOnly ? profile?.full_name : null
   const ownerTabTitle: Record<TabType, string> = {
-    profile: 'Coach dashboard',
-    media: 'Media',
-    journey: 'Career history',
-    references: 'References',
-    friends: 'Connections',
-    comments: 'Comments',
-    posts: 'Posts',
-    community: 'My Network',
-    opportunities: 'Opportunities',
+    profile: t('coachDashboard.ownerTitle.profile'),
+    media: t('coachDashboard.ownerTitle.media'),
+    journey: t('coachDashboard.ownerTitle.journey'),
+    references: t('coachDashboard.ownerTitle.references'),
+    friends: t('coachDashboard.ownerTitle.friends'),
+    comments: t('coachDashboard.ownerTitle.comments'),
+    posts: t('coachDashboard.ownerTitle.posts'),
+    community: t('coachDashboard.ownerTitle.community'),
+    opportunities: t('coachDashboard.ownerTitle.opportunities'),
   }
   const visitorTabSuffix: Record<TabType, string | null> = {
     profile: null,
-    media: 'Media',
-    journey: 'Career history',
-    references: 'References',
-    friends: 'Connections',
-    comments: 'Comments',
-    posts: 'Posts',
-    community: 'Community',
-    opportunities: 'Opportunities',
+    media: t('coachDashboard.visitorTitle.media'),
+    journey: t('coachDashboard.visitorTitle.journey'),
+    references: t('coachDashboard.visitorTitle.references'),
+    friends: t('coachDashboard.visitorTitle.friends'),
+    comments: t('coachDashboard.visitorTitle.comments'),
+    posts: t('coachDashboard.visitorTitle.posts'),
+    community: t('coachDashboard.visitorTitle.community'),
+    opportunities: t('coachDashboard.visitorTitle.opportunities'),
   }
+  const visitorSuffix = visitorTabSuffix[activeTab]
   const computedTitle = visitedName
-    ? visitorTabSuffix[activeTab]
-      ? `${visitedName} · ${visitorTabSuffix[activeTab]}`
+    ? visitorSuffix
+      ? t('coachDashboard.visitorTitle.withSection', { name: visitedName, section: visitorSuffix })
       : visitedName
     : ownerTabTitle[activeTab]
   useDocumentTitle(computedTitle)
@@ -439,7 +442,7 @@ export default function CoachDashboard({
     }
     if (!profileData) return
     if (user.id === profileData.id) {
-      addToast('You cannot message yourself.', 'error')
+      addToast(t('coachDashboard.errors.messageSelf'), 'error')
       return
     }
 
@@ -464,13 +467,13 @@ export default function CoachDashboard({
       } else if (recruiterCannotStartWith(authProfile, profileData.server_age)) {
         // Founder ruling 2026-10-06: clubs and recruiting coaches cannot start a
         // conversation with an under-18 (existing conversations still open above).
-        addToast(RECRUITER_MINOR_MESSAGE, 'info')
+        addToast(recruiterMinorMessage(), 'info')
       } else {
         navigate(`/messages?new=${profileData.id}`, { state: { returnTo, messageOrigin: 'Profile' } })
       }
     } catch (error) {
       logger.error('Error starting conversation:', error)
-      addToast('Failed to start conversation. Please try again.', 'error')
+      addToast(t('coachDashboard.errors.startConversation'), 'error')
     } finally {
       setSendingMessage(false)
     }
@@ -533,7 +536,7 @@ export default function CoachDashboard({
       } catch (err) {
         logger.error('[CoachDashboard] failed to enable recruiter mode', err)
         addToast(
-          'Unable to enable recruiter mode. Please try again.',
+          t('coachDashboard.errors.recruiterMode'),
           'error',
         )
         return
@@ -610,7 +613,7 @@ export default function CoachDashboard({
             className="hidden items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors lg:flex"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Back</span>
+            <span className="text-sm font-medium">{t('coachDashboard.back')}</span>
           </button>
         )}
 
@@ -625,7 +628,7 @@ export default function CoachDashboard({
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">
-              {readOnly ? 'Back to profile' : 'Back to dashboard'}
+              {readOnly ? t('coachDashboard.backToProfile') : t('coachDashboard.backToDashboard')}
             </span>
           </button>
         )}
@@ -677,7 +680,7 @@ export default function CoachDashboard({
           keyFacts={d2 ? (
             <div className="flex flex-col gap-3">
               <KeyFactsGrid facts={keyFacts.facts} onAction={readOnly ? undefined : () => setShowEditModal(true)} />
-              {!readOnly && <p className="text-caption text-ink-2">Clubs see these six first. Complete profiles are suggested to clubs more often.</p>}
+              {!readOnly && <p className="text-caption text-ink-2">{t('coachDashboard.keyFactsHint')}</p>}
             </div>
           ) : null}
         />
@@ -744,18 +747,18 @@ export default function CoachDashboard({
               hasPreviewBanner={readOnly && isOwnProfile}
               sections={[
                 ...(((profile as Profile).career_entry_count ?? 0) > 0
-                  ? [{ id: 'portfolio-journey', label: 'Career' }]
+                  ? [{ id: 'portfolio-journey', label: t('coachDashboard.sectionNav.career') }]
                   : []),
                 ...(((profile as Profile).accepted_reference_count ?? 0) > 0
-                  ? [{ id: 'community-references', label: 'References' }]
+                  ? [{ id: 'community-references', label: t('coachDashboard.sectionNav.references') }]
                   : []),
-                { id: 'portfolio-media', label: 'Media' },
+                { id: 'portfolio-media', label: t('coachDashboard.sectionNav.media') },
                 ...(((profile as Profile).accepted_friend_count ?? 0) > 0
-                  ? [{ id: 'community-connections', label: 'Connections' }]
+                  ? [{ id: 'community-connections', label: t('coachDashboard.sectionNav.connections') }]
                   : []),
-                { id: 'community-comments', label: 'Comments' },
+                { id: 'community-comments', label: t('coachDashboard.sectionNav.comments') },
                 ...(((profile as Profile).post_count ?? 0) > 0
-                  ? [{ id: 'community-posts', label: 'Posts' }]
+                  ? [{ id: 'community-posts', label: t('coachDashboard.sectionNav.posts') }]
                   : []),
               ]}
             />
@@ -771,7 +774,7 @@ export default function CoachDashboard({
                   profileId={profile.id}
                   readOnly
                   variant="inline"
-                  title="Career history"
+                  title={t('coachDashboard.careerHistory')}
                 />
               </div>
             </div>
@@ -845,7 +848,7 @@ export default function CoachDashboard({
                   <JourneyTab
                     profileId={profile.id}
                     readOnly={readOnly}
-                    {...(readOnly ? { variant: 'inline' as const, title: 'Career history' } : {})}
+                    {...(readOnly ? { variant: 'inline' as const, title: t('coachDashboard.careerHistory') } : {})}
                   />
                 </div>
               )}
@@ -871,14 +874,14 @@ export default function CoachDashboard({
                     // (reconciled Connections design — same as Player).
                     <div className="flex flex-col items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-6">
                       <p className="text-sm text-gray-600">
-                        Sign in to see {profile.full_name ?? 'this member'}&apos;s connections.
+                        {t('coachDashboard.signInToSeeConnections', { name: profile.full_name ?? t('coachDashboard.thisMember') })}
                       </p>
                       <button
                         type="button"
                         onClick={() => navigate('/signin')}
                         className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                       >
-                        Sign in
+                        {t('coachDashboard.signIn')}
                       </button>
                     </div>
                   ) : readOnly ? (
@@ -976,8 +979,8 @@ export default function CoachDashboard({
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
-        title="Sign in to message"
-        message="Sign in to message this coach and see more about their profile."
+        title={t('coachDashboard.signInPrompt.title')}
+        message={t('coachDashboard.signInPrompt.message')}
       />
     </div>
   )

@@ -9,6 +9,7 @@ import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import { getTimeAgo } from '@/lib/utils'
 import { SectionHeader } from './SectionHeader'
 import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
+import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * "Opportunities for you" (Home redesign V2, player Pulse): a horizontal rail
@@ -90,7 +91,7 @@ export function OpportunitiesForYou({
   forRole = 'player',
   moduleId = MODULE_ID,
   position = POSITION,
-  title = 'Opportunities for you',
+  title,
 }: {
   enabled: boolean
   forRole?: 'player' | 'coach'
@@ -98,6 +99,7 @@ export function OpportunitiesForYou({
   position?: number
   title?: string
 }) {
+  const t = useHomeT()
   const navigate = useNavigate()
   const { loading, items } = useOpportunitiesForYou(enabled, forRole)
   const ref = useImpressionOnce(() => recordModuleImpression(moduleId, position))
@@ -112,7 +114,7 @@ export function OpportunitiesForYou({
   return (
     <section ref={ref} className="mb-6">
       <SectionHeader
-        title={title}
+        title={title ?? t('opportunitiesForYou.title')}
         /* No "Matched" chip: match language is recruiter-only (founder
            rule 2026-09-25); the section title already says "for you". */
         action={
@@ -124,7 +126,7 @@ export function OpportunitiesForYou({
             }}
             className="inline-flex items-center gap-0.5 text-sm font-semibold text-hockia-primary"
           >
-            See all
+            {t('opportunitiesForYou.seeAll')}
             <ChevronRight className="h-4 w-4" />
           </button>
         }

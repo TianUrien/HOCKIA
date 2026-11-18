@@ -6,12 +6,14 @@ import {
   PLATFORM_LABEL,
   type AppVersionInfo,
 } from '@/lib/appVersion'
+import { useSettingsT } from '@/i18n/ns/settings'
 
-const ENV_LABEL: Record<string, string> = {
-  production: 'Production',
-  staging: 'Staging',
-  development: 'Development',
-}
+/** Keys in the settings catalog. */
+const ENV_LABEL = {
+  production: 'aboutApp.envProduction',
+  staging: 'aboutApp.envStaging',
+  development: 'aboutApp.envDevelopment',
+} as const
 
 /**
  * Settings → About: shows the installed app version/build, what the app is
@@ -20,6 +22,7 @@ const ENV_LABEL: Record<string, string> = {
  * e.g. whether they've actually updated to the version with the push fix.
  */
 export default function AboutAppCard() {
+  const t = useSettingsT()
   const [info, setInfo] = useState<AppVersionInfo | null>(null)
   const platform = getRuntimePlatform()
   const env = getEnvironment()
@@ -33,12 +36,12 @@ export default function AboutAppCard() {
 
   const versionText = info
     ? `${info.version} (${info.build})`
-    : isNative ? '—' : 'Web — always latest'
+    : isNative ? '—' : t('aboutApp.webLatest')
 
   const rows: [string, string][] = [
-    ['Version', versionText],
-    ['Platform', PLATFORM_LABEL[platform]],
-    ['Environment', ENV_LABEL[env] ?? env],
+    [t('aboutApp.version'), versionText],
+    [t('aboutApp.platform'), PLATFORM_LABEL[platform]],
+    [t('aboutApp.environment'), env in ENV_LABEL ? t(ENV_LABEL[env]) : env],
   ]
 
   return (

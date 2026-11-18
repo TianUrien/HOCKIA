@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { X, Pause, Play, CheckCircle, AlertCircle, Upload, ChevronDown, ChevronUp } from 'lucide-react'
 import { useUploadManager, type UploadEntry } from '@/lib/uploadManager'
+import { useMediaT } from '@/i18n/ns/media'
 
 export default function UploadIndicator() {
+  const t = useMediaT()
   const uploads = useUploadManager((s) => s.uploads)
   const cancelUpload = useUploadManager((s) => s.cancelUpload)
   const pauseUpload = useUploadManager((s) => s.pauseUpload)
@@ -34,12 +36,12 @@ export default function UploadIndicator() {
   const hasError = visible.some((u) => u.status === 'error')
 
   const statusLabel = hasActive
-    ? 'Uploading...'
+    ? t('uploadIndicator.uploading')
     : hasPaused
-      ? 'Upload paused'
+      ? t('uploadIndicator.paused')
       : hasError
-        ? 'Upload failed'
-        : 'Upload complete'
+        ? t('uploadIndicator.failed')
+        : t('uploadIndicator.complete')
 
   return (
     <div className="fixed bottom-20 right-4 md:bottom-4 z-[90] w-80 max-w-[calc(100vw-2rem)]">
@@ -54,7 +56,7 @@ export default function UploadIndicator() {
             type="button"
             onClick={() => setIsCollapsed((p) => !p)}
             className="p-1 text-gray-400 hover:text-gray-600 rounded"
-            aria-label={isCollapsed ? 'Expand upload details' : 'Collapse upload details'}
+            aria-label={isCollapsed ? t('uploadIndicator.expand') : t('uploadIndicator.collapse')}
           >
             {isCollapsed ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
@@ -95,6 +97,7 @@ function UploadRow({
   onResume: () => void
   onDismiss: () => void
 }) {
+  const t = useMediaT()
   const isActive = entry.status === 'uploading' || entry.status === 'validating'
 
   const handleAction = useCallback(() => {
@@ -115,7 +118,7 @@ function UploadRow({
               type="button"
               onClick={handleAction}
               className="p-1 text-gray-400 hover:text-hockia-primary rounded"
-              aria-label={entry.status === 'uploading' ? 'Pause upload' : 'Resume upload'}
+              aria-label={entry.status === 'uploading' ? t('uploadIndicator.pause') : t('uploadIndicator.resume')}
             >
               {entry.status === 'uploading' ? (
                 <Pause className="w-3.5 h-3.5" />
@@ -130,7 +133,7 @@ function UploadRow({
             type="button"
             onClick={isActive || entry.status === 'paused' ? onCancel : onDismiss}
             className="p-1 text-gray-400 hover:text-red-500 rounded"
-            aria-label={isActive || entry.status === 'paused' ? 'Cancel upload' : 'Dismiss'}
+            aria-label={isActive || entry.status === 'paused' ? t('uploadIndicator.cancel') : t('uploadIndicator.dismiss')}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -152,24 +155,24 @@ function UploadRow({
       {/* Status label */}
       <div className="mt-1 flex items-center gap-1.5">
         {entry.status === 'validating' && (
-          <span className="text-xs text-gray-500">Checking video...</span>
+          <span className="text-xs text-gray-500">{t('uploadIndicator.checking')}</span>
         )}
         {entry.status === 'uploading' && (
-          <span className="text-xs text-gray-500">{entry.progress}% uploaded</span>
+          <span className="text-xs text-gray-500">{t('uploadIndicator.progress', { progress: entry.progress })}</span>
         )}
         {entry.status === 'paused' && (
-          <span className="text-xs text-amber-600">Paused at {entry.progress}%</span>
+          <span className="text-xs text-amber-600">{t('uploadIndicator.pausedAt', { progress: entry.progress })}</span>
         )}
         {entry.status === 'completed' && (
           <>
             <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-            <span className="text-xs text-green-600">Upload complete</span>
+            <span className="text-xs text-green-600">{t('uploadIndicator.rowComplete')}</span>
           </>
         )}
         {entry.status === 'error' && (
           <>
             <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-            <span className="text-xs text-red-600 truncate">{entry.error || 'Upload failed'}</span>
+            <span className="text-xs text-red-600 truncate">{entry.error || t('uploadIndicator.rowFailed')}</span>
           </>
         )}
       </div>

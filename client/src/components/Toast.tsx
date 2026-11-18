@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { CheckCircle, XCircle, Info, X } from 'lucide-react'
+import { useCommonT } from '@/i18n/ns/common'
 
 /** neutral = quiet grey info (e.g. "This person isn't accepting requests.") — never red. */
 export type ToastType = 'success' | 'error' | 'info' | 'neutral'
@@ -12,6 +13,7 @@ interface ToastProps {
 }
 
 export default function Toast({ message, type, onClose, duration = 4000 }: ToastProps) {
+  const t = useCommonT()
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(onClose, duration)
@@ -53,7 +55,7 @@ export default function Toast({ message, type, onClose, duration = 4000 }: Toast
       <button
         onClick={onClose}
         className="flex h-8 w-8 flex-shrink-0 items-center justify-center opacity-70 transition-opacity hover:opacity-100 lg:h-auto lg:w-auto"
-        aria-label="Close notification"
+        aria-label={t('toast.close')}
       >
         <X className="w-4 h-4" />
       </button>

@@ -21,6 +21,7 @@ import { PostRoleStartSheet } from './PostRoleStartSheet'
 import { useYourReplies } from '@/hooks/useYourReplies'
 import { yourRepliesCopy } from '@/lib/yourReplies'
 import { ClubRoleCardSkeleton } from '@/components/ScreenSkeletons'
+import { tClub, useClubT } from '@/i18n/ns/club'
 
 
 /**
@@ -37,26 +38,27 @@ type Segment = 'open' | 'closed'
 const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
 
 function whenLine(r: ClubRole): string {
-  const from = r.start_date ? `Starts ${monthDay(r.start_date)}` : 'Starts immediately'
+  const from = r.start_date ? tClub('clubRoles.starts', { date: monthDay(r.start_date) }) : tClub('clubRoles.startsNow')
   return [from, formatDurationText(r.duration_text)].filter(Boolean).join(' · ')
 }
 
 function closedLabel(r: ClubRole): { label: string; tone: 'positive' | 'grey' } {
-  if (r.closed_reason === 'filled') return r.filled_via_hockia ? { label: 'Filled through Hockia', tone: 'positive' } : { label: 'Filled', tone: 'grey' }
-  if (r.closed_reason === 'withdrawn') return { label: 'Closed without hiring', tone: 'grey' }
-  return { label: 'Closed', tone: 'grey' }
+  if (r.closed_reason === 'filled') return r.filled_via_hockia ? { label: tClub('clubRoles.outcome.filledHockia'), tone: 'positive' } : { label: tClub('clubRoles.outcome.filled'), tone: 'grey' }
+  if (r.closed_reason === 'withdrawn') return { label: tClub('clubRoles.outcome.withoutHiring'), tone: 'grey' }
+  return { label: tClub('clubRoles.outcome.closed'), tone: 'grey' }
 }
 
 /** Draft card (Figma O5 162:542): dashed outline, Draft pill, the title, Continue. */
 function DraftCard({ role, onContinue }: { role: ClubRole; onContinue: () => void }) {
+  const t = useClubT()
   return (
     <article className="flex flex-col gap-1.5 self-start rounded-[24px] border border-dashed border-line px-4 py-3.5" data-testid="club-draft-card">
       <div className="flex items-center gap-2">
-        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[3px] text-caption font-semibold text-ink-2">Draft</span>
+        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[3px] text-caption font-semibold text-ink-2">{t('clubRoles.draft')}</span>
         <h3 className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[21px] text-ink-1">{roleTitle(role)}</h3>
-        <button type="button" onClick={onContinue} className="shrink-0 text-[16px] font-semibold leading-[21px] text-brand-primary">Continue</button>
+        <button type="button" onClick={onContinue} className="shrink-0 text-[16px] font-semibold leading-[21px] text-brand-primary">{t('clubRoles.continue')}</button>
       </div>
-      <p className="text-secondary text-ink-2">Only you can see this. Post it when it’s ready.</p>
+      <p className="text-secondary text-ink-2">{t('clubRoles.draftHint')}</p>
     </article>
   )
 }
@@ -71,14 +73,15 @@ function DraftCard({ role, onContinue }: { role: ClubRole; onContinue: () => voi
  */
 function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit, onPostAgain }: { role: ClubRole; expiryDays: number; cover: OwnerCrest; onReview: () => void; onChanged: () => void; onEdit?: () => void; onPostAgain?: () => void }) {
   const press = usePressSpring<HTMLButtonElement>()
+  const t = useClubT()
   const pill = genderPill(role.gender)
   const family = categoryFamily(role.gender)
   const p = role.pipeline
   const open = role.status === 'open'
   const outcome = open ? null : closedLabel(role)
   const meta = [
-    `Posted ${monthDay(rolePostedAt(role))}`,
-    open ? whenLine(role) : role.closed_at ? `Closed ${monthDay(role.closed_at)}` : null,
+    t('clubRoles.posted', { date: monthDay(rolePostedAt(role)) }),
+    open ? whenLine(role) : role.closed_at ? t('clubRoles.closedOn', { date: monthDay(role.closed_at) }) : null,
     role.location_city?.trim() || null,
   ].filter(Boolean).join(' · ')
   const stat = (value: number, label: string, accent = false) => {
@@ -90,7 +93,7 @@ function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit, onPost
       </div>
     )
   }
-  const reviewLabel = open && p.toReview > 0 ? `Review ${p.toReview} applicant${p.toReview === 1 ? '' : 's'}` : p.total > 0 ? 'View applicants' : 'No applicants yet'
+  const reviewLabel = open && p.toReview > 0 ? t('clubRoles.review', { count: p.toReview }) : p.total > 0 ? t('clubRoles.viewApplicants') : t('clubRoles.noApplicants')
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-[24px] border border-line bg-white shadow-[0_4px_16px_rgba(0,0,0,0.05)] lg:transition-[transform,box-shadow] lg:duration-200 lg:hover:-translate-y-0.5 lg:hover:shadow-[0_12px_24px_rgba(15,15,20,0.1)]" data-testid="club-role-card" data-status={role.status}>
       <RoleCover coverUrl={role.cover_url} crestUrl={cover.crestUrl} palette={cover.palette} scrim="band" className="h-[88px]">
@@ -105,10 +108,10 @@ function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit, onPost
         )}
         <h3 className="text-body font-semibold text-ink-1">{roleTitle(role)}</h3>
         <p className="text-secondary text-ink-2">{meta}</p>
-        <button type="button" onClick={onReview} className="flex gap-2 pt-3 text-left" aria-label="Open applicants">
-          {stat(p.toReview, 'To review', open)}
-          {stat(p.shortlisted, 'Shortlisted')}
-          {stat(p.declined, 'Not a fit')}
+        <button type="button" onClick={onReview} className="flex gap-2 pt-3 text-left" aria-label={t('clubRoles.openApplicantsAria')}>
+          {stat(p.toReview, t('clubRoles.stat.toReview'), open)}
+          {stat(p.shortlisted, t('clubRoles.stat.shortlisted'))}
+          {stat(p.declined, t('clubRoles.stat.notFit'))}
         </button>
         {closedBreakdown(p, expiryDays) && (
           <p className="flex items-center gap-1.5 pt-1 text-caption text-ink-3" data-testid="role-closed-breakdown">
@@ -132,6 +135,7 @@ function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit, onPost
  * posting. No segmented control, no waiting notice, no counters.
  */
 function FirstRunOpportunities({ cover, onPostRole, onFindPlayers }: { cover: OwnerCrest; onPostRole: () => void; onFindPlayers: () => void }) {
+  const t = useClubT()
   return (
     <div className="flex flex-col px-4" data-testid="club-opportunities-first-run">
       {/* Figma O8 164:663: a cover in the club's colours shows what a posted role will look like. */}
@@ -139,13 +143,13 @@ function FirstRunOpportunities({ cover, onPostRole, onFindPlayers }: { cover: Ow
         <span aria-hidden="true" className="absolute bottom-8 left-4 h-4 w-[170px] rounded-full bg-white/60" />
         <span aria-hidden="true" className="absolute bottom-[14px] left-4 h-3 w-[110px] rounded-full bg-white/45" />
       </RoleCover>
-      <h2 className="mt-6 text-title text-ink-1">Post your first opportunity</h2>
-      <p className="mt-2 text-[16px] leading-[22px] text-ink-2">Describe the opportunity once. Players who fit find it in Opportunities and apply straight to you, and you review everyone here.</p>
+      <h2 className="mt-6 text-title text-ink-1">{t('clubRoles.firstRun.title')}</h2>
+      <p className="mt-2 text-[16px] leading-[22px] text-ink-2">{t('clubRoles.firstRun.body')}</p>
       <button type="button" onClick={onPostRole} className="mt-5 flex h-[52px] w-full items-center justify-center rounded-full bg-brand-primary text-[16px] font-semibold text-white">
-        Post an opportunity
+        {t('clubRoles.firstRun.post')}
       </button>
-      <p className="mt-4 text-center text-secondary text-ink-2">Not ready to post? Find players and shortlist them first.</p>
-      <button type="button" onClick={onFindPlayers} className="mt-2 h-11 text-[16px] font-semibold text-brand-primary">Find players now</button>
+      <p className="mt-4 text-center text-secondary text-ink-2">{t('clubRoles.firstRun.notReady')}</p>
+      <button type="button" onClick={onFindPlayers} className="mt-2 h-11 text-[16px] font-semibold text-brand-primary">{t('clubRoles.firstRun.findPlayers')}</button>
     </div>
   )
 }
@@ -183,7 +187,10 @@ export interface RecruiterRolesProps {
   subtitle?: string | null
 }
 
-export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, from = '/opportunities', statusSegment = 'always', parentLabel = 'Opportunities', layout = 'phone', title = 'Opportunities', subtitle = null }: RecruiterRolesProps) {
+export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, from = '/opportunities', statusSegment = 'always', parentLabel: parentLabelProp, layout = 'phone', title: titleProp, subtitle = null }: RecruiterRolesProps) {
+  const t = useClubT()
+  const parentLabel = parentLabelProp ?? t('clubRoles.opportunities')
+  const title = titleProp === undefined ? t('clubRoles.opportunities') : titleProp
   const desktop = layout === 'desktop'
   const navigate = useNavigate()
   const [segment, setSegment] = useState<Segment>('open')
@@ -246,11 +253,11 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
           {showSegment && (
             <div className="shrink-0">
               <SegmentedControl<Segment>
-                ariaLabel="Opportunity status"
+                ariaLabel={t('clubRoles.statusAria')}
                 value={segment}
                 onChange={setSegment}
                 className="[&_button]:whitespace-nowrap [&_button]:px-4"
-                options={[{ value: 'open', label: 'Open', count: publishedOpen }, { value: 'closed', label: 'Closed', count: data.closed.length }]}
+                options={[{ value: 'open', label: t('clubRoles.segment.open'), count: publishedOpen }, { value: 'closed', label: t('clubRoles.segment.closed'), count: data.closed.length }]}
               />
             </div>
           )}
@@ -258,16 +265,16 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
               Primary is the role card's "Review N applicants", so Post a role
               steps down to Tonal. */}
           <button type="button" onClick={postRole} className={cn('inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-5 text-[16px] font-semibold transition-colors', rolesWithPending.length > 0 ? 'bg-brand-soft text-brand-primary hover:bg-brand-soft-hover' : 'bg-brand-primary text-white hover:bg-brand-primary-hover')} data-testid="desktop-post-role" data-emphasis={rolesWithPending.length > 0 ? 'tonal' : 'primary'}>
-            <Plus className="h-5 w-5" strokeWidth={2.2} /> Post an opportunity
+            <Plus className="h-5 w-5" strokeWidth={2.2} /> {t('clubRoles.postOpportunity')}
           </button>
         </div>
       ) : showSegment && (
         <div className="px-4 pb-3.5 pt-1">
           <SegmentedControl<Segment>
-            ariaLabel="Opportunity status"
+            ariaLabel={t('clubRoles.statusAria')}
             value={segment}
             onChange={setSegment}
-            options={[{ value: 'open', label: 'Open', count: publishedOpen }, { value: 'closed', label: 'Closed', count: data.closed.length }]}
+            options={[{ value: 'open', label: t('clubRoles.segment.open'), count: publishedOpen }, { value: 'closed', label: t('clubRoles.segment.closed'), count: data.closed.length }]}
           />
         </div>
       )}
@@ -290,9 +297,9 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
         <div className={desktop ? 'pb-5' : 'px-4 pb-3.5'}>
           {/* Figma 05 CS8 205:5742: neutral surface, the club's own last 30 days, from 5 applicants. */}
           <div className="flex flex-col gap-2 rounded-[16px] bg-surface-subtle px-4 py-3.5" data-testid="your-replies">
-            <p className="text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">Your replies · last 30 days</p>
+            <p className="text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">{t('clubRoles.repliesHeading')}</p>
             <p className="text-[16px] font-semibold leading-[21px] text-ink-1">{yourRepliesCopy(replies).title}</p>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-line" role="progressbar" aria-valuemin={0} aria-valuemax={replies.total} aria-valuenow={replies.answered} aria-label="Applicants answered">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-line" role="progressbar" aria-valuemin={0} aria-valuemax={replies.total} aria-valuenow={replies.answered} aria-label={t('clubRoles.repliesAria')}>
               <div className="h-full rounded-full bg-brand-primary" style={{ width: `${Math.round((replies.answered / replies.total) * 100)}%` }} />
             </div>
             {yourRepliesCopy(replies).detail && <p className="text-secondary text-ink-2">{yourRepliesCopy(replies).detail}</p>}
@@ -304,9 +311,9 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
         {!data.loading && roles.length === 0 && (
           segment === 'open' ? (
             <button type="button" onClick={postRole} className="flex h-[52px] w-full items-center justify-between rounded-card bg-surface-grouped px-4 text-row text-ink-2">
-              Post a role <Plus className="h-4 w-4 text-hockia-primary" strokeWidth={2.2} />
+              {t('clubRoles.postRole')} <Plus className="h-4 w-4 text-hockia-primary" strokeWidth={2.2} />
             </button>
-          ) : <p className="py-2 text-row text-ink-3">No closed opportunities yet.</p>
+          ) : <p className="py-2 text-row text-ink-3">{t('clubRoles.noClosed')}</p>
         )}
         {/* First load: role-card skeletons in the same grid, so the cards land without a jump. */}
         {data.loading && roles.length === 0 && (desktop
@@ -325,12 +332,12 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
         {segment === 'open' && (
           <div className={cn('overflow-hidden rounded-[16px] bg-surface-subtle', desktop ? 'mt-2' : 'mt-1.5')} data-testid="club-scouting-group">
             <button type="button" onClick={() => navigate(findPlayersPath)} className="flex min-h-[48px] w-full items-center gap-2 py-3 pl-3.5 pr-3 text-left active:bg-surface-muted-pressed">
-              <span className="flex-1 text-[16px] leading-[22px] text-ink-1">Find players for this opportunity</span>
+              <span className="flex-1 text-[16px] leading-[22px] text-ink-1">{t('clubRoles.findPlayers')}</span>
               <ChevronRight className="h-3.5 w-3.5 text-ink-4" strokeWidth={2} />
             </button>
             <div className="mx-3.5 h-[0.5px] bg-line" />
             <button type="button" onClick={() => navigate('/dashboard/shortlist', { state: { parent: parentLabel } })} className="flex min-h-[48px] w-full items-center gap-2 py-3 pl-3.5 pr-3 text-left active:bg-surface-muted-pressed">
-              <span className="flex-1 text-[16px] leading-[22px] text-ink-1">Shortlist</span>
+              <span className="flex-1 text-[16px] leading-[22px] text-ink-1">{t('clubRoles.shortlist')}</span>
               <span className="text-[16px] leading-[22px] text-ink-3 tabular-nums" data-testid="club-shortlist-count">{activeShortlist.loading ? '' : activeShortlist.rows.length}</span>
               <ChevronRight className="h-3.5 w-3.5 text-ink-4" strokeWidth={2} />
             </button>
@@ -347,12 +354,13 @@ export default function ClubOpportunitiesScreen() {
   // Club speed CS1: "+" asks how to start — Hockia AI or from scratch.
   const [starting, setStarting] = useState(false)
   const postRole = () => setStarting(true)
+  const t = useClubT()
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)] pb-28 lg:hidden" data-testid="club-opportunities-screen">
       <LargeTitleBar
-        title="Opportunities"
+        title={t('clubRoles.opportunities')}
         trailing={(
-          <button type="button" onClick={postRole} aria-label="Post an opportunity" className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:opacity-90">
+          <button type="button" onClick={postRole} aria-label={t('clubRoles.postOpportunity')} className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:opacity-90">
             <Plus className="h-6 w-6" strokeWidth={2.2} />
           </button>
         )}

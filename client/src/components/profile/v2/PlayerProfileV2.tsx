@@ -51,6 +51,9 @@ import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { Chip, CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, RoleRow, Section, type GridTile } from './ProfileSections'
 import { safeVideoHref } from '@/lib/videoUrlValidator'
+import { useProfileT } from '@/i18n/ns/profile'
+import { useEnumsT } from '@/i18n/ns/enums'
+import { countryLabel } from '@/i18n/countryNames'
 
 /**
  * Profile v2 — player, phone (Figma t24oVt… PR1 public 97:4 · PR2 own 101:46 ·
@@ -95,15 +98,7 @@ export interface PlayerProfileV2Props {
   onOpenRoles?: () => void
 }
 
-const ANCHORS_PUBLIC = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'roles', label: 'Open opportunities' },
-  { id: 'videos', label: 'Videos' },
-  { id: 'references', label: 'References' },
-  { id: 'career', label: 'Career' },
-  { id: 'posts', label: 'Posts' },
-  { id: 'about', label: 'About' },
-]
+const ANCHORS_PUBLIC = ['overview', 'roles', 'videos', 'references', 'career', 'posts', 'about'] as const
 
 function fact(facts: KeyFact[], id: string): KeyFact | undefined {
   return facts.find((f) => f.id === id)
@@ -111,6 +106,8 @@ function fact(facts: KeyFact[], id: string): KeyFact | undefined {
 
 export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const { profile, readOnly, isOwnProfile, facts, recruiter } = props
+  const t = useProfileT()
+  const tEnum = useEnumsT()
   const navigate = useNavigate()
   const addToast = useToastStore((s) => s.addToast)
   const viewer = useAuthStore((s) => s.profile)
@@ -140,7 +137,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const compact = useScrolledPast(heroRef)
 
   // ── Identity ────────────────────────────────────────────────────────────
-  const name = profile.full_name?.trim() || 'Hockia member'
+  const name = profile.full_name?.trim() || t('playerProfileV2.nameFallback')
   const ageFact = fact(facts, 'age')
   const age = ageFact && !ageFact.missing ? Number.parseInt(ageFact.value, 10) || null : (profile.server_age ?? null)
   const positions = [profile.position, profile.secondary_position]
@@ -155,8 +152,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
     ? (coachCats && !coachCats.missing ? coachCats.value : null)
     : categoryToDisplay(profile.playing_category) || null
   const roleLine = isCoach
-    ? [coachSpec && !coachSpec.missing ? coachSpec.value : 'Coach', category].filter(Boolean).join(' · ')
-    : [...positions, category].filter(Boolean).join(' · ') || 'Player'
+    ? [coachSpec && !coachSpec.missing ? coachSpec.value : tEnum('role.coach'), category].filter(Boolean).join(' · ')
+    : [...positions, category].filter(Boolean).join(' · ') || tEnum('role.player')
   const recruitsForTeam = isCoach && Boolean((profile as { coach_recruits_for_team?: boolean | null }).coach_recruits_for_team)
   // A person's flag means nationality; the place is text ("Based in Santander, Spain") — 16 Oct 2026.
   const place = useMemo(() => basedInLine(displayPlace(profile.base_location ?? null, (profile as { base_country_id?: number | null }).base_country_id ?? null, countries)), [profile, countries])
@@ -183,7 +180,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
     try {
       if (navigator.share) { await navigator.share({ title: name, url }); return }
       await navigator.clipboard.writeText(url)
-      addToast('Link copied', 'success')
+      addToast(t('playerProfileV2.linkCopied'), 'success')
     } catch (err) {
       if (!(err instanceof Error && err.name === 'AbortError')) logger.warn('[PlayerProfileV2] share failed', err)
     }
@@ -213,9 +210,9 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const vis = useWeeklyVisibility(owner, false)
   const searches = useSearchAppearances({ profileId: owner ? profileId : null })
   const stats = owner ? [
-    { value: vis.visibility?.views_7d ?? 0, label: (vis.visibility?.views_7d ?? 0) === 1 ? 'profile view' : 'profile views' },
-    { value: vis.visibility?.viewers_by_role?.club ?? 0, label: (vis.visibility?.viewers_by_role?.club ?? 0) === 1 ? 'club viewed' : 'clubs viewed' },
-    { value: searches.summary?.total ?? 0, label: 'in searches' },
+    { value: vis.visibility?.views_7d ?? 0, label: t('playerProfileV2.stats.views', { count: vis.visibility?.views_7d ?? 0 }) },
+    { value: vis.visibility?.viewers_by_role?.club ?? 0, label: t('playerProfileV2.stats.clubs', { count: vis.visibility?.viewers_by_role?.club ?? 0 }) },
+    { value: searches.summary?.total ?? 0, label: t('playerProfileV2.stats.searches') },
   ] : []
 
   // ── Videos (privacy kept from ProfileLongScroll) ────────────────────────
@@ -294,12 +291,13 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const availableTile: { value: string; detail: string | null; tone?: 'positive' | 'muted' } | null = !available
     ? null
     : !openFlag
-      ? (owner ? { value: 'Not looking right now', detail: null, tone: 'muted' } : null)
+      ? (owner ? { value: t('playerProfileV2.available.notLooking'), detail: null, tone: 'muted' } : null)
       : isCoach
-        ? { value: 'Open to coach', detail: !available.missing && available.value !== 'Open to coach' ? available.value : null, tone: 'positive' }
+        // The fact may read "Open to coach" in either language; it adds nothing to the tile then.
+        ? { value: t('playerProfileV2.available.openToCoach'), detail: !available.missing && available.value !== 'Open to coach' && available.value !== t('playerProfileV2.available.openToCoach') ? available.value : null, tone: 'positive' }
         // Open but no dates yet: say so, never "Not given" in green (QA F2).
         : available.missing
-          ? { value: 'Open to play', detail: owner ? 'Add when you’re available' : null, tone: 'positive' }
+          ? { value: t('playerProfileV2.available.openToPlay'), detail: owner ? t('playerProfileV2.available.addWhen') : null, tone: 'positive' }
           : { value: available.value, detail: available.detail, tone: 'positive' }
   const skills = isCoach ? [] : (profile.specialist_skills ?? []).filter(Boolean)
   const friendCount = profile.accepted_friend_count ?? 0
@@ -313,8 +311,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
     },
   })
   const friendText = visitor && inCommon.count > 0
-    ? `${friendCount} ${friendCount === 1 ? 'friend' : 'friends'} · ${inCommon.count} in common with you`
-    : `${friendCount} ${friendCount === 1 ? 'friend' : 'friends'}`
+    ? t('playerProfileV2.friendsInCommon', { count: friendCount, common: inCommon.count })
+    : t('playerProfileV2.friends', { count: friendCount })
   const faces = visitor && inCommon.count > 0
     ? inCommon.people.map((p) => ({ id: p.id, full_name: p.fullName, avatar_url: p.avatarUrl, role: p.role }))
     : friendsPreview.data ?? []
@@ -351,14 +349,14 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
     else if (!friendship.isFriend && !friendship.isOutgoingRequest) void friendship.sendRequest()
   }
   const friendButton: ActionBarButton = friendship.isFriend
-    ? { key: 'friend', label: 'Friends', icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'done', disabled: true }
+    ? { key: 'friend', label: t('playerProfileV2.action.friends'), icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'done', disabled: true }
     : friendship.isOutgoingRequest
-      ? { key: 'friend', label: 'Requested', icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'secondary', disabled: true }
-      : { key: 'friend', label: friendship.isIncomingRequest ? 'Accept' : 'Add friend', icon: <UserPlus className="h-5 w-5" strokeWidth={2} />, tone: 'primary', onClick: addFriend, disabled: friendship.mutating, testId: 'profile-add-friend' }
-  const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? 'Opening…' : 'Message', icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'secondary', onClick: recruiter.preview ? undefined : (signedIn ? props.onMessage : () => navigate('/signup')), disabled: props.sendingMessage, testId: 'profile-message' }
+      ? { key: 'friend', label: t('playerProfileV2.action.requested'), icon: <Check className="h-5 w-5" strokeWidth={2.4} />, tone: 'secondary', disabled: true }
+      : { key: 'friend', label: friendship.isIncomingRequest ? t('playerProfileV2.action.accept') : t('playerProfileV2.action.addFriend'), icon: <UserPlus className="h-5 w-5" strokeWidth={2} />, tone: 'primary', onClick: addFriend, disabled: friendship.mutating, testId: 'profile-add-friend' }
+  const messageButton: ActionBarButton = { key: 'message', label: props.sendingMessage ? t('playerProfileV2.action.opening') : t('playerProfileV2.action.message'), icon: <MessageCircle className="h-5 w-5" strokeWidth={1.8} />, tone: 'secondary', onClick: recruiter.preview ? undefined : (signedIn ? props.onMessage : () => navigate('/signup')), disabled: props.sendingMessage, testId: 'profile-message' }
   const buttons: ActionBarButton[] = !readOnly ? [] : showRecruiter
     ? [
-        { key: 'shortlist', label: recruiter.shortlisted ? 'Shortlisted' : 'Shortlist', icon: <Star className={cn('h-5 w-5', recruiter.shortlisted && 'fill-current')} strokeWidth={1.8} />, tone: recruiter.shortlisted ? 'done' : 'primary', onClick: recruiter.onShortlist, disabled: recruiter.busy, testId: 'profile-shortlist' },
+        { key: 'shortlist', label: recruiter.shortlisted ? t('playerProfileV2.action.shortlisted') : t('playerProfileV2.action.shortlist'), icon: <Star className={cn('h-5 w-5', recruiter.shortlisted && 'fill-current')} strokeWidth={1.8} />, tone: recruiter.shortlisted ? 'done' : 'primary', onClick: recruiter.onShortlist, disabled: recruiter.busy, testId: 'profile-shortlist' },
         messageButton,
       ]
     : !personGate.addFriend
@@ -371,7 +369,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
       : [friendButton, messageButton]
   // Recruiters: Add friend moves into ⋯ (Shortlist owns the primary button).
   const leadingMenuItems = showRecruiter && !friendship.isFriend && signedIn
-    ? [{ key: 'friend', label: friendship.isOutgoingRequest ? 'Friend request sent' : friendship.isIncomingRequest ? 'Accept friend request' : 'Add friend', onSelect: addFriend, disabled: friendship.isOutgoingRequest || friendship.mutating }]
+    ? [{ key: 'friend', label: friendship.isOutgoingRequest ? t('playerProfileV2.menu.requestSent') : friendship.isIncomingRequest ? t('playerProfileV2.menu.acceptRequest') : t('playerProfileV2.menu.addFriend'), onSelect: addFriend, disabled: friendship.isOutgoingRequest || friendship.mutating }]
     : []
 
   // ── Coach: open roles this coach posted ─────────────────────────────────
@@ -394,7 +392,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const coachRoles = coachRolesQ.data ?? []
   const coachHealth = useRolesHealth(owner && isCoach && (recruitsForTeam || coachRoles.length > 0))
 
-  const anchors = ANCHORS_PUBLIC.filter((a) => (a.id === 'roles' ? isCoach && (coachRoles.length > 0 || (owner && recruitsForTeam)) : a.id === 'videos' ? (owner && !isCoach) || shownVideoCount > 0 : a.id === 'career' ? owner || careerCount > 0 : a.id === 'posts' ? owner || tiles.length > 0 : a.id === 'references' ? owner || referenceCount > 0 : a.id === 'about' ? owner || Boolean(bio) || Boolean(relocation) : true))
+  const anchors = ANCHORS_PUBLIC.filter((id) => (id === 'roles' ? isCoach && (coachRoles.length > 0 || (owner && recruitsForTeam)) : id === 'videos' ? (owner && !isCoach) || shownVideoCount > 0 : id === 'career' ? owner || careerCount > 0 : id === 'posts' ? owner || tiles.length > 0 : id === 'references' ? owner || referenceCount > 0 : id === 'about' ? owner || Boolean(bio) || Boolean(relocation) : true))
+    .map((id) => ({ id, label: t(`playerProfileV2.anchors.${id}`) }))
 
   // ⋯ (report / block) — in the hero and again in the compact header, so it
   // stays reachable after scrolling (PR10).
@@ -434,7 +433,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           role={isCoach ? 'coach' : 'player'}
           owner={owner}
           fitPill={fitPill}
-          badge={recruitsForTeam ? 'Recruiting players' : null}
+          badge={recruitsForTeam ? t('playerProfileV2.recruitingBadge') : null}
           onBack={back}
           onShare={() => void share()}
           onCamera={() => props.onOpenSection('media')}
@@ -448,8 +447,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           <OwnerButtons
             onEdit={() => props.onEdit()}
             previews={[
-              { key: 'public', label: 'Someone on Hockia', detail: 'What players and coaches see', onSelect: props.onViewPublic },
-              { key: 'club', label: 'A club', detail: 'With the fit for their role', onSelect: props.onViewAsClub },
+              { key: 'public', label: t('playerProfileV2.preview.public'), detail: t('playerProfileV2.preview.publicDetail'), onSelect: props.onViewPublic },
+              { key: 'club', label: t('playerProfileV2.preview.club'), detail: t('playerProfileV2.preview.clubDetail'), onSelect: props.onViewAsClub },
             ]}
           />
           {stepCopy && step && (
@@ -479,7 +478,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         {playsAt && !playsAt.missing && (
           <FactTile
             full
-            label={isCoach ? 'Coaches at' : 'Plays at'}
+            label={isCoach ? t('playerProfileV2.overview.coachesAt') : t('playerProfileV2.overview.playsAt')}
             value={playsAt.value}
             detail={playsAt.detail}
             leading={<EntityAvatar src={props.currentClubLogo} name={playsAt.value} role="club" size={40} />}
@@ -496,7 +495,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         )}
         {availableTile && (
           <div className="flex gap-2.5">
-            <FactTile label="Available" value={availableTile.value} detail={availableTile.detail} tone={availableTile.tone} />
+            <FactTile label={t('playerProfileV2.overview.available')} value={availableTile.value} detail={availableTile.detail} tone={availableTile.tone} />
           </div>
         )}
         {!isCoach && (skills.length > 0 || (confirmed.data?.length ?? 0) > 0 || showSelfDeclared) && (
@@ -506,33 +505,33 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
               <button key={b.id} type="button" onClick={() => navigate(`/brands/${b.slug}`)} className="inline-flex" data-testid="sponsor-confirmed">
                 <Chip outline>
                   <EntityAvatar src={b.logo_url} name={b.name} role="brand" size={24} />
-                  {b.name} athlete ✓
+                  {t('playerProfileV2.overview.brandAthlete', { brand: b.name })}
                 </Chip>
               </button>
             ))}
             {showSelfDeclared && <Chip><span data-testid="sponsor-self-declared">{sponsorLabel(selfDeclared)}</span></Chip>}
           </div>
         )}
-        {videosHiddenFromViewer && shownVideoCount === 0 && <p className="text-secondary text-ink-3" data-testid="profile-videos-clubs-only">Videos are shared with clubs</p>}
+        {videosHiddenFromViewer && shownVideoCount === 0 && <p className="text-secondary text-ink-3" data-testid="profile-videos-clubs-only">{t('playerProfileV2.overview.videosClubsOnly')}</p>}
         {friendCount > 0 && <FacesRow people={faces} text={friendText} onClick={() => props.onOpenSection('friends')} />}
         {props.clubViewSlot}
       </section>
 
       {/* Videos: highlights + full matches (reels live in the grid) */}
       {((owner && !isCoach) || shownVideoCount > 0) && (
-        <Section id="videos" title="Videos" action={shownVideoCount > 0 ? `See all ${shownVideoCount}` : null} onAction={() => props.onOpenSection('videos')}>
-          {videoTotal === 0 && !data.loading && dashed('Add a highlight', () => props.onOpenSection('media'))}
+        <Section id="videos" title={t('playerProfileV2.videos.title')} action={shownVideoCount > 0 ? t('playerProfileV2.videos.seeAll', { count: shownVideoCount }) : null} onAction={() => props.onOpenSection('videos')}>
+          {videoTotal === 0 && !data.loading && dashed(t('playerProfileV2.videos.addHighlight'), () => props.onOpenSection('media'))}
           {shownVideoCount > 0 && (
             <div className="flex snap-x scroll-pl-4 gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {shownHighlights.map((v, i) => <VideoCard key={v.id} title={v.title}><ProfileVideoTile video={v} locked={v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} priority={i === 0} size={{ width: 280, height: 158 }} onOpen={() => openVideo(v, v.visibility === 'recruiters')} className="h-[158px] w-[280px]" /></VideoCard>)}
               {shownLinked && linkedHighlight && (
-                <VideoCard title="Linked highlight">
+                <VideoCard title={t('playerProfileV2.videos.linkedHighlight')}>
                   <a href={linkedHighlight} target="_blank" rel="noopener noreferrer" className="relative flex h-[158px] w-[280px] items-center justify-center rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-6 w-6" /></a>
                 </VideoCard>
               )}
               {shownFullMatches.map((v, i) => <VideoCard key={v.id} title={v.title}><ProfileVideoTile video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 1} size={{ width: 280, height: 158 }} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[158px] w-[280px]" /></VideoCard>)}
               {data.fullGameLinks.map((l) => (
-                <VideoCard key={l.id} title={l.match_title?.trim() || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}>
+                <VideoCard key={l.id} title={l.match_title?.trim() || (l.opponent_team ? t('playerProfileV2.videos.versus', { team: l.opponent_team }) : t('playerProfileV2.videos.fullMatch'))}>
                   <a href={safeVideoHref(l.video_url) ?? undefined} target="_blank" rel="noopener noreferrer" className="relative flex h-[158px] w-[280px] items-center justify-center rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-6 w-6" /></a>
                 </VideoCard>
               ))}
@@ -545,17 +544,17 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
       {isCoach && (coachRoles.length > 0 || (owner && recruitsForTeam)) && (
         <Section
           id="roles"
-          title={coachRoles.length > 0 ? `Open opportunities · ${coachRoles.length}` : 'Open opportunities'}
-          action={owner && props.onPostRole ? '+ Post an opportunity' : coachRoles.length > 2 ? 'See all' : null}
+          title={coachRoles.length > 0 ? t('playerProfileV2.roles.titleCount', { count: coachRoles.length }) : t('playerProfileV2.roles.title')}
+          action={owner && props.onPostRole ? t('playerProfileV2.roles.post') : coachRoles.length > 2 ? t('playerProfileV2.roles.seeAll') : null}
           onAction={owner && props.onPostRole ? props.onPostRole : () => navigate('/opportunities')}
         >
           <div className="flex flex-col gap-2.5 px-4">
             {coachRoles.slice(0, owner ? 3 : 2).map((r) => (
               <RoleRow key={r.id} role={r} onOpen={() => navigate(`/opportunities/${r.id}`)} />
             ))}
-            {owner && coachRoles.length === 0 && !coachRolesQ.isLoading && <p className="text-body text-ink-3">No open opportunities right now.</p>}
+            {owner && coachRoles.length === 0 && !coachRolesQ.isLoading && <p className="text-body text-ink-3">{t('playerProfileV2.roles.empty')}</p>}
             {owner && coachRoles.length > 3 && (
-              <button type="button" onClick={props.onOpenRoles ?? (() => navigate('/opportunities'))} className="flex min-h-[44px] items-center text-secondary font-semibold text-hockia-primary" data-testid="coach-roles-see-all">See all {coachRoles.length} roles</button>
+              <button type="button" onClick={props.onOpenRoles ?? (() => navigate('/opportunities'))} className="flex min-h-[44px] items-center text-secondary font-semibold text-hockia-primary" data-testid="coach-roles-see-all">{t('playerProfileV2.roles.seeAllCount', { count: coachRoles.length })}</button>
             )}
           </div>
         </Section>
@@ -563,14 +562,14 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
 
       {/* References (gold = trust) */}
       {(owner || referenceCount > 0) && (
-      <Section id="references" title="References" action={referenceCount > 0 ? `See all ${referenceCount}` : owner ? 'Ask for one' : null} onAction={props.onOpenReferences}>
+      <Section id="references" title={t('playerProfileV2.references.title')} action={referenceCount > 0 ? t('playerProfileV2.references.seeAll', { count: referenceCount }) : owner ? t('playerProfileV2.references.askOne') : null} onAction={props.onOpenReferences}>
         {referenceCount === 0 && !refsLoading && (owner
-          ? dashed('Ask for a reference', props.onOpenReferences)
-          : <p className="px-4 text-row leading-[21px] text-ink-2">{isCoach ? 'No references yet. Clubs, players and coaches who are friends on Hockia can write one.' : 'No references yet. Coaches and teammates who are friends on Hockia can write one.'}</p>)}
+          ? dashed(t('playerProfileV2.references.ask'), props.onOpenReferences)
+          : <p className="px-4 text-row leading-[21px] text-ink-2">{isCoach ? t('playerProfileV2.references.emptyCoach') : t('playerProfileV2.references.emptyPlayer')}</p>)}
         <div className="flex flex-col gap-3 px-4">
           {acceptedReferences.slice(0, 1).map((r) => {
             const p = r.profile
-            const who = [p?.fullName?.trim() || 'Hockia member', humanizeToken(r.relationshipType)].filter(Boolean).join(' · ')
+            const who = [p?.fullName?.trim() || t('playerProfileV2.references.memberFallback'), humanizeToken(r.relationshipType)].filter(Boolean).join(' · ')
             return (
               <button key={r.id} type="button" onClick={() => props.onOpenReference(r.id)} className="w-full text-left" data-testid="profile-reference">
                 <SquircleBox className="flex flex-col gap-3 bg-gold-soft px-[18px] py-4 shadow-[inset_0_0_0_0.5px_rgba(15,15,20,0.06)]">
@@ -579,7 +578,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
                     <EntityAvatar src={p?.avatarUrl ?? null} name={p?.fullName ?? null} role={p?.role} size={32} />
                     <span className="min-w-0">
                       <span className="block truncate text-[14px] font-semibold leading-[19px] text-ink-1">{who}</span>
-                      <span className="block truncate text-caption text-ink-2">✓ Verified on Hockia{r.acceptedAt ? ` · ${dayFirst(r.acceptedAt, { year: 'always' })}` : ''}</span>
+                      <span className="block truncate text-caption text-ink-2">{r.acceptedAt ? t('playerProfileV2.references.verifiedOn', { date: dayFirst(r.acceptedAt, { year: 'always' }) }) : t('playerProfileV2.references.verified')}</span>
                     </span>
                   </span>
                 </SquircleBox>
@@ -593,15 +592,15 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
 
       {/* Career */}
       {(owner || careerCount > 0) && (
-        <Section id="career" title="Career" action={careerCount > 0 ? `See all ${careerCount}` : null} onAction={() => props.onOpenSection('journey')}>
-          {careerCount === 0 && !data.loading && dashed('Add your first club', () => props.onOpenSection('journey'))}
+        <Section id="career" title={t('playerProfileV2.career.title')} action={careerCount > 0 ? t('playerProfileV2.career.seeAll', { count: careerCount }) : null} onAction={() => props.onOpenSection('journey')}>
+          {careerCount === 0 && !data.loading && dashed(t('playerProfileV2.career.addFirst'), () => props.onOpenSection('journey'))}
           {owner && careerCount < 2 && !data.loading && (
             <div className="px-4 pt-2">
               <button type="button" onClick={openBuilder} className="flex min-h-[52px] w-full items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left" data-testid="profile-fill-with-ai">
                 <Sparkles className="h-5 w-5 shrink-0 text-brand-primary" strokeWidth={2} />
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-5 text-brand-primary">Fill my profile with Hockia AI <BetaPill onSoft testId="profile-fill-with-ai-beta" /></span>
-                  <span className="block text-caption text-ink-2">From your CV, photos, links or a few lines. You check it first.</span>
+                  <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-5 text-brand-primary">{t('playerProfileV2.career.fillWithAi')} <BetaPill onSoft testId="profile-fill-with-ai-beta" /></span>
+                  <span className="block text-caption text-ink-2">{t('playerProfileV2.career.fillWithAiDetail')}</span>
                 </span>
               </button>
             </div>
@@ -610,7 +609,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             {data.career.map((e) => {
               const now = isCurrentEntry(e)
               const flag = flagForCountryName(countries, e.locationCountry) ?? e.worldClub?.flag ?? null
-              const sub = [e.positionRole?.trim() ? humanizeToken(e.positionRole) : null, [flag, e.locationCity?.trim() || e.locationCountry?.trim() || null].filter(Boolean).join(' ') || null].filter(Boolean).join(' · ')
+              const sub = [e.positionRole?.trim() ? humanizeToken(e.positionRole) : null, [flag, e.locationCity?.trim() || countryLabel(e.locationCountry?.trim()) || null].filter(Boolean).join(' ') || null].filter(Boolean).join(' · ')
               return (
                 <div key={e.id} className="flex items-start gap-3 py-2.5" data-testid="career-row">
                   <EntityAvatar src={e.worldClub?.avatar_url ?? null} name={e.clubName} role="club" size={40} />
@@ -628,8 +627,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
 
       {/* Posts & photos */}
       {(owner || tiles.length > 0) && (
-        <Section id="posts" title="Posts & photos" action={gridTotal > 6 ? `See all ${gridTotal}` : null} onAction={() => props.onOpenSection('posts')}>
-          {tiles.length === 0 && !data.loading && dashed('Add your first photo', () => props.onOpenSection('media'))}
+        <Section id="posts" title={t('playerProfileV2.posts.title')} action={gridTotal > 6 ? t('playerProfileV2.posts.seeAll', { count: gridTotal }) : null} onAction={() => props.onOpenSection('posts')}>
+          {tiles.length === 0 && !data.loading && dashed(t('playerProfileV2.posts.addFirst'), () => props.onOpenSection('media'))}
           {tiles.length > 0 && <PostsPhotosGrid tiles={tiles} />}
         </Section>
       )}
@@ -638,16 +637,16 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
 
       {/* About */}
       {(owner || bio || relocation) && (
-        <Section id="about" title="About" action={owner ? 'Edit' : null} onAction={() => props.onEdit('about')}>
+        <Section id="about" title={t('playerProfileV2.about.title')} action={owner ? t('playerProfileV2.about.edit') : null} onAction={() => props.onEdit('about')}>
           <div className="px-4">
             {bio ? (
               <>
                 <p className={cn('whitespace-pre-line text-body text-ink-1', !bioOpen && 'line-clamp-3')}>{bio}</p>
-                {!bioOpen && bio.length > 140 && <button type="button" onClick={() => setBioOpen(true)} className="min-h-[32px] text-secondary font-semibold text-hockia-primary">More</button>}
+                {!bioOpen && bio.length > 140 && <button type="button" onClick={() => setBioOpen(true)} className="min-h-[32px] text-secondary font-semibold text-hockia-primary">{t('playerProfileV2.about.more')}</button>}
               </>
-            ) : owner ? (step?.key === 'bio' ? <p className="text-body text-ink-3">No bio yet</p> : dashed('Write a short bio', () => props.onEdit('about'))) : null}
+            ) : owner ? (step?.key === 'bio' ? <p className="text-body text-ink-3">{t('playerProfileV2.about.noBio')}</p> : dashed(t('playerProfileV2.about.writeBio'), () => props.onEdit('about'))) : null}
             <div className="mt-2 divide-y divide-line">
-              {relocation && <DetailRow label="Relocation" value={relocation} />}
+              {relocation && <DetailRow label={t('playerProfileV2.about.relocation')} value={relocation} />}
             </div>
           </div>
         </Section>
@@ -660,7 +659,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
           images={[{ video_id: player.id, media_type: 'video', duration: player.durationSeconds, order: 0 }]}
           initialIndex={0}
           onClose={() => setPlayer(null)}
-          videoLabel={player.kind === 'highlight' ? 'Highlight' : player.kind === 'full_match' ? 'Full match' : 'Reel'}
+          videoLabel={player.kind === 'highlight' ? t('playerProfileV2.videos.highlight') : player.kind === 'full_match' ? t('playerProfileV2.videos.fullMatchLabel') : t('playerProfileV2.videos.reel')}
           isOwner={owner}
           caption={player.title}
         />

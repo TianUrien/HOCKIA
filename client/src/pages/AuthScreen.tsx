@@ -15,9 +15,10 @@
  */
 
 import { useEffect, useState } from 'react'
-import { NETWORK_ERROR_COPY } from '@/lib/networkCopy'
+import { networkErrorCopy } from '@/lib/networkCopy'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { CheckCircle2, Loader2 } from 'lucide-react'
+import { Trans } from 'react-i18next'
 import { OAuthButtons } from '@/components/auth/OAuthButtons'
 import { detectInAppBrowser } from '@/lib/inAppBrowser'
 import { AuthHeading, AuthPage, FormError, OrDivider } from '@/components/auth/authUi'
@@ -26,7 +27,7 @@ import { webButtonClassName } from '@/components/ui/buttonClasses'
 import { supabase } from '@/lib/supabase'
 import { sendMagicLink } from '@/lib/magicLink'
 import { checkLoginRateLimit, formatRateLimitError } from '@/lib/rateLimit'
-import { guardCheck, guardReportFailedSignIn } from '@/lib/authGuard'
+import { guardCheck, guardReportFailedSignIn, rateLimitedCopy } from '@/lib/authGuard'
 import { useAuthStore } from '@/lib/auth'
 import { trackLogin, trackLoginFailed } from '@/lib/analytics'
 import { isNetworkFailureError, reportAuthFlowError } from '@/lib/sentryHelpers'
@@ -34,7 +35,9 @@ import { isNetworkFailureError, reportAuthFlowError } from '@/lib/sentryHelpers'
 /** Same words as Community's "Couldn't load members" state: the problem is the connection, not the member. */
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { clearRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
-import { CAPTCHA_FAILED_COPY, captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, resetCaptcha, warmCaptcha } from '@/lib/captcha'
+import { captchaFailedCopy, captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, resetCaptcha, warmCaptcha } from '@/lib/captcha'
+import { LanguageSwitch } from '@/components/LanguageSwitch'
+import { useAuthT } from '@/i18n/ns/auth'
 
 const RESEND_COOLDOWN_SECONDS = 60
 
@@ -44,6 +47,7 @@ const LINK_M = webButtonClassName({ variant: 'link', size: 'medium' })
 export default function AuthScreen() {
   const navigate = useNavigate()
   const location = useLocation()
+  const t = useAuthT()
   const { user, profile, profileStatus, loading: authLoading } = useAuthStore()
   // Get the bot check ready while the member types (lib/captcha).
   useEffect(() => { warmCaptcha('login') }, [])
@@ -98,7 +102,7 @@ export default function AuthScreen() {
       const result = await sendMagicLink({ email, intent: 'signin' })
       if (!result.ok) {
         if (result.captchaFailed) { setCaptchaFailed(true); return }
-        setError(result.error ?? 'Could not send the link.')
+        setError(result.error ?? t('signIn.sendFailed'))
         if (result.userNotFound) setUserNotFound(true)
         return
       }
@@ -120,7 +124,7 @@ export default function AuthScreen() {
     try {
       const result = await sendMagicLink({ email: sentTo, intent: 'signin' })
       if (!result.ok) {
-        setError(result.error ?? 'Could not resend the link.')
+        setError(result.error ?? t('signIn.resendFailed'))
         return
       }
       setCooldown(RESEND_COOLDOWN_SECONDS)
@@ -145,7 +149,7 @@ export default function AuthScreen() {
       if (!guard.allowed) {
         trackLoginFailed('password', guard.reason === 'captcha_failed' ? 'captcha' : 'rate_limited')
         if (guard.reason === 'captcha_failed') setCaptchaFailed(true)
-        else setError(guard.message ?? 'Too many attempts. Please try again in a minute.')
+        else setError(guard.message ?? rateLimitedCopy(null))
         return
       }
       const captchaToken = await getCaptchaToken('login')
@@ -163,7 +167,7 @@ export default function AuthScreen() {
         // say so, instead of blaming the password.
         if (isNetworkFailureError(signInError)) {
           trackLoginFailed('password', 'network')
-          setError(NETWORK_ERROR_COPY)
+          setError(networkErrorCopy())
           return
         }
         if (signInError.message.toLowerCase().includes('email not confirmed')) {
@@ -173,12 +177,12 @@ export default function AuthScreen() {
         }
         trackLoginFailed('password', 'bad_credentials')
         guardReportFailedSignIn()
-        setError('Incorrect email or password.')
+        setError(t('signIn.badCredentials'))
         return
       }
       if (!data.user) {
         trackLoginFailed('password', 'no_user')
-        setError('Something went wrong. Please try again.')
+        setError(t('signIn.generic'))
         return
       }
       reportCaptchaCoverage('login')
@@ -189,7 +193,7 @@ export default function AuthScreen() {
       const network = isNetworkFailureError(err)
       trackLoginFailed('password', network ? 'network' : 'exception')
       reportAuthFlowError('password_signin.catch', err, { emailDomain: email.split('@')[1] ?? null })
-      setError(network ? NETWORK_ERROR_COPY : err instanceof Error ? err.message : 'Sign in failed.')
+      setError(network ? networkErrorCopy() : err instanceof Error ? err.message : t('signIn.failed'))
     } finally {
       setLoading(false)
     }
@@ -208,37 +212,36 @@ export default function AuthScreen() {
   }
 
   const switchLine = (
-    <>
-      New to Hockia?{' '}
-      <Link to={`/signup${search}`} className={switchLink}>Create an account</Link>
-    </>
+    <Trans t={t} i18nKey="signIn.switchLine" components={{ a: <Link to={`/signup${search}`} className={switchLink} /> }} />
   )
+  // English / Español, in the footer above the switch line: found before any form is read.
+  const languageSwitch = <LanguageSwitch />
 
   // ── Sent state ──
   if (sentTo) {
     return (
-      <AuthPage onBack={onBack} backLabel="Back to Start" switchLine={switchLine}>
+      <AuthPage onBack={onBack} backLabel={t('signIn.backLabel')} footerNote={languageSwitch} switchLine={switchLine}>
         <div className="flex flex-1 flex-col items-center pt-6 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-positive-soft text-positive">
             <CheckCircle2 className="h-7 w-7" />
           </span>
-          <h1 className="mt-5 text-web3-title text-ink-1">Check your inbox</h1>
-          <p className="mt-2 text-[15px] leading-[21px] text-ink-2">We sent a sign-in link to</p>
+          <h1 className="mt-5 text-web3-title text-ink-1">{t('signIn.sentTitle')}</h1>
+          <p className="mt-2 text-[15px] leading-[21px] text-ink-2">{t('signIn.sentIntro')}</p>
           <p className="mt-0.5 break-all text-[15px] font-semibold leading-[21px] text-ink-1">{sentTo}</p>
-          <p className="mt-4 text-[13px] leading-[18px] text-ink-3">Tap the link in the email to continue. It expires in 1 hour.</p>
+          <p className="mt-4 text-[13px] leading-[18px] text-ink-3">{t('signIn.sentHint')}</p>
           {/* Inside Instagram / Facebook the link opens in the phone's browser,
               not back in this webview — the member is signed in there. */}
           {inApp && (
-            <p className="mt-2 text-[13px] leading-[18px] text-ink-3">The link opens in your phone’s browser, and you’ll be signed in there.</p>
+            <p className="mt-2 text-[13px] leading-[18px] text-ink-3">{t('signIn.sentInApp')}</p>
           )}
           <div className="mt-4 w-full"><FormError>{error}</FormError></div>
           <div className="mt-6 flex items-center gap-4 text-[15px] leading-[21px]">
             <button type="button" onClick={handleResendLink} disabled={cooldown > 0 || loading} className="h-11 font-semibold text-brand-primary disabled:opacity-40">
-              {cooldown > 0 ? `Resend in ${cooldown}s` : loading ? 'Resending…' : 'Resend link'}
+              {cooldown > 0 ? t('signIn.resendIn', { seconds: cooldown }) : loading ? t('signIn.resending') : t('signIn.resend')}
             </button>
             <span className="text-ink-4">·</span>
             <button type="button" onClick={() => { setSentTo(null); setCooldown(0); setError(null) }} className="h-11 font-medium text-ink-2">
-              Use a different email
+              {t('signIn.differentEmail')}
             </button>
           </div>
         </div>
@@ -247,9 +250,9 @@ export default function AuthScreen() {
   }
 
   return (
-    <AuthPage onBack={onBack} backLabel="Back to Start" switchLine={switchLine}>
+    <AuthPage onBack={onBack} backLabel={t('signIn.backLabel')} footerNote={languageSwitch} switchLine={switchLine}>
       {/* Rebrand page 26 · Log in: title, providers (platform order), or, email. */}
-      <AuthHeading title="Welcome back" />
+      <AuthHeading title={t('signIn.title')} />
 
       <div className="mt-8">
         <OAuthButtons intent="signin" next={next} onError={setError} appearance="web" />
@@ -259,13 +262,13 @@ export default function AuthScreen() {
 
       <form onSubmit={passwordMode ? handlePasswordSignIn : handleSendMagicLink} noValidate className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label htmlFor="auth-email" className={webFieldLabel}>Email</label>
+          <label htmlFor="auth-email" className={webFieldLabel}>{t('fields.email')}</label>
           <input
             id="auth-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t('fields.emailPlaceholder')}
             className={webFieldInput}
             autoComplete="email"
             inputMode="email"
@@ -277,8 +280,8 @@ export default function AuthScreen() {
         {passwordMode && (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label htmlFor="auth-password" className={webFieldLabel}>Password</label>
-              <Link to="/forgot-password" className={`${LINK_M} h-5`}>Forgot password?</Link>
+              <label htmlFor="auth-password" className={webFieldLabel}>{t('fields.password')}</label>
+              <Link to="/forgot-password" className={`${LINK_M} h-5`}>{t('signIn.forgot')}</Link>
             </div>
             <div className="relative">
               <input
@@ -293,10 +296,10 @@ export default function AuthScreen() {
               <button
                 type="button"
                 onClick={() => setShown((v) => !v)}
-                aria-label={shown ? 'Hide password' : 'Show password'}
+                aria-label={shown ? t('fields.hidePassword') : t('fields.showPassword')}
                 className="absolute right-1 top-1/2 flex h-11 -translate-y-1/2 items-center rounded-lg px-3 text-[14px] font-semibold text-ink-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
               >
-                {shown ? 'Hide' : 'Show'}
+                {shown ? t('signIn.hideToggle') : t('signIn.showToggle')}
               </button>
             </div>
           </div>
@@ -305,22 +308,22 @@ export default function AuthScreen() {
         {error && !userNotFound && <FormError>{error}</FormError>}
         {captchaFailed && (
           <div className="rounded-[12px] bg-status-danger-soft px-3.5 py-3" role="alert" data-testid="captcha-failed">
-            <p className="text-secondary text-status-danger">{CAPTCHA_FAILED_COPY}</p>
-            <p className="mt-1 text-secondary text-ink-2">You can also continue with Apple or Google above.</p>
+            <p className="text-secondary text-status-danger">{captchaFailedCopy()}</p>
+            <p className="mt-1 text-secondary text-ink-2">{t('signIn.captchaAlternative')}</p>
             <button
               type="button"
               onClick={retryAfterCaptcha}
               disabled={loading}
               className="mt-1 h-11 text-secondary font-semibold text-brand-primary disabled:opacity-40"
             >
-              Try again
+              {t('signIn.tryAgain')}
             </button>
           </div>
         )}
         {userNotFound && (
           <div className="rounded-[12px] bg-surface-grouped px-3.5 py-3" role="alert">
-            <p className="text-secondary font-semibold text-ink-1">No account found for this email.</p>
-            <Link to={`/signup${search}`} className="mt-1 inline-block text-secondary font-semibold text-brand-primary">Create an account</Link>
+            <p className="text-secondary font-semibold text-ink-1">{t('signIn.notFound')}</p>
+            <Link to={`/signup${search}`} className="mt-1 inline-block text-secondary font-semibold text-brand-primary">{t('signIn.createAccount')}</Link>
           </div>
         )}
 
@@ -331,7 +334,7 @@ export default function AuthScreen() {
           className={PRIMARY_L}
         >
           {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />}
-          {passwordMode ? 'Log in' : 'Email me a sign-in link'}
+          {passwordMode ? t('signIn.submit') : t('signIn.submitMagic')}
         </button>
 
         <button
@@ -339,7 +342,7 @@ export default function AuthScreen() {
           onClick={() => { setPasswordMode((m) => !m); setError(null); setUserNotFound(false) }}
           className={webButtonClassName({ variant: 'secondary', size: 'large', block: true })}
         >
-          {passwordMode ? 'Email me a sign-in link instead' : 'Use a password instead'}
+          {passwordMode ? t('signIn.useMagic') : t('signIn.usePassword')}
         </button>
       </form>
     </AuthPage>

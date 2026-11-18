@@ -5,6 +5,7 @@ import { Share } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FaceCircle } from '@/components/home/v1/FaceCircle'
 import { BackGlyph } from '@/components/ui/BackGlyph'
+import { useProfileT } from '@/i18n/ns/profile'
 
 /**
  * Compact header (Figma PR10 / PR11): once the hero has scrolled away, a white
@@ -20,6 +21,7 @@ export function CompactHeader({ name, avatarUrl, role = 'player', visible, owner
   onShare: () => void
   right?: ReactNode
 }) {
+  const t = useProfileT()
   // Light status-bar glyphs over the hero, dark once this header shows.
   useHeroStatusBar(visible)
   return (
@@ -33,11 +35,11 @@ export function CompactHeader({ name, avatarUrl, role = 'player', visible, owner
     >
       <div className="flex items-center gap-1 px-2" style={{ height: COMPACT_HEADER_PX }}>
         {!owner ? (
-          <button type="button" onClick={onBack} aria-label="Back" tabIndex={visible ? 0 : -1} className="flex h-11 w-11 items-center justify-center text-ink-1"><BackGlyph className="h-6 w-6" strokeWidth={1.8} /></button>
+          <button type="button" onClick={onBack} aria-label={t('profileChrome.back')} tabIndex={visible ? 0 : -1} className="flex h-11 w-11 items-center justify-center text-ink-1"><BackGlyph className="h-6 w-6" strokeWidth={1.8} /></button>
         ) : <span className="w-3" />}
         <FaceCircle url={avatarUrl} name={name} role={role} size="avatar-sm" initialsClassName="text-[11px]" className="mr-1.5 h-[30px] w-[30px] shrink-0" />
         <p className="min-w-0 flex-1 truncate text-body font-semibold text-ink-1">{name}</p>
-        <button type="button" onClick={onShare} aria-label="Share profile" tabIndex={visible ? 0 : -1} className="flex h-11 w-11 items-center justify-center text-ink-1"><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
+        <button type="button" onClick={onShare} aria-label={t('profileChrome.share')} tabIndex={visible ? 0 : -1} className="flex h-11 w-11 items-center justify-center text-ink-1"><Share className="h-[22px] w-[22px]" strokeWidth={1.6} /></button>
         {right}
       </div>
     </div>
@@ -51,6 +53,7 @@ export interface AnchorItem { id: string; label: string }
  * under the header is the dark one; tapping scrolls to that section.
  */
 export function SectionAnchors({ items, refreshKey }: { items: AnchorItem[]; /** Change it when sections mount late (data loaded) so they get observed. */ refreshKey?: string | number | boolean }) {
+  const t = useProfileT()
   const [active, setActive] = useState(items[0]?.id ?? null)
   const rowRef = useRef<HTMLDivElement>(null)
   const ids = items.map((i) => i.id).join(',')
@@ -104,7 +107,7 @@ export function SectionAnchors({ items, refreshKey }: { items: AnchorItem[]; /**
     <nav
       // Phone: under the compact header; desktop: under the app header.
       className="sticky top-[calc(env(safe-area-inset-top)+52px)] z-30 bg-white/95 backdrop-blur-[20px] lg:top-[77px]"
-      aria-label="Profile sections"
+      aria-label={t('profileChrome.sections')}
       data-testid="profile-anchors"
     >
       <div ref={rowRef} className="flex gap-2 overflow-x-auto px-4 pb-1.5 pt-3.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

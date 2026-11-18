@@ -7,9 +7,11 @@ import { sendTrackedEmail, createLogger } from '../_shared/email-sender.ts'
 import {
   generateReminderEmailHtml,
   generateReminderEmailText,
+  reminderSubject,
   type ReminderRecipient,
   type ReminderSuggestedFriend,
 } from '../_shared/reference-reminder-email.ts'
+import { readMemberLanguage } from '../_shared/member-language.ts'
 
 /**
  * ============================================================================
@@ -292,9 +294,11 @@ Deno.serve(async (req: Request) => {
       role: friend.role,
     }
 
-    const subject = 'Add trust to your Hockia profile'
-    const html = generateReminderEmailHtml(reminderRecipient, reminderFriend)
-    const text = generateReminderEmailText(reminderRecipient, reminderFriend)
+    // The recipient's interface language, read on its own (fails to English).
+    const language = await readMemberLanguage(supabase, recipient.id)
+    const subject = reminderSubject(language)
+    const html = generateReminderEmailHtml(reminderRecipient, reminderFriend, language)
+    const text = generateReminderEmailText(reminderRecipient, reminderFriend, language)
 
     const result = await sendTrackedEmail({
       supabase,

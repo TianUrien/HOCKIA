@@ -30,6 +30,7 @@ import { useClubFit } from '@/hooks/useClubFit'
 import { clubFitStateLabel, type ClubFitState } from '@/lib/clubFit'
 import type { FitCandidateFields } from '@/lib/clubFit'
 import { FitBadge } from '@/components/ui/FitBadge'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /** The minimal fit shape this chip renders. Both ClubFitResult and
  *  CoachFitResult satisfy it, so the chip is the single visual surface for
@@ -98,6 +99,7 @@ export default function ClubFitChip({
   // Rules of hooks: always compute the player fit. When a precomputed
   // `fitResult` is supplied (coach path), it takes precedence and the
   // player computation (NOT_APPLICABLE for a coach candidate) is ignored.
+  const t = useRecruitingT()
   const computed = useClubFit(candidate ?? null)
   const fit: ChipFitResult = fitResult ?? computed
   const [open, setOpen] = useState(false)
@@ -162,8 +164,11 @@ export default function ClubFitChip({
 
   const label = clubFitStateLabel(fit.state)
   const tooltip = fit.reasons.length > 0
-    ? `${label} — ${fit.reasons.join(' · ')}`
+    ? t('clubFitChip.tooltip', { label, reasons: fit.reasons.join(' · ') })
     : label
+  const ariaLabel = kind === 'coach'
+    ? t('clubFitChip.ariaCoach', { label })
+    : t('clubFitChip.ariaClub', { label })
 
   // ── Badge variant: just bars, still tappable for the popover ────
   if (variant === 'badge') {
@@ -181,7 +186,7 @@ export default function ClubFitChip({
           className,
         ].join(' ')}
         title={tooltip}
-        aria-label={`${kind === 'coach' ? 'Coach' : 'Club'} fit: ${label}. Tap for reasoning.`}
+        aria-label={ariaLabel}
         aria-expanded={open}
         aria-controls={popoverId}
       >
@@ -217,7 +222,7 @@ export default function ClubFitChip({
         className,
       ].join(' ')}
       title={tooltip}
-      aria-label={`${kind === 'coach' ? 'Coach' : 'Club'} fit: ${label}. Tap for reasoning.`}
+      aria-label={ariaLabel}
       aria-expanded={open}
       aria-controls={popoverId}
     >
@@ -248,6 +253,20 @@ interface ReasoningPopoverProps {
   popoverRef: React.RefObject<HTMLSpanElement | null>
 }
 
+/** The target team category as a word ("women", "men"); unknown values are lowercased as before. */
+function targetWord(t: ReturnType<typeof useRecruitingT>, target: string): string {
+  switch (target) {
+    case 'Men':
+      return t('clubFitChip.target.men')
+    case 'Women':
+      return t('clubFitChip.target.women')
+    case 'Mixed':
+      return t('clubFitChip.target.mixed')
+    default:
+      return target.toLowerCase()
+  }
+}
+
 const POPOVER_WIDTH = 256 // matches w-64 in the markup
 const VIEWPORT_PADDING = 8 // breathing room from screen edges
 const ANCHOR_GAP = 6 // mt-1.5
@@ -267,7 +286,7 @@ const ANCHOR_GAP = 6 // mt-1.5
 function ReasoningPopover({
   id, target, label, reasons, kind = 'club', anchorRef, popoverRef,
 }: ReasoningPopoverProps) {
-  const subject = kind === 'coach' ? 'coach' : 'player'
+  const t = useRecruitingT()
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
   const measure = useCallback(() => {
@@ -337,11 +356,11 @@ function ReasoningPopover({
       <span className="block text-[11px] font-bold text-gray-900 mb-1">
         {label}
         {target && (
-          <span className="font-normal text-gray-500"> · for your {target.toLowerCase()}'s team</span>
+          <span className="font-normal text-gray-500">{t('clubFitChip.forTeam', { target: targetWord(t, target) })}</span>
         )}
       </span>
       <span className="block text-[10px] text-gray-500 mb-2 leading-relaxed">
-        Based on facts in this {subject}'s profile. Never published back to the {subject}.
+        {kind === 'coach' ? t('clubFitChip.privacyCoach') : t('clubFitChip.privacyPlayer')}
       </span>
       <span className="block space-y-1 text-[11px] text-gray-700">
         {reasons.map((r, i) => (

@@ -1,6 +1,7 @@
 import { Briefcase, ChevronRight, Medal, Trophy, type LucideIcon } from 'lucide-react'
 import { SwitchCardRow } from '@/components/ui/SwitchCardRow'
 import { STATUS_TONE_PILL } from '@/lib/statusTone'
+import { useOpportunitiesT } from '@/i18n/ns/opportunities'
 import { closedRoleDate, closedRoleMeta, closedRoleOwnStatus, coachingRolesPostedLine, type ClosedCoachingRole } from '@/lib/coachRoles'
 
 /**
@@ -51,6 +52,7 @@ export function CoachRolesEmptyState({
   postedThisYear, recentlyClosed, ownStatuses, careerEntryCount, acceptedReferenceCount,
   alertsOn, alertsBusy, onToggleAlerts, onAddCareer, onAskReference, onOpenRole, now,
 }: CoachRolesEmptyStateProps) {
+  const t = useOpportunitiesT()
   const posted = coachingRolesPostedLine(postedThisYear)
   const needsCareer = careerEntryCount === 0
   const needsReference = acceptedReferenceCount === 0
@@ -61,14 +63,14 @@ export function CoachRolesEmptyState({
         <span className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-surface-muted text-ink-2" aria-hidden="true">
           <Briefcase className="h-6 w-6" strokeWidth={1.6} />
         </span>
-        <h2 className="text-[16px] font-semibold leading-[21px] text-ink-1">No coaching opportunities open right now</h2>
+        <h2 className="text-[16px] font-semibold leading-[21px] text-ink-1">{t('coachEmpty.title')}</h2>
         {posted && <p className="text-secondary text-ink-2" data-testid="coach-roles-posted-line">{posted}</p>}
       </div>
 
       <div className="mt-3">
         <SwitchCardRow
-          title="Coaching opportunity alerts"
-          description="Push and email when an opportunity fits you"
+          title={t('coachEmpty.alertsTitle')}
+          description={t('coachEmpty.alertsDescription')}
           checked={alertsOn}
           disabled={alertsBusy}
           onChange={onToggleAlerts}
@@ -78,15 +80,15 @@ export function CoachRolesEmptyState({
 
       {(needsCareer || needsReference) && (
         <section data-testid="coach-be-ready">
-          <SectionTitle>Be ready for the next one</SectionTitle>
-          {needsCareer && <ReadyRow icon={Trophy} title="Add your coaching career" detail="Clubs read career first. You have none yet." onClick={onAddCareer} testId="coach-ready-career" />}
-          {needsReference && <ReadyRow icon={Medal} title="Ask for a reference" detail="From a player, coach or club you’ve worked with." onClick={onAskReference} testId="coach-ready-reference" />}
+          <SectionTitle>{t('coachEmpty.beReady')}</SectionTitle>
+          {needsCareer && <ReadyRow icon={Trophy} title={t('coachEmpty.careerTitle')} detail={t('coachEmpty.careerDetail')} onClick={onAddCareer} testId="coach-ready-career" />}
+          {needsReference && <ReadyRow icon={Medal} title={t('coachEmpty.referenceTitle')} detail={t('coachEmpty.referenceDetail')} onClick={onAskReference} testId="coach-ready-reference" />}
         </section>
       )}
 
       {recentlyClosed.length > 0 && (
         <section data-testid="coach-recently-closed">
-          <SectionTitle>Recently closed</SectionTitle>
+          <SectionTitle>{t('coachEmpty.recentlyClosed')}</SectionTitle>
           {recentlyClosed.map((role) => {
             const own = closedRoleOwnStatus(ownStatuses[role.id])
             const meta = [closedRoleMeta(role), closedRoleDate(role.closedAt, now)].filter(Boolean).join(' · ')

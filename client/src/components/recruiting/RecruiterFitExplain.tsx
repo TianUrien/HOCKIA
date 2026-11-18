@@ -2,6 +2,7 @@ import RecruiterVerdictCard from './RecruiterVerdictCard'
 import AIOpinionPanel from './AIOpinionPanel'
 import { useCandidateVerdict } from '@/hooks/useCandidateVerdict'
 import type { Profile } from '@/components/community/PeopleListView'
+import { useRecruitingT } from '@/i18n/ns/recruiting'
 
 /**
  * "Why this fit" for recruiters on the desktop deck (founder decision
@@ -13,6 +14,7 @@ import type { Profile } from '@/components/community/PeopleListView'
  * coach candidates.
  */
 export default function RecruiterFitExplain({ member }: { member: Profile }) {
+  const t = useRecruitingT()
   const { verdict } = useCandidateVerdict(member)
   return (
     <div className="flex flex-col gap-3" data-testid="recruiter-fit-explain">
@@ -20,7 +22,7 @@ export default function RecruiterFitExplain({ member }: { member: Profile }) {
         <RecruiterVerdictCard verdict={verdict} />
       ) : (
         <p className="rounded-[14px] bg-surface-muted px-3.5 py-2.5 text-[14px] leading-[19px] text-ink-2">
-          No fit to explain yet. Choose a context in Ranked for.
+          {t('fitExplain.empty')}
         </p>
       )}
       <AIOpinionPanel

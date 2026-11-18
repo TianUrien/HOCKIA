@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { useProfileT } from '@/i18n/ns/profile'
 
 /**
  * The mark on a career entry that confirm_signing created
@@ -8,12 +9,13 @@ import { cn } from '@/lib/utils'
  * Journey card and every club / public view of the career.
  */
 export function SignedThroughHockiaPill({ className }: { className?: string }) {
+  const t = useProfileT()
   return (
     <span
       className={cn('inline-flex shrink-0 rounded-full bg-hockia-soft px-2 py-0.5 text-caption font-semibold text-hockia-primary', className)}
       data-testid="signed-through-hockia"
     >
-      Signed through Hockia
+      {t('signedThroughHockiaPill.label')}
     </span>
   )
 }
