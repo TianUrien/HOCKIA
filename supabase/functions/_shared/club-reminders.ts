@@ -23,6 +23,7 @@
  */
 
 import { spanishAnd, spanishPositionLabel } from './member-language.ts'
+import { spanishCountryName } from './country-names-es.ts'
 
 export { spanishAnd }
 
@@ -292,12 +293,13 @@ export function positionText(value: string | null | undefined, lang: ReminderLan
   return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
-/** "Player · Midfielder · Argentina" (client lib/clubRecruiting personRoleLine + country). */
+/** "Player, Midfielder, Argentina" (client lib/clubRecruiting personRoleLine + country); the country in Spanish for Spanish readers. */
 export function roleLine(role: string | null, position: string | null, country: string | null, lang: ReminderLanguage = 'en'): string {
   const roleWord = lang === 'es'
     ? (role === 'coach' ? 'Entrenador/a' : role === 'umpire' ? 'Árbitro/a' : 'Jugador/a')
     : role === 'coach' ? 'Coach' : role === 'umpire' ? 'Umpire' : 'Player'
-  return [roleWord, positionText(position, lang), country?.trim() || null].filter(Boolean).join(' · ')
+  const place = country?.trim() || null
+  return [roleWord, positionText(position, lang), place && lang === 'es' ? spanishCountryName(place) : place].filter(Boolean).join(', ')
 }
 
 /** First name only (gender-neutral copy uses the name, never a pronoun). */
@@ -766,7 +768,7 @@ export function reminderCopyFromMetadata(kind: string, metadata: Record<string, 
   if (kind === 'applicant_last_call') {
     return { title: title ?? 'Last day to answer an applicant', body: body ?? 'An application closes tomorrow.' }
   }
-  return { title: title ?? 'Players are waiting for your answer', body: body ?? 'Some applications close soon.' }
+  return { title: title ?? 'Applicants are waiting for your answer', body: body ?? 'Some applications close soon.' }
 }
 
 // ── Grouped new-application push (20261021160000) ────────────────────────────

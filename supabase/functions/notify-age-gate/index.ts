@@ -231,22 +231,22 @@ Deno.serve(async (req: Request) => {
         'Hockia is 18+ for now. Your profile is saved, not deleted. Everything you built is waiting for you.',
         "We're building Hockia Juniors, a version with protections designed for young players. Want to be first to know when it opens?",
         waitlistUrl, '',
-        'Questions, or want your data removed instead? Write to team@inhockia.com. We answer every message.',
+        'Questions, or want your data removed instead? Just reply, or write to team@inhockia.com. We answer every message.',
       ].join('\n')
     } else if (queueRecord.kind === 'welcome_back') {
       const suggestions = await fetchSuggestions(supabase, person.id, [], 3)
       subject = 'Welcome back: your Hockia profile is live again'
       html = shell(`
-        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">Happy 18th, ${escapeHtml(firstName)}! 🎉</div>
+        <div style="font-size:20px;font-weight:700;color:#0e0b1a;">${person.full_name?.trim() ? `Happy 18th, ${escapeHtml(firstName)}!` : 'Happy 18th!'} 🎉</div>
         <p style="font-size:15px;color:#3f3c4d;line-height:1.6;">
           Your Hockia profile is live again, exactly as you left it. The hockey
-          market kept moving while you were away; here's what's open right now:
+          market kept moving while you were away.
         </p>
         ${suggestionsHtml(suggestions, HOCKIA_BASE_URL)}
         ${btn(`${HOCKIA_BASE_URL}/opportunities`, 'Browse open opportunities')}`)
       text = [
-        `Happy 18th, ${firstName}!`, '',
-        'Your Hockia profile is live again, exactly as you left it.',
+        person.full_name?.trim() ? `Happy 18th, ${firstName}!` : 'Happy 18th!', '',
+        'Your Hockia profile is live again, exactly as you left it. The hockey market kept moving while you were away.',
         suggestionsText(suggestions, HOCKIA_BASE_URL), '',
         `Browse open opportunities: ${HOCKIA_BASE_URL}/opportunities`,
       ].join('\n')

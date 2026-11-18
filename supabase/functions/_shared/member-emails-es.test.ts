@@ -77,14 +77,14 @@ Deno.test('application email: Spanish has no English and keeps the data; English
   for (const s of [html, text]) {
     assertStringIncludes(s, 'Ana Pérez')
     assertStringIncludes(s, 'Arquero/a 2027')
-    assertStringIncludes(s, 'Volante • Arquero/a')
+    assertStringIncludes(s, 'Volante, Arquero/a')
     assertStringIncludes(s, '/dashboard/opportunities/o1/applicants')
   }
   assertStringIncludes(html, '<html lang="es">')
-  assertEquals(app.applicantPositionsText(applicant), 'Midfielder • Goalkeeper')
+  assertEquals(app.applicantPositionsText(applicant), 'Midfielder, Goalkeeper')
   const en = app.generateEmailText(applicant, opportunity)
   assertStringIncludes(en, 'New application received on Hockia')
-  assertStringIncludes(en, 'Position: Midfielder • Goalkeeper')
+  assertStringIncludes(en, 'Position: Midfielder, Goalkeeper')
   assertStringIncludes(en, "You're receiving this because you're on Hockia.\nManage preferences: ")
 })
 
@@ -157,7 +157,7 @@ Deno.test('message digest: Spanish builders and template variables; English vari
   assertEquals(es.cta_label, 'Ver mensajes')
   assertEquals(es.conversations_text, 'Dani Sosa: 1 mensaje nuevo\nEva: 3 mensajes nuevos')
   assertEquals(es.first_name, 'Carla')
-  assertEquals(md.messageDigestTemplateVars(null, conversations, 'https://h.test', 'es').first_name, 'integrante')
+  assertEquals(md.messageDigestTemplateVars(null, conversations, 'https://h.test', 'es').first_name, '')
 
   // English: exactly what notify-message-digest built inline before.
   const en = md.messageDigestTemplateVars('Carla Gómez', conversations, 'https://h.test')
@@ -177,8 +177,8 @@ Deno.test('message digest: Spanish builders and template variables; English vari
 
 Deno.test('profile views: Spanish lines, phrases and builders; English unchanged', () => {
   assertEquals(pv.composeStatsLine({ club: 2, coach: 1, player: 4, zebra: 1 }, 'es'),
-    '2 clubes · 1 entrenador/a · 4 jugadores/as · 1 perfil de otro tipo')
-  assertEquals(pv.composeStatsLine({ club: 2, coach: 1, player: 4, zebra: 1 }), '2 clubs · 1 coach · 4 players · 1 other')
+    '2 clubes, 1 entrenador/a, 4 jugadores/as y 1 perfil de otro tipo')
+  assertEquals(pv.composeStatsLine({ club: 2, coach: 1, player: 4, zebra: 1 }), '2 clubs, 1 coach, 4 players and 1 other member')
   assertEquals(pv.composeTrendLine(5, 2, 'es'), '5 visitas al perfil esta semana, más que la semana anterior (2).')
   assertEquals(pv.composeTrendLine(3, 1, 'es'), '3 visitas al perfil esta semana, más que la semana anterior (1).')
   assertEquals(pv.composeTrendLine(1, 4, 'es'), '1 visita al perfil esta semana, menos que la semana anterior (4).')

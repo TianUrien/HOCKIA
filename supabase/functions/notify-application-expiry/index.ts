@@ -28,9 +28,9 @@ import { FOOTER_ES, readMemberLanguage } from '../_shared/member-language.ts'
  */
 
 const EXPIRY_EXPLAINER_EN =
-  "Applications close automatically when there's no update on Hockia for a while, so you're never left waiting. Some conversations simply continue elsewhere. Here's what's open right now:"
+  "Applications close automatically when there's no update on Hockia for a while, so you're never left waiting. Some conversations simply continue elsewhere."
 const EXPIRY_EXPLAINER_ES =
-  'Las postulaciones se cierran solas cuando pasa un tiempo sin novedades en Hockia, para que nunca te quedes esperando. Algunas conversaciones simplemente siguen por otro lado. Esto es lo que está abierto ahora:'
+  'Las postulaciones se cierran solas cuando pasa un tiempo sin novedades en Hockia, para que nunca te quedes esperando. Algunas conversaciones simplemente siguen por otro lado.'
 
 interface QueueRecord {
   id: string
@@ -160,7 +160,7 @@ Deno.serve(async (req: Request) => {
 
     const entries = apps.map((a: any) => ({
       title: a.opportunity?.title ?? (es ? 'una oportunidad' : 'an opportunity'),
-      publisher: a.opportunity?.club?.full_name ?? (es ? 'El club' : 'The club'),
+      publisher: a.opportunity?.club?.full_name ?? (es ? 'quien publicó la oportunidad' : 'the publisher'),
     }))
     const opportunityIds = apps.map((a: any) => a.opportunity_id).filter(Boolean)
 
@@ -176,15 +176,15 @@ Deno.serve(async (req: Request) => {
         ? `Tu postulación a ${entries[0].title} se cerró`
         : `Se cerraron ${entries.length} de tus postulaciones`
       : single
-      ? `Your application to ${entries[0].title} has closed`
+      ? `Your application for ${entries[0].title} has closed`
       : `${entries.length} of your applications have closed`
 
     const listHtml = entries
-      .map((e) => `<li style="margin:4px 0;color:#3f3c4d;font-size:14px;"><strong>${escapeHtml(e.title)}</strong> · ${escapeHtml(e.publisher)}</li>`)
+      .map((e) => `<li style="margin:4px 0;color:#3f3c4d;font-size:14px;"><strong>${escapeHtml(e.title)}</strong>, ${escapeHtml(e.publisher)}</li>`)
       .join('')
 
     const html = `<!DOCTYPE html>
-<html${es ? ' lang="es"' : ''}><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<html lang="${es ? 'es' : 'en'}"><body style="margin:0;padding:0;background:#f1eff6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
@@ -208,6 +208,7 @@ Deno.serve(async (req: Request) => {
           <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">${es ? 'Ver oportunidades abiertas' : 'Browse open opportunities'}</a>
         </div>
         <p style="font-size:12px;color:#73707c;margin-top:24px;">
+          ${es ? FOOTER_ES.reason : "You're receiving this because you have a Hockia account."}<br>
           <a href="${HOCKIA_BASE_URL}/settings" style="color:#6c2bd9;">${es ? FOOTER_ES.settings : 'Notification settings'}</a>
         </p>
       </td></tr>
@@ -215,32 +216,27 @@ Deno.serve(async (req: Request) => {
   </td></tr></table>
 </body></html>`
 
-    const text = es
-      ? [
-        firstName ? `Hola, ${firstName}:` : 'Hola:',
-        '',
-        single
+    const suggestionLines = suggestionsText(suggestions, HOCKIA_BASE_URL, language).trim()
+    const text = [
+      es ? (firstName ? `Hola, ${firstName}:` : 'Hola:') : `Hi ${firstName},`,
+      '',
+      es
+        ? single
           ? `Tu postulación a "${entries[0].title}" ya no está activa en Hockia.`
-          : `Estas postulaciones ya no están activas en Hockia:`,
-        ...(single ? [] : entries.map((e) => `- ${e.title} · ${e.publisher}`)),
-        '',
-        'Las postulaciones se cierran solas cuando pasa un tiempo sin novedades en Hockia, para que nunca te quedes esperando. Algunas conversaciones simplemente siguen por otro lado.',
-        suggestionsText(suggestions, HOCKIA_BASE_URL, language),
-        '',
-        `Ver oportunidades abiertas: ${HOCKIA_BASE_URL}/opportunities`,
-      ].join('\n')
-      : [
-      `Hi ${firstName},`,
-      '',
-      single
+          : 'Estas postulaciones ya no están activas en Hockia:'
+        : single
         ? `Your application for "${entries[0].title}" is no longer active on Hockia.`
-        : `These applications are no longer active on Hockia:`,
-      ...(single ? [] : entries.map((e) => `- ${e.title} · ${e.publisher}`)),
+        : 'These applications are no longer active on Hockia:',
+      ...(single ? [] : entries.map((e) => `- ${e.title}, ${e.publisher}`)),
       '',
-      "Applications close automatically when there's no update on Hockia for a while, so you're never left waiting. Some conversations simply continue elsewhere.",
-      suggestionsText(suggestions, HOCKIA_BASE_URL),
+      es ? EXPIRY_EXPLAINER_ES : EXPIRY_EXPLAINER_EN,
       '',
-      `Browse open opportunities: ${HOCKIA_BASE_URL}/opportunities`,
+      ...(suggestionLines ? [suggestionLines, ''] : []),
+      `${es ? 'Ver oportunidades abiertas' : 'Browse open opportunities'}: ${HOCKIA_BASE_URL}/opportunities`,
+      '',
+      '---',
+      es ? FOOTER_ES.reason : "You're receiving this because you have a Hockia account.",
+      `${es ? FOOTER_ES.manage : 'Notification settings: '}${HOCKIA_BASE_URL}/settings`,
     ].join('\n')
 
     // A DB template is used only when it is in the member's language (no

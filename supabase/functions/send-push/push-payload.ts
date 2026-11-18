@@ -137,7 +137,7 @@ export function pushLanguageOf(value: unknown): PushLanguage {
 
 /** Fallback actor name when the actor has no name (send-push/index.ts). */
 export function unnamedActor(lang: PushLanguage): string {
-  return lang === 'es' ? 'Alguien de Hockia' : 'A HOCKIA member'
+  return lang === 'es' ? 'Alguien de Hockia' : 'A Hockia member'
 }
 
 /**
@@ -550,7 +550,7 @@ export function buildPushPayload(
       const spanishTitle = es ? recruitingTitleEs(event, storedTitle) : null
       return {
         title: es ? (spanishTitle || 'Novedad de incorporación') : (storedTitle || 'Recruiting update'),
-        body: getString(metadata, 'summary') || (es ? 'Abre Hockia para ver qué cambió.' : 'Open HOCKIA to see what changed.'),
+        body: getString(metadata, 'summary') || (es ? 'Abre Hockia para ver qué cambió.' : 'Open Hockia to see what changed.'),
         url: safeInternalPath(targetUrl) ?? '/messages',
         tag: event ? `recruiting-${event}` : 'recruiting',
       }
@@ -567,8 +567,8 @@ export function buildPushPayload(
             ? 'Una de tus postulaciones ya no está activa en Hockia. Hay nuevas oportunidades abiertas.'
             : `${count} de tus postulaciones ya no están activas en Hockia. Hay nuevas oportunidades abiertas.`)
           : count === 1
-            ? 'An application is no longer active on HOCKIA. Fresh opportunities are open.'
-            : `${count} applications are no longer active on HOCKIA. Fresh opportunities are open.`,
+            ? 'An application is no longer active on Hockia. Fresh opportunities are open.'
+            : `${count} applications are no longer active on Hockia. Fresh opportunities are open.`,
         url: '/opportunities',
         // one per sweep day; replace any prior unread expiry push
         tag: 'applications-expired',
@@ -602,7 +602,7 @@ export function buildPushPayload(
     case 'account_verified':
       return {
         title: es ? 'Cuenta verificada' : 'Account Verified',
-        body: es ? 'Ya tienes acceso completo a Hockia.' : 'You now have full access to HOCKIA.',
+        body: es ? 'Ya tienes acceso completo a Hockia.' : 'You now have full access to Hockia.',
         url: '/settings',
         tag: 'verified',
       }
@@ -614,13 +614,13 @@ export function buildPushPayload(
       if (getString(metadata, 'notice') === 'removed_account') {
         return {
           title: getString(metadata, 'title') || (es ? 'Un mensaje sobre tu seguridad' : 'A message about your safety'),
-          body: getString(metadata, 'summary') || (es ? 'Abre Hockia para leerlo.' : 'Open HOCKIA to read it.'),
+          body: getString(metadata, 'summary') || (es ? 'Abre Hockia para leerlo.' : 'Open Hockia to read it.'),
           url: '/notifications',
           tag: 'safety-notice',
         }
       }
       return {
-        title: getString(metadata, 'title') || (es ? 'Novedad de Hockia' : 'HOCKIA Update'),
+        title: getString(metadata, 'title') || (es ? 'Novedad de Hockia' : 'Hockia update'),
         body: getString(metadata, 'summary') || (es ? 'Tienes una novedad' : 'You have a new update'),
         url: '/home',
         tag: 'announcement',
@@ -629,7 +629,7 @@ export function buildPushPayload(
     // ── Fallback ──
     default:
       return {
-        title: es ? 'Hockia' : 'HOCKIA',
+        title: 'Hockia',
         body: es ? 'Tienes una notificación nueva' : 'You have a new notification',
         url: '/home',
       }

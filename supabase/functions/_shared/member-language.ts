@@ -201,7 +201,7 @@ export function emailPositionLabel(token: string, lang: MemberLanguage = 'en'): 
     const hit = spanishPositionLabel(token)
     if (hit) return hit
   }
-  return capitalizeFirst(token)
+  return capitalizeFirst(token.replace(/_/g, ' ').trim())
 }
 
 /** A reference relationship in the member's language; unknown values as stored. */

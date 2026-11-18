@@ -225,7 +225,7 @@ Deno.serve(async (req: Request) => {
       requester_location: requester.base_location?.trim() || '',
       requester_avatar_url: requester.avatar_url || '',
       avatar_role: requester.role || '',
-      cta_url: `${HOCKIA_BASE_URL}/friends`,
+      cta_url: `${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=incoming`,
       profile_url: profileUrl,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
     })

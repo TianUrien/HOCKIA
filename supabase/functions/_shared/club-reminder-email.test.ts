@@ -111,7 +111,7 @@ Deno.test('Closing soon email: N players waiting, soonest first, fit badges, amb
   assertStringIncludes(email.html, '>Review 3 players<')
   assertStringIncludes(email.html, `href="${BASE}/dashboard/opportunities/${ROLE}/applicants"`)
   assertStringIncludes(email.html, 'Not the right fit? Marking it &quot;Not a fit&quot; takes one tap, and Hockia AI drafts a kind note you can edit.')
-  assertStringIncludes(email.html, 'Player · Midfielder · Argentina')
+  assertStringIncludes(email.html, 'Player, Midfielder, Argentina')
 })
 
 Deno.test('Closing soon for one applicant: "<First name>\'s application closes on <weekday>"', () => {

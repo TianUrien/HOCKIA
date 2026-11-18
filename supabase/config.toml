@@ -200,12 +200,12 @@ otp_expiry = 3600
 
 # Custom email verification template with mobile-friendly guidance
 [auth.email.template.confirmation]
-subject = "Verify your HOCKIA email"
+subject = "{{ if eq (printf \"%v\" .Data.ui_language) \"es\" }}Verifica tu email de Hockia{{ else }}Verify your Hockia email{{ end }}"
 content_path = "./supabase/templates/confirmation.html"
 
 # Custom password recovery template with mobile-friendly guidance
 [auth.email.template.recovery]
-subject = "Reset your HOCKIA password"
+subject = "{{ if eq (printf \"%v\" .Data.ui_language) \"es\" }}Restablece tu contraseña de Hockia{{ else }}Reset your Hockia password{{ end }}"
 content_path = "./supabase/templates/recovery.html"
 
 [auth.sms]

@@ -111,9 +111,11 @@ Deno.test('Spanish subjects, lines and names', () => {
   assertEquals(lastCallSubject([{ firstName: 'Ana' }], 'es'), 'Último día para responder a Ana')
   assertEquals(waitingLine(3, true, 'es'), '3 jugadores/as esperan tu respuesta')
   assertEquals(waitingLine(1, false, 'es'), '1 postulante espera tu respuesta')
-  assertEquals(roleLine('player', 'midfielder', 'Argentina', 'es'), 'Jugador/a · Volante · Argentina')
-  assertEquals(roleLine('coach', 'head_coach', null, 'es'), 'Entrenador/a · Entrenador/a principal')
-  assertEquals(roleLine('player', 'midfielder', 'Argentina'), 'Player · Midfielder · Argentina')
+  assertEquals(roleLine('player', 'midfielder', 'Argentina', 'es'), 'Jugador/a, Volante, Argentina')
+  assertEquals(roleLine('coach', 'head_coach', null, 'es'), 'Entrenador/a, Entrenador/a principal')
+  assertEquals(roleLine('player', 'midfielder', 'Argentina'), 'Player, Midfielder, Argentina')
+  assertEquals(roleLine('player', 'midfielder', 'Netherlands', 'es'), 'Jugador/a, Volante, Países Bajos')
+  assertEquals(roleLine('player', 'midfielder', 'Netherlands'), 'Player, Midfielder, Netherlands')
   const items = toApplicantItems([row()], TZ, 'es')
   assertEquals(newApplicationsSubject(items, 'es'), 'Ana se postuló a Primera división, volante')
   const pending = toItems([row({ closes_at: '2026-10-13T08:00:00Z' })], TZ, AR_9AM, 'es')
@@ -157,7 +159,7 @@ Deno.test('Spanish grouped new-applications push', () => {
 Deno.test('Spanish reminder plan: items carry Spanish role lines', () => {
   const plan = planPublisherReminders([row({ closes_at: CLOSES_SAT })], AR_9AM, 'es')
   assert(plan?.email)
-  assertEquals(plan!.pending[0].roleLine, 'Jugador/a · Volante · Argentina')
+  assertEquals(plan!.pending[0].roleLine, 'Jugador/a, Volante, Argentina')
 })
 
 Deno.test('Spanish emails: subject, body and footer in Spanish, html lang="es"', () => {

@@ -115,6 +115,44 @@ export function interpolateVariables(
   })
 }
 
+/** A greeting written for a first name, reworded for a member without one. */
+export function namelessGreeting(text: string): string {
+  return text
+    .replace(/Hola, \{\{first_name\}\}/g, 'Hola')
+    .replace(/Hi \{\{first_name\}\}/g, 'Hi there')
+    .replace(/Hello \{\{first_name\}\}/g, 'Hello')
+}
+
+function withNamelessGreeting(template: EmailTemplate): EmailTemplate {
+  return {
+    ...template,
+    subject_template: namelessGreeting(template.subject_template),
+    text_template: template.text_template ? namelessGreeting(template.text_template) : template.text_template,
+    content_json: JSON.parse(namelessGreeting(JSON.stringify(template.content_json))),
+  }
+}
+
+/**
+ * A plain-text template with its variables filled in. A line whose only
+ * content was a label for an empty variable ("Location: ", 'Message: ""') is
+ * dropped, so the text version never shows a label with nothing after it, and
+ * runs of blank lines left behind are collapsed.
+ */
+export function interpolateText(template: string, variables: Record<string, string>): string {
+  const EMPTY = '\u0000'
+  const filled = template.replace(/\{\{(\w+)\}\}/g, (_match, varName) => variables[varName] || EMPTY)
+  return filled
+    .split('\n')
+    .filter((line) => {
+      if (!line.includes(EMPTY)) return true
+      const rest = line.split(EMPTY).join('')
+      return !/^\s*(?:[^:\n]{1,40}:)?\s*(?:""|“”|«»)?\s*$/.test(rest)
+    })
+    .map((line) => line.split(EMPTY).join(''))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+}
+
 /**
  * Validate that all required variables are provided.
  */
@@ -211,7 +249,7 @@ export function renderBlock(block: ContentBlock, vars: Record<string, string>, l
     }
 
     case 'user_card': {
-      const name = interpolate(block.name_var ? `{{${block.name_var}}}` : '') || (es ? 'Alguien de Hockia' : 'User')
+      const name = interpolate(block.name_var ? `{{${block.name_var}}}` : '') || (es ? 'Alguien de Hockia' : 'A Hockia member')
       const avatarUrl = vars[block.avatar_var || ''] || null
       const label = interpolate(block.label)
       const detailPills = (block.detail_vars || [])
@@ -511,11 +549,16 @@ export async function renderTemplate(
     variables.settings_url = `${HOCKIA_BASE_URL}/settings`
   }
 
+  // No first name: "Hola, {{first_name}}:" reads "Hola:" and "Hi {{first_name}}," reads "Hi there,".
+  if (!variables.first_name?.trim() && JSON.stringify(template).includes('{{first_name}}')) {
+    template = withNamelessGreeting(template)
+  }
+
   const isOutreach = template.template_key.startsWith('outreach_')
   const subject = interpolateVariables(template.subject_template, variables)
   const { html } = renderContentBlocks(template.content_json, variables, { isOutreach, language: renderLanguage })
   const text = template.text_template
-    ? interpolateVariables(template.text_template, variables)
+    ? interpolateText(template.text_template, variables)
     : subject // Fallback plain text is just the subject
 
   return { subject, html, text, language: renderLanguage }

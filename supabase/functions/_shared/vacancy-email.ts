@@ -3,6 +3,7 @@ import { positionLabel } from './display-labels.ts'
 import { escapeHtml } from './html-escape.ts'
 import { EMAIL_LOGO_HTML } from './email-brand.ts'
 import { type MemberLanguage, FOOTER_ES, spanishPositionLabel } from './member-language.ts'
+import { spanishCountryName } from './country-names-es.ts'
 declare const Deno: { env: { get(key: string): string | undefined } }
 
 /**
@@ -65,21 +66,45 @@ export interface VacancyPayload {
   old_record: VacancyRecord | null
 }
 
+/** "Amsterdam, Netherlands"; the country in Spanish for Spanish readers. Empty when neither is set. */
+export function vacancyLocation(
+  vacancy: Pick<VacancyRecord, 'location_city' | 'location_country'>,
+  language: MemberLanguage = 'en',
+): string {
+  const city = vacancy.location_city?.trim() || ''
+  const rawCountry = vacancy.location_country?.trim() || ''
+  const country = rawCountry && language === 'es' ? spanishCountryName(rawCountry) : rawCountry
+  return city && country ? `${city}, ${country}` : city || country
+}
+
+/** The first `max` characters of a description, cut at a word and closed with an ellipsis when shortened. */
+export function vacancySummary(description: string | null | undefined, max = 200): string {
+  const text = description?.trim() ?? ''
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  const lastSpace = cut.lastIndexOf(' ')
+  return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s.,;:]+$/, '')}…`
+}
+
+/** The per-recipient greeting: the sentinel becomes the first name, or the comma and sentinel go when there is none. */
+export function personaliseGreeting(body: string, sentinel: string, firstName: string): string {
+  const name = firstName.trim()
+  if (name) return body.split(sentinel).join(name)
+  return body
+    .split(`, ${sentinel}`).join('')
+    .split(` ${sentinel},`).join(' there,')
+    .split(sentinel).join('')
+}
+
 export function generateEmailHtml(vacancy: VacancyRecord, clubName: string, language: MemberLanguage = 'en'): string {
   const es = language === 'es'
   // Safe field extraction with fallbacks
   // "head_coach" → "Head coach" (the app's label), never the raw token.
   const position = es ? vacancyPositionLabel(vacancy.position, language) : positionLabel(vacancy.position)
   
-  // Build location string, handling missing city or country
-  const city = vacancy.location_city?.trim() || null
-  const country = vacancy.location_country?.trim() || null
-  const location = city && country 
-    ? `${city}, ${country}` 
-    : city || country || null
+  const location = vacancyLocation(vacancy, language) || null
   
-  const summary = vacancy.description?.trim()?.slice(0, 200) || null
-  const hasMoreSummary = vacancy.description && vacancy.description.length > 200
+  const summary = vacancySummary(vacancy.description) || null
   const vacancyUrl = `${HOCKIA_BASE_URL}/opportunities/${vacancy.id}`
   const safeClubName = clubName?.trim() || unnamedClub(language)
 
@@ -91,7 +116,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string, lang
   }
   
   if (location) {
-    detailItems.push(`<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">📍 ${escapeHtml(location)}</span>`)
+    detailItems.push(`<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(location)}</span>`)
   }
 
   return `
@@ -121,7 +146,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string, lang
 
       ${detailItems.length > 0 ? `<div style="margin-bottom: 16px;">${detailItems.join('')}</div>` : ''}
 
-      ${summary ? `<p style="color: #5a5766; margin: 0; font-size: 14px; line-height: 1.6;">${escapeHtml(summary)}${hasMoreSummary ? '...' : ''}</p>` : ''}
+      ${summary ? `<p style="color: #5a5766; margin: 0; font-size: 14px; line-height: 1.6;">${escapeHtml(summary)}</p>` : ''}
     </div>
 
     <!-- CTA -->
@@ -149,15 +174,9 @@ export function generateEmailText(vacancy: VacancyRecord, clubName: string, lang
   // "head_coach" → "Head coach" (the app's label), never the raw token.
   const position = es ? vacancyPositionLabel(vacancy.position, language) : positionLabel(vacancy.position)
   
-  // Build location string, handling missing city or country
-  const city = vacancy.location_city?.trim() || null
-  const country = vacancy.location_country?.trim() || null
-  const location = city && country 
-    ? `${city}, ${country}` 
-    : city || country || null
+  const location = vacancyLocation(vacancy, language) || null
   
-  const summary = vacancy.description?.trim()?.slice(0, 200) || null
-  const hasMoreSummary = vacancy.description && vacancy.description.length > 200
+  const summary = vacancySummary(vacancy.description) || null
   const vacancyUrl = `${HOCKIA_BASE_URL}/opportunities/${vacancy.id}`
   const safeClubName = clubName?.trim() || unnamedClub(language)
 
@@ -181,7 +200,7 @@ export function generateEmailText(vacancy: VacancyRecord, clubName: string, lang
   
   if (summary) {
     lines.push('')
-    lines.push(`${summary}${hasMoreSummary ? '...' : ''}`)
+    lines.push(summary)
   }
   
   lines.push(

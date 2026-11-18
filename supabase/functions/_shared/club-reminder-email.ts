@@ -78,7 +78,7 @@ const COPY = {
     newOne: (name: string | null, role: string) => `${name ?? 'A new applicant'} applied for ${role}.`,
     newOneRole: (n: number, role: string) => `${n} people applied for ${role} since the last email.`,
     newManyRoles: (n: number) => `${n} people applied for your opportunities since the last email.`,
-    quickAnswer: 'A quick answer, even a no, helps every player.',
+    quickAnswer: 'A quick answer, even a no, helps every applicant.',
     declineHintShort: DECLINE_HINT.replace(/^Not the right fit\? /, ''),
     declineHint: DECLINE_HINT,
     settingsFooter: SETTINGS_FOOTER,
@@ -209,7 +209,7 @@ function textRow(item: ApplicantItem | ReminderItem, showRole: boolean, lang: Re
   if (item.fit === 'possible') bits.push(c.possibleFit)
   if ('daysLeft' in item) bits.push(closesChip(item.daysLeft, item.closesLocal, lang))
   if (showRole) bits.push(item.roleTitle)
-  return `- ${item.applicantName} (${bits.join(' · ')})`
+  return `- ${item.applicantName} (${bits.join(', ')})`
 }
 
 function reviewLabel(items: ApplicantItem[], lang: ReminderLanguage = 'en'): string {
@@ -249,6 +249,8 @@ export function renderNewApplicationsEmail(input: { items: ApplicantItem[]; base
     items.length > MAX_ROWS ? c.moreWaiting(items.length - MAX_ROWS) : '',
     '',
     `${c.review}: ${url(baseUrl, target)}`,
+    '',
+    `${c.quickAnswer} ${c.declineHintShort}`,
     ...textFooter(baseUrl, '', lang),
   ].filter((l, idx, arr) => !(l === '' && arr[idx - 1] === '')).join('\n')
   return { subject, html: shell(baseUrl, body, '', lang), text }
@@ -327,7 +329,7 @@ export function renderReminderEmail(input: ReminderEmailInput): RenderedEmail {
       subject,
       ...lastCall.flatMap((i) => [
         '',
-        `${i.applicantName} (${i.roleLine} · ${i.roleTitle})`,
+        `${i.applicantName} (${i.roleLine}, ${i.roleTitle})`,
         lastCallBody(i, lang),
         `${c.reviewName(i.firstName)}: ${url(baseUrl, reviewPath(i.opportunityId, i.applicationId))}`,
         `${c.notAFit}: ${url(baseUrl, declinePath(i.opportunityId, i.applicationId))}`,

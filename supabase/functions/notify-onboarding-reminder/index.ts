@@ -246,10 +246,8 @@ Deno.serve(async (req: Request) => {
     // =========================================================================
 
     // These users never completed onboarding so full_name is typically NULL.
-    // Derive a first name from the email address as a fallback.
-    const firstName = recipient.full_name
-      ? recipient.full_name.split(' ')[0].trim()
-      : recipient.email.split('@')[0].trim()
+    // No name yet: the greeting goes without one (never the email's local part).
+    const firstName = recipient.full_name?.trim().split(/\s+/)[0] ?? ''
 
     // The recipient's interface language, read on its own (fails to English).
     const language = await readMemberLanguage(supabase, recipient.id)
@@ -290,7 +288,7 @@ Deno.serve(async (req: Request) => {
       emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #6c2bd9;">${content.heading}</h1>
-          <p>Hola, ${escapeHtml(firstName)}:</p>
+          <p>${firstName ? `Hola, ${escapeHtml(firstName)}:` : 'Hola:'}</p>
           <p>${content.bodyText}</p>
           <p style="text-align: center; margin: 30px 0;">
             <a href="${ctaUrl}"
@@ -304,7 +302,7 @@ Deno.serve(async (req: Request) => {
           </p>
         </div>
       `
-      emailText = `${content.heading}\n\nHola, ${firstName}:\n\n${content.bodyText}\n\n${content.ctaLabel}: ${ctaUrl}\n\nSi esta cuenta no es tuya, puedes ignorar este email.`
+      emailText = `${content.heading}\n\n${firstName ? `Hola, ${firstName}:` : 'Hola:'}\n\n${content.bodyText}\n\n${content.ctaLabel}: ${ctaUrl}\n\nSi esta cuenta no es tuya, puedes ignorar este email.`
       logger.info('Falling back to hardcoded template', { reminderNumber, language })
     } else {
       // Fallback: simple plain-text-ish email
@@ -312,7 +310,7 @@ Deno.serve(async (req: Request) => {
       emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #6c2bd9;">${content.heading}</h1>
-          <p>Hi ${escapeHtml(firstName)},</p>
+          <p>Hi ${escapeHtml(firstName || 'there')},</p>
           <p>${content.bodyText}</p>
           <p style="text-align: center; margin: 30px 0;">
             <a href="${ctaUrl}"
@@ -326,7 +324,7 @@ Deno.serve(async (req: Request) => {
           </p>
         </div>
       `
-      emailText = `${content.heading}\n\nHi ${firstName},\n\n${content.bodyText}\n\n${content.ctaLabel}: ${ctaUrl}\n\nIf you didn't create this account, you can safely ignore this email.`
+      emailText = `${content.heading}\n\nHi ${firstName || 'there'},\n\n${content.bodyText}\n\n${content.ctaLabel}: ${ctaUrl}\n\nIf you didn't create this account, you can safely ignore this email.`
       logger.info('Falling back to hardcoded template', { reminderNumber })
     }
 

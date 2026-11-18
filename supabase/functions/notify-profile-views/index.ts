@@ -12,7 +12,6 @@ import {
   composeTrendLine,
   generateEmailHtml,
   generateEmailText,
-  PROFILE_VIEWS_NAME_FALLBACK_ES,
   profileViewsCtaLabel,
   profileViewsFallbackSubject,
   viewCountPhrase,
@@ -203,7 +202,7 @@ Deno.serve(async (req: Request) => {
     const templateVars = (lang: MemberLanguage) => {
       const s = statsFor(lang)
       return {
-        first_name: recipient.full_name?.split(' ')[0]?.trim() || (lang === 'es' ? PROFILE_VIEWS_NAME_FALLBACK_ES : 'there'),
+        first_name: recipient.full_name?.split(' ')[0]?.trim() || (lang === 'es' ? '' : 'there'),
         view_count: viewCountPhrase(s.uniqueViewers, lang),
         unique_viewers: String(s.uniqueViewers),
         total_views: String(s.totalViews),

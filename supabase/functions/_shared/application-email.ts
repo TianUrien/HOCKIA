@@ -65,7 +65,7 @@ export interface ApplicationPayload {
   old_record: ApplicationRecord | null
 }
 
-/** "Midfielder • Forward" (English capitalises the token, Spanish uses the agreed word). */
+/** "Midfielder, Forward" (English capitalises the token, Spanish uses the agreed word). */
 export function applicantPositionsText(
   applicant: Pick<ApplicantData, 'position' | 'secondary_position'>,
   language: MemberLanguage = 'en',
@@ -77,7 +77,7 @@ export function applicantPositionsText(
   if (applicant.secondary_position && applicant.secondary_position !== applicant.position) {
     positions.push(emailPositionLabel(applicant.secondary_position, language))
   }
-  return positions.length > 0 ? positions.join(' • ') : null
+  return positions.length > 0 ? positions.join(', ') : null
 }
 
 export function generateEmailHtml(
@@ -112,7 +112,7 @@ export function generateEmailHtml(
   }
 
   if (location) {
-    detailItems.push(`<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">📍 ${escapeHtml(location)}</span>`)
+    detailItems.push(`<span style="display: inline-block; background: #f1eff6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #3f3c4d; margin-right: 8px; margin-bottom: 8px;">${escapeHtml(location)}</span>`)
   }
 
   

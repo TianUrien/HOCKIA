@@ -25,6 +25,9 @@ import {
   spanishPositionOr,
   unnamedClub,
   vacancyFallbackSubject,
+  vacancyLocation,
+  vacancySummary,
+  personaliseGreeting,
 } from '../_shared/vacancy-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { type MemberLanguage, readMemberLanguages } from '../_shared/member-language.ts'
@@ -397,10 +400,7 @@ Deno.serve(async (req: Request) => {
     const clubName = clubProfile.full_name || 'A club'
     // "head_coach" → "Head coach" (the app's label), never the raw token.
     const position = positionLabel(vacancy.position) ?? ''
-    const city = vacancy.location_city?.trim() || ''
-    const country = vacancy.location_country?.trim() || ''
-    const location = city && country ? `${city}, ${country}` : city || country || ''
-    const summary = vacancy.description?.trim()?.slice(0, 200) || ''
+    const summary = vacancySummary(vacancy.description)
 
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
@@ -411,7 +411,7 @@ Deno.serve(async (req: Request) => {
       vacancy_title: vacancy.title,
       club_name: lang === 'es' ? clubProfile.full_name || unnamedClub(lang) : clubName,
       position: lang === 'es' ? spanishPositionOr(vacancy.position, position) : position,
-      location,
+      location: vacancyLocation(vacancy, lang),
       summary,
       first_name: FIRST_NAME_SENTINEL,
       cta_url: `${HOCKIA_BASE_URL}/opportunities/${vacancy.id}`,
@@ -466,8 +466,8 @@ Deno.serve(async (req: Request) => {
           ? r.recipientName.split(' ')[0]
           : ''
         const base = baseByLanguage.get(languageOfRecipient(r)) ?? englishBase
-        const personalizedHtml = base.html.replace(FIRST_NAME_SENTINEL, firstName)
-        const personalizedText = base.text.replace(FIRST_NAME_SENTINEL, firstName)
+        const personalizedHtml = personaliseGreeting(base.html, FIRST_NAME_SENTINEL, firstName)
+        const personalizedText = personaliseGreeting(base.text, FIRST_NAME_SENTINEL, firstName)
         return {
           html: personalizedHtml,
           text: personalizedText,
