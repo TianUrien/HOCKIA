@@ -120,7 +120,7 @@ describe('world bodies', () => {
     expect(html).toContain('<p>Meet players &amp; coaches.</p>')
     expect(html).toContain('players, coaches, clubs, umpires and brands in field hockey')
     for (const tab of ['players', 'coaches', 'clubs', 'umpires', 'brands']) expect(html).toContain(`<a href="/community/${tab}">`)
-    expect(html.replace(/<[^>]+>/g, '')).not.toMatch(/\d/)
+    expect(html.split('h1').join('')).not.toMatch(/\d/)
     expect(injectServerBody(SHELL, html)).toContain('data-server-body="1"')
   })
 })
