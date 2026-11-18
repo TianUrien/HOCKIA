@@ -86,6 +86,13 @@ Verified patterns:
   `app_version_requirements` table (`hooks/useAppUpdateCheck.ts`). The WebView
   origin is `https://app.inhockia.com` on both platforms so API-key referrer
   rules and CORS treat the app as a first-party client.
+- **Crawler contracts** (added 2026-11-18; source: the AI search visibility
+  audit of the same date): `/llms.txt` is a static text file
+  (`client/public/llms.txt`, `text/plain`, excluded from the service-worker
+  fallback). Private routes get `X-Robots-Tag: noindex, nofollow` from
+  `client/vercel.json`, in step with the `NOINDEX` list in
+  `src/lib/seo/routeMeta.ts` (`aiCrawlerStatics.test.ts` checks both);
+  `/signin` and `/signup/email` also carry the robots tag in their HTML.
 - **PWA**: `vite-plugin-pwa` with `autoUpdate`; `/app.html` is the SPA shell
   and `/index.html` the prerendered landing (`scripts/prerender-landing.mjs`).
   No runtime caching of `/rest/v1/` by design (user-scoped responses).
