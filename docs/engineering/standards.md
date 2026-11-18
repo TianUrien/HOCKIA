@@ -137,6 +137,12 @@ Verified in the 2026-09/10 migrations; older migrations predate some of these.
 12. **Applied only with the CLI**: `supabase db push --linked` after a
     `--dry-run`; never through a dashboard SQL editor or an MCP tool. See
     decisions/ADR-0001.
+13. **Rewrite a function from its latest body** (added 2026-11-18, source:
+    the `create_user_post` regression). Before a `CREATE OR REPLACE`, find the
+    newest migration that defines the function
+    (`grep -ln "FUNCTION public.<name>" supabase/migrations/* | tail -1`) and
+    start from that text. Twice a rewrite from an older copy dropped this
+    function's rate limit (2026-04-11 and 2026-09-20).
 
 ## 7. Edge function conventions (`supabase/functions`)
 
