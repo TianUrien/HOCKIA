@@ -186,7 +186,7 @@ export default defineConfig(({ mode, command }) => {
           // hard way 2026-07-29). The SW fetches it at install time.
           additionalManifestEntries: [{ url: '/app.html', revision: String(Date.now()) }],
           // llms.txt is a text file for AI crawlers, never the app shell.
-          navigateFallbackDenylist: [/^\/api/, /^\/auth/, /^\/llms\.txt$/],
+          navigateFallbackDenylist: [/^\/api/, /^\/auth/, /^\/llms\.txt$/, /^\/sitemap\.xml$/],
           // A new worker WAITS until the user taps Reload (SKIP_WAITING
           // message from src/lib/swUpdate.ts); once activated it claims the
           // open clients so the reload lands on the new build.
