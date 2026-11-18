@@ -12,6 +12,7 @@
 import { assert, assertEquals } from 'https://deno.land/std@0.208.0/assert/mod.ts'
 import { interpolateText, namelessGreeting } from './email-renderer.ts'
 import { personaliseGreeting, vacancyLocation, vacancySummary } from './vacancy-email.ts'
+import { offerDateLabel } from './offer-email.ts'
 
 Deno.test('text templates: a label with an empty value is dropped, the rest is kept', () => {
   const template = 'POSTULANTE:\n{{name}}\nPosición: {{position}}\nUbicación: {{location}}\nMensaje: "{{note}}"\n\n\n\nVer: {{url}}'
@@ -56,13 +57,21 @@ Deno.test('vacancy email: location, summary and per-recipient greeting', () => {
   assertEquals(personaliseGreeting(`Hi ${S}, a new opportunity`, S, 'Ben'), 'Hi Ben, a new opportunity')
 })
 
+Deno.test('offer email: the last day to answer, in the member language', () => {
+  assertEquals(offerDateLabel('2026-11-25', 'es'), '25 de noviembre')
+  assertEquals(offerDateLabel('2026-11-25', 'en'), '25 November')
+  assertEquals(offerDateLabel('2026-12-01T00:00:00+00:00', 'es'), '1 de diciembre')
+  assertEquals(offerDateLabel(null, 'es'), null)
+  assertEquals(offerDateLabel('not a date', 'en'), null)
+})
+
 Deno.test('member emails and push: no middle-dot or bullet separators in copy', async () => {
   const here = new URL('.', import.meta.url)
   const files = [
     'application-email.ts', 'vacancy-email.ts', 'friend-request-email.ts', 'message-digest-email.ts',
     'reference-request-email.ts', 'reference-response-email.ts', 'reference-reminder-email.ts',
     'profile-views-email.ts', 'club-reminder-email.ts', 'club-reminders.ts', 'opportunity-suggestions.ts',
-    'age-gate-email-es.ts', 'email-renderer.ts',
+    'age-gate-email-es.ts', 'email-renderer.ts', 'offer-email.ts',
     '../notify-application-status/index.ts', '../notify-application-digest/index.ts',
     '../notify-application-expiry/index.ts', '../notify-opportunity-renewal/index.ts',
     '../notify-age-gate/index.ts', '../notify-vacancy/index.ts', '../notify-application/index.ts',
