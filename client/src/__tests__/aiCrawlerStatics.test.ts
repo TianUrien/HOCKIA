@@ -95,6 +95,7 @@ describe('home Organization JSON-LD', () => {
   it('describes Hockia as a field hockey network and keeps its profiles', () => {
     expect(String(org.description)).toContain('field hockey network')
     expect(org.areaServed).toBe('Worldwide')
+    expect(org.foundingDate).toBe('2025') // year of the first commit (2025-11-13)
     expect(org.knowsAbout).toContain('Field hockey')
     expect(org.sameAs).toEqual([
       'https://www.instagram.com/inhockia/', 'https://www.linkedin.com/company/hockia/', 'https://www.facebook.com/profile.php?id=61590881692674',
