@@ -6,6 +6,7 @@ import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { fetchSuggestions, suggestionsHtml, suggestionsText } from '../_shared/opportunity-suggestions.ts'
+import { offerDateLabel } from '../_shared/offer-email.ts'
 import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
 import { FOOTER_ES, readMemberLanguage } from '../_shared/member-language.ts'
 
@@ -35,13 +36,17 @@ interface QueueRecord {
 }
 
 interface StatusEntry {
-  status: 'shortlisted' | 'rejected'
+  /** 'offered' is a club's offer (recruiting_update / offer_received), not an application status change. */
+  status: 'shortlisted' | 'rejected' | 'offered'
   vacancy_title: string
   club_name: string
   opportunity_id: string | null
   application_id: string | null
   /** The club's note on a decline (Figma 04 Club · Decline), when it wrote one. */
   note: string | null
+  /** Offers only: the conversation that holds the offer card, and the last day to answer. */
+  conversation_id?: string | null
+  open_until?: string | null
 }
 
 function createLogger(correlationId: string) {
@@ -154,7 +159,7 @@ Deno.serve(async (req: Request) => {
     // ── The status-change notifications in this batch ──
     const { data: notifications, error: notifError } = await supabase
       .from('profile_notifications')
-      .select('id, metadata')
+      .select('id, kind, metadata')
       .in('id', queueRecord.notification_ids ?? [])
 
     if (notifError || !notifications || notifications.length === 0) {
@@ -163,6 +168,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const rawEntries: StatusEntry[] = notifications
+      .filter((n: any) => n.kind !== 'recruiting_update')
       .map((n: any) => ({
         status: n.metadata?.status,
         vacancy_title: n.metadata?.vacancy_title ?? (es ? 'una oportunidad' : 'an opportunity'),
@@ -189,9 +195,62 @@ Deno.serve(async (req: Request) => {
         currentById.set(a.id, { status: a.status, note })
       }
     }
-    const entries: StatusEntry[] = rawEntries
+    const statusEntries: StatusEntry[] = rawEntries
       .filter((e) => !e.application_id || !currentById.has(e.application_id) || currentById.get(e.application_id)!.status === e.status)
       .map((e) => ({ ...e, note: e.status === 'rejected' && e.application_id ? currentById.get(e.application_id)?.note ?? null : null }))
+
+    // ── Offers in this batch (recruiting_update / offer_received) ──
+    // Only an offer that is still live is emailed: one withdrawn, answered or
+    // replaced since the notification was written is dropped.
+    const offerNotifs = notifications.filter((n: any) =>
+      n.kind === 'recruiting_update' && n.metadata?.event === 'offer_received' && typeof n.metadata?.offer_id === 'string')
+    const offerEntries: StatusEntry[] = []
+    if (offerNotifs.length) {
+      // opportunity_offers is newer than the generated edge types.
+      const db = supabase as any
+      const { data: offers } = await db
+        .from('opportunity_offers')
+        .select('id, status, open_until, application_id, opportunity_id, player_id')
+        .in('id', offerNotifs.map((n: any) => n.metadata.offer_id))
+      const liveById = new Map<string, any>()
+      for (const o of (offers ?? []) as any[]) {
+        if (o.status === 'live' && o.player_id === player.id) liveById.set(o.id, o)
+      }
+      const oppIds = [...new Set([...liveById.values()].map((o) => o.opportunity_id).filter(Boolean))]
+      const titleById = new Map<string, string>()
+      const orgById = new Map<string, string>()
+      if (oppIds.length) {
+        const { data: opps } = await db
+          .from('opportunities')
+          .select('id, title, club:profiles (full_name)')
+          .in('id', oppIds)
+        for (const o of (opps ?? []) as any[]) {
+          if (o.title) titleById.set(o.id, o.title)
+          if (o.club?.full_name) orgById.set(o.id, o.club.full_name)
+        }
+        // A coach's role names the organisation it recruits for (same as the status entries).
+        for (const id of oppIds) {
+          const { data: org } = await db.rpc('role_organisation', { p_opportunity_id: id })
+          const name = Array.isArray(org) ? org[0]?.name : (org as any)?.name
+          if (typeof name === 'string' && name.trim()) orgById.set(id, name.trim())
+        }
+      }
+      for (const n of offerNotifs as any[]) {
+        const offer = liveById.get(n.metadata.offer_id)
+        if (!offer) continue
+        offerEntries.push({
+          status: 'offered',
+          vacancy_title: titleById.get(offer.opportunity_id) ?? n.metadata?.summary ?? (es ? 'una oportunidad' : 'an opportunity'),
+          club_name: orgById.get(offer.opportunity_id) ?? (es ? 'un club' : 'a club'),
+          opportunity_id: offer.opportunity_id ?? null,
+          application_id: offer.application_id ?? null,
+          note: null,
+          conversation_id: n.metadata?.conversation_id ?? null,
+          open_until: offer.open_until ?? null,
+        })
+      }
+    }
+    const entries: StatusEntry[] = [...offerEntries, ...statusEntries]
 
     if (entries.length === 0) {
       logger.info('No emailable entries in batch, skipping', { playerId: player.id })
@@ -203,6 +262,15 @@ Deno.serve(async (req: Request) => {
     const firstName = player.full_name?.split(' ')[0]?.trim() || (es ? '' : 'there')
     const rejected = entries.filter((e) => e.status === 'rejected')
     const shortlisted = entries.filter((e) => e.status === 'shortlisted')
+    const offered = entries.filter((e) => e.status === 'offered')
+    const offerUrl = (e: StatusEntry) => e.conversation_id
+      ? `${HOCKIA_BASE_URL}/messages/${e.conversation_id}`
+      : `${HOCKIA_BASE_URL}/opportunities/applications`
+    // "Open until 25 November." Empty when the offer carries no date.
+    const offerUntil = (e: StatusEntry) => {
+      const label = offerDateLabel(e.open_until, language)
+      return label ? (es ? ` Abierta hasta el ${label}.` : ` Open until ${label}.`) : ''
+    }
 
     // Suggestions only when a rejection is in the batch (spec: rejected →
     // honest + 2-3 similar open opportunities; shortlist emails stay focused).
@@ -218,17 +286,27 @@ Deno.serve(async (req: Request) => {
     const single = entries.length === 1
     const subject = es
       ? single
-        ? (entries[0].status === 'shortlisted'
+        ? (entries[0].status === 'offered'
+            ? `${entries[0].club_name} te envió una oferta`
+            : entries[0].status === 'shortlisted'
             ? `Estás en la preselección de ${entries[0].club_name}`
             : `Novedades sobre tu postulación a ${entries[0].vacancy_title}`)
         : 'Novedades sobre tus postulaciones'
       : single
-      ? (entries[0].status === 'shortlisted'
+      ? (entries[0].status === 'offered'
+          ? `${entries[0].club_name} sent you an offer`
+          : entries[0].status === 'shortlisted'
           ? `You're on the shortlist of ${entries[0].club_name}`
           : `An update on your application to ${entries[0].vacancy_title}`)
       : 'Updates on your applications'
 
-    const entryHtmlEs = (e: StatusEntry) => e.status === 'shortlisted'
+    const offerHtml = (e: StatusEntry) => `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
+           <div style="font-size:15px;font-weight:600;color:#0e0b1a;">${escapeHtml(es ? `${e.club_name} te envió una oferta` : `${e.club_name} sent you an offer`)}</div>
+           <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(`${e.vacancy_title}.${offerUntil(e)} ${es ? 'Abre Hockia para ver los términos y responder.' : 'Open Hockia to see the terms and answer.'}`)}</div>
+           <a href="${offerUrl(e)}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">${es ? 'Ver la oferta' : 'See the offer'} →</a>
+         </td></tr>`
+
+    const entryHtmlEs = (e: StatusEntry) => e.status === 'offered' ? offerHtml(e) : e.status === 'shortlisted'
       ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
            <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ Estás en la preselección de ${escapeHtml(e.club_name)}</div>
            <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Mantén tu perfil al día mientras revisan.</div>
@@ -242,7 +320,7 @@ Deno.serve(async (req: Request) => {
            ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">Ver tu postulación →</a>` : ''}
          </td></tr>`
 
-    const entryHtml = (e: StatusEntry) => es ? entryHtmlEs(e) : e.status === 'shortlisted'
+    const entryHtml = (e: StatusEntry) => es ? entryHtmlEs(e) : e.status === 'offered' ? offerHtml(e) : e.status === 'shortlisted'
       ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
            <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ You're on the shortlist of ${escapeHtml(e.club_name)}</div>
            <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Keep your profile sharp while they review.</div>
@@ -282,8 +360,16 @@ Deno.serve(async (req: Request) => {
     // The text version carries the same sentences, links and footer as the HTML.
     const linkLine = (label: string, e: StatusEntry) =>
       e.opportunity_id ? [`${label}: ${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}`] : []
+    const offerText = offered.flatMap((e) => [
+      es
+        ? `${e.club_name} te envió una oferta para ${e.vacancy_title}.${offerUntil(e)} Abre Hockia para ver los términos y responder.`
+        : `${e.club_name} sent you an offer for ${e.vacancy_title}.${offerUntil(e)} Open Hockia to see the terms and answer.`,
+      `${es ? 'Ver la oferta' : 'See the offer'}: ${offerUrl(e)}`,
+      '',
+    ])
     const textEntries = es
       ? [
+        ...offerText,
         ...shortlisted.flatMap((e) => [
           `⭐ Estás en la preselección de ${e.club_name} para ${e.vacancy_title}. Mantén tu perfil al día mientras revisan.`,
           ...linkLine('Ver oportunidad', e),
@@ -298,6 +384,7 @@ Deno.serve(async (req: Request) => {
         ]),
       ]
       : [
+        ...offerText,
         ...shortlisted.flatMap((e) => [
           `⭐ You're on the shortlist of ${e.club_name} for ${e.vacancy_title}. Keep your profile sharp while they review.`,
           ...linkLine('View opportunity', e),
