@@ -89,6 +89,18 @@ Verified patterns:
 - **PWA**: `vite-plugin-pwa` with `autoUpdate`; `/app.html` is the SPA shell
   and `/index.html` the prerendered landing (`scripts/prerender-landing.mjs`).
   No runtime caching of `/rest/v1/` by design (user-scoped responses).
+- **Public pages for crawlers without JavaScript** (added 2026-11-18; source:
+  the AI search visibility audit of the same date): the Vercel edge functions
+  in `client/api/` (`page-head.ts`, `opportunity-page.ts`, `world-page.ts`)
+  serve the shell with a per-page head and a plain HTML block inside
+  `<div id="root">` (`src/lib/seo/serverBody.ts`): open roles on
+  `/opportunities`, countries on `/world`, clubs, leagues and regions on
+  `/world/:code`, place, leagues and open roles on a club page, the full
+  description on a role page. `createRoot().render()` replaces the block
+  when the app boots. Roles come only from the `public-opportunities`
+  function (its view applies the hidden-profile predicate) and the 90-day
+  rule; no people are listed. A club's roles are matched by organisation
+  name within its country, because the public API carries no club id.
 
 ### 2.2 Database (`supabase/migrations`)
 
