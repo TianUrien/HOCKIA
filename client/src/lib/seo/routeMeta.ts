@@ -31,8 +31,13 @@ export interface RouteMetaEntry {
   dynamic?: boolean
 }
 
-/** Routes that are private, transactional or duplicates: never indexed. */
-const NOINDEX: RegExp[] = [
+/**
+ * Routes that are private, transactional or duplicates: never indexed.
+ * client/vercel.json sends the same routes an X-Robots-Tag header, so the
+ * rule also holds before JavaScript runs; routeMeta.test.tsx keeps the two
+ * lists in step.
+ */
+export const NOINDEX: RegExp[] = [
   /^\/admin(\/|$)/, /^\/dashboard(\/|$)/, /^\/settings(\/|$)/, /^\/messages(\/|$)/, /^\/inbox(\/|$)/,
   /^\/home(\/|$)/, /^\/pulse(\/|$)/, /^\/search(\/|$)/, /^\/discover(y)?(\/|$)/, /^\/notifications(\/|$)/,
   /^\/complete-profile(\/|$)/, /^\/onboarding(\/|$)/, /^\/auth(\/|$)/, /^\/email-action(\/|$)/,

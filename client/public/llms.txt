@@ -1,0 +1,36 @@
+# Hockia (inhockia.com)
+
+> Hockia is the field hockey network for players, coaches, clubs, umpires and brands. It is free to join and to use.
+
+Canonical name: Hockia (inhockia.com). Hockia is about field hockey (the sport played on grass or turf with a stick and a ball), not ice hockey.
+
+## What people do on Hockia
+
+- Players and coaches create a profile, find open roles at clubs worldwide and apply directly.
+- Clubs publish open roles for players and coaches and review the applications they receive.
+- Umpires and brands have their own profiles and take part in the same community.
+- Anyone can browse the world directory of field hockey clubs and leagues by country.
+
+## Cost
+
+Hockia is free for players, coaches, clubs, umpires and brands.
+
+## Key pages
+
+- [Open field hockey roles for players and coaches](https://inhockia.com/opportunities): every open role, with club, city and country.
+- [World directory of field hockey clubs and leagues](https://inhockia.com/world): clubs by country, region and league.
+- [Community](https://inhockia.com/community): players, coaches, clubs and umpires on Hockia.
+- [Join Hockia](https://inhockia.com/signup): create a free profile.
+- [Developers](https://inhockia.com/developers): the public API for open roles and structured data.
+- [Sitemap](https://inhockia.com/api/sitemap.xml)
+
+## Apps
+
+- [Hockia for iPhone and iPad (App Store)](https://apps.apple.com/app/hockia/id6760937891)
+- [Hockia for Android (Google Play)](https://play.google.com/store/apps/details?id=com.inhockia.app)
+
+## Contact
+
+- team@inhockia.com
+- [Instagram](https://www.instagram.com/inhockia/)
+- [LinkedIn](https://www.linkedin.com/company/hockia/)
