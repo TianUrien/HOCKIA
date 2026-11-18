@@ -8,6 +8,7 @@ import ConfirmActionModal from '@/components/ConfirmActionModal'
 import UploadVideoModal from '@/components/media/UploadVideoModal'
 import FullGameVideoFormModal from '@/components/FullGameVideoFormModal'
 import { MediaLightbox } from '@/components/home/MediaLightbox'
+import { ShareToHomePrompt } from '@/components/home/ShareToHomePrompt'
 import { ProfileVideoTile } from './ProfileVideoTile'
 import { useProfileVideos, type ProfileVideo } from '@/hooks/useProfileVideos'
 import { useFullGameVideos, type FullGameVideo } from '@/hooks/useFullGameVideos'
@@ -98,6 +99,8 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
   const [deleting, setDeleting] = useState(false)
   const [playing, setPlaying] = useState<ProfileVideo | null>(null)
   const [photoIndex, setPhotoIndex] = useState<number | null>(null)
+  // Photos just added: offered once for a Home post (founder 2026-11-18).
+  const [shareFiles, setShareFiles] = useState<File[]>([])
   const [reordering, setReordering] = useState(false)
   const [draftOrder, setDraftOrder] = useState<GalleryPhoto[] | null>(null)
   // Reorder mode stages EVERYTHING — moves and deletes — until Done; Cancel
@@ -153,7 +156,8 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
 
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return
-    const { added, failed } = await gallery.add(Array.from(files))
+    const { added, failed, addedFiles } = await gallery.add(Array.from(files))
+    if (addedFiles.length) setShareFiles(addedFiles)
     if (added) addToast(t('manageMedia.toasts.photosAdded', { count: added }), 'success')
     for (const f of failed) addToast(f, 'error')
   }
@@ -253,6 +257,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
           onSecondary={cancelReorder}
         >
           <input ref={fileRef} type="file" accept="image/png,image/jpeg" multiple className="hidden" onChange={(e) => { void addPhotos(e.target.files); e.target.value = '' }} />
+          <ShareToHomePrompt files={shareFiles} onDone={() => setShareFiles([])} />
           <div className="grid grid-cols-3 gap-1.5">
             {shownPhotos.filter((p) => !stagedDeletes.has(p.id)).map((p, i, visible) => (
               <div key={p.id} className="relative aspect-square overflow-hidden rounded-[10px] bg-surface-grouped">

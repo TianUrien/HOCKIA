@@ -745,5 +745,14 @@
       "processing": "Processing…",
       "badge": "Video"
     }
+  },
+  "shareToHome": {
+    "title_one": "Share this photo on Home?",
+    "title_other": "Share these photos on Home?",
+    "body_one": "Members see it as your post. It stays on your profile either way.",
+    "body_other": "Members see them as your post. They stay on your profile either way.",
+    "share": "Share",
+    "notNow": "Not now",
+    "shared": "Shared on Home."
   }
 }

@@ -4,6 +4,7 @@ import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
 import { MediaLightbox } from '@/components/home/MediaLightbox'
+import { ShareToHomePrompt } from '@/components/home/ShareToHomePrompt'
 import { useClubMedia, type ClubPhoto } from '@/hooks/useClubMedia'
 import { useToastStore } from '@/lib/toast'
 import { getImageSrcSet, getImageUrl } from '@/lib/imageUrl'
@@ -30,6 +31,8 @@ export default function ClubManageMediaScreen({ clubId, parent, onBack }: ClubMa
   const media = useClubMedia(clubId)
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [photoIndex, setPhotoIndex] = useState<number | null>(null)
+  // Photos just added: offered once for a Home post (founder 2026-11-18).
+  const [shareFiles, setShareFiles] = useState<File[]>([])
   const [reordering, setReordering] = useState(false)
   const [draftOrder, setDraftOrder] = useState<ClubPhoto[] | null>(null)
   const [stagedDeletes, setStagedDeletes] = useState<Set<string>>(new Set())
@@ -39,7 +42,8 @@ export default function ClubManageMediaScreen({ clubId, parent, onBack }: ClubMa
 
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return
-    const { added, failed } = await media.add(Array.from(files))
+    const { added, failed, addedFiles } = await media.add(Array.from(files))
+    if (addedFiles.length) setShareFiles(addedFiles)
     if (added) addToast(t('manageMedia.toasts.added', { count: added }), 'success')
     for (const f of failed) addToast(t('manageMedia.toasts.addFailed', { file: f }), 'error')
   }
@@ -79,6 +83,7 @@ export default function ClubManageMediaScreen({ clubId, parent, onBack }: ClubMa
 
       <div className="flex flex-col gap-3 px-5 pt-2">
         <input ref={fileRef} type="file" accept="image/png,image/jpeg" multiple className="hidden" data-testid="club-media-input" onChange={(e) => { void addPhotos(e.target.files); e.target.value = '' }} />
+        <ShareToHomePrompt files={shareFiles} onDone={() => setShareFiles([])} />
         <div className="flex items-center justify-between">
           <h2 className="text-body font-semibold text-ink-1">{t('manageMedia.photosHeading', { count: media.photos.length })}</h2>
           <span className="flex items-center gap-4">

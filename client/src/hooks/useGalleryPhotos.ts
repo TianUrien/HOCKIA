@@ -43,10 +43,12 @@ export function useGalleryPhotos(profileId: string | null | undefined) {
 
   const touched = () => { if (profileId) { clearCoverPhotoCache(profileId); clearProfileScrollCache(profileId) } }
 
-  const add = useCallback(async (files: File[]): Promise<{ added: number; failed: string[] }> => {
-    if (!profileId) return { added: 0, failed: [] }
+  const add = useCallback(async (files: File[]): Promise<{ added: number; failed: string[]; addedFiles: File[] }> => {
+    if (!profileId) return { added: 0, failed: [], addedFiles: [] }
     const batch = files.slice(0, MAX_BATCH)
     const failed: string[] = []
+    // The originals that made it in, for the "Share on Home?" offer.
+    const addedFiles: File[] = []
     setBusy(true)
     try {
       let top = photos.length ? Math.max(...photos.map((p) => p.orderIndex)) : -1
@@ -67,6 +69,7 @@ export function useGalleryPhotos(profileId: string | null | undefined) {
           const { error: dbErr } = await supabase.from('gallery_photos').insert({ user_id: profileId, photo_url: url, file_name: file.name, file_size: optimized.size, order_index: base - i })
           if (dbErr) throw dbErr
           added += 1
+          addedFiles.push(file)
           top = Math.max(top, base - i)
         } catch (err) {
           logger.error('[useGalleryPhotos] upload failed', err)
@@ -75,7 +78,7 @@ export function useGalleryPhotos(profileId: string | null | undefined) {
       }
       touched()
       await load()
-      return { added, failed }
+      return { added, failed, addedFiles }
     } finally {
       setBusy(false)
     }
