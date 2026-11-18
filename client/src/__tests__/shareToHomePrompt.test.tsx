@@ -11,10 +11,15 @@ vi.mock('@/lib/toast', () => ({
   useToastStore: (select: (s: { addToast: typeof addToast }) => unknown) => select({ addToast }),
 }))
 vi.mock('@/lib/queryClient', () => ({ queryClient: { invalidateQueries } }))
+const rpc = vi.hoisted(() => vi.fn())
+const validateVideoFull = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/supabase', () => ({ supabase: { rpc } }))
+vi.mock('@/lib/imageOptimization', () => ({ validateVideoFull }))
 vi.mock('@/components/home/PostComposerModal', () => ({
-  PostComposerModal: ({ initialImageFiles, onPostCreated, onClose }: { initialImageFiles?: File[]; onPostCreated: (item: unknown) => void; onClose: () => void }) => (
+  PostComposerModal: ({ initialImageFiles, initialVideoFile, onPostCreated, onClose }: { initialImageFiles?: File[]; initialVideoFile?: File | null; onPostCreated: (item: unknown) => void; onClose: () => void }) => (
     <div data-testid="composer-modal">
       <span data-testid="composer-files">{initialImageFiles?.map((f) => f.name).join(',')}</span>
+      <span data-testid="composer-video">{initialVideoFile?.name}</span>
       <button type="button" onClick={() => { onPostCreated({}); onClose() }}>post</button>
       <button type="button" onClick={onClose}>close</button>
     </div>
@@ -22,6 +27,7 @@ vi.mock('@/components/home/PostComposerModal', () => ({
 }))
 
 import { ShareToHomePrompt, SHARE_TO_HOME_MAX_PHOTOS } from '@/components/home/ShareToHomePrompt'
+import { shareableVideo } from '@/lib/shareToHome'
 
 const photo = (name: string) => new File(['x'], name, { type: 'image/jpeg' })
 const user = userEvent.setup()
@@ -83,5 +89,55 @@ describe('ShareToHomePrompt', () => {
     await user.click(await screen.findByRole('button', { name: 'close' }))
     expect(onDone).toHaveBeenCalledTimes(1)
     expect(addToast).not.toHaveBeenCalled()
+  })
+
+  describe('video', () => {
+    const clip = new File(['x'], 'goal.mp4', { type: 'video/mp4' })
+    beforeEach(() => {
+      rpc.mockResolvedValue({ data: true, error: null })
+      validateVideoFull.mockResolvedValue({ valid: true })
+    })
+
+    it('offers only a public highlight', () => {
+      expect(shareableVideo({ file: clip, kind: 'highlight', visibility: 'public' })).toBe(clip)
+      expect(shareableVideo({ file: clip, kind: 'highlight', visibility: 'recruiters' })).toBeNull()
+      expect(shareableVideo({ file: clip, kind: 'full_match', visibility: 'public' })).toBeNull()
+    })
+
+    it('asks about the video and hands it to the composer', async () => {
+      render(<ShareToHomePrompt video={clip} onDone={vi.fn()} />)
+      expect(await screen.findByRole('heading', { name: 'Share this video on Home?' })).toBeInTheDocument()
+      expect(rpc).toHaveBeenCalledWith('video_posts_enabled')
+      expect(trackDbEvent).toHaveBeenCalledWith('share_to_home_prompt', undefined, undefined, { action: 'view', media_type: 'video', count: 1 })
+      await user.click(screen.getByRole('button', { name: 'Share' }))
+      expect((await screen.findByTestId('composer-video')).textContent).toBe('goal.mp4')
+      expect(screen.getByTestId('composer-files').textContent).toBe('')
+    })
+
+    it('stays hidden while video posts are switched off', async () => {
+      rpc.mockResolvedValue({ data: false, error: null })
+      const { container } = render(<ShareToHomePrompt video={clip} onDone={vi.fn()} />)
+      await vi.waitFor(() => expect(rpc).toHaveBeenCalled())
+      await Promise.resolve()
+      expect(container.innerHTML).toBe('')
+      expect(validateVideoFull).not.toHaveBeenCalled()
+      expect(trackDbEvent).not.toHaveBeenCalled()
+    })
+
+    it('stays hidden when the flag cannot be read', async () => {
+      rpc.mockResolvedValue({ data: null, error: { message: 'network' } })
+      const { container } = render(<ShareToHomePrompt video={clip} onDone={vi.fn()} />)
+      await vi.waitFor(() => expect(rpc).toHaveBeenCalled())
+      await Promise.resolve()
+      expect(container.innerHTML).toBe('')
+    })
+
+    it('stays hidden when the video is too long or too large for a post', async () => {
+      validateVideoFull.mockResolvedValue({ valid: false, error: 'too long' })
+      const { container } = render(<ShareToHomePrompt video={clip} onDone={vi.fn()} />)
+      await vi.waitFor(() => expect(validateVideoFull).toHaveBeenCalledWith(clip))
+      await Promise.resolve()
+      expect(container.innerHTML).toBe('')
+    })
   })
 })

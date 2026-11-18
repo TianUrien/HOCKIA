@@ -253,3 +253,17 @@ is still not tracked.
 | "Share" tapped (composer opens with the photos) | `share_to_home_prompt` | `action` = `accept` |
 | "Not now" tapped | `share_to_home_prompt` | `action` = `dismiss` |
 | Post created from the prompt | `share_to_home_prompt` | `action` = `posted` (the usual `post_create` fires too) |
+
+Videos (added 2026-11-18, same event with `media_type` = `video`, `count` = 1). The prompt
+appears after the owner uploads a highlight they made public, never for a video limited to
+clubs and coaches or for a full match. It also needs video posts switched on
+(`video_posts_enabled()`, an `app_settings` row) and a file that fits a post (100 MB, 3
+minutes; a profile highlight may be 1 GB and 10 minutes). The file is uploaded a second time
+as a Home video post (`player_videos.kind = 'post'`), because a post cannot reference a
+profile highlight.
+
+Source: production on 2026-11-18 (read-only, hidden and test profiles excluded). The
+`video_posts_enabled` row is absent, so video posts are off and this prompt does not appear
+there yet; staging has it on. 77 public highlights are ready (33 members), 17 of them added
+since 2026-11-10, and 74 of the 77 are 3 minutes or shorter (length only; file size was not
+measured). 43 more highlights are limited to clubs and coaches and are never offered.

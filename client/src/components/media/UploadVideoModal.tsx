@@ -16,10 +16,17 @@ import { useMediaT } from '@/i18n/ns/media'
  * "processing" while Cloudflare transcodes → success. Calls onUploaded
  * with the new videoId so the parent can refresh its list.
  */
+export interface UploadedVideoInfo {
+  file: File
+  kind: 'highlight' | 'full_match'
+  visibility: 'public' | 'recruiters'
+}
+
 interface UploadVideoModalProps {
   isOpen: boolean
   onClose: () => void
-  onUploaded: (videoId: string) => void
+  /** `info` carries the file so the owner can be offered a Home post of it. */
+  onUploaded: (videoId: string, info: UploadedVideoInfo) => void
   kind?: 'highlight' | 'full_match'
 }
 
@@ -87,7 +94,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
       const { error: visError } = await supabase.from('player_videos').update({ visibility }).eq('id', id)
       if (visError) logger.error('[UploadVideoModal] per-video visibility failed', visError)
     }
-    if (id && phase !== 'error') onUploaded(id)
+    if (id && phase !== 'error') onUploaded(id, { file, kind, visibility })
   }
 
   return (

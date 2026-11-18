@@ -9,6 +9,7 @@ import UploadVideoModal from '@/components/media/UploadVideoModal'
 import FullGameVideoFormModal from '@/components/FullGameVideoFormModal'
 import { MediaLightbox } from '@/components/home/MediaLightbox'
 import { ShareToHomePrompt } from '@/components/home/ShareToHomePrompt'
+import { shareableVideo } from '@/lib/shareToHome'
 import { ProfileVideoTile } from './ProfileVideoTile'
 import { useProfileVideos, type ProfileVideo } from '@/hooks/useProfileVideos'
 import { useFullGameVideos, type FullGameVideo } from '@/hooks/useFullGameVideos'
@@ -101,6 +102,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
   const [photoIndex, setPhotoIndex] = useState<number | null>(null)
   // Photos just added: offered once for a Home post (founder 2026-11-18).
   const [shareFiles, setShareFiles] = useState<File[]>([])
+  const [shareVideo, setShareVideo] = useState<File | null>(null)
   const [reordering, setReordering] = useState(false)
   const [draftOrder, setDraftOrder] = useState<GalleryPhoto[] | null>(null)
   // Reorder mode stages EVERYTHING — moves and deletes — until Done; Cancel
@@ -201,6 +203,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
 
       <div className="flex flex-col gap-7 px-5 pt-2">
         <Section title={t('manageMedia.highlightSection')} action={highlights.length || legacyHighlight ? t('manageMedia.highlightAdd') : undefined} onAction={() => setUploadKind('highlight')}>
+          <ShareToHomePrompt video={shareVideo} onDone={() => setShareVideo(null)} />
           {videos.loading ? (
             <div className="h-[72px] animate-pulse rounded-card bg-surface-grouped" />
           ) : (
@@ -285,7 +288,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
         </Section>
       </div>
 
-      <UploadVideoModal isOpen={uploadKind !== null} kind={uploadKind ?? 'highlight'} onClose={() => setUploadKind(null)} onUploaded={() => { setUploadKind(null); clearProfileScrollCache(profileId); void videos.reload() }} />
+      <UploadVideoModal isOpen={uploadKind !== null} kind={uploadKind ?? 'highlight'} onClose={() => setUploadKind(null)} onUploaded={(_id, info) => { setUploadKind(null); setShareVideo(shareableVideo(info)); clearProfileScrollCache(profileId); void videos.reload() }} />
       <FullGameVideoFormModal
         isOpen={linkForm.open}
         initialValue={linkForm.edit}
