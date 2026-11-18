@@ -264,3 +264,28 @@ security.md section 6.
 Never run `supabase config push` against a hosted project: `config.toml` holds local-development values, and the push would replace the hosted auth settings with them (site URL, redirect URLs, password rules, email confirmation, MFA, Apple sign-in). Source: its own diff against staging, 2026-11-18, declined before anything changed.
 
 The link in both emails lasts as long as the project's email OTP expiry (3600 seconds on staging), so the templates say one hour.
+
+## IndexNow pings for role pages (2026-11-18)
+
+Source: the AI search visibility audit of 2026-11-18. IndexNow tells Bing
+(and through it ChatGPT search and Copilot) that a URL changed.
+
+- `notify-vacancy` (the database webhook on `opportunities`) sends the
+  role's URL and `/opportunities` when a role becomes open or stops being
+  open (`supabase/functions/_shared/indexnow.ts`). Only public URLs are
+  sent. A failed ping is logged and never fails the webhook.
+- It is off until `INDEXNOW_KEY` is set. To turn it on in production:
+  1. Generate a key of 32 lowercase hex characters (`openssl rand -hex 16`).
+     The key is not a secret, but it is set per environment, not committed.
+  2. Set `INDEXNOW_KEY` in the Vercel project (production) and redeploy.
+     `https://inhockia.com/<key>.txt` must then return the key
+     (`client/api/indexnow-key.ts`).
+  3. Set the same `INDEXNOW_KEY` as a secret of the production Supabase
+     project and deploy `notify-vacancy`.
+  4. Verify the site in Bing Webmaster Tools (it can import from Search
+     Console); its IndexNow page lists the received URLs.
+- Leave it unset on staging: staging pages are noindex.
+- Not verified from the repository: that the webhook also fires for updates
+  that close a role. It is configured in the Supabase dashboard; if it is
+  filtered to publishes, closes are not pinged (the role page still turns
+  noindex and the sitemap drops it).
