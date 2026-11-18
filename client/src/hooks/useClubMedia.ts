@@ -49,10 +49,12 @@ export function useClubMedia(clubId: string | null | undefined) {
 
   const touched = useCallback(() => { if (clubId) clearClubProfileScrollCache(clubId) }, [clubId])
 
-  const add = useCallback(async (files: File[]): Promise<{ added: number; failed: string[] }> => {
-    if (!clubId) return { added: 0, failed: [] }
+  const add = useCallback(async (files: File[]): Promise<{ added: number; failed: string[]; addedFiles: File[] }> => {
+    if (!clubId) return { added: 0, failed: [], addedFiles: [] }
     const batch = files.slice(0, MAX_BATCH)
     const failed: string[] = []
+    // The originals that made it in, for the "Share on Home?" offer.
+    const addedFiles: File[] = []
     setBusy(true)
     try {
       const current = photosRef.current
@@ -77,6 +79,7 @@ export function useClubMedia(clubId: string | null | undefined) {
             throw dbErr
           }
           added += 1
+          addedFiles.push(file)
         } catch (err) {
           logger.error('[useClubMedia] upload failed', err)
           failed.push(file.name)
@@ -84,7 +87,7 @@ export function useClubMedia(clubId: string | null | undefined) {
       }
       touched()
       await load()
-      return { added, failed }
+      return { added, failed, addedFiles }
     } finally {
       setBusy(false)
     }

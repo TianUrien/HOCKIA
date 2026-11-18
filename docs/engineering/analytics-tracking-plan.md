@@ -247,3 +247,17 @@ item). Module ids and their `position` values are unchanged so earlier numbers s
 comparable by id; from this date `v1_people_new` and `v1_people_available` are seen after
 the first feed card, so their impressions depend on the feed having at least one item
 scrolled past. Compare them by date, not across it.
+
+## Share on Home prompt (added 2026-11-18)
+
+Source: production on 2026-11-18 (read-only). In the 8 days after the 2026-11-10 "facts only"
+ruling members wrote 1 post and added 18 photos and 17 videos to their profiles. The founder
+chose to offer a Home post at the moment of the upload. Opening the post composer from Home
+is still not tracked.
+
+| Step | Event | Properties |
+|---|---|---|
+| Prompt on screen after the owner adds photos to their profile | `share_to_home_prompt` | `action` = `view`, `media_type` = `photo`, `count` |
+| "Share" tapped (composer opens with the photos) | `share_to_home_prompt` | `action` = `accept` |
+| "Not now" tapped | `share_to_home_prompt` | `action` = `dismiss` |
+| Post created from the prompt | `share_to_home_prompt` | `action` = `posted` (the usual `post_create` fires too) |

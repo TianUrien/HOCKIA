@@ -440,13 +440,26 @@ describe('ClubManageMediaScreen', () => {
     expect(onBack).toHaveBeenCalled()
   })
 
-  it('adds the picked files', async () => {
-    clubMedia.add.mockResolvedValue({ added: 2, failed: [] })
-    render(<MemoryRouter><Screen clubId="club-1" parent="Profile" onBack={vi.fn()} /></MemoryRouter>)
+  it('adds the picked files, then offers them for a Home post', async () => {
     const files = [new File(['a'], 'a.jpg', { type: 'image/jpeg' }), new File(['b'], 'b.jpg', { type: 'image/jpeg' })]
+    clubMedia.add.mockResolvedValue({ added: 2, failed: [], addedFiles: files })
+    render(<MemoryRouter><Screen clubId="club-1" parent="Profile" onBack={vi.fn()} /></MemoryRouter>)
+    expect(screen.queryByTestId('share-to-home-prompt')).toBeNull()
     fireEvent.change(screen.getByTestId('club-media-input'), { target: { files } })
     await waitFor(() => expect(clubMedia.add).toHaveBeenCalledWith(files))
     expect(toast.addToast).toHaveBeenCalledWith('2 photos added.', 'success')
+    expect(await screen.findByRole('heading', { name: 'Share these photos on Home?' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }))
+    expect(screen.queryByTestId('share-to-home-prompt')).toBeNull()
+  })
+
+  it('offers nothing when no photo made it in', async () => {
+    clubMedia.add.mockResolvedValue({ added: 0, failed: ['a.jpg'], addedFiles: [] })
+    render(<MemoryRouter><Screen clubId="club-1" parent="Profile" onBack={vi.fn()} /></MemoryRouter>)
+    const files = [new File(['a'], 'a.jpg', { type: 'image/jpeg' })]
+    fireEvent.change(screen.getByTestId('club-media-input'), { target: { files } })
+    await waitFor(() => expect(clubMedia.add).toHaveBeenCalled())
+    expect(screen.queryByTestId('share-to-home-prompt')).toBeNull()
   })
 
   it('reorder stages moves and deletes; Cancel throws them away, Done saves after confirming deletes', async () => {

@@ -32,6 +32,9 @@ interface PostComposerModalProps {
   onClose: () => void
   onPostCreated: (item: HomeFeedItem) => void
   editingPost?: { id: string; content: string; images: PostImage[] | null } | null
+  /** Photos to attach as the composer opens ("Share on Home?" after a profile
+   *  upload). Each goes through the normal post-image upload. New posts only. */
+  initialImageFiles?: File[]
 }
 
 interface ClubSearchResult {
@@ -68,6 +71,7 @@ export function PostComposerModal({
   onClose,
   onPostCreated,
   editingPost,
+  initialImageFiles,
 }: PostComposerModalProps) {
   const t = useHomeT()
   const { user, profile } = useAuthStore()
@@ -466,6 +470,18 @@ export function PostComposerModal({
       setIsUploading(false)
     }
   }, [user, t])
+
+  // "Share on Home?": attach the photos handed in, once per open, one at a
+  // time so they keep their order. Runs after the open-effect cleared `media`.
+  const seededFilesRef = useRef(false)
+  useEffect(() => {
+    if (!isOpen) { seededFilesRef.current = false; return }
+    if (seededFilesRef.current || editingPost || !initialImageFiles?.length) return
+    seededFilesRef.current = true
+    void (async () => {
+      for (const file of initialImageFiles.slice(0, 5)) await handleMediaAddImage(file)
+    })()
+  }, [isOpen, editingPost, initialImageFiles, handleMediaAddImage])
 
   const handleMediaAddVideo = useCallback((file: File) => {
     if (!user) return
