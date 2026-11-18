@@ -130,6 +130,10 @@
       "destination": "/api/page-head?path=/juniors-waitlist"
     },
     {
+      "source": "/:key([0-9a-f]{32}).txt",
+      "destination": "/api/indexnow-key?key=:key"
+    },
+    {
       "source": "/:path((?!assets/).*)",
       "destination": "/app.html"
     }
