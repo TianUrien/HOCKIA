@@ -6,13 +6,14 @@
  * rewrites, one per path. Without this, Google read the shell's generic
  * title for every route.
  *
- * /opportunities and /world also get a body block (open roles; countries)
- * for crawlers that do not run JavaScript; the app replaces it on boot. A
- * failed lookup serves the head alone, as before.
+ * /opportunities, /world and /community also get a body block (open roles;
+ * countries; what the directory is, with no people data) for crawlers that
+ * do not run JavaScript; the app replaces it on boot. A failed lookup serves
+ * the head alone, as before.
  */
 import { renderStaticHtml } from '../src/lib/seo/opportunityHead'
 import { ROUTE_META, resolveRouteMeta } from '../src/lib/seo/routeMeta'
-import { injectServerBody, opportunitiesBody, worldBody } from '../src/lib/seo/serverBody'
+import { communityBody, injectServerBody, opportunitiesBody, worldBody } from '../src/lib/seo/serverBody'
 import { fetchOpenRoles, restAnon } from './_publicData'
 
 export const config = { runtime: 'edge' }
@@ -50,6 +51,8 @@ export default async function handler(req: Request): Promise<Response> {
       'world_countries_with_directory?select=country_code,country_name,total_clubs&order=country_name.asc',
     )
     if (rows) html = injectServerBody(html, worldBody(rows.map((r) => ({ code: r.country_code, name: r.country_name, totalClubs: r.total_clubs ?? 0 })), intro))
+  } else if (path === '/community') {
+    html = injectServerBody(html, communityBody(intro))
   }
   return new Response(html, {
     status: 200,

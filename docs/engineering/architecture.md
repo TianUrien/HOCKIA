@@ -103,7 +103,11 @@ Verified patterns:
   `<div id="root">` (`src/lib/seo/serverBody.ts`): open roles on
   `/opportunities`, countries on `/world`, clubs, leagues and regions on
   `/world/:code`, place, leagues and open roles on a club page, the full
-  description on a role page. `createRoot().render()` replaces the block
+  description on a role page. `/community` gets a fixed intro of who
+  the directory is for (2026-11-18 follow-up): no member names and no counts,
+  because no public source gives per-role counts with the hidden-profile
+  predicate applied (`get_landing_stats` is one total and counts frozen
+  minors by design). `createRoot().render()` replaces the block
   when the app boots. Roles come only from the `public-opportunities`
   function (its view applies the hidden-profile predicate) and the 90-day
   rule; no people are listed. A club's roles are matched by organisation
