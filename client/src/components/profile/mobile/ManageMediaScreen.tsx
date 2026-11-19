@@ -54,7 +54,7 @@ function VideoCard({ video, onPlay, onVisibility, onDelete }: { video: ProfileVi
       <ProfileVideoTile video={video} locked={locked} compact eager size={{ width: 120, height: 72 }} onOpen={onPlay} className="h-[72px] w-[120px] shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-row font-semibold text-ink-1">{video.title}</p>
-        <p className="text-secondary text-ink-2">{duration && <><span className="tabular-nums">{duration}</span>{' '}</>}<span className={duration ? 'ml-1 text-ink-3' : undefined}>{t('manageMedia.ready')}</span></p>
+        <p className="text-secondary text-ink-2">{duration && <><span className="tabular-nums">{duration}</span>{' '}</>}<span className={duration ? 'ml-1 text-ink-2' : undefined}>{t('manageMedia.ready')}</span></p>
         <button type="button" onClick={onVisibility} className="mt-1.5 inline-flex h-[26px] max-w-full items-center gap-1 whitespace-nowrap rounded-full bg-surface-grouped px-2.5 text-caption font-semibold text-ink-2">
           {locked ? <Lock className="h-3 w-3" strokeWidth={2.2} /> : null}
           {locked ? t('manageMedia.chipRecruiters') : t('manageMedia.chipEveryone')}
@@ -70,7 +70,7 @@ function Section({ title, count, action, onAction, secondary, onSecondary, child
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-body font-semibold text-ink-1">{title}{typeof count === 'number' && <>{' '}<span className="ml-1 text-ink-3">{count}</span></>}</h2>
+        <h2 className="text-body font-semibold text-ink-1">{title}{typeof count === 'number' && <>{' '}<span className="ml-1 text-ink-2">{count}</span></>}</h2>
         <span className="flex items-center gap-4">
           {secondary && <button type="button" onClick={onSecondary} className="-my-3 flex min-h-[44px] items-center text-row font-semibold text-ink-2">{secondary}</button>}
           {action && <button type="button" onClick={onAction} className="-my-3 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary" data-testid="media-section-link">{action}</button>}

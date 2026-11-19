@@ -579,7 +579,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
                     <EntityAvatar src={p?.avatarUrl ?? null} name={p?.fullName ?? null} role={p?.role} size={32} />
                     <span className="min-w-0">
                       <span className="block truncate text-[14px] font-semibold leading-[19px] text-ink-1">{who}</span>
-                      <span className="block truncate text-caption text-ink-2">{t('playerProfileV2.references.verified')}{r.acceptedAt && <>{' '}<span className="ml-1 text-ink-3">{dayFirst(r.acceptedAt, { year: 'always' })}</span></>}</span>
+                      <span className="block truncate text-caption text-ink-2">{t('playerProfileV2.references.verified')}{r.acceptedAt && <>{' '}<span className="ml-1 text-ink-2">{dayFirst(r.acceptedAt, { year: 'always' })}</span></>}</span>
                     </span>
                   </span>
                 </SquircleBox>

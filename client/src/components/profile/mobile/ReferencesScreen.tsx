@@ -171,7 +171,7 @@ export default function ReferencesScreen({ profileId, profileName, profileRole, 
 
         {own && incoming.length > 0 && (
           <section className="rounded-card bg-surface-grouped p-3.5">
-            <h2 className="text-secondary font-semibold text-ink-2">{t('references.screen.incomingTitle')}{' '}<span className="ml-1 text-ink-3">{incoming.length}</span></h2>
+            <h2 className="text-secondary font-semibold text-ink-2">{t('references.screen.incomingTitle')}{' '}<span className="ml-1 text-ink-2">{incoming.length}</span></h2>
             <ul className="mt-1 divide-y divide-line">
               {incoming.map((r) => {
                 const who = r.requesterProfile?.fullName?.trim() || t('references.screen.fallbackName')
@@ -226,7 +226,7 @@ export default function ReferencesScreen({ profileId, profileName, profileRole, 
 
         {own && refs.pendingReferences.length > 0 && (
           <section className="pt-2">
-            <h2 className="pb-1 text-secondary font-semibold text-ink-2">{t('references.screen.requestedTitle')}{' '}<span className="ml-1 text-ink-3">{refs.pendingReferences.length}</span></h2>
+            <h2 className="pb-1 text-secondary font-semibold text-ink-2">{t('references.screen.requestedTitle')}{' '}<span className="ml-1 text-ink-2">{refs.pendingReferences.length}</span></h2>
             <ul className="divide-y divide-line">
               {refs.pendingReferences.map((r) => {
                 const who = r.profile?.fullName?.trim() || t('references.screen.fallbackName')

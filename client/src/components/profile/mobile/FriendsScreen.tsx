@@ -168,7 +168,7 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
           <>
             {inCommon.length > 0 && (
               <>
-                <h2 className="pb-1 pt-3 text-[20px] font-semibold leading-6 text-ink-1">{t('friendsScreen.inCommon')}{' '}<span className="ml-1 text-ink-3">{inCommon.length}</span></h2>
+                <h2 className="pb-1 pt-3 text-[20px] font-semibold leading-6 text-ink-1">{t('friendsScreen.inCommon')}{' '}<span className="ml-1 text-ink-2">{inCommon.length}</span></h2>
                 <ul>{inCommon.map(row)}</ul>
                 {rest.length > 0 && <h2 className="pb-1 pt-5 text-[20px] font-semibold leading-6 text-ink-1">{t('friendsScreen.allFriends')}</h2>}
               </>

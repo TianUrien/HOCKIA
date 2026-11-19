@@ -85,7 +85,7 @@ function SectionHeader({ title, count, action, onAction }: { title: string; coun
     <div className="flex items-center justify-between">
       <h2 className="text-[20px] font-bold leading-6 text-ink-1">
         {title}
-        {typeof count === 'number' && <>{' '}<span className="ml-1 font-semibold text-ink-3">{count}</span></>}
+        {typeof count === 'number' && <>{' '}<span className="ml-1 font-semibold text-ink-2">{count}</span></>}
       </h2>
       {action && (
         <button type="button" onClick={onAction} className="-my-2 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary" data-testid="section-header-action">

@@ -35,7 +35,7 @@ export function Section({ id, title, count, action, onAction, children, classNam
   return (
     <section id={id} className={cn('scroll-mt-[120px] pt-6', className)} data-testid={`profile-section-${id}`}>
       <div className="mb-3 flex items-center px-4">
-        <h2 className="min-w-0 flex-1 truncate text-[20px] font-semibold leading-6 tracking-[-0.08px] text-ink-1">{title}{typeof count === 'number' && <>{' '}<span className="ml-1 text-ink-3">{count}</span></>}</h2>
+        <h2 className="min-w-0 flex-1 truncate text-[20px] font-semibold leading-6 tracking-[-0.08px] text-ink-1">{title}{typeof count === 'number' && <>{' '}<span className="ml-1 text-ink-2">{count}</span></>}</h2>
         {action && onAction && (
           <button type="button" onClick={onAction} className="-my-2 flex min-h-[44px] items-center pl-3 text-secondary font-semibold text-hockia-primary">{action}</button>
         )}
