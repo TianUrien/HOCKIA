@@ -31,7 +31,7 @@
       "openToPlay": "Open to play"
     },
     "visitorTitle": {
-      "withSection": "{{name}} · {{section}}",
+      "withSection": "{{name}}, {{section}}",
       "media": "Media",
       "videos": "Videos",
       "gallery": "Photos",
@@ -215,7 +215,7 @@
       "opportunities": "Opportunities"
     },
     "visitorTitle": {
-      "withSection": "{{name}} · {{section}}",
+      "withSection": "{{name}}, {{section}}",
       "media": "Media",
       "journey": "Career history",
       "references": "References",
@@ -262,7 +262,7 @@
       "startConversation": "Failed to start conversation. Please try again."
     },
     "documentTitle": {
-      "named": "{{name}} · Umpire | Hockia",
+      "named": "{{name}}, Umpire | Hockia",
       "anonymous": "Umpire | Hockia"
     },
     "tabs": {
@@ -329,8 +329,8 @@
   "useFriendsInCommon": {
     "count_one": "{{count}} friend",
     "count_other": "{{count}} friends",
-    "countWithNames_one": "{{count}} friend · {{names}}",
-    "countWithNames_other": "{{count}} friends · {{names}}"
+    "countWithNames_one": "{{count}} friend: {{names}}",
+    "countWithNames_other": "{{count}} friends: {{names}}"
   },
   "useFriendship": {
     "toasts": {
@@ -361,7 +361,8 @@
     "memberFallback": "Hockia member",
     "accept": "Accept",
     "add": "Add",
-    "titleOwn": "Friends · {{total}}",
+    "titleOwn_one": "{{total}} friend",
+    "titleOwn_other": "{{total}} friends",
     "titleNamed": "{{firstName}}’s friends",
     "title": "Friends",
     "parent": "Profile",
@@ -377,7 +378,7 @@
     "emptyPublic": "No friends to show",
     "findPeople": "Find people in Community",
     "noMatch": "No one matches “{{query}}”.",
-    "inCommon": "In common · {{total}}",
+    "inCommon": "In common",
     "allFriends": "All friends",
     "signInTitle": "Sign in to see friends"
   },
@@ -753,7 +754,6 @@
     "photoPosition": "Photo {{index}} of {{count}}"
   },
   "profileSections": {
-    "commentsTitleCount": "Comments · {{count}}",
     "commentsTitle": "Comments",
     "commentsSeeAll": "See all",
     "memberFallback": "Member",
@@ -767,15 +767,15 @@
     "previewSheet": "Preview as",
     "previewTitle": "Preview your profile as…",
     "cancel": "Cancel",
-    "onlyYou": "Only you see this · Your activity",
+    "onlyYou": "Only you see this. Your activity",
     "applicantsToReview_one": "{{count}} applicant to review",
     "applicantsToReview_other": "{{count}} applicants to review",
     "noNewApplicants": "No new applicants",
     "notRecruiting": "Not recruiting right now",
     "openRoles_one": "{{count}} open opportunity",
     "openRoles_other": "{{count}} open opportunities",
-    "openRolesWithNames_one": "{{count}} open opportunity · {{names}}",
-    "openRolesWithNames_other": "{{count}} open opportunities · {{names}}",
+    "openRolesWithNames_one": "{{count}} open opportunity: {{names}}",
+    "openRolesWithNames_other": "{{count}} open opportunities: {{names}}",
     "postToReceive": "Post an opportunity and players can apply",
     "reviewApplicants": "Review applicants",
     "postOpportunity": "+ Post an opportunity",
@@ -805,8 +805,8 @@
     },
     "friends_one": "{{count}} friend",
     "friends_other": "{{count}} friends",
-    "friendsInCommon_one": "{{count}} friend · {{common}} in common with you",
-    "friendsInCommon_other": "{{count}} friends · {{common}} in common with you",
+    "friendsInCommon_one": "{{count}} friend, {{common}} in common with you",
+    "friendsInCommon_other": "{{count}} friends, {{common}} in common with you",
     "action": {
       "friends": "Friends",
       "requested": "Requested",
@@ -837,7 +837,6 @@
       "detail": "Tournaments and leagues"
     },
     "matches": {
-      "titleCount": "Matches officiated · {{count}}",
       "title": "Matches officiated",
       "add": "+ Add",
       "seeAll": "See all",
@@ -850,8 +849,7 @@
       "ask": "Ask for one",
       "empty": "No references yet. Players, coaches and clubs who are friends on Hockia can write one.",
       "memberFallback": "Hockia member",
-      "verified": "✓ Verified on Hockia",
-      "verifiedOn": "✓ Verified on Hockia · {{date}}"
+      "verified": "✓ Verified on Hockia"
     },
     "posts": {
       "title": "Posts & photos",
@@ -878,6 +876,7 @@
       "posts": "Posts",
       "about": "About"
     },
+    "fitFor": "for {{role}}",
     "nameFallback": "Hockia member",
     "linkCopied": "Link copied",
     "stats": {
@@ -895,8 +894,8 @@
     },
     "friends_one": "{{count}} friend",
     "friends_other": "{{count}} friends",
-    "friendsInCommon_one": "{{count}} friend · {{common}} in common with you",
-    "friendsInCommon_other": "{{count}} friends · {{common}} in common with you",
+    "friendsInCommon_one": "{{count}} friend, {{common}} in common with you",
+    "friendsInCommon_other": "{{count}} friends, {{common}} in common with you",
     "action": {
       "friends": "Friends",
       "requested": "Requested",
@@ -938,7 +937,6 @@
       "reel": "Reel"
     },
     "roles": {
-      "titleCount": "Open opportunities · {{count}}",
       "title": "Open opportunities",
       "post": "+ Post an opportunity",
       "seeAll": "See all",
@@ -955,8 +953,7 @@
       "emptyCoach": "No references yet. Clubs, players and coaches who are friends on Hockia can write one.",
       "emptyPlayer": "No references yet. Coaches and teammates who are friends on Hockia can write one.",
       "memberFallback": "Hockia member",
-      "verified": "✓ Verified on Hockia",
-      "verifiedOn": "✓ Verified on Hockia · {{date}}"
+      "verified": "✓ Verified on Hockia"
     },
     "career": {
       "title": "Career",
@@ -983,7 +980,7 @@
     "versus": "vs {{team}}",
     "fullMatch": "Full match",
     "memberFallback": "Hockia member",
-    "verifiedReference": "Verified · written on Hockia",
+    "verifiedReference": "Verified, written on Hockia",
     "representativeTeam": "representative team",
     "videos": {
       "title": "Videos",
@@ -1037,7 +1034,7 @@
     }
   },
   "publicPlayerProfile": {
-    "documentTitle": "{{name}} • {{role}}",
+    "documentTitle": "{{name}}, {{role}}",
     "errors": {
       "invalidUrl": "Invalid profile URL",
       "notFound": "Profile not found.",
@@ -1072,7 +1069,7 @@
   },
   "verifiedBadge": {
     "tooltip": "Verified by Hockia",
-    "tooltipWithDate": "Verified by Hockia · {{date}}",
+    "tooltipWithDate": "Verified by Hockia, {{date}}",
     "ariaLabel": "Verified profile"
   },
   "pendingVerificationBadge": {
@@ -1091,8 +1088,8 @@
     "chartLabel": "Daily appearances over the last {{windowDays}} days"
   },
   "publicViewBanner": {
-    "clubView": "<strong>Club view</strong> · how clubs see you",
-    "publicView": "<strong>Public view</strong> · how other members see you",
+    "clubView": "<strong>Club view</strong>: how clubs see you",
+    "publicView": "<strong>Public view</strong>: how other members see you",
     "done": "Done",
     "title": "You are viewing your network profile.",
     "body": "This is how other Hockia members see you.",
@@ -1223,7 +1220,7 @@
     "notGiven": "Not given",
     "notSet": "Not set",
     "selfReported": "self-reported",
-    "leagueSelfReported": "{{league}} · self-reported",
+    "leagueSelfReported": "{{league}}, self-reported",
     "leagueNotSet": "League not set",
     "leagueNotGiven": "League not given",
     "position": "Position",
@@ -1252,7 +1249,7 @@
     "highlights_other": "{{count}} highlights",
     "coachFallback": "Coach",
     "anyCategory": "Any category",
-    "currentRole": "{{role}} · current role",
+    "currentRole": "{{role}}, current role",
     "openToCoach": "Open to coach"
   },
   "keyFactsGrid": {
@@ -1272,8 +1269,8 @@
     "pastClubs": "Past clubs",
     "listed_one": "{{count}} listed",
     "listed_other": "{{count}} listed",
-    "more_one": " · +{{count}} more",
-    "more_other": " · +{{count}} more",
+    "more_one": "+{{count}} more",
+    "more_other": "+{{count}} more",
     "selections": "Selections",
     "references": "References",
     "accepted_one": "1 accepted",

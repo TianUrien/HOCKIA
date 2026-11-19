@@ -113,10 +113,10 @@ function formatDate(value: string | null): string | null {
   return dayFirst(value, { year: 'always' })
 }
 
-function formatDateRange(start: string | null, end: string | null): string | null {
+function formatDateRange(start: string | null, end: string | null, t: ProfileEditT): string | null {
   const s = formatDate(start)
   const e = formatDate(end)
-  if (s && e && start !== end) return `${s} · ${e}`
+  if (s && e && start !== end) return t('umpireSection.dateRange', { start: s, end: e })
   if (s) return s
   if (e) return e
   return null
@@ -183,9 +183,10 @@ export default function UmpireAppointmentsSection({
         <h2 className="text-2xl font-bold text-gray-900 inline-flex items-center gap-2">
           <Award className="w-6 h-6 text-ink-2" />
           {t('umpireSection.title')}
+          {appointments.length > 0 && ' '}
           {appointments.length > 0 && (
             <span className="text-base font-normal text-gray-400">
-              · {appointments.length}
+              {appointments.length}
             </span>
           )}
         </h2>
@@ -250,7 +251,7 @@ export default function UmpireAppointmentsSection({
             const visual = visualFor(entryTypeVisuals, a.entry_type)
             const { Icon } = visual
             const isAppointment = a.entry_type === 'appointment' || !a.entry_type
-            const dateRange = formatDateRange(a.start_date, a.end_date)
+            const dateRange = formatDateRange(a.start_date, a.end_date, t)
             const location = formatLocation(a.location_city, a.location_country)
             const formatLabel =
               isAppointment && a.match_format ? matchFormatLabels[a.match_format] : null

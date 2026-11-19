@@ -47,7 +47,7 @@
       "titlePlayer": "Complete Player Profile",
       "titleUmpire": "Complete Umpire Profile",
       "titleClub": "Complete Club Profile",
-      "wizardStep": "Step {{current}} of 3 · {{label}}",
+      "wizardStep": "Step {{current}} of 3: {{label}}",
       "intro": "Fill in your details below",
       "stepsLabel": "Profile completion steps",
       "back": "Back",

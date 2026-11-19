@@ -327,7 +327,7 @@ describe('9 · the flag beside the entry comes from its own country before the l
       worldClub: { id: 'w1', club_name: 'E2E Test FC', avatar_url: null, flag: '🇦🇺' }, signedViaHockia: true,
     }
     render(<CareerRow entry={entry} last flag={null} locationFlag={flagForCountryName(countries, entry.locationCountry)} />)
-    expect(screen.getByText('🏴 Manchester · From Nov 2099')).toBeTruthy()
+    expect(screen.getByText('From Nov 2099').parentElement?.textContent).toBe('🏴 Manchester From Nov 2099')
     expect(screen.queryByText('Now')).toBeNull()
     expect(screen.getByText('Signed through Hockia')).toBeTruthy()
   })

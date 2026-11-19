@@ -85,9 +85,9 @@ describe('screens built on the helpers', () => {
   const list = ['DE', 'ES', 'PE', 'AR', 'NL'].map(country)
 
   it('writes the nationality line with Spanish names', async () => {
-    expect(nationalityLine([country('AR'), country('NL')], { label: 'demonym' })).toBe('Argentine · Dutch')
+    expect(nationalityLine([country('AR'), country('NL')], { label: 'demonym' })).toBe('Argentine, Dutch')
     await setCountryNamesLanguage('es')
-    expect(nationalityLine([country('AR'), country('NL')], { label: 'demonym' })).toBe('Argentina · Países Bajos')
+    expect(nationalityLine([country('AR'), country('NL')], { label: 'demonym' })).toBe('Argentina, Países Bajos')
     expect(nationalityLine([country('ES')])).toBe('España')
   })
 

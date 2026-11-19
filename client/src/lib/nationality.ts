@@ -43,7 +43,7 @@ export function nationalityFlags(list: NationalityCountry[]): string | null {
 /** "🇦🇷 Argentina · 🇮🇹 Italy" — every nationality, never truncated to the first. */
 export function nationalityNames(list: NationalityCountry[]): string | null {
   if (list.length === 0) return null
-  return list.map((c) => [c.flag, c.name].filter(Boolean).join(' ')).join(' · ')
+  return list.map((c) => [c.flag, c.name].filter(Boolean).join(' ')).join(', ')
 }
 
 /** "Based in Santander, Spain": the place as text, no flag. Null when unknown. */
@@ -57,5 +57,5 @@ export function basedInLine(place: DisplayPlace | null | undefined): string | nu
 export function ageCityLine(age: number | null | undefined, place: DisplayPlace | null | undefined): string | null {
   const city = place?.city ?? place?.country ?? null
   const parts = [typeof age === 'number' ? String(age) : null, city].filter(Boolean)
-  return parts.length > 0 ? parts.join(' · ') : null
+  return parts.length > 0 ? parts.join(', ') : null
 }

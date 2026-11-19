@@ -137,9 +137,9 @@ export default function HeroIdentityCard({
     : null
   const coachingCategoriesLabel = isCoach ? categoriesToDisplay(profile.coaching_categories ?? null) : null
   const detail = isCoach
-    ? [specializationLabel, coachingCategoriesLabel].filter(Boolean).join(' · ')
-    : [positions.join(', '), profile.playing_category ? categoryToDisplay(profile.playing_category) : null].filter(Boolean).join(' · ')
-  const roleLine = detail ? `${roleLabel(role)} · ${detail}` : roleLabel(role)
+    ? [specializationLabel, coachingCategoriesLabel].filter(Boolean).join(', ')
+    : [positions.join(', '), profile.playing_category ? categoryToDisplay(profile.playing_category) : null].filter(Boolean).join(', ')
+  const roleLine = detail ? `${roleLabel(role)}, ${detail}` : roleLabel(role)
 
   const isAvailable = isCoach ? profile.open_to_coach === true : profile.open_to_play === true
   const availabilityLabel = isCoach ? t('hero.openToCoach') : t('hero.openToPlay')

@@ -144,12 +144,12 @@ export default function ClubLeagueScreen({ profile, parent: parentLabel, onBack,
 
   const crest = club?.crestUrl ?? profile.avatar_url ?? null
   const crestSrc = crest ? getImageUrl(crest, 'avatar-sm') ?? crest : null
-  const linkedLine = club ? [[club.country?.flag, countryLabel(club.country?.name)].filter(Boolean).join(' ') || null, club.claimedAt ? t('leagueClub.linkedOn', { date: monthDay(club.claimedAt) }) : null].filter(Boolean).join(' · ') : null
+  const linkedLine = club ? [[club.country?.flag, countryLabel(club.country?.name)].filter(Boolean).join(' ') || null, club.claimedAt ? t('leagueClub.linkedOn', { date: monthDay(club.claimedAt) }) : null].filter(Boolean).join(', ') : null
 
   const storedName = (side: Side) => (side === 'men' ? profile.mens_league_division : profile.womens_league_division)?.trim() || null
   // Same-named leagues carry their province on the row too ("Premier League · Victoria").
   const rowLabel = (side: Side, league: League | null) => {
-    if (league) return league.province && leagues.filter((l) => l.name === league.name).length > 1 ? `${league.name} · ${league.province}` : league.name
+    if (league) return league.province && leagues.filter((l) => l.name === league.name).length > 1 ? `${league.name}, ${league.province}` : league.name
     return ((side === 'men' ? menId : womenId) !== null ? storedName(side) : null) ?? t('leagueClub.notSet')
   }
   const leagueRow = (side: Side, label: string, league: League | null, last: boolean) => (
@@ -241,7 +241,7 @@ export default function ClubLeagueScreen({ profile, parent: parentLabel, onBack,
                 <button key={opt.id ?? 'none'} type="button" role="radio" aria-checked={selected} onClick={() => void choose(picker ?? 'men', opt.id)} className="flex min-h-[50px] w-full items-center gap-3 px-4 py-3 text-left">
                   <span className={cn('min-w-0 flex-1 text-body', opt.id === null ? 'text-ink-2' : 'text-ink-1')}>
                     {opt.name}
-                    {repeated && opt.province && <span className="text-ink-3"> · {opt.province}</span>}
+                    {repeated && opt.province && <span className="text-ink-3">, {opt.province}</span>}
                   </span>
                   {opt.tier !== null && <span className="shrink-0 text-caption text-ink-3">{t('leagueClub.tier', { tier: opt.tier })}</span>}
                   {selected && <Check className="h-5 w-5 shrink-0 text-hockia-primary" strokeWidth={2.5} />}

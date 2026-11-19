@@ -87,8 +87,8 @@ describe('club Your week', () => {
 // ── Inbox (DEV NOTE 355:914) ──────────────────────────────────────────────
 describe('club Inbox', () => {
   it('role line is "Player · position", plus "Applied"', () => {
-    expect(clubInboxRoleLine('player', 'Forward', true)).toBe('Player · Forward · Applied')
-    expect(clubInboxRoleLine('player', 'Forward', false)).toBe('Player · Forward')
+    expect(clubInboxRoleLine('player', 'Forward', true)).toBe('Player, Forward · Applied')
+    expect(clubInboxRoleLine('player', 'Forward', false)).toBe('Player, Forward')
     expect(clubInboxRoleLine('coach', null, false)).toBe('Coach')
   })
   it('the amber notice counts conversations the club never wrote in, and hides at 0', () => {
@@ -185,7 +185,7 @@ describe('Settings — club', () => {
     render(withClient(<SettingsMobile section="hub" />))
     expect(screen.getByText('Kilkenny Hockey Club')).toBeInTheDocument()
     expect(screen.getByText('Signed in with email')).toBeInTheDocument()
-    expect(screen.getByText('Club · admin')).toBeInTheDocument()
+    expect(screen.getByText('Club admin')).toBeInTheDocument()
     expect(screen.getByText('Linked · Leinster Division 1A')).toBeInTheDocument()
     expect(screen.getByText('Contact email')).toBeInTheDocument()
     expect(screen.getByText('Private · players message you on Hockia')).toBeInTheDocument()

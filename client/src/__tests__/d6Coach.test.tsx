@@ -397,7 +397,7 @@ describe('Coach key facts (D6.1)', () => {
     }, { viewer: 'recruiter', today: NOW })
     expect(facts.map((f) => f.label)).toEqual(['Specialization', 'Coaches at', 'Available', 'Passport', 'Categories', 'Age'])
     expect(byId(facts, 'specialization').value).toBe('Drag-flick coach')
-    expect(byId(facts, 'coaches_at')).toMatchObject({ value: 'Club Atlético Pacífico', detail: 'Head coach · current role' })
+    expect(byId(facts, 'coaches_at')).toMatchObject({ value: 'Club Atlético Pacífico', detail: 'Head coach, current role' })
     expect(byId(facts, 'available')).toMatchObject({ value: 'From 4 Jan 2027', detail: 'Open to relocating' })
     expect(byId(facts, 'passport')).toMatchObject({ value: '🇦🇷 Argentina', detail: 'No EU passport' })
     expect(byId(facts, 'categories').value).toBe('Any category')
@@ -409,7 +409,7 @@ describe('Coach key facts (D6.1)', () => {
       specialization: 'head_coach', categories: ['adult_women'], currentRole: null, currentClubName: null, openToCoach: false,
       availableFrom: null, passports: [{ name: 'Argentina', isEu: false }, { name: 'Italy', isEu: true }], age: 40,
     }, { viewer: 'public', today: NOW })
-    expect(byId(facts, 'passport')).toMatchObject({ value: 'Argentina · Italy', detail: 'EU passport' })
+    expect(byId(facts, 'passport')).toMatchObject({ value: 'Argentina, Italy', detail: 'EU passport' })
   })
 
   it('empty facts read "Not given" and are never hidden', () => {

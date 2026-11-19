@@ -38,8 +38,8 @@ describe('CareerEntryItem', () => {
   it('shows the team, "role · league" and "flag place · from – to"', () => {
     renderItem({ locationFlag: '🏴' })
     expect(screen.getByText('Holcombe Hockey Club')).toBeTruthy()
-    expect(screen.getByText('Defender & coach · Division One South')).toBeTruthy()
-    expect(screen.getByText('🏴 Rochester · Jul – Dec 2025')).toBeTruthy()
+    expect(screen.getByText('Defender & coach, Division One South')).toBeTruthy()
+    expect(screen.getByText('Jul – Dec 2025').parentElement?.textContent).toBe('🏴 Rochester Jul – Dec 2025')
   })
 
   it('draws the timeline line down to the next entry, not on the last', () => {
@@ -78,7 +78,7 @@ describe('CareerEntryItem', () => {
   it('a national team without a crest uses the same placeholder', () => {
     renderItem({ entry: entry({ crestUrl: null, entryType: 'national_team', clubName: 'Buenos Aires Selection 2024', divisionLeague: null, positionRole: 'Defender' }) })
     expect(screen.getByTestId('career-entry-placeholder')).toBeTruthy()
-    expect(screen.getByText('Defender · representative team')).toBeTruthy()
+    expect(screen.getByText('Defender, representative team')).toBeTruthy()
   })
 
   it('Own mode: a chevron and the row opens the entry', () => {

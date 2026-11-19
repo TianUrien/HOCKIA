@@ -79,8 +79,8 @@ function monthYear(date: string | null): string | null {
 
 function AppointmentRow({ a, flag }: { a: UmpireAppointment; flag: string | null }) {
   const where = [flag, a.location_city?.trim() || countryLabel(a.location_country?.trim()) || null].filter(Boolean).join(' ')
-  const sub = [a.organizer?.trim() || null, where || null].filter(Boolean).join(' · ')
-  const tags = [a.match_level ? humanizeToken(a.match_level) : null, a.match_format ? humanizeToken(a.match_format) : null].filter(Boolean).join(' · ')
+  const sub = [a.organizer?.trim() || null, where || null].filter(Boolean).join(', ')
+  const tags = [a.match_level ? humanizeToken(a.match_level) : null, a.match_format ? humanizeToken(a.match_format) : null].filter(Boolean).join(', ')
   return (
     <div className="flex items-start gap-3 py-2.5" data-testid="appointment-row">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold-soft text-[#b45309]"><Trophy className="h-5 w-5" strokeWidth={1.8} /></span>
@@ -124,7 +124,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
   const level = profile.umpire_level?.trim() || null
   const spec = specializationLabel(profile.officiating_specialization, t)
   // Same lead as the Community card and preview ("Umpire · Regional"), then the format.
-  const roleLine = [tEnum('role.umpire'), level, spec].filter(Boolean).join(' · ')
+  const roleLine = [tEnum('role.umpire'), level, spec].filter(Boolean).join(', ')
   const place = useMemo(() => basedInLine(displayPlace(profile.base_location ?? null, (profile as { base_country_id?: number | null }).base_country_id ?? null, countries)), [profile, countries])
   const nationalities = useMemo(() => nationalityCountries([profile.nationality_country_id, profile.nationality2_country_id], countries), [profile.nationality_country_id, profile.nationality2_country_id, countries])
   const photos = useMemo(() => {
@@ -294,7 +294,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
 
       {/* Matches officiated (the record; never "appointments", founder 2026-10-03) */}
       {(owner || apptCount > 0) && (
-        <Section id="appointments" title={apptCount > 0 ? t('umpireProfileV2.matches.titleCount', { count: apptCount }) : t('umpireProfileV2.matches.title')} action={owner ? t('umpireProfileV2.matches.add') : apptCount > 3 ? t('umpireProfileV2.matches.seeAll') : null} onAction={() => props.onOpenSection('officiating')}>
+        <Section id="appointments" title={t('umpireProfileV2.matches.title')} count={apptCount > 0 ? apptCount : null} action={owner ? t('umpireProfileV2.matches.add') : apptCount > 3 ? t('umpireProfileV2.matches.seeAll') : null} onAction={() => props.onOpenSection('officiating')}>
           <div className="flex flex-col px-4">
             {appts.appointments.slice(0, 3).map((a) => <AppointmentRow key={a.id} a={a} flag={flagForCountryName(countries, a.location_country)} />)}
             {apptCount === 0 && !appts.loading && <p className="text-body text-ink-3">{t('umpireProfileV2.matches.empty')}</p>}
@@ -309,7 +309,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
         <div className="flex flex-col gap-3 px-4">
           {acceptedReferences.slice(0, 1).map((r) => {
             const p = r.profile
-            const who = [p?.fullName?.trim() || t('umpireProfileV2.references.memberFallback'), humanizeToken(r.relationshipType)].filter(Boolean).join(' · ')
+            const who = [p?.fullName?.trim() || t('umpireProfileV2.references.memberFallback'), humanizeToken(r.relationshipType)].filter(Boolean).join(', ')
             return (
               <button key={r.id} type="button" onClick={() => props.onOpenSection('references')} className="w-full text-left" data-testid="profile-reference">
                 <SquircleBox className="flex flex-col gap-3 bg-gold-soft px-[18px] py-4 shadow-[inset_0_0_0_0.5px_rgba(15,15,20,0.06)]">
@@ -318,7 +318,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
                     <EntityAvatar src={p?.avatarUrl ?? null} name={p?.fullName ?? null} role={p?.role} size={32} />
                     <span className="min-w-0">
                       <span className="block truncate text-[14px] font-semibold leading-[19px] text-ink-1">{who}</span>
-                      <span className="block truncate text-caption text-ink-2">{r.acceptedAt ? t('umpireProfileV2.references.verifiedOn', { date: dayFirst(r.acceptedAt, { year: 'always' }) }) : t('umpireProfileV2.references.verified')}</span>
+                      <span className="block truncate text-caption text-ink-2">{t('umpireProfileV2.references.verified')}{r.acceptedAt && <>{' '}<span className="ml-1 text-ink-3">{dayFirst(r.acceptedAt, { year: 'always' })}</span></>}</span>
                     </span>
                   </span>
                 </SquircleBox>
@@ -352,7 +352,7 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
             {languages.length > 0 && (
               <div className="mt-2 flex items-center justify-between gap-3 border-b border-line py-3">
                 <span className="text-[14px] text-ink-2">{t('umpireProfileV2.about.languages')}</span>
-                <span className="min-w-0 truncate text-right text-[14px] font-semibold text-ink-1">{languages.join(' · ')}</span>
+                <span className="min-w-0 truncate text-right text-[14px] font-semibold text-ink-1">{languages.join(', ')}</span>
               </div>
             )}
           </div>
