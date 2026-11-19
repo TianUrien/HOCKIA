@@ -64,7 +64,7 @@ function summarizeChanges(
       if (parts.length >= 3) break
     }
   }
-  return parts.length ? parts.join(' · ') : null
+  return parts.length ? parts.join(', ') : null
 }
 
 const ACTION_LABELS: Record<string, string> = {
@@ -245,7 +245,7 @@ export function AdminAuditLog() {
                         <span className="font-medium text-gray-900">
                           {ACTION_LABELS[log.action] || log.action}
                         </span>
-                        <span className="text-gray-400">•</span>
+                        {' '}
                         <span className="text-sm text-gray-500">
                           {log.target_name
                             ? `${log.target_name}${log.target_email ? ` (${log.target_email})` : ''}`
@@ -253,8 +253,8 @@ export function AdminAuditLog() {
                         </span>
                       </div>
                       <div className="text-sm text-gray-500 mt-1">
-                        by {log.admin_name || log.admin_email || 'Unknown admin'} •{' '}
-                        {formatAdminDateTime(log.created_at)}
+                        by {log.admin_name || log.admin_email || 'Unknown admin'}{' '}
+                        <span className="text-gray-400">{formatAdminDateTime(log.created_at)}</span>
                       </div>
                       {changeSummary && (
                         <div className="text-xs text-gray-600 mt-1 font-mono truncate">

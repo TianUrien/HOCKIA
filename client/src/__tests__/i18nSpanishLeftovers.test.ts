@@ -30,9 +30,9 @@ const spanish = async () => {
 describe('Hockia AI in Spanish', () => {
   it('shows the country of a result in Spanish and leaves English alone', async () => {
     const role = { league_label: null, location_label: 'Berlin, Germany', benefit_labels: ['Housing'] }
-    expect(roleResultMeta(role)).toBe('Berlin, Germany · Housing')
+    expect(roleResultMeta(role)).toBe('Berlin, Germany. Housing')
     await spanish()
-    expect(roleResultMeta(role)).toBe('Berlin, Alemania · Housing')
+    expect(roleResultMeta(role)).toBe('Berlin, Alemania. Housing')
     expect(roleResultMeta({ league_label: 'Bundesliga', location_label: 'Berlin, Germany', benefit_labels: [] })).toBe('Bundesliga')
   })
 

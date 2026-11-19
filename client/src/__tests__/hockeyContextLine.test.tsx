@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import HockeyContextLine from '@/components/recruiting/HockeyContextLine'
 
 describe('HockeyContextLine', () => {
@@ -75,12 +75,11 @@ describe('HockeyContextLine', () => {
     expect(fallback.className).toMatch(/text-gray-400/)
   })
 
-  it('preserves middle-dot separators between segments', () => {
+  it('joins the segments with a comma, never a middle dot', () => {
     const { container } = render(
       <HockeyContextLine clubName="CASI" competitionName="Metro A" position="Forward" />,
     )
-    // Each separator is a span containing the · glyph
-    const separators = within(container).getAllByText('·')
-    expect(separators).toHaveLength(2)
+    expect(container.textContent).toBe('CASI, Metro A, Forward')
+    expect(container.textContent).not.toMatch(/[·•]/)
   })
 })

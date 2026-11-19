@@ -83,7 +83,7 @@ export function CrestPaletteBackfill() {
               <img src={getImageUrl(d.crest_url, 'avatar-sm') ?? d.crest_url} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
               <span className="min-w-0">
                 <span className="block truncate text-sm text-gray-900">{d.name}</span>
-                <span className="block text-xs text-gray-500">{d.kind === 'profile' ? 'Club profile' : 'Directory club'} · {d.color ?? 'no usable crest'}</span>
+                <span className="block text-xs text-gray-500">{d.kind === 'profile' ? 'Club profile' : 'Directory club'}, {d.color ?? 'no usable crest'}</span>
               </span>
             </li>
           ))}

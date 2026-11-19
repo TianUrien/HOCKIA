@@ -70,7 +70,7 @@ describe('Card / Reference', () => {
     const card = screen.getByTestId('reference-card')
     expect(card.className).toContain('border-gold-line')
     expect(screen.getByTestId('reference-quote').className).toContain('line-clamp-4')
-    expect(screen.getByText(/Verified · written on Hockia/).className).toContain('text-gold')
+    expect(screen.getByText(/Verified, written on Hockia/).className).toContain('text-gold')
     expect(screen.getByText('12 Mar 2026')).toBeInTheDocument()
   })
 })

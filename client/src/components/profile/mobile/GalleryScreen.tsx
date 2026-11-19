@@ -30,7 +30,7 @@ export default function GalleryScreen({ profile, mode, onBack }: GalleryScreenPr
   const count = photos.length
   // Owner: "Photos · 2". Visitor: "Mariano's photos" with the count below —
   // never the raw account name in a title.
-  const title = own ? (loading ? t('galleryScreen.title') : t('galleryScreen.titleCount', { total: count })) : firstName ? t('galleryScreen.titleNamed', { firstName }) : t('galleryScreen.title')
+  const title = own ? (loading ? t('galleryScreen.title') : t('galleryScreen.titleCount', { count, total: count })) : firstName ? t('galleryScreen.titleNamed', { firstName }) : t('galleryScreen.title')
   const avatar = profile.avatar_url ? getImageUrl(profile.avatar_url, 'avatar-md') ?? profile.avatar_url : null
 
   return (

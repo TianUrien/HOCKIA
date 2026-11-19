@@ -108,7 +108,7 @@ export default function BrandAmbassadorsPage() {
                     </span>
                     <span className="block p-3 pb-2">
                       <span className="block truncate text-row font-semibold text-ink-1">{c.full_name ?? tEnums('role.player')}</span>
-                      <span className="block truncate text-secondary text-ink-2">{[positionLabel(c.player_position), humanizeToken(c.playing_category)].filter(Boolean).join(' · ') || tEnums('role.player')}</span>
+                      <span className="block truncate text-secondary text-ink-2">{[positionLabel(c.player_position), humanizeToken(c.playing_category)].filter(Boolean).join(', ') || tEnums('role.player')}</span>
                       <span className="block truncate text-secondary text-ink-2">{[c.base_city, c.base_country_id != null ? names([c.base_country_id])[0] : null].filter(Boolean).join(', ')}</span>
                       {c.instagram_handle ? (
                         <span className="mt-1 flex items-center gap-1 truncate text-secondary text-ink-1"><Instagram className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />@{c.instagram_handle}</span>
@@ -145,7 +145,7 @@ export default function BrandAmbassadorsPage() {
                     <Avatar src={a.avatar_url} alt={a.full_name ?? ''} role="player" size="md" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-row font-semibold text-ink-1">{a.full_name ?? tEnums('role.player')}</p>
-                      <p className="truncate text-secondary text-ink-2">{[positionLabel(a.position), a.current_club].filter(Boolean).join(' · ')}</p>
+                      <p className="truncate text-secondary text-ink-2">{[positionLabel(a.position), a.current_club].filter(Boolean).join(', ')}</p>
                     </div>
                   </li>
                 ))}

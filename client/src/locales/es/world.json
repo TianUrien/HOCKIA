@@ -7,10 +7,10 @@
       "add": "Agregar fotos"
     },
     "league": {
-      "menAndWomen": "{{league}} · caballeros y damas",
-      "menThenWomen": "{{men}} · caballeros, {{women}} · damas",
-      "men": "{{league}} · caballeros",
-      "women": "{{league}} · damas",
+      "menAndWomen": "{{league}}, caballeros y damas",
+      "menThenWomen": "{{men}} en caballeros, {{women}} en damas",
+      "men": "{{league}}, caballeros",
+      "women": "{{league}}, damas",
       "bandNote": "Hockia todavía no tiene un nivel para {{list}}. Hasta entonces, el encaje no puede comparar niveles en tus oportunidades."
     },
     "openRole": {
@@ -113,11 +113,11 @@
       "memberCount_many": "{{count}} integrantes",
       "previewLabel": "Alguien en Hockia",
       "previewDetail": "Lo que ven jugadores/as y entrenadores/as",
-      "viewsLine_one": "visita al perfil esta semana · <lock/> solo lo ves tú",
-      "viewsLine_other": "visitas al perfil esta semana · <lock/> solo lo ves tú",
-      "viewsLine_many": "visitas al perfil esta semana · <lock/> solo lo ves tú",
+      "viewsLine_one": "visita al perfil esta semana <lock/> solo lo ves tú",
+      "viewsLine_other": "visitas al perfil esta semana <lock/> solo lo ves tú",
+      "viewsLine_many": "visitas al perfil esta semana <lock/> solo lo ves tú",
       "seeWho": "Ver quiénes",
-      "openRolesWithCount": "Oportunidades abiertas · {{count}}",
+      "openRolesWithCount": "Oportunidades abiertas ({{count}})",
       "openRoles": "Oportunidades abiertas",
       "postRole": "+ Publicar una oportunidad",
       "seeAllRoles": "Ver todas",
@@ -125,7 +125,7 @@
       "seeAllRolesCount_other": "Ver las {{count}} oportunidades",
       "seeAllRolesCount_many": "Ver las {{count}} oportunidades",
       "noOpenRoles": "No hay oportunidades abiertas por ahora.",
-      "squadWithCount": "Plantel · {{count}}",
+      "squadWithCount": "Plantel ({{count}})",
       "squad": "Plantel",
       "manage": "Gestionar",
       "seeAllSquad": "Ver todo",
@@ -171,7 +171,7 @@
       "removeConfirm": "Quitar",
       "pendingTitle": "Invitaciones pendientes",
       "pending": "Invitación pendiente",
-      "pendingViaLink": "Invitación pendiente · por enlace",
+      "pendingViaLink": "Invitación pendiente, por enlace",
       "cancelInvite": "Cancelar",
       "tryAgain": "Reintentar",
       "emptyTitle": "Todavía no hay integrantes",
@@ -270,7 +270,7 @@
     "leagueCount_one": "{{count}} liga",
     "leagueCount_other": "{{count}} ligas",
     "leagueCount_many": "{{count}} ligas",
-    "countsLine": "{{clubs}} · {{leagues}}"
+    "countsLine": "{{clubs}}, {{leagues}}"
   },
   "worldSearch": {
     "placeholder": "Buscar países o clubes...",

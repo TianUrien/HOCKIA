@@ -48,7 +48,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
   const youth = vacancy.gender === 'Girls' || vacancy.gender === 'Boys'
   const headline = roleHeadline(vacancy)
   const city = vacancy.location_city?.trim() || countryLabel(vacancy.location_country?.trim()) || ''
-  const subline = [clubName, countryFlag && city ? `${countryFlag} ${city}` : city, league].filter(Boolean).join(' · ')
+  const subline = [clubName, countryFlag && city ? `${countryFlag} ${city}` : city, league].filter(Boolean).join(', ')
   const packageChips = [...(isPaid(vacancy) ? [t('list.paidChip')] : []), ...roleBenefits(vacancy).map((b) => b.label), ...(vacancy.custom_benefits ?? [])]
   const shown = packageChips.slice(0, MAX_PACKAGE_CHIPS)
   const more = packageChips.length - shown.length
@@ -81,7 +81,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
           <span className="mt-3 inline-flex max-w-full items-center gap-1 rounded-full bg-surface-subtle py-[5px] pl-1.5 pr-3 text-secondary text-ink-2" data-testid="role-posted-by">
             <EntityAvatar src={postedBy.avatar ? getImageUrl(postedBy.avatar, 'avatar-sm') ?? postedBy.avatar : null} name={postedBy.name} role="coach" size={22} />
             <Trans t={t} i18nKey="list.postedByCapsule" values={{ name: postedBy.name }} components={{ label: <span />, name: <span className="truncate font-semibold text-ink-1" /> }} />
-            {postedBy.roleLabel && <span className="truncate">· {postedBy.roleLabel}</span>}
+            {postedBy.roleLabel && <>{' '}<span className="ml-1 truncate">{postedBy.roleLabel}</span></>}
           </span>
         )}
 

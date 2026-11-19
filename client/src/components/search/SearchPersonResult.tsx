@@ -19,7 +19,7 @@ export function SearchPersonResult({ result }: SearchPersonResultProps) {
 
   const subtitle = [result.position, placeText(result.base_location), result.current_club]
     .filter(Boolean)
-    .join(' · ')
+    .join(', ')
 
   // Truncate bio
   const bioPreview = result.bio && result.bio.length > 120

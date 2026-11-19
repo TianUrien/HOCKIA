@@ -230,7 +230,7 @@ function positionFact(input: PlayerKeyFactsInput, viewer: KeyFactsViewer): KeyFa
   const parts = [clean(input.position), clean(input.secondaryPosition)].filter((p): p is string => p !== null)
   const unique = parts.filter((p, i) => parts.findIndex((q) => q.toLowerCase() === p.toLowerCase()) === i)
   if (unique.length === 0) return missingFact('position', tProfile('keyFacts.position'), viewer, 'add_position')
-  return fact('position', tProfile('keyFacts.position'), { value: unique.join(' · ') })
+  return fact('position', tProfile('keyFacts.position'), { value: unique.join(', ') })
 }
 
 function playsAtFact(input: PlayerKeyFactsInput, viewer: KeyFactsViewer): KeyFact<PlayerKeyFactId> {
@@ -321,7 +321,7 @@ function passportFact<Id extends string>(
         withFlag(permit.countryName, permit.flag),
         workPermitTypeLabel(permit.type),
         when,
-      ].filter(Boolean).join(' · ')
+      ].filter(Boolean).join(', ')
       extraLines.push(isOwner ? { text, status } : { text })
     }
   }
@@ -333,7 +333,7 @@ function passportFact<Id extends string>(
 
   const anyEu = list.some((p) => p.isEu)
   return fact(id, tProfile('keyFacts.passport'), {
-    value: list.map((p) => withFlag(p.name.trim(), p.flag)).join(' · '),
+    value: list.map((p) => withFlag(p.name.trim(), p.flag)).join(', '),
     valueLines: list.map((p) => withFlag(p.name.trim(), p.flag)),
     euTag: anyEu,
     detail: anyEu ? tProfile('keyFacts.euPassport') : tProfile('keyFacts.noEuPassport'),
@@ -373,7 +373,7 @@ export function buildPlayerKeyFacts(input: PlayerKeyFactsInput, options: KeyFact
     hl > 0 ? tProfile('keyFacts.highlights', { count: hl }) : null,
   ].filter((p): p is string => p !== null)
   const video: KeyFact<PlayerKeyFactId> = videoParts.length > 0
-    ? fact('video', tProfile('keyFacts.video'), { value: videoParts.join(' · ') })
+    ? fact('video', tProfile('keyFacts.video'), { value: videoParts.join(', ') })
     : missingFact('video', tProfile('keyFacts.video'), viewer, 'add_video')
 
   return [

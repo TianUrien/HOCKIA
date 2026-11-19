@@ -243,7 +243,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
               results.map((player) => {
                 const subtitle = [player.position, player.current_club, placeText(player.base_location)]
                   .filter(Boolean)
-                  .join(' \u00B7 ')
+                  .join(', ')
                 const isAdding = addingId === player.id
 
                 return (

@@ -33,7 +33,7 @@
     "passportsOnly": "Only opportunities my passports qualify for",
     "show_one": "Show {{count}} opportunity",
     "show_other": "Show {{count}} opportunities",
-    "passportHint": "{{nationality}} · {{eligible}} of {{total}} open opportunities"
+    "passportHint": "{{nationality}}: {{eligible}} of {{total}} open opportunities"
   },
   "roleLifecycle": {
     "closed": "Opportunity closed.",
@@ -102,9 +102,9 @@
     "notePlaceholderNamedOptional": "Add a note to {{name}} (optional)",
     "notePlaceholderClubOptional": "Add a note to the club (optional)",
     "maxCharacters": "Max 500 characters",
-    "optionalMaxCharacters": "Optional · max 500 characters",
+    "optionalMaxCharacters": "Optional, max 500 characters",
     "cancel": "Cancel",
-    "clubWillSee": "The club will see · tap a detail to edit",
+    "clubWillSee": "What the club will see. Tap a detail to edit",
     "highlightIncludedTitle": "Your highlight video is included",
     "highlightIncludedAria": "Highlight video included",
     "rows": {
@@ -145,7 +145,7 @@
     "reviewsClub": "The club reviews it and replies here",
     "onBehalf": "{{name}} posted this opportunity on behalf of {{club}}. Messages go to the coach.",
     "postedBy": "Posted by {{name}}",
-    "clubPostedBy": "{{club}} · posted by {{name}}",
+    "clubPostedBy": "{{club}}, posted by {{name}}",
     "coachNamed": "Coach {{name}}",
     "sentNamed": "{{name}} will review your profile. We’ll let you know when they reply. You can follow it in Applied.",
     "sentClub": "The club will review your profile. We’ll let you know when they reply. You can follow it in Applied.",
@@ -212,7 +212,7 @@
     "unknownClub": "Unknown Club",
     "loadFailed": "Could not load opportunities. Please check your connection and try again.",
     "tabTitle": "Field Hockey Jobs & Opportunities – Players & Coaches Worldwide | Hockia",
-    "clubSubtitleNamed": "{{name}} · your opportunities",
+    "clubSubtitleNamed": "{{name}}, your opportunities",
     "clubSubtitle": "Your opportunities",
     "title": "Opportunities",
     "postOpportunity": "Post an opportunity",
@@ -229,7 +229,7 @@
       "openShort": "Open"
     },
     "quickFiltersAria": "Quick filters",
-    "filtersCount": "Filters · {{count}}",
+    "filtersCount": "Filters {{count}}",
     "subtitleUmpire": "See what clubs are looking for across the Hockia network.",
     "subtitle": "Open opportunities from clubs and coaches",
     "subtitleCount_one": "{{count}} open opportunity from clubs and coaches",
@@ -274,7 +274,7 @@
       "answerTitle": "You get an answer",
       "answerDetail": "Shortlisted or not this time"
     },
-    "clubPostedBy": "{{club}} · posted by {{name}}",
+    "clubPostedBy": "{{club}}, posted by {{name}}",
     "whatHappensNext": "What happens next",
     "viewApplications": "View my applications",
     "backToList": "Back to opportunities",
@@ -293,7 +293,7 @@
   },
   "road": {
     "yourApplication": "Your application",
-    "skippedStep": "{{label}} · skipped",
+    "skippedStep": "{{label}}, skipped",
     "withdrawFailed": "Couldn’t withdraw. Please try again.",
     "confirmSigning": "Confirm signing",
     "seeOffer": "See the offer",
@@ -320,7 +320,7 @@
     "noteOriginal": "Translated automatically. Original note:",
     "closedTitle": "This opportunity is closed",
     "closedBody": "It’s no longer taking applications.",
-    "declineNoteTitle": "Not this time · The club’s note",
+    "declineNoteTitle": "Not this time. The club’s note",
     "facts": {
       "team": "Team",
       "coachingOpportunity": "Coaching opportunity",
@@ -332,11 +332,11 @@
     },
     "asks": {
       "position": "Position",
-      "positionRequired": "{{position}} · required",
+      "positionRequired": "{{position}}, required",
       "category": "Category",
       "passport": "Passport",
       "euPassportRequired": "EU passport required",
-      "euPassportMissing": "EU passport required · you don’t hold one",
+      "euPassportMissing": "EU passport required. You don’t hold one",
       "passportAny": "Any",
       "level": "Level",
       "specialist": "Specialist",
@@ -418,7 +418,7 @@
     "playerTag": "Player",
     "coachTag": "Coach",
     "deadlinePassed": "Deadline passed",
-    "dialogAriaTitled": "{{title}} · opportunity details",
+    "dialogAriaTitled": "{{title}}, opportunity details",
     "dialogAria": "Opportunity details",
     "close": "Close",
     "coachBadge": "Coach",
@@ -457,7 +457,7 @@
     "postedOn": "Posted on {{date}}"
   },
   "detailPage": {
-    "documentTitle": "{{title}} • Opportunities",
+    "documentTitle": "Opportunities: {{title}}",
     "documentTitleLoading": "Opportunity",
     "tabTitleLoading": "Field Hockey Opportunity | Hockia",
     "tabTitle": "{{title}} at {{club}} | Hockia",

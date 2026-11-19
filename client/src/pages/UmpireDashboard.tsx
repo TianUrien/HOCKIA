@@ -501,7 +501,7 @@ export default function UmpireDashboard({
                   <span className="inline-flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 text-gray-400" />
                     {dobDisplay}
-                    {age !== null && <span className="text-gray-400">· {t('umpireDashboard.ageShort', { age })}</span>}
+                    {age !== null && <>{' '}<span className="text-gray-400">{t('umpireDashboard.ageShort', { age })}</span></>}
                   </span>
                 )}
               </div>

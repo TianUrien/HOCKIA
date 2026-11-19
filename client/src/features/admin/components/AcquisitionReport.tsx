@@ -130,9 +130,9 @@ export function AcquisitionReport({ days = 90 }: { days?: number }) {
                     </div>
                     <div className="mt-1 text-xs text-gray-600 tabular-nums">
                       {leader.signups} of {total} signups ({Math.round((leader.signups / total) * 100)}%)
-                      {' · '}
+                      {', '}
                       <Delta value={leader.signups - leader.prev_signups} /> vs previous {days}d
-                      {' · '}
+                      {', '}
                       {leader.activated}/{leader.signups} activated
                     </div>
                     <div className="mt-1 text-[11px] text-gray-500">
@@ -182,9 +182,9 @@ export function AcquisitionReport({ days = 90 }: { days?: number }) {
             </div>
           </div>
           <p className="text-[11px] text-gray-500 mt-4">
-            Measured (utm / referrer / deep link): {measured} of {total} ·
-            inferred or backfilled: {total - measured} ·
-            platforms: {Object.entries(report.platforms).map(([k, v]) => `${k} ${v}`).join(', ') || '—'}
+            Measured (utm / referrer / deep link): {measured} of {total}.
+            Inferred or backfilled: {total - measured}.
+            Platforms: {Object.entries(report.platforms).map(([k, v]) => `${k} ${v}`).join(', ') || '—'}
           </p>
         </>
       )}
@@ -198,7 +198,7 @@ function DonutTip({ active, payload, total }: { active?: boolean; payload?: Arra
   return (
     <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-sm">
       <div className="font-medium text-gray-900">{name}</div>
-      <div className="text-gray-600 tabular-nums">{value} signups · {total ? Math.round((value / total) * 100) : 0}%</div>
+      <div className="text-gray-600 tabular-nums">{value} signups, {total ? Math.round((value / total) * 100) : 0}%</div>
     </div>
   )
 }

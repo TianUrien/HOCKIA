@@ -232,7 +232,7 @@
     "signInBody": "Inicia sesión o crea una cuenta gratis en Hockia para ver los perfiles."
   },
   "people": {
-    "deckLabel": "{{list}} · {{sort}}",
+    "deckLabel": "{{list}}, {{sort}}",
     "deckList": {
       "matching": "Perfiles que coinciden",
       "all": "Todos los perfiles",
@@ -268,13 +268,13 @@
       "boys": "Juveniles caballeros"
     },
     "roleLine": {
-      "player": "{{position}} · {{team}}",
-      "coach": "Entrenador/a · {{specialty}}",
-      "umpire": "Árbitro/a · {{level}}",
-      "brand": "Marca · {{category}}"
+      "player": "{{position}}, {{team}}",
+      "coach": "Entrenador/a, {{specialty}}",
+      "umpire": "Árbitro/a, {{level}}",
+      "brand": "Marca, {{category}}"
     },
     "recruiting": "Incorporando",
-    "recruitingFor": "Incorporando · {{positions}}",
+    "recruitingFor": "Incorporando: {{positions}}",
     "availableNow": "Ahora",
     "availableFrom": "Desde {{month}}",
     "availableFromYear": "Desde {{month}} {{year}}",
@@ -307,7 +307,7 @@
   },
   "previewSheet": {
     "fallbackName": "Integrante de Hockia",
-    "label": "{{name}} · vista previa",
+    "label": "{{name}}, vista previa",
     "close": "Cerrar vista previa",
     "openPhoto": "Abrir la foto de {{name}}",
     "rows": {
@@ -363,7 +363,7 @@
   },
   "fullPreview": {
     "fallbackName": "Integrante de Hockia",
-    "passportWithEu": "{{names}} · UE",
+    "passportWithEu": "{{names}}, UE",
     "errors": {
       "messageFailed": "No se pudo abrir la conversación. Intenta de nuevo."
     },
@@ -730,7 +730,7 @@
       "same": "Igual que la semana pasada"
     },
     "recruiters": {
-      "both": "{{clubs}} · {{coaches}}",
+      "both": "{{clubs}}, {{coaches}}",
       "none": "Nadie todavía"
     },
     "newRoles": {
@@ -818,7 +818,7 @@
       "newLabel": "Nueva esta semana",
       "wroteReference": "{{name}} te escribió una referencia",
       "receivedReference": "Recibiste una referencia",
-      "askHint": "Integrantes del plantel pueden escribirte una referencia · <a>Pedir</a>"
+      "askHint": "Integrantes del plantel pueden escribirte una referencia. <a>Pedir</a>"
     },
     "activity": {
       "documentTitle": "Tu actividad",
@@ -833,7 +833,7 @@
       "profileViews_one": "{{count}} visita al perfil",
       "profileViews_many": "{{count}} visitas al perfil",
       "profileViews_other": "{{count}} visitas al perfil",
-      "viewsHint": "Esta semana · con nombre cuando es visible",
+      "viewsHint": "Esta semana. Con nombre cuando es visible",
       "leftReference": "{{name}} te dejó una referencia",
       "receivedReference": "Recibiste una referencia",
       "emptyTitle": "Nada nuevo esta semana",

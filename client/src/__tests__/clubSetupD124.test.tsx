@@ -105,7 +105,7 @@ describe('ClubSetupFlow (D1.24)', () => {
   it('step 1 is About your club: no back button, Continue waits for the 18+ box', () => {
     render(<ClubSetupFlow onFinished={vi.fn()} />)
     expect(screen.getByRole('heading', { name: 'About your club' })).toBeTruthy()
-    expect(screen.getByText('Step 1 of 2 · what players see next to every opportunity.')).toBeTruthy()
+    expect(screen.getByText('Step 1 of 2: what players see next to every opportunity.')).toBeTruthy()
     expect(screen.getAllByRole('button', { name: 'Add your crest' })).toHaveLength(2)
     expect(screen.queryByRole('button', { name: /^Back/ })).toBeNull()
     expect(screen.queryByText(/contact email/i)).toBeNull()
@@ -117,7 +117,7 @@ describe('ClubSetupFlow (D1.24)', () => {
 
   it('Continue saves the basics, calls the attestation, then shows Link your club in onboarding mode', async () => {
     render(<ClubSetupFlow onFinished={vi.fn()} />)
-    fireEvent.change(screen.getByLabelText('Year founded · optional'), { target: { value: '1955' } })
+    fireEvent.change(screen.getByLabelText('Year founded, optional'), { target: { value: '1955' } })
     fireEvent.click(screen.getByRole('checkbox', { name: /18 or over/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
     await screen.findByTestId('link-club-stub')

@@ -48,7 +48,7 @@ describe('buildPlayerKeyFacts — club view (Figma D2.1)', () => {
   })
 
   it('position joins primary and secondary', () => {
-    expect(byId(facts, 'position').value).toBe('Midfielder · Defender')
+    expect(byId(facts, 'position').value).toBe('Midfielder, Defender')
   })
 
   it('plays at shows the club with "League not given" when there is no league', () => {
@@ -72,7 +72,7 @@ describe('buildPlayerKeyFacts — club view (Figma D2.1)', () => {
   })
 
   it('video counts full matches and highlights with plurals', () => {
-    expect(byId(facts, 'video').value).toBe('1 full match · 4 highlights')
+    expect(byId(facts, 'video').value).toBe('1 full match, 4 highlights')
   })
 
   it('age is a plain number', () => {
@@ -118,7 +118,7 @@ describe('buildPlayerKeyFacts — owner view (Figma D2.2)', () => {
       ),
       'passport',
     )
-    expect(f.value).toBe('🇦🇷 Argentina · 🇮🇹 Italy')
+    expect(f.value).toBe('🇦🇷 Argentina, 🇮🇹 Italy')
     expect(f.detail).toBe('EU passport')
     expect(f.action).toBeNull()
   })
@@ -188,7 +188,7 @@ describe('league: club league vs self-reported', () => {
       buildPlayerKeyFacts({ ...leandro, league: { name: 'Torneo Regional NOA B', source: 'self_reported' } }, { viewer: 'recruiter', today: TODAY }),
       'plays_at',
     )
-    expect(f.detail).toBe('Torneo Regional NOA B · self-reported')
+    expect(f.detail).toBe('Torneo Regional NOA B, self-reported')
     expect(f.badge).toBe('self_reported')
     expect(f.action).toBeNull()
   })
@@ -290,9 +290,9 @@ describe('permits on the passport tile', () => {
   it('recruiters see valid permits only (incl. expiring soon), no status', () => {
     const f = byId(buildPlayerKeyFacts(input, { viewer: 'recruiter', today: TODAY }), 'passport')
     expect(f.extraLines).toEqual([
-      { text: '🇬🇧 United Kingdom · Visa · until Mar 2027' },
-      { text: '🇦🇺 Australia · Work permit · until Oct 2026' },
-      { text: '🇨🇦 Canada · Residency' },
+      { text: '🇬🇧 United Kingdom, Visa, until Mar 2027' },
+      { text: '🇦🇺 Australia, Work permit, until Oct 2026' },
+      { text: '🇨🇦 Canada, Residency' },
     ])
   })
 
@@ -305,9 +305,9 @@ describe('permits on the passport tile', () => {
   it('the owner sees every permit with its status (amber for expiring soon / expired)', () => {
     const f = byId(buildPlayerKeyFacts(input, { viewer: 'owner', today: TODAY }), 'passport')
     expect(f.extraLines.map((l) => l.status)).toEqual(['valid', 'expiring_soon', 'expired', 'not_yet_valid', 'valid'])
-    expect(f.extraLines[2].text).toBe('🇮🇪 Ireland · Residency · expired Jan 2026')
-    expect(f.extraLines[3].text).toBe('🇳🇿 New Zealand · Visa · from Jan 2027 until Dec 2027')
-    expect(f.extraLines[4].text).toBe('🇨🇦 Canada · Residency')
+    expect(f.extraLines[2].text).toBe('🇮🇪 Ireland, Residency, expired Jan 2026')
+    expect(f.extraLines[3].text).toBe('🇳🇿 New Zealand, Visa, from Jan 2027 until Dec 2027')
+    expect(f.extraLines[4].text).toBe('🇨🇦 Canada, Residency')
   })
 
   it('a permit with no expiry is valid and shows no date; a future start still hides it from recruiters', () => {
@@ -316,11 +316,11 @@ describe('permits on the passport tile', () => {
       { countryName: 'Japan', flag: '🇯🇵', type: 'work_permit', validFrom: '2027-04-01', expiresOn: null },
     ] }
     const rec = byId(buildPlayerKeyFacts(onlyOpen, { viewer: 'recruiter', today: TODAY }), 'passport')
-    expect(rec.extraLines).toEqual([{ text: '🇬🇧 United Kingdom · Visa' }])
+    expect(rec.extraLines).toEqual([{ text: '🇬🇧 United Kingdom, Visa' }])
     const own = byId(buildPlayerKeyFacts(onlyOpen, { viewer: 'owner', today: TODAY }), 'passport')
     expect(own.extraLines).toEqual([
-      { text: '🇬🇧 United Kingdom · Visa', status: 'valid' },
-      { text: '🇯🇵 Japan · Work permit · from Apr 2027', status: 'not_yet_valid' },
+      { text: '🇬🇧 United Kingdom, Visa', status: 'valid' },
+      { text: '🇯🇵 Japan, Work permit, from Apr 2027', status: 'not_yet_valid' },
     ])
   })
 
@@ -356,7 +356,7 @@ describe('buildCoachKeyFacts', () => {
     expect(byId(facts, 'categories').value).toBe("Women's, Girls")
     expect(byId(facts, 'coaches_at').label).toBe('Coaches at')
     expect(byId(facts, 'coaches_at').value).toBe('Belgrano AC')
-    expect(byId(facts, 'coaches_at').detail).toBe('Head coach · current role')
+    expect(byId(facts, 'coaches_at').detail).toBe('Head coach, current role')
     expect(byId(facts, 'available').value).toBe('Open to coach')
     expect(byId(facts, 'available').detail).toBe('Start date not given')
     expect(byId(facts, 'passport').detail).toBe('EU passport')

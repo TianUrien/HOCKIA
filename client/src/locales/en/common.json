@@ -260,7 +260,7 @@
     "backTo": "Back to {{parent}}"
   },
   "segmented": {
-    "withCount": "{{label}} · {{count}}",
+    "withCount": "{{label}} ({{count}})",
     "newLabel": "{{label}}, new"
   },
   "shortcuts": {
@@ -368,7 +368,7 @@
     "sent": "Application sent to {{club}}",
     "title": "Get ready for {{where}}",
     "body": "Things players sort out before moving. Only if they help you.",
-    "offerSuffix": " · Offer for members",
+    "offerSuffix": "Offer for members",
     "seeAll": "See everything for {{where}}",
     "notNow": "Not now"
   }

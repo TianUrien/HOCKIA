@@ -38,9 +38,9 @@ export function CareerEntryItem({ entry, last, flag, locationFlag = null, onOpen
   const span = careerSpan(entry)
   // The entry's own country first; the linked world club's can disagree with the club profile (QA 2 Oct).
   const metaFlag = locationFlag ?? entry.clubFlag ?? flag
-  const metaText = [entry.locationCity?.trim() || countryLabel(entry.locationCountry?.trim()) || null, span].filter(Boolean).join(' · ')
-  const meta = [metaFlag, metaText].filter(Boolean).join(' ')
-  const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? t('career.item.representative') : entry.divisionLeague?.trim() || null].filter(Boolean).join(' · ')
+  // The place, then the time in its own element: no separator character between the two.
+  const place = [metaFlag, entry.locationCity?.trim() || countryLabel(entry.locationCountry?.trim()) || null].filter(Boolean).join(' ')
+  const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? t('career.item.representative') : entry.divisionLeague?.trim() || null].filter(Boolean).join(', ')
   const crest = entry.crestUrl ? getImageUrl(entry.crestUrl, 'avatar-sm') ?? entry.crestUrl : null
   const highlights = entry.highlights.slice(0, CAREER_ITEM_HIGHLIGHTS)
   const body = (
@@ -50,7 +50,7 @@ export function CareerEntryItem({ entry, last, flag, locationFlag = null, onOpen
         {onOpen && <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} aria-hidden="true" data-testid="career-entry-chevron" />}
       </div>
       {sub && <p className="truncate text-secondary text-ink-2">{sub}</p>}
-      {meta && <p className="truncate text-secondary text-ink-2">{meta}</p>}
+      {(place || span) && <p className="truncate text-secondary text-ink-2">{place}{place && span ? ' ' : null}{span && <span className={place ? 'ml-2 text-ink-3' : undefined}>{span}</span>}</p>}
       {entry.signedViaHockia && <SignedThroughHockiaPill className="mt-1" />}
       {highlights.length > 0 && (
         <ul className="mt-1.5 space-y-1">

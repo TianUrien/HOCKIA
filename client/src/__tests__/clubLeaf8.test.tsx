@@ -105,7 +105,7 @@ describe('member card fit chip', () => {
     expect(screen.getByText('Strong fit')).toBeInTheDocument()
     // No availability chip over faces (audit B1).
     expect(screen.queryByText('Open to play')).toBeNull()
-    expect(screen.getByText('Player · Midfielder')).toBeInTheDocument()
+    expect(screen.getByText('Player, Midfielder')).toBeInTheDocument()
     rerender(<RecruiterCandidateCard member={member} fitState="yellow" onPreview={() => {}} />)
     expect(screen.getByText('Possible fit')).toBeInTheDocument()
   })
@@ -132,7 +132,7 @@ describe('ClubViewPlayersHeader', () => {
     render(<ClubViewPlayersHeader sort="newest" onSort={() => {}} />)
     expect(screen.getByRole('heading', { name: 'Players' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Best fit' })).toBeInTheDocument()
-    expect(screen.getByTestId('ranked-for-pill')).toHaveTextContent("Midfielder · Men's")
+    expect(screen.getByTestId('ranked-for-pill')).toHaveTextContent("Midfielder, Men's")
   })
   it('reads "No context" and "Newest" without a context, and the pill opens Ranked for', () => {
     render(<ClubViewPlayersHeader sort="newest" onSort={() => {}} />)

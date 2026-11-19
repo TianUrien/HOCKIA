@@ -290,9 +290,9 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
 
   const held = [profile.nationality_country_id, profile.nationality2_country_id].map((id) => (typeof id === 'number' ? countries.find((c) => c.id === id) : undefined)).filter((c): c is NonNullable<typeof c> => Boolean(c))
   const passports = nationalityLine(held, { label: 'demonym' }) ?? (profile.nationality?.trim() || null)
-  const positions = [profile.position, profile.secondary_position].filter(Boolean).map((p) => humanizeToken(p)).join(' · ') || null
+  const positions = [profile.position, profile.secondary_position].filter(Boolean).map((p) => humanizeToken(p)).join(', ') || null
   const leagueLine = league ? (league.source === 'self_reported' ? t('mobileEdit.rows.leagueSelfReported', { league: league.name }) : league.name) : null
-  const available = [profile.available_from ? monthYear(profile.available_from) : null, profile.availability_duration ? DURATION_LABEL[profile.availability_duration] ?? null : null].filter(Boolean).join(' · ') || null
+  const available = [profile.available_from ? monthYear(profile.available_from) : null, profile.availability_duration ? DURATION_LABEL[profile.availability_duration] ?? null : null].filter(Boolean).join(', ') || null
   const links = Object.keys((profile.social_links ?? {}) as Record<string, string>).filter((k) => ((profile.social_links ?? {}) as Record<string, string>)[k])
   const name = profile.full_name?.trim() || t('mobileEdit.screen.yourProfile')
   const dobLocked = Boolean(profile.date_of_birth)
@@ -337,7 +337,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
           {p.role === 'player'
             ? <Row label={t('mobileEdit.rows.league')} value={leagueLine} locked={league?.source === 'club'} onClick={() => setEditing('club')} />
             : null}
-          <Row label={t('mobileEdit.rows.skills')} value={(p.specialist_skills ?? []).map((sk) => humanizeToken(sk)).join(' · ') || null} onClick={() => setEditing('skills')} />
+          <Row label={t('mobileEdit.rows.skills')} value={(p.specialist_skills ?? []).map((sk) => humanizeToken(sk)).join(', ') || null} onClick={() => setEditing('skills')} />
           <Row label={t('mobileEdit.rows.about')} value={p.bio?.trim() || null} onClick={() => setEditing('about')} />
         </Group>
 
@@ -363,7 +363,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
 
         <Group label={t('mobileEdit.screen.contactLinks')}>
           <Row label={t('mobileEdit.rows.contact')} value={p.contact_email?.trim() || null} onClick={() => setEditing('contact')} />
-          <Row label={t('mobileEdit.rows.links')} value={links.length ? links.map((k) => humanizeToken(k)).join(' · ') : null} onClick={() => setEditing('links')} />
+          <Row label={t('mobileEdit.rows.links')} value={links.length ? links.map((k) => humanizeToken(k)).join(', ') : null} onClick={() => setEditing('links')} />
         </Group>
       </div>
 

@@ -166,7 +166,7 @@ describe('ClubMembersTab', () => {
     await waitFor(() => {
       expect(screen.getByTestId('member-row')).toBeInTheDocument()
     })
-    expect(screen.getByText('Midfielder · London, UK')).toBeInTheDocument()
+    expect(screen.getByText('Midfielder, London, UK')).toBeInTheDocument()
   })
 
   it('calls RPC with correct parameters', async () => {

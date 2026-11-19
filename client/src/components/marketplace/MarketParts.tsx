@@ -82,14 +82,18 @@ export function MarketTile({ item, wide = false, surface, onOpen, onMenu }: { it
 export function MarketRow({ item, surface, detail, onOpen, onMenu }: { item: MarketItem; surface: MarketSurface; detail?: string | null; onOpen: () => void; onMenu: () => void }) {
   const t = useBrandsT()
   const ref = useSeenOnce<HTMLDivElement>(() => trackItemImpression(item, surface))
-  const line = [item.brand_name, detail ?? (item.body ? item.body.split(/[.\n]/)[0].trim() : null)].filter(Boolean).join(' · ')
+  const about = detail ?? (item.body ? item.body.split(/[.\n]/)[0].trim() : null)
   return (
     <div ref={ref} className="flex items-center gap-3 rounded-[20px] bg-white p-3 shadow-[0_1px_2px_rgba(15,15,20,0.06)]" onContextMenu={(e) => { e.preventDefault(); onMenu() }} data-testid="market-row" data-kind={item.kind}>
       <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
         <ItemImage item={item} className="h-16 w-16 shrink-0 rounded-[14px]" logoClassName="h-10 w-10 rounded-[10px] shadow-[0_2px_10px_rgba(15,15,20,0.18)]" eager />
         <span className="min-w-0 flex-1">
           <span className="block text-body font-semibold leading-[22px] text-ink-1 line-clamp-2">{item.title}</span>
-          <span className="mt-0.5 block text-row text-ink-2 line-clamp-2">{line}</span>
+          <span className="mt-0.5 block text-row text-ink-2 line-clamp-2">
+            {item.brand_name}
+            {item.brand_name && about ? ' ' : null}
+            {about ? <span className={item.brand_name ? 'ml-2 text-ink-3' : undefined}>{about}</span> : null}
+          </span>
         </span>
       </button>
       {item.kind === 'offer' ? <OfferPill className="shrink-0" perk={item.perk} /> : null}

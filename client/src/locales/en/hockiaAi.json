@@ -8,8 +8,8 @@
     "softErrorDefault": "I had trouble with that one. Let's try a different angle.",
     "searching": "Searching",
     "checkProfileAgainstRole": "Check my profile against this opportunity",
-    "fromOpenRoles_one": "From {{count}} open opportunity · updated today",
-    "fromOpenRoles_other": "From {{count}} open opportunities · updated today"
+    "fromOpenRoles_one": "From {{count}} open opportunity, updated today",
+    "fromOpenRoles_other": "From {{count}} open opportunities, updated today"
   },
   "chips": {
     "openRoles": "Opportunities for me",
@@ -74,7 +74,7 @@
     "goalOff": "Ask me anything about your hockey. I can see your profile."
   },
   "context": {
-    "chipLabel": "{{topic}} · {{fact}}",
+    "chipLabel": "{{topic}}: {{fact}}",
     "yourOpportunities": "Your opportunities",
     "yourOffers": "Your offers",
     "yourRecord": "Your record",
@@ -144,14 +144,14 @@
     "notNowSub": "Close Hockia AI",
     "photoDone": "Profile photo added",
     "photoChatTitle": "Added a profile photo",
-    "photoChatSummary": "Action · Profile photo",
+    "photoChatSummary": "Action: Profile photo",
     "bioDone": "Bio saved to your profile",
     "bioChatImproved": "Improved my bio",
     "bioChatWrote": "Wrote my bio",
-    "bioChatSummary": "Action · Bio",
+    "bioChatSummary": "Action: Bio",
     "linkDone": "{{label}} added to your profile",
     "linkChatTitle": "Added my {{label}}",
-    "linkChatSummary": "Action · Link"
+    "linkChatSummary": "Action: Link"
   },
   "photo": {
     "pickerError": "I couldn’t open your photos. Check the app’s photo permission.",
@@ -232,8 +232,8 @@
     "tryAgain": "Try again",
     "nothingNew": "I couldn’t find anything new to add. Your profile may already have it. Tell me more, or attach your CV.",
     "reviewIntro": "Here’s what I’ll add. Tap anything to fix it, or save it all.",
-    "reviewHeader_one": "Add to your profile · {{count}} item",
-    "reviewHeader_other": "Add to your profile · {{count}} items",
+    "reviewHeader_one": "Add to your profile: {{count}} item",
+    "reviewHeader_other": "Add to your profile: {{count}} items",
     "groupCareer": "Career",
     "clubLabel": "Club",
     "leaguePlaceholder": "League (optional)",
@@ -244,7 +244,7 @@
     "groupMedia": "Videos & photos",
     "removeVideo": "Remove video",
     "removePhoto": "Remove photo {{number}}",
-    "videoLine": "Highlights video · {{title}}",
+    "videoLine": "Highlights video: {{title}}",
     "photosLine_one": "{{count}} photo to your gallery",
     "photosLine_other": "{{count}} photos to your gallery",
     "idPhotos_one": "I left out a photo that looks like an ID document. Passports are just the country, never a document.",
@@ -253,7 +253,7 @@
     "groupPosition": "Position",
     "mainPosition": "Main position",
     "secondPosition": "Second position",
-    "groupDob": "Date of birth · only you see it",
+    "groupDob": "Date of birth, only you see it",
     "dobNote": "Clubs see your age, never the date",
     "under18": "The date you wrote is under 18. Under-18 accounts work differently on Hockia, so I didn’t add it. If it’s right, add it from Edit profile.",
     "groupLinks": "Links",
@@ -323,7 +323,7 @@
     "checkedFirst": "I checked this opportunity first:",
     "notEligible": "{{reason}}, so this opportunity can’t take your application. You can still message the club.",
     "defaultReason": "This opportunity is for another team category.",
-    "cardEyebrow": "Application · Draft",
+    "cardEyebrow": "Application draft",
     "availableFrom": "Available from",
     "passport": "Passport",
     "contact": "Contact",
@@ -332,7 +332,7 @@
     "contactEmail": "Email",
     "contactHidden": "Shown once the club replies",
     "euSuffix": "{{country}} (EU)",
-    "noteByAi": "Note to the club · written by Hockia AI",
+    "noteByAi": "Note to the club, written by Hockia AI",
     "note": "Note to the club",
     "noNote": "No note. Your profile is the application.",
     "done": "Done",
@@ -349,7 +349,7 @@
     "findSimilarQuery": "Find opportunities like {{role}}",
     "chatTitle": "Applied to {{org}}",
     "chatTitleNoOrg": "Applied to the club",
-    "chatSummary": "Action · Application sent",
+    "chatSummary": "Action: Application sent",
     "theClub": "the club"
   },
   "availability": {
@@ -385,7 +385,7 @@
   },
   "opinion": {
     "panelLabel": "Hockia AI fit opinion",
-    "eyebrow": "Hockia AI · fit opinion",
+    "eyebrow": "Hockia AI fit opinion",
     "privateCoach": "Private to you. Based on the coach's profile facts vs your recruiting context.",
     "privatePlayer": "Private to you. Based on the player's profile facts vs your recruiting context.",
     "loadError": "Couldn't load the opinion right now.",
@@ -393,11 +393,11 @@
     "quota": "Daily AI opinion limit reached (50/day).",
     "quotaNote": "Resets at midnight UTC. Cached opinions still available without a fresh call.",
     "hideEvidence": "Hide evidence",
-    "why_one": "Why · {{count}} citation",
-    "why_other": "Why · {{count}} citations",
+    "why_one": "Why ({{count}} citation)",
+    "why_other": "Why ({{count}} citations)",
     "cached": "Cached",
     "fresh": "Fresh",
-    "freshRemaining": "· {{count}} fresh remaining today",
+    "freshRemaining": "({{count}} fresh remaining today)",
     "rateLabel": "Rate this opinion",
     "helpful": "Helpful",
     "notHelpful": "Not helpful",
@@ -411,7 +411,7 @@
   "summary": {
     "cap": "You’ve reached today’s Hockia AI limit. Everything else works as usual.",
     "error": "I couldn’t summarise right now. Try again in a moment.",
-    "eyebrow": "Hockia AI · Summary · Beta",
+    "eyebrow": "Hockia AI summary, beta",
     "intro": "I can sum up the {{count}} applicants to review from what their profiles show.",
     "summarising": "Summarising…",
     "summarise": "Summarise"
@@ -463,7 +463,7 @@
     "currentClub": "Current club",
     "noCurrentClub": "No current club",
     "verified": "✓ Verified",
-    "bioMention": "Bio mention · not verified",
+    "bioMention": "Bio mention, not verified",
     "hideDetails": "Hide details",
     "showDetails": "Show details",
     "keyInfo": "Key info",
@@ -523,8 +523,8 @@
     "noneYet": "None yet",
     "players_one": "{{count}} player",
     "players_other": "{{count}} players",
-    "refineCaption_one": "From Hockia’s {{count}} suggestion for this opportunity · only facts from their profiles",
-    "refineCaption_other": "From Hockia’s {{count}} suggestions for this opportunity · only facts from their profiles"
+    "refineCaption_one": "From Hockia’s {{count}} suggestion for this opportunity. Only facts from their profiles.",
+    "refineCaption_other": "From Hockia’s {{count}} suggestions for this opportunity. Only facts from their profiles."
   },
   "reasons": {
     "playsPosition": "Plays {{position}}",

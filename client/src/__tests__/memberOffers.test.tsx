@@ -81,7 +81,7 @@ describe('Home card (H1-no-image) and Not useful (H2)', () => {
 
   it('shows From brands, the brand, and the location + role reason', () => {
     renderCard()
-    expect(screen.getByText('From brands · Northline Hockey')).toBeInTheDocument()
+    expect(screen.getByText('From brands: Northline Hockey')).toBeInTheDocument()
     expect(screen.getByText('You see this because you live in England and play.')).toBeInTheDocument()
   })
 

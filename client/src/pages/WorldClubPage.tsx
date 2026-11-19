@@ -8,7 +8,6 @@ import { tWorld, useWorldT } from '@/i18n/ns/world'
 import { countryLabel } from '@/i18n/countryNames'
 
 /** Separator between place names; punctuation, not copy. */
-const DOT = '·'
 
 /**
  * WorldClubPage — leaf-level page for a single world_clubs row.
@@ -261,9 +260,8 @@ export default function WorldClubPage() {
                     <span className="inline-flex items-center gap-1.5">
                       <MapPin className="h-4 w-4 text-gray-400" />
                       {province?.name && (
-                        <Link to={provinceHref} className="hover:text-hockia-primary">{province.name}</Link>
+                        <span><Link to={provinceHref} className="hover:text-hockia-primary">{province.name}</Link>{country ? ',' : null}</span>
                       )}
-                      {province?.name && country && <span>{DOT}</span>}
                       {country?.name && (
                         <span>{country.flag_emoji ? `${country.flag_emoji} ` : ''}{countryLabel(country.name)}</span>
                       )}

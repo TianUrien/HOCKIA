@@ -142,7 +142,7 @@ export const METRIC_INFO = {
   },
   activation: {
     title: 'Activated (photo + position)',
-    measures: 'Of this period’s new signups, how many completed the minimum setup to become a usable member. ("Activated · first real action" in the registration funnel and "Activation by Role" count a first value-action instead: different definitions, named on each card.)',
+    measures: 'Of this period’s new signups, how many completed the minimum setup to become a usable member. ("Activated: first real action" in the registration funnel and "Activation by Role" count a first value-action instead: different definitions, named on each card.)',
     formula: 'New users who finished onboarding AND uploaded a profile photo AND (for players) set a position ÷ all new users in the period.',
     why: 'Signups without activation are empty shells: they can’t be discovered, matched, or contacted. This measures how well onboarding converts interest into a real member.',
     unit: '%',

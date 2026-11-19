@@ -456,7 +456,6 @@ export default function VacancyDetailView({
                 <ul className="space-y-1.5">
                   {vacancy.requirements.map((req, i) => (
                     <li key={i} className="flex items-start gap-2 text-[15px] text-gray-600">
-                      <span className="text-gray-400 mt-0.5">•</span>
                       <span>{req}</span>
                     </li>
                   ))}

@@ -40,7 +40,7 @@ interface FriendListItemProps {
 }
 
 /** Between the meta line and the flags; the same in every language. */
-const FLAGS_SEPARATOR = ' · '
+const FLAGS_SEPARATOR = ' '
 const GREY_PILL = 'flex h-9 shrink-0 items-center gap-1 rounded-full bg-surface-grouped px-3 text-secondary font-semibold text-ink-2'
 const TONAL_SMALL = buttonClassName({ variant: 'tonal', size: 'small', radius: 'rounded-full' })
 
@@ -76,7 +76,7 @@ export function FriendListItem({ name, avatarUrl, role, meta, flags, showReferen
           <span className="block truncate text-row font-semibold text-ink-1">{name}</span>
           <span className="flex min-w-0 items-center text-secondary text-ink-2">
             <span className="min-w-0 truncate">{meta}</span>
-            {flags && <span className="shrink-0 whitespace-pre">{FLAGS_SEPARATOR}{flags}</span>}
+            {flags && <span className="ml-1 shrink-0 whitespace-pre">{FLAGS_SEPARATOR}{flags}</span>}
           </span>
           {showReference && (
             <span className="mt-1 inline-flex h-[22px] items-center gap-1 rounded-full bg-gold-soft px-2 text-caption font-semibold text-gold" data-testid="friend-reference-pill">

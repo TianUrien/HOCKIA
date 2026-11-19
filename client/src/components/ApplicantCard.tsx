@@ -170,8 +170,8 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
           </button>
 
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-2 sm:text-sm">
-            {positions.length > 0 ? <span className="font-medium">{positions.map((p) => positionLabel(p) ?? p).join(' • ')}</span> : null}
-            {positions.length > 0 && applicant.base_location ? <span>•</span> : null}
+            {positions.length > 0 ? <span className="font-medium">{positions.map((p) => positionLabel(p) ?? p).join(', ')}</span> : null}
+            {positions.length > 0 && applicant.base_location ? ' ' : null}
             {applicant.base_location ? (
               <div className="flex items-center gap-1">
                 <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5" />

@@ -53,7 +53,7 @@ export interface ClosedCoachingRole {
 
 /** "Hockey Club Concordia 1906 · Croatia" */
 export function closedRoleMeta(role: Pick<ClosedCoachingRole, 'clubName' | 'country'>): string {
-  return [role.clubName, role.country].map((s) => s?.trim()).filter(Boolean).join(' · ')
+  return [role.clubName, role.country].map((s) => s?.trim()).filter(Boolean).join(', ')
 }
 
 /** "Closed 3 Oct" (day first; the year once it differs from now's). */

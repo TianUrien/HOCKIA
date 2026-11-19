@@ -16,18 +16,18 @@ const label = (i: Partial<AiChipInput>) => {
 
 describe('aiContextChip', () => {
   it('player: goal from the header, Opportunities from that screen, nothing without either', () => {
-    expect(label({ goalLabel: 'Play abroad' })).toBe('Your goal · Play abroad')
+    expect(label({ goalLabel: 'Play abroad' })).toBe('Your goal: Play abroad')
     expect(aiContextChip({ ...base, goalLabel: 'Play abroad' })?.kind).toBe('goal')
-    expect(label({ entry: 'opportunities', openOpportunities: 128, goalLabel: 'Play abroad' })).toBe('Opportunities · 128 open')
+    expect(label({ entry: 'opportunities', openOpportunities: 128, goalLabel: 'Play abroad' })).toBe('Opportunities: 128 open')
     expect(label({})).toBeNull()
   })
 
   it('per role: coach, club, brand, umpire', () => {
-    expect(label({ role: 'coach', entry: 'opportunities', openOpportunities: 6 })).toBe('Coaching opportunities · 6 open')
-    expect(label({ role: 'club', recruiter: true, myOpenRoles: 2 })).toBe('Your opportunities · 2 open')
-    expect(label({ role: 'brand', liveOffers: 2 })).toBe('Your offers · 2 live')
-    expect(label({ role: 'umpire', matchesOfficiated: 12 })).toBe('Your record · 12 matches officiated')
-    expect(label({ role: 'umpire', matchesOfficiated: 1 })).toBe('Your record · 1 match officiated')
+    expect(label({ role: 'coach', entry: 'opportunities', openOpportunities: 6 })).toBe('Coaching opportunities: 6 open')
+    expect(label({ role: 'club', recruiter: true, myOpenRoles: 2 })).toBe('Your opportunities: 2 open')
+    expect(label({ role: 'brand', liveOffers: 2 })).toBe('Your offers: 2 live')
+    expect(label({ role: 'umpire', matchesOfficiated: 12 })).toBe('Your record: 12 matches officiated')
+    expect(label({ role: 'umpire', matchesOfficiated: 1 })).toBe('Your record: 1 match officiated')
   })
 
   it('a count that is 0 or unknown drops the fact, never "0 open"', () => {

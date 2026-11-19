@@ -128,7 +128,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
   const leagueLabel = (id: number | null, empty: string) => {
     const l = id === null ? null : leagues.find((x) => x.id === id)
     if (!l) return empty
-    return l.province && leagues.filter((x) => x.name === l.name).length > 1 ? `${l.name} · ${l.province}` : l.name
+    return l.province && leagues.filter((x) => x.name === l.name).length > 1 ? `${l.name}, ${l.province}` : l.name
   }
 
   const submit = async () => {
@@ -248,7 +248,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[16px] font-medium leading-[21px] text-ink-1">{m.name}</span>
                         <span className="block truncate text-secondary text-ink-2">
-                          {m.isClaimed ? t('linkClub.search.alreadyLinkedRow') : [m.province, m.leagueName].filter(Boolean).join(' · ') || countryName}
+                          {m.isClaimed ? t('linkClub.search.alreadyLinkedRow') : [m.province, m.leagueName].filter(Boolean).join(', ') || countryName}
                         </span>
                       </span>
                       {m.isClaimed ? <span className="shrink-0 text-caption font-semibold text-ink-3">{t('linkClub.search.linked')}</span> : radio(selected(m.id))}
