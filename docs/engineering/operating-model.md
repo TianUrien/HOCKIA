@@ -121,7 +121,7 @@ Order follows section 1. "Evidence" is what was observed, with its date.
 |---|---|---|
 | 18 | 41 local worktrees, 31 with branches already in `staging`; 341 remote branches | `git worktree list`, 2026-11-11 |
 | 19 | Test messages left in staging conversations by E2E runs | 2026-11-10 |
-| 20 | `/sitemap.xml` on the production domain is an old static file with 4 `www.` URLs; `robots.txt` points to `/api/sitemap.xml` (298 URLs) | Seen on 2026-11-11 after the SEO release |
+| 20 | Done 2026-11-18: `/sitemap.xml` was an old static file with 4 `www.` URLs; it is removed and the path now 301s to `/api/sitemap.xml` (`client/vercel.json` redirects) | Seen on 2026-11-11 after the SEO release |
 
 ## 7. How this document is kept
 

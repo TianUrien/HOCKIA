@@ -11,6 +11,7 @@ import MediaLightbox from './MediaLightbox'
 import Skeleton from './Skeleton'
 import StorageImage from './StorageImage'
 import { deleteStorageObject } from '@/lib/storage'
+import { ShareToHomePrompt } from '@/components/home/ShareToHomePrompt'
 import { optimizeImage, type OptimizeOptions, validateImage, validateVideoFull, imageFileExtension } from '@/lib/imageOptimization'
 import { useNativeVideoUpload } from '@/hooks/useNativeVideoUpload'
 import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
@@ -211,6 +212,8 @@ export default function GalleryManager({
   // Public-portfolio cap toggle (readOnly + previewLimit only).
   const [galleryExpanded, setGalleryExpanded] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([])
+  // Photos just added by the owner: offered once for a Home post (founder 2026-11-18).
+  const [shareFiles, setShareFiles] = useState<File[]>([])
   const [draggedItem, setDraggedItem] = useState<NormalizedMedia | null>(null)
   const [editingCaption, setEditingCaption] = useState<string | null>(null)
   const [captionText, setCaptionText] = useState('')
@@ -362,6 +365,7 @@ export default function GalleryManager({
     // selected file the highest index of the batch so a multi-select shows in
     // the order the user picked, with the whole batch above older media.
     const batchTop = nextOrderIndex() + validFiles.length - 1
+    const added: File[] = []
 
     for (let i = 0; i < validFiles.length; i++) {
       const file = validFiles[i]
@@ -426,6 +430,7 @@ export default function GalleryManager({
             idx === i ? { ...item, progress: 100, status: 'success' } : item
           )
         )
+        added.push(file)
       } catch (error) {
         logger.error('Error uploading file:', error)
         const message = error instanceof Error ? error.message : t('galleryManager.uploadFailed')
@@ -438,6 +443,9 @@ export default function GalleryManager({
     }
 
     await fetchMedia()
+
+    // Only the owner, on their own profile or club page, is asked to share.
+    if (added.length > 0 && user.id === targetEntityId) setShareFiles(added)
 
     setTimeout(() => {
       setUploadProgress([])
@@ -820,6 +828,8 @@ export default function GalleryManager({
           )}
         </div>
       )}
+
+      {!readOnly && <ShareToHomePrompt files={shareFiles} onDone={() => setShareFiles([])} />}
 
       {uploadProgress.length > 0 && (
         <div className="space-y-2">

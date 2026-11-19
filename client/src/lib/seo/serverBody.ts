@@ -185,3 +185,27 @@ export function worldBody(countries: { code: string; name: string; totalClubs: n
   parts.push(FOOTER)
   return parts.join('\n')
 }
+
+/** The role directories of /community, in the order of its tabs. */
+const COMMUNITY_SECTIONS: { tab: string; label: string; text: string }[] = [
+  { tab: 'players', label: 'Field hockey players', text: 'Players create a profile, find open roles at clubs worldwide and apply directly.' },
+  { tab: 'coaches', label: 'Field hockey coaches', text: 'Coaches create a profile and apply to open coaching roles.' },
+  { tab: 'clubs', label: 'Field hockey clubs', text: 'Clubs publish open roles for players and coaches and review the applications they receive.' },
+  { tab: 'umpires', label: 'Field hockey umpires', text: 'Umpires have their own profiles and take part in the same community.' },
+  { tab: 'brands', label: 'Field hockey brands', text: 'Brands have their own profiles and take part in the same community.' },
+]
+
+/**
+ * /community: what the directory is and who is in it. No member names and
+ * no counts: the page lists people, and no public source gives per-role
+ * counts with the hidden-profile predicate applied.
+ */
+export function communityBody(intro: string): string {
+  return [
+    '<h1>The field hockey community on Hockia</h1>',
+    `<p>${escapeHtml(intro)}</p>`,
+    '<p>The community directory brings together the players, coaches, clubs, umpires and brands in field hockey. Hockia is free to join and to use.</p>',
+    `<ul>\n${COMMUNITY_SECTIONS.map((s) => `<li><a href="/community/${s.tab}">${s.label}</a>: ${s.text}</li>`).join('\n')}\n</ul>`,
+    FOOTER,
+  ].join('\n')
+}

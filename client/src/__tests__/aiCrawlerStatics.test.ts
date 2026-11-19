@@ -3,7 +3,7 @@
  * /llms.txt is a real text file, private routes are noindex at the server,
  * and the home page's Organization data says what Hockia is.
  */
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { NOINDEX, resolveRouteMeta } from '@/lib/seo/routeMeta'
@@ -13,6 +13,7 @@ const root = path.resolve(__dirname, '../..')
 const read = (rel: string) => readFileSync(path.join(root, rel), 'utf8')
 
 interface VercelConfig {
+  redirects?: { source: string; destination: string; statusCode?: number; permanent?: boolean }[]
   headers: { source: string; has?: unknown; headers: { key: string; value: string }[] }[]
   rewrites: { source: string; destination: string }[]
 }
@@ -45,6 +46,16 @@ describe('/llms.txt', () => {
     expect(vercel.rewrites[own]).toEqual({ source: '/llms.txt', destination: '/llms.txt' })
     expect(own).toBeLessThan(shell)
     expect(read('vite.config.ts')).toContain('/^\\/llms\\.txt$/')
+  })
+})
+
+describe('/sitemap.xml', () => {
+  it('redirects to the live sitemap, with no static copy and no app-shell fallback', () => {
+    expect(vercel.redirects).toContainEqual({ source: '/sitemap.xml', destination: '/api/sitemap.xml', statusCode: 301 })
+    expect(existsSync(path.join(root, 'public/sitemap.xml'))).toBe(false)
+    expect(vercel.rewrites.some((r) => r.source === '/api/sitemap.xml')).toBe(true)
+    expect(read('public/robots.txt')).toContain('Sitemap: https://inhockia.com/api/sitemap.xml')
+    expect(read('vite.config.ts')).toContain('/^\\/sitemap\\.xml$/')
   })
 })
 
