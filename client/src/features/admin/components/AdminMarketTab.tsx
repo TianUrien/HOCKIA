@@ -132,7 +132,7 @@ function TrendsChart({ trends }: { trends: MarketIntelligence['trends'] }) {
                         style={{ height: `${Math.max(v > 0 ? 4 : 1, (v / max) * 96)}px`, backgroundColor: v > 0 ? s.color : '#e5e7eb' }}
                       />
                       <span className="pointer-events-none absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-[10px] text-white z-10">
-                        {monthLabel(t.month)} · {s.label}: {v}
+                        {monthLabel(t.month)}, {s.label}: {v}
                       </span>
                     </div>
                   )
@@ -296,7 +296,7 @@ export function AdminMarketTab() {
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <h3 className="text-sm font-semibold text-gray-900">Market balance: demand vs supply</h3>
         <p className="text-xs text-gray-500 mb-3">
-          Per cell: vacancies (last {data.meta.demand_window_days}d) · active open-to-play players · applications.
+          Per cell: vacancies (last {data.meta.demand_window_days}d), active open-to-play players, applications.
           Chips mark segments where demand outruns supply.
         </p>
         <div className="overflow-x-auto">
@@ -320,9 +320,9 @@ export function AdminMarketTab() {
                     return (
                       <td key={g} className={`py-2.5 px-4 ${gap ? 'bg-red-50/70' : ''}`}>
                         <span className="tabular-nums text-gray-900">{c.demand_window}</span>
-                        <span className="text-gray-400"> vac · </span>
+                        <span className="text-gray-400"> vac, </span>
                         <span className="tabular-nums text-gray-900">{c.supply_active}</span>
-                        <span className="text-gray-400"> plyr · </span>
+                        <span className="text-gray-400"> plyr, </span>
                         <span className="tabular-nums text-gray-900">{c.apps_window}</span>
                         <span className="text-gray-400"> app</span>
                         {gap && (
@@ -515,7 +515,7 @@ export function AdminMarketTab() {
                           <span className="truncate min-w-0">{q.title}</span>
                           {isCold && (
                             <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 flex-shrink-0 whitespace-nowrap">
-                              cold · {q.days_open}d · 0 apps
+                              cold, {q.days_open}d, 0 apps
                             </span>
                           )}
                         </p>
@@ -580,7 +580,7 @@ export function AdminMarketTab() {
           <div className="space-y-2 text-sm">
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Silent supply · {data.player_behavior.silent_supply.count}
+                Silent supply{' '}<span className="text-gray-400">{data.player_behavior.silent_supply.count}</span>
               </p>
               <p className="text-xs text-gray-400">Active open-to-play, never applied: activation targets</p>
               {data.player_behavior.silent_supply.players.length > 0 && (
@@ -591,14 +591,14 @@ export function AdminMarketTab() {
             </div>
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Burned · {data.player_behavior.burned.count}
+                Burned{' '}<span className="text-gray-400">{data.player_behavior.burned.count}</span>
               </p>
               <p className="text-xs text-gray-400">Applied 7+ days ago, never got any response: churn risk</p>
               {data.player_behavior.burned.players.length > 0 && (
                 <ul className="text-xs text-gray-600 mt-0.5 space-y-0.5">
                   {data.player_behavior.burned.players.map((p) => (
                     <li key={p.id} className="truncate">
-                      {p.name ?? '—'} · {p.applications} app{p.applications === 1 ? '' : 's'} · last {p.days_since_last_app}d ago
+                      {p.name ?? '—'}{' '}<span className="text-gray-400">{p.applications} app{p.applications === 1 ? '' : 's'}, last {p.days_since_last_app}d ago</span>
                     </li>
                   ))}
                 </ul>
@@ -609,8 +609,8 @@ export function AdminMarketTab() {
       </div>
 
       <p className="text-xs text-gray-400">
-        Computed {new Date(data.meta.computed_at + 'Z').toLocaleString()} · demand window{' '}
-        {data.meta.demand_window_days}d · test accounts excluded · medians, not means. Counts are
+        Computed {new Date(data.meta.computed_at + 'Z').toLocaleString()}. Demand window{' '}
+        {data.meta.demand_window_days}d. Test accounts excluded. Medians, not means. Counts are
         small while the marketplace grows, so absolute numbers are shown throughout.
       </p>
     </div>

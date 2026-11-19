@@ -197,7 +197,7 @@ export function AdminEmailTemplateEditor() {
           </button>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{detail.template.name}</h1>
-            <p className="text-sm text-gray-500 font-mono">{detail.template.template_key} &middot; v{detail.template.current_version}</p>
+            <p className="text-sm text-gray-500 font-mono">{detail.template.template_key}{' '}<span className="text-gray-400">v{detail.template.current_version}</span></p>
           </div>
         </div>
 
@@ -258,7 +258,7 @@ export function AdminEmailTemplateEditor() {
                   )}
                   <p className="text-xs text-gray-500">
                     {new Date(v.created_at).toLocaleString()}
-                    {v.change_note && ` · ${v.change_note}`}
+                    {v.change_note && <>{' '}<span className="text-gray-400">{v.change_note}</span></>}
                   </p>
                 </div>
                 {v.version_number !== detail.template.current_version && (

@@ -47,11 +47,12 @@ describe('AdminSignInTraffic', () => {
     }
     render(<MemoryRouter><AdminSignInTraffic /></MemoryRouter>)
 
-    await waitFor(() => expect(screen.getByText('a1b2c3d4 · e5f6a7b8')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('a1b2c3d4')).toBeInTheDocument())
+    expect(screen.getByText('a1b2c3d4').textContent).toBe('a1b2c3d4 e5f6a7b8')
     expect(rpcCalls[0]).toEqual({ fn: 'admin_get_auth_attempts', args: { p_hours: 24 } })
     expect(screen.getByText('Rate limit: off')).toBeInTheDocument()
     expect(screen.getByText('Bot check required: off')).toBeInTheDocument()
-    expect(screen.getByText('Android 11 · IN2023 · WebView · android · 1.26 · AR')).toBeInTheDocument()
+    expect(screen.getByText('Android 11 · IN2023 · WebView, android, 1.26, AR')).toBeInTheDocument()
     expect(screen.getByText('15 would be limited')).toBeInTheDocument()
     expect(screen.getByText(/10 per device and 40 per network every 5 minutes/)).toBeInTheDocument()
   })

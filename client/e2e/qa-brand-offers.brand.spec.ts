@@ -149,7 +149,7 @@ test.describe('brand offers QA', () => {
     await expect(page.getByTestId('admin-brand-offers')).toBeVisible({ timeout: 20_000 })
     await settle(page)
     await shot(page, 'admin-01-live.png')
-    await expect(page.getByText('Ireland · Cork (by where members live)')).toBeVisible()
+    await expect(page.getByText('Ireland, Cork (by where members live)')).toBeVisible()
     await page.getByTestId('admin-offer-take-down').click()
     await page.getByRole('button', { name: 'A claim we can’t check' }).click()
     await shot(page, 'admin-02-take-down.png')

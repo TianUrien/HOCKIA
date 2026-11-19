@@ -217,8 +217,7 @@ export function AdminAppRatings() {
                 {st == null ? 'All' : `${st}★`}
               </button>
             ))}
-            <span className="text-gray-500 mx-2">·</span>
-            <span className="text-gray-500 mr-1">Platform:</span>
+            <span className="text-gray-500 ml-4 mr-1">Platform:</span>
             {([null, 'web', 'pwa', 'ios-native', 'android-native'] as (string | null)[]).map((pf) => (
               <button
                 key={pf ?? 'all'}
@@ -232,8 +231,7 @@ export function AdminAppRatings() {
                 {pf == null ? 'All' : pf}
               </button>
             ))}
-            <span className="text-gray-500 mx-2">·</span>
-            <span className="text-gray-500 mr-1">Role:</span>
+            <span className="text-gray-500 ml-4 mr-1">Role:</span>
             {([null, 'player', 'coach', 'club', 'umpire', 'brand'] as (string | null)[]).map((rl) => (
               <button
                 key={rl ?? 'all'}
@@ -325,8 +323,8 @@ function RatingRowItem({ row, expanded, onToggle }: { row: AppRatingRow; expande
                 {row.user_role}
               </span>
             )}
-            {row.platform && <><span>·</span><span>{row.platform}</span></>}
-            <span>·</span>
+            {row.platform && <>{' '}<span>{row.platform}</span></>}
+            {' '}
             <span>{formatAdminDate(row.submitted_at)}</span>
           </div>
           {row.feedback_text ? (

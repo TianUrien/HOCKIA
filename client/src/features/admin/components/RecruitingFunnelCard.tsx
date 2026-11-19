@@ -89,7 +89,7 @@ export function RecruitingFunnelCard({ days }: RecruitingFunnelCardProps) {
                     <div className="tabular-nums text-gray-900"><span className="font-bold">{s.count.toLocaleString()}</span> <span className="text-xs text-gray-500">{s.unit}</span></div>
                     <div className="text-[11px] text-gray-500 tabular-nums">
                       {people ?? '—'}
-                      {share && share.whole > 0 && s.count > 0 && <span> · {shareLabel(s.key === 'applied' ? s.people : s.count, share.whole)} {share.label}</span>}
+                      {share && share.whole > 0 && s.count > 0 && <span>, {shareLabel(s.key === 'applied' ? s.people : s.count, share.whole)} {share.label}</span>}
                     </div>
                   </div>
                 </li>
@@ -100,7 +100,7 @@ export function RecruitingFunnelCard({ days }: RecruitingFunnelCardProps) {
             <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 border-t border-gray-100 pt-3 text-xs sm:grid-cols-5" data-testid="funnel-medians">
               <div>
                 <dt className="text-gray-500">Opportunity posted → first application</dt>
-                <dd className="font-semibold text-gray-900 tabular-nums">{hours(med.role_to_first_application_hours)} <span className="font-normal text-gray-400">median · {med.roles_with_application} opportunities</span></dd>
+                <dd className="font-semibold text-gray-900 tabular-nums">{hours(med.role_to_first_application_hours)} <span className="font-normal text-gray-400">median, {med.roles_with_application} opportunities</span></dd>
               </div>
               <div>
                 <dt className="text-gray-500">Invite answered in</dt>
@@ -112,7 +112,7 @@ export function RecruitingFunnelCard({ days }: RecruitingFunnelCardProps) {
               </div>
               <div>
                 <dt className="text-gray-500">Club's first reply</dt>
-                <dd className="font-semibold text-gray-900 tabular-nums" data-testid="funnel-first-reply">{hours(reply?.median_hours)} <span className="font-normal text-gray-400">median · {(reply?.responses_measured ?? 0).toLocaleString()} replies</span></dd>
+                <dd className="font-semibold text-gray-900 tabular-nums" data-testid="funnel-first-reply">{hours(reply?.median_hours)} <span className="font-normal text-gray-400">median, {(reply?.responses_measured ?? 0).toLocaleString()} replies</span></dd>
               </div>
               <div>
                 <dt className="text-gray-500">Applications still unanswered</dt>

@@ -49,7 +49,7 @@ export function CohortRetention() {
     <div className="bg-white rounded-2xl border border-gray-200 p-5">
       <div className="flex items-center gap-2 mb-1">
         <Users2 className="w-4 h-4 text-purple-500" />
-        <h3 className="text-sm font-semibold text-gray-900">Week-2 cohort return · by signup week &amp; source</h3>
+        <h3 className="text-sm font-semibold text-gray-900">Week-2 cohort return: by signup week &amp; source</h3>
       </div>
       <p className="text-xs text-gray-500 mb-4">
         Returner = any activity in days 7–13 after signup. Exact (Supabase events, test accounts excluded).
@@ -66,8 +66,8 @@ export function CohortRetention() {
           <Timer className="w-4 h-4 text-emerald-600" />
           <span className="text-sm text-gray-700">
             Median time-to-first-response:{' '}
-            <strong className="text-gray-900">{formatHours(stats.median_hours)}</strong>
-            <span className="text-gray-400"> · {stats.responses_measured} responses measured · {stats.publishers_with_badge} publishers hold a badge ({stats.tier_fast} ⚡ / {stats.tier_week} week / {stats.tier_two_weeks} two-weeks)</span>
+            <strong className="text-gray-900">{formatHours(stats.median_hours)}</strong>{' '}
+            <span className="text-gray-400">{stats.responses_measured} responses measured, {stats.publishers_with_badge} publishers hold a badge ({stats.tier_fast} ⚡ / {stats.tier_week} week / {stats.tier_two_weeks} two-weeks)</span>
           </span>
         </div>
       )}
@@ -98,7 +98,7 @@ export function CohortRetention() {
                     <td className="py-2 pr-4 text-right">
                       {immature ? (
                         <span className="text-gray-400" title="Cohort younger than 14 days: week-2 not final">
-                          {r.week2_returners} · pending
+                          {r.week2_returners} pending
                         </span>
                       ) : (
                         <span className="font-medium text-gray-900">

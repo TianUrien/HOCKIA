@@ -501,9 +501,9 @@ function FeedbackRow({
             <span className="font-medium text-gray-700">
               {row.player_name ?? row.player_id.slice(0, 8)}
             </span>
-            <span>·</span>
+            {' '}
             <span>{formatAdminDate(row.feedback_created_at)}</span>
-            <span>·</span>
+            {' '}
             <code className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded">
               {row.prompt_version}
             </code>
@@ -530,8 +530,8 @@ function FeedbackRow({
                   <ul className="mt-0.5 space-y-1">
                     {row.citations.map((c, i) => (
                       <li key={`${c.field}-${i}`} className="text-gray-700">
-                        <code className="text-purple-700 mr-1">{c.field}</code>
-                        · {c.claim}
+                        <code className="text-purple-700 mr-1">{c.field}</code>{' '}
+                        {c.claim}
                       </li>
                     ))}
                   </ul>
