@@ -109,7 +109,7 @@ export function whenLine(row: Pick<PublicOpportunity, 'start_date' | 'duration'>
   const duration = durationText(row.duration)
   if (!start && !duration) return null
   const starts = start ? `Starts ${start}` : 'Starts immediately'
-  return duration ? `${starts} · ${duration}` : starts
+  return duration ? `${starts}, ${duration}` : starts
 }
 
 /** Package keys the post-role form writes → chip labels. Custom benefits
@@ -173,7 +173,7 @@ export function toOpenRoleCard(row: PublicOpportunity, now = new Date()): OpenRo
 /** "Bologna, Italy · Serie A1" — the card's place line, omitting what is missing (flag drawn separately). */
 export function placeLine(card: Pick<OpenRoleCard, 'city' | 'country' | 'league'>): string {
   const place = [card.city, card.country].filter(Boolean).join(', ')
-  return [place, card.league].filter(Boolean).join(' · ')
+  return [place, card.league].filter(Boolean).join(', ')
 }
 
 /** The strip shows nothing rather than a thin row. */

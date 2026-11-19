@@ -8,15 +8,15 @@ const base: CardMember = { id: 'm1', full_name: 'Leandro Bica', role: 'player', 
 
 describe('Community photo card lines (Figma 6:100)', () => {
   it('role line per role', () => {
-    expect(cardRoleLine({ ...base, position: 'midfielder', playing_category: 'adult_men' })).toBe('Midfielder · Men’s')
+    expect(cardRoleLine({ ...base, position: 'midfielder', playing_category: 'adult_men' })).toBe('Midfielder, Men’s')
     expect(cardRoleLine({ ...base, position: null })).toBe('Player')
-    expect(cardRoleLine({ ...base, role: 'coach', coach_specialization: 'head_coach' })).toBe('Coach · Head coach')
-    expect(cardRoleLine({ ...base, role: 'umpire', umpire_level: 'FIH Level 2' })).toBe('Umpire · FIH Level 2')
-    expect(cardRoleLine({ ...base, role: 'brand', brand_category: 'equipment' })).toBe('Brand · Equipment')
+    expect(cardRoleLine({ ...base, role: 'coach', coach_specialization: 'head_coach' })).toBe('Coach, Head coach')
+    expect(cardRoleLine({ ...base, role: 'umpire', umpire_level: 'FIH Level 2' })).toBe('Umpire, FIH Level 2')
+    expect(cardRoleLine({ ...base, role: 'brand', brand_category: 'equipment' })).toBe('Brand, Equipment')
   })
 
   it('place line hides an unknown age or place', () => {
-    expect(cardPlaceLine(22, '🇦🇷 Buenos Aires')).toBe('22 · 🇦🇷 Buenos Aires')
+    expect(cardPlaceLine(22, '🇦🇷 Buenos Aires')).toBe('22, 🇦🇷 Buenos Aires')
     expect(cardPlaceLine(null, '🇦🇷 Buenos Aires')).toBe('🇦🇷 Buenos Aires')
     expect(cardPlaceLine(31, null)).toBe('31')
     expect(cardPlaceLine(null, null)).toBeNull()
@@ -40,9 +40,9 @@ describe('Club wide card (Figma 12:41)', () => {
   })
 
   it('meta lists open opportunities without counts, else league · place', () => {
-    expect(clubMetaLine({ recruiting: true, positions: ['defender', 'forward', 'defender'], league: 'D1', place: null })).toBe('Recruiting · Defender, Forward')
-    expect(clubMetaLine({ recruiting: true, positions: ['coach'], league: null, place: null })).toBe('Recruiting · Coach')
-    expect(clubMetaLine({ recruiting: false, positions: [], league: 'Serie A Elite', place: '🇮🇹 Rome, Italy' })).toBe('Serie A Elite · 🇮🇹 Rome, Italy')
+    expect(clubMetaLine({ recruiting: true, positions: ['defender', 'forward', 'defender'], league: 'D1', place: null })).toBe('Recruiting: Defender, Forward')
+    expect(clubMetaLine({ recruiting: true, positions: ['coach'], league: null, place: null })).toBe('Recruiting: Coach')
+    expect(clubMetaLine({ recruiting: false, positions: [], league: 'Serie A Elite', place: '🇮🇹 Rome, Italy' })).toBe('Serie A Elite, 🇮🇹 Rome, Italy')
   })
 
   it('crest colour gradient falls back to brand until a colour is stored', () => {

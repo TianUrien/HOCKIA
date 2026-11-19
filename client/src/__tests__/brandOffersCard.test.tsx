@@ -24,7 +24,7 @@ describe('brand dashboard Offers card (Figma B0 / B0b)', () => {
 
   it('says what is waiting when nothing is live yet', () => {
     render(<OffersCard offers={[{ status: 'draft' }, { status: 'in_review' }, { status: 'in_review' }]} totals={null} onCreate={vi.fn()} onOpen={vi.fn()} />)
-    expect(screen.getByText('0 of 5 live · 3 drafts')).toBeInTheDocument()
+    expect(screen.getByText('0 of 5 live, 3 drafts')).toBeInTheDocument()
   })
 
   it('hides the 30-day tiles while every number is zero or unknown', () => {

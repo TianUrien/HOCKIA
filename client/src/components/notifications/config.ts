@@ -332,7 +332,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
       // positionLabel covers player positions and coach roles ('head_coach'
       // → 'Head coach'), so the raw enum never reaches the row.
       const parts = [positionLabel(position), location || null].filter(Boolean)
-      return parts.length > 0 ? parts.join(' \u2022 ') : null
+      return parts.length > 0 ? parts.join(', ') : null
     },
     getRoute: opportunityDetailRoute,
   },

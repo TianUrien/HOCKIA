@@ -85,7 +85,7 @@ export function formatAuthorContext(ctx: AuthorContext | null, role?: string | n
   if (!ctx) return null
   // A club IS the club — show only where it is.
   const parts = role === 'club' ? [ctx.city] : [ctx.club, ctx.city]
-  const s = parts.filter(Boolean).join(' · ')
+  const s = parts.filter(Boolean).join(', ')
   return s || null
 }
 

@@ -226,7 +226,7 @@
     "signInBody": "Sign in or create a free Hockia account to view member profiles."
   },
   "people": {
-    "deckLabel": "{{list}} · {{sort}}",
+    "deckLabel": "{{list}}, {{sort}}",
     "deckList": {
       "matching": "Matching members",
       "all": "All members",
@@ -262,13 +262,13 @@
       "boys": "Boys"
     },
     "roleLine": {
-      "player": "{{position}} · {{team}}",
-      "coach": "Coach · {{specialty}}",
-      "umpire": "Umpire · {{level}}",
-      "brand": "Brand · {{category}}"
+      "player": "{{position}}, {{team}}",
+      "coach": "Coach, {{specialty}}",
+      "umpire": "Umpire, {{level}}",
+      "brand": "Brand, {{category}}"
     },
     "recruiting": "Recruiting",
-    "recruitingFor": "Recruiting · {{positions}}",
+    "recruitingFor": "Recruiting: {{positions}}",
     "availableNow": "Now",
     "availableFrom": "From {{month}}",
     "availableFromYear": "From {{month}} {{year}}",
@@ -298,7 +298,7 @@
   },
   "previewSheet": {
     "fallbackName": "Hockia member",
-    "label": "{{name}} · preview",
+    "label": "{{name}}, preview",
     "close": "Close preview",
     "openPhoto": "Open {{name}}'s photo",
     "rows": {
@@ -353,7 +353,7 @@
   },
   "fullPreview": {
     "fallbackName": "Hockia member",
-    "passportWithEu": "{{names}} · EU",
+    "passportWithEu": "{{names}}, EU",
     "errors": {
       "messageFailed": "Could not open the conversation. Please try again."
     },
@@ -703,7 +703,7 @@
       "same": "Same as last week"
     },
     "recruiters": {
-      "both": "{{clubs}} · {{coaches}}",
+      "both": "{{clubs}}, {{coaches}}",
       "none": "None yet"
     },
     "newRoles": {
@@ -782,7 +782,7 @@
       "newLabel": "New this week",
       "wroteReference": "{{name}} wrote you a reference",
       "receivedReference": "You received a reference",
-      "askHint": "Teammates can write you a reference · <a>Ask</a>"
+      "askHint": "Teammates can write you a reference. <a>Ask</a>"
     },
     "activity": {
       "documentTitle": "Your activity",
@@ -795,7 +795,7 @@
       "clubsViewed_other": "{{count}} clubs viewed your profile",
       "profileViews_one": "{{count}} profile view",
       "profileViews_other": "{{count}} profile views",
-      "viewsHint": "This week · names shown when visible",
+      "viewsHint": "This week. Names shown when visible",
       "leftReference": "{{name}} left you a reference",
       "receivedReference": "You received a reference",
       "emptyTitle": "Nothing new this week",

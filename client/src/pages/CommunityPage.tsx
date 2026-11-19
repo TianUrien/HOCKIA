@@ -494,7 +494,7 @@ export default function CommunityPage() {
                   {(() => {
                     const displayed = isNarrowed || scopeNarrows ? filteredCount : totalCount
                     if (displayed === null) return null
-                    return <span className="font-semibold tabular-nums text-gray-500"> · {formatNumber(displayed)}</span>
+                    return <>{' '}<span className="ml-2 font-semibold tabular-nums text-gray-500">{formatNumber(displayed)}</span></>
                   })()}
                 </h2>
                 <label className="relative flex flex-shrink-0 items-center text-[13px] font-semibold text-hockia-primary">

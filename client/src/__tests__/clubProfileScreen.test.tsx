@@ -5,15 +5,15 @@ import { clubLeagueLine, leagueBandNote, openRoleLine } from '@/lib/clubProfileC
 // the public open-role card's second line.
 describe('clubLeagueLine', () => {
   it('merges an identical men and women league', () => {
-    expect(clubLeagueLine('Leinster Division 1A', 'Leinster Division 1A')).toBe('Leinster Division 1A · men & women')
-    expect(clubLeagueLine('Premier Division', ' premier division ')).toBe('Premier Division · men & women')
+    expect(clubLeagueLine('Leinster Division 1A', 'Leinster Division 1A')).toBe('Leinster Division 1A, men & women')
+    expect(clubLeagueLine('Premier Division', ' premier division ')).toBe('Premier Division, men & women')
   })
   it('names each side when they differ', () => {
-    expect(clubLeagueLine('Premier Division', 'Serie A1')).toBe('Premier Division · men, Serie A1 · women')
+    expect(clubLeagueLine('Premier Division', 'Serie A1')).toBe('Premier Division for men, Serie A1 for women')
   })
   it('handles one side and none', () => {
-    expect(clubLeagueLine('Premier Division', null)).toBe('Premier Division · men')
-    expect(clubLeagueLine(null, 'Serie A1')).toBe('Serie A1 · women')
+    expect(clubLeagueLine('Premier Division', null)).toBe('Premier Division, men')
+    expect(clubLeagueLine(null, 'Serie A1')).toBe('Serie A1, women')
     expect(clubLeagueLine('', undefined)).toBeNull()
   })
 })
