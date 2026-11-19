@@ -36,8 +36,11 @@ interface QueueRecord {
 }
 
 interface StatusEntry {
-  /** 'offered' is a club's offer (recruiting_update / offer_received), not an application status change. */
-  status: 'shortlisted' | 'rejected' | 'offered'
+  /**
+   * 'offered' is a club's offer and 'offer_withdrawn' its withdrawal
+   * (recruiting_update / offer_received, offer_withdrawn), not application status changes.
+   */
+  status: 'shortlisted' | 'rejected' | 'offered' | 'offer_withdrawn'
   vacancy_title: string
   club_name: string
   opportunity_id: string | null
@@ -47,6 +50,8 @@ interface StatusEntry {
   /** Offers only: the conversation that holds the offer card, and the last day to answer. */
   conversation_id?: string | null
   open_until?: string | null
+  /** Withdrawn offers only: the application is back on the club's shortlist. */
+  still_shortlisted?: boolean
 }
 
 function createLogger(correlationId: string) {
@@ -199,11 +204,15 @@ Deno.serve(async (req: Request) => {
       .filter((e) => !e.application_id || !currentById.has(e.application_id) || currentById.get(e.application_id)!.status === e.status)
       .map((e) => ({ ...e, note: e.status === 'rejected' && e.application_id ? currentById.get(e.application_id)?.note ?? null : null }))
 
-    // ── Offers in this batch (recruiting_update / offer_received) ──
-    // Only an offer that is still live is emailed: one withdrawn, answered or
-    // replaced since the notification was written is dropped.
+    // ── Offers in this batch (recruiting_update / offer_received, offer_withdrawn) ──
+    // An offer is emailed only while it is still live: one withdrawn, answered
+    // or replaced since the notification was written is dropped. A withdrawal
+    // is emailed only while the offer is still withdrawn (the SQL side queues
+    // it only when the offer itself was emailed).
     const offerNotifs = notifications.filter((n: any) =>
-      n.kind === 'recruiting_update' && n.metadata?.event === 'offer_received' && typeof n.metadata?.offer_id === 'string')
+      n.kind === 'recruiting_update'
+      && (n.metadata?.event === 'offer_received' || n.metadata?.event === 'offer_withdrawn')
+      && typeof n.metadata?.offer_id === 'string')
     const offerEntries: StatusEntry[] = []
     if (offerNotifs.length) {
       // opportunity_offers is newer than the generated edge types.
@@ -212,11 +221,25 @@ Deno.serve(async (req: Request) => {
         .from('opportunity_offers')
         .select('id, status, open_until, application_id, opportunity_id, player_id')
         .in('id', offerNotifs.map((n: any) => n.metadata.offer_id))
+      const wantedStatus = new Map<string, string>(offerNotifs.map((n: any) =>
+        [n.metadata.offer_id, n.metadata.event === 'offer_withdrawn' ? 'withdrawn' : 'live']))
       const liveById = new Map<string, any>()
       for (const o of (offers ?? []) as any[]) {
-        if (o.status === 'live' && o.player_id === player.id) liveById.set(o.id, o)
+        if (o.status === wantedStatus.get(o.id) && o.player_id === player.id) liveById.set(o.id, o)
       }
       const oppIds = [...new Set([...liveById.values()].map((o) => o.opportunity_id).filter(Boolean))]
+      // "Still on the shortlist" is said only when it is true right now.
+      const withdrawnAppIds = [...liveById.values()].filter((o) => o.status === 'withdrawn').map((o) => o.application_id).filter(Boolean)
+      const shortlistedApps = new Set<string>()
+      if (withdrawnAppIds.length) {
+        const { data: apps } = await supabase
+          .from('opportunity_applications')
+          .select('id, status')
+          .in('id', withdrawnAppIds)
+        for (const a of (apps ?? []) as { id: string; status: string }[]) {
+          if (a.status === 'shortlisted') shortlistedApps.add(a.id)
+        }
+      }
       const titleById = new Map<string, string>()
       const orgById = new Map<string, string>()
       if (oppIds.length) {
@@ -239,7 +262,7 @@ Deno.serve(async (req: Request) => {
         const offer = liveById.get(n.metadata.offer_id)
         if (!offer) continue
         offerEntries.push({
-          status: 'offered',
+          status: offer.status === 'withdrawn' ? 'offer_withdrawn' : 'offered',
           vacancy_title: titleById.get(offer.opportunity_id) ?? n.metadata?.summary ?? (es ? 'una oportunidad' : 'an opportunity'),
           club_name: orgById.get(offer.opportunity_id) ?? (es ? 'un club' : 'a club'),
           opportunity_id: offer.opportunity_id ?? null,
@@ -247,9 +270,12 @@ Deno.serve(async (req: Request) => {
           note: null,
           conversation_id: n.metadata?.conversation_id ?? null,
           open_until: offer.open_until ?? null,
+          still_shortlisted: offer.status === 'withdrawn' && shortlistedApps.has(offer.application_id),
         })
       }
     }
+    // Offers first, then withdrawals, then status changes (same order in HTML and text).
+    offerEntries.sort((x, y) => Number(x.status === 'offer_withdrawn') - Number(y.status === 'offer_withdrawn'))
     const entries: StatusEntry[] = [...offerEntries, ...statusEntries]
 
     if (entries.length === 0) {
@@ -263,6 +289,7 @@ Deno.serve(async (req: Request) => {
     const rejected = entries.filter((e) => e.status === 'rejected')
     const shortlisted = entries.filter((e) => e.status === 'shortlisted')
     const offered = entries.filter((e) => e.status === 'offered')
+    const offerWithdrawn = entries.filter((e) => e.status === 'offer_withdrawn')
     const offerUrl = (e: StatusEntry) => e.conversation_id
       ? `${HOCKIA_BASE_URL}/messages/${e.conversation_id}`
       : `${HOCKIA_BASE_URL}/opportunities/applications`
@@ -271,6 +298,11 @@ Deno.serve(async (req: Request) => {
       const label = offerDateLabel(e.open_until, language)
       return label ? (es ? ` Abierta hasta el ${label}.` : ` Open until ${label}.`) : ''
     }
+
+    const withdrawnTitle = (e: StatusEntry) => es ? `${e.club_name} retiró su oferta` : `${e.club_name} withdrew its offer`
+    const withdrawnBody = (e: StatusEntry) => e.still_shortlisted
+      ? (es ? ' Tu postulación sigue en su preselección.' : ' Your application is still on their shortlist.')
+      : ''
 
     // Suggestions only when a rejection is in the batch (spec: rejected →
     // honest + 2-3 similar open opportunities; shortlist emails stay focused).
@@ -288,6 +320,8 @@ Deno.serve(async (req: Request) => {
       ? single
         ? (entries[0].status === 'offered'
             ? `${entries[0].club_name} te envió una oferta`
+            : entries[0].status === 'offer_withdrawn'
+            ? withdrawnTitle(entries[0])
             : entries[0].status === 'shortlisted'
             ? `Estás en la preselección de ${entries[0].club_name}`
             : `Novedades sobre tu postulación a ${entries[0].vacancy_title}`)
@@ -295,6 +329,8 @@ Deno.serve(async (req: Request) => {
       : single
       ? (entries[0].status === 'offered'
           ? `${entries[0].club_name} sent you an offer`
+          : entries[0].status === 'offer_withdrawn'
+          ? withdrawnTitle(entries[0])
           : entries[0].status === 'shortlisted'
           ? `You're on the shortlist of ${entries[0].club_name}`
           : `An update on your application to ${entries[0].vacancy_title}`)
@@ -306,7 +342,13 @@ Deno.serve(async (req: Request) => {
            <a href="${offerUrl(e)}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">${es ? 'Ver la oferta' : 'See the offer'} →</a>
          </td></tr>`
 
-    const entryHtmlEs = (e: StatusEntry) => e.status === 'offered' ? offerHtml(e) : e.status === 'shortlisted'
+    const withdrawnHtml = (e: StatusEntry) => `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
+           <div style="font-size:15px;font-weight:600;color:#0e0b1a;">${escapeHtml(withdrawnTitle(e))}</div>
+           <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(`${e.vacancy_title}.${withdrawnBody(e)}`)}</div>
+           <a href="${offerUrl(e)}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">${es ? 'Ver la conversación' : 'See the conversation'} →</a>
+         </td></tr>`
+
+    const entryHtmlEs = (e: StatusEntry) => e.status === 'offered' ? offerHtml(e) : e.status === 'offer_withdrawn' ? withdrawnHtml(e) : e.status === 'shortlisted'
       ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
            <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ Estás en la preselección de ${escapeHtml(e.club_name)}</div>
            <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Mantén tu perfil al día mientras revisan.</div>
@@ -320,7 +362,7 @@ Deno.serve(async (req: Request) => {
            ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">Ver tu postulación →</a>` : ''}
          </td></tr>`
 
-    const entryHtml = (e: StatusEntry) => es ? entryHtmlEs(e) : e.status === 'offered' ? offerHtml(e) : e.status === 'shortlisted'
+    const entryHtml = (e: StatusEntry) => es ? entryHtmlEs(e) : e.status === 'offered' ? offerHtml(e) : e.status === 'offer_withdrawn' ? withdrawnHtml(e) : e.status === 'shortlisted'
       ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
            <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ You're on the shortlist of ${escapeHtml(e.club_name)}</div>
            <div style="font-size:13px;color:#6b6878;margin-top:2px;">${escapeHtml(e.vacancy_title)}. Keep your profile sharp while they review.</div>
@@ -366,7 +408,13 @@ Deno.serve(async (req: Request) => {
         : `${e.club_name} sent you an offer for ${e.vacancy_title}.${offerUntil(e)} Open Hockia to see the terms and answer.`,
       `${es ? 'Ver la oferta' : 'See the offer'}: ${offerUrl(e)}`,
       '',
-    ])
+    ]).concat(offerWithdrawn.flatMap((e) => [
+      es
+        ? `${e.club_name} retiró su oferta para ${e.vacancy_title}.${withdrawnBody(e)}`
+        : `${e.club_name} withdrew its offer for ${e.vacancy_title}.${withdrawnBody(e)}`,
+      `${es ? 'Ver la conversación' : 'See the conversation'}: ${offerUrl(e)}`,
+      '',
+    ]))
     const textEntries = es
       ? [
         ...offerText,
