@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { closesSoonLabel } from '@/lib/opportunityCopy'
 import { supabase } from '@/lib/supabase'
 import type { Vacancy } from '@/lib/supabase'
-import { clubNoteFromFeedback, formatDurationText } from '@/lib/opportunityCopy'
+import { clubNoteFromFeedback, clubNoteOriginalFromFeedback, formatDurationText } from '@/lib/opportunityCopy'
 import { dayFirst } from '@/lib/dayFirst'
 import { daysUntil } from '@/lib/opportunityRails'
 import { getShareOrigin } from '@/lib/profileShare'
@@ -16,9 +16,10 @@ import { intlLocale, isEnglish } from '@/i18n/format'
  */
 export function useOwnApplicationRow(vacancyId: string, userId: string | null, enabled: boolean, applicationStatus: string | null) {
   const [clubNote, setClubNote] = useState<string | null>(null)
+  const [clubNoteOriginal, setClubNoteOriginal] = useState<string | null>(null)
   const [appliedAt, setAppliedAt] = useState<string | null>(null)
   useEffect(() => {
-    if (!enabled || !userId) { setClubNote(null); setAppliedAt(null); return }
+    if (!enabled || !userId) { setClubNote(null); setClubNoteOriginal(null); setAppliedAt(null); return }
     let cancelled = false
     void supabase
       .from('opportunity_applications')
@@ -30,11 +31,12 @@ export function useOwnApplicationRow(vacancyId: string, userId: string | null, e
         if (cancelled) return
         const row = data as { applied_at?: string | null; ai_feedback?: unknown } | null
         setClubNote(clubNoteFromFeedback(row?.ai_feedback, applicationStatus))
+        setClubNoteOriginal(clubNoteOriginalFromFeedback(row?.ai_feedback, applicationStatus))
         setAppliedAt(row?.applied_at ?? null)
       })
     return () => { cancelled = true }
   }, [enabled, applicationStatus, userId, vacancyId])
-  return { clubNote, appliedAt }
+  return { clubNote, clubNoteOriginal, appliedAt }
 }
 
 /** Share the role's public link: the OS share sheet when there is one, else the clipboard. */

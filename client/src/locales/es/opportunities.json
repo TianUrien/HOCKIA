@@ -503,6 +503,7 @@
     "yourApplication": "Tu postulación",
     "clubNote": "La nota del club",
     "noteFrom": "De {{club}}",
+    "noteOriginal": "Traducción automática. Nota original:",
     "closedTitle": "Esta oportunidad está cerrada",
     "closedBody": "Ya no recibe postulaciones.",
     "declineNoteTitle": "Esta vez no · La nota del club",

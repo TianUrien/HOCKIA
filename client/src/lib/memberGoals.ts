@@ -45,7 +45,7 @@ export interface MyGoal {
 export function goalTitle(role: GoalRole, goal: Pick<MyGoal, 'options' | 'other_text'>): string {
   const labels = GOAL_OPTIONS[role].filter((o) => goal.options.includes(o.key)).map((o) => o.label)
   if (goal.other_text) labels.push(goal.other_text)
-  return labels.join(' · ')
+  return labels.join('. ')
 }
 
 // ── Server calls ────────────────────────────────────────────────────────────
@@ -121,10 +121,10 @@ export function goalRows(role: GoalRole, goal: Pick<MyGoal, 'options'>, data: Go
     const open = data.open_roles ?? 0
     const waiting = data.applicants_waiting ?? 0
     if (open > 0) {
-      // Two separate facts on one row, separated by the interface's middle dot.
+      // Two counts on one row, joined with a comma (no dot separators).
       const parts = [tHome('goalRows.openRoles', { count: open })]
       if (waiting > 0) parts.push(tHome('goalRows.applicantsWaiting', { count: waiting }))
-      rows.push({ key: 'review', goal: 'fill_role', text: parts.join(' · '), action: tHome('goalRows.review'), to: '/opportunities' })
+      rows.push({ key: 'review', goal: 'fill_role', text: parts.join(', '), action: tHome('goalRows.review'), to: '/opportunities' })
       rows.push({ key: 'post', goal: 'fill_role', text: tHome('goalRows.postAnother'), action: tHome('goalRows.postAction'), to: '/dashboard/opportunities/new' })
     } else {
       rows.push({ key: 'post', goal: 'fill_role', text: tHome('goalRows.postFirst'), action: tHome('goalRows.postAction'), to: '/dashboard/opportunities/new' })

@@ -1,4 +1,5 @@
 import { RoleAiEntry } from '@/components/hockiaAi/RoleAiEntry'
+import { ClubNoteOriginal } from './ClubNoteOriginal'
 import { roleViewerGate } from '@/lib/roleViewerGate'
 import type { ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -117,7 +118,7 @@ export function OpportunityDetailDesktop({
   const { startsValue, duration, applyByValue, applyBySub } = roleDates(vacancy)
   const userId = profile?.id ?? null
   const needsOwnRow = hasApplied && !!userId && (applicationStatus === 'rejected' || closed)
-  const { clubNote, appliedAt } = useOwnApplicationRow(vacancy.id, userId, needsOwnRow, applicationStatus)
+  const { clubNote, clubNoteOriginal, appliedAt } = useOwnApplicationRow(vacancy.id, userId, needsOwnRow, applicationStatus)
   const appliedOn = appliedOnLine(appliedAt)
   const compensationKey = (vacancy.compensation ?? '').toLowerCase()
   const eyebrow = [identity.hiringClub?.name ?? clubName, pill?.label].filter(Boolean).join(' · ').toUpperCase()
@@ -258,6 +259,7 @@ export function OpportunityDetailDesktop({
                   <div className="mt-3 border-t border-line pt-3" data-testid="club-note">
                     <p className="text-secondary font-semibold text-ink-2">{t('detail.clubNote')}</p>
                     <p className="mt-1.5 whitespace-pre-wrap break-words text-row leading-[21px] text-ink-1">{clubNote}</p>
+                    <ClubNoteOriginal original={clubNoteOriginal} />
                     <p className="mt-1.5 text-caption text-ink-3">{t('detail.noteFrom', { club: clubName })}</p>
                   </div>
                 )}
@@ -282,6 +284,7 @@ export function OpportunityDetailDesktop({
                 <div className="rounded-card bg-surface-grouped p-4">
                   <p className="text-secondary font-semibold text-ink-2">{t('detail.declineNoteTitle')}</p>
                   <p className="mt-1.5 whitespace-pre-wrap text-row leading-[21px] text-ink-1">{clubNote}</p>
+                  <ClubNoteOriginal original={clubNoteOriginal} />
                   <p className="mt-1.5 text-caption text-ink-3">{t('detail.noteFrom', { club: clubName })}</p>
                 </div>
               </section>

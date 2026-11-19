@@ -145,11 +145,11 @@ export function formatClock(seconds: number | null | undefined): string | null {
   return `${m}:${s}`
 }
 
-/** "Defender · Women's 1st team · 2027" — the club's role label, else the
+/** "Defender, 2027" — the club's role label, else the
  *  person's position, then the season. */
 export function signingDetail(m: Pick<SigningMetadata, 'signing_role' | 'person_position' | 'season'>): string | null {
   const role = m.signing_role?.trim() || positionLabel(m.person_position) || null
-  return [role, m.season?.trim() || null].filter(Boolean).join(' · ') || null
+  return [role, m.season?.trim() || null].filter(Boolean).join(', ') || null
 }
 
 /** Share a Hockia path with the system sheet, else copy it. */
@@ -171,10 +171,10 @@ export async function shareLink(path: string): Promise<'shared' | 'copied' | 'di
   }
 }
 
-/** "Defender · Women's 1st" — position, then the team ("Women's Team" → "Women's"). */
+/** "Defender, Women's 1st" — position, then the team ("Women's Team" → "Women's"). */
 export function roleTitle(position: string | null, gender: string | null, fallback: string): string {
   const team = opportunityGenderToTeamLabel(gender).replace(/ Team$/, '')
-  return [positionLabel(position) || null, team || null].filter(Boolean).join(' · ') || fallback
+  return [positionLabel(position) || null, team || null].filter(Boolean).join(', ') || fallback
 }
 
 /** People-row rings (Figma 60:164): brand for new members, green for available now. */

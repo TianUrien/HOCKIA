@@ -49,7 +49,7 @@
     "ariaLabel": "{{caption}}: {{percent}}%"
   },
   "dashboardCard": {
-    "ariaLabel": "{{title}} · {{cta}}"
+    "ariaLabel": "{{title}}, {{cta}}"
   },
   "clubHero": {
     "actionComplete": "Completar",
@@ -195,7 +195,7 @@
   "feedCard": {
     "unnamedClub": "Un club",
     "unnamedMember": "Integrante de Hockia",
-    "viewProfileAria": "{{name}} · ver perfil"
+    "viewProfileAria": "{{name}}, ver perfil"
   },
   "carousel": {
     "imageAlt": "{{title}} - imagen {{number}}",
@@ -296,8 +296,8 @@
     "addVideo": "Agregar video",
     "hintPhotoOrVideo": "Foto o video",
     "hintPhoto": "Foto",
-    "limitPhotoOrVideo": "Foto o video · hasta {{max}}",
-    "limitPhotos": "Fotos · hasta {{max}}",
+    "limitPhotoOrVideo": "Foto o video, hasta {{max}}",
+    "limitPhotos": "Fotos, hasta {{max}}",
     "uploadingVideo": "Subiendo video...",
     "uploading": "Subiendo...",
     "cancelUpload": "Cancelar subida",
@@ -308,8 +308,8 @@
     "addPhotoTile": "Foto",
     "addVideoTile": "Video",
     "cancel": "Cancelar",
-    "footer": "{{used}}/{{max}} archivos · Fotos: hasta 10 MB",
-    "footerWithVideo": "{{used}}/{{max}} archivos · Fotos: hasta 10 MB · Video: hasta 100 MB, 3 min"
+    "footer": "{{used}}/{{max}} archivos. Fotos: hasta 10 MB.",
+    "footerWithVideo": "{{used}}/{{max}} archivos. Fotos: hasta 10 MB. Video: hasta 100 MB, 3 min."
   },
   "profileViews": {
     "clubAndCoach": "{{clubs}} club y {{coaches}} entrenador/a vieron tu perfil esta semana",
@@ -411,10 +411,10 @@
     "fullscreen": "Pantalla completa"
   },
   "mediaGrid": {
-    "playVideoAria": "Reproducir video · {{title}}",
-    "viewImageAria": "Ver imagen · {{title}}",
+    "playVideoAria": "Reproducir video, {{title}}",
+    "viewImageAria": "Ver imagen, {{title}}",
     "defaultAlt": "Publicación",
-    "imageAlt": "{{title}} · imagen {{number}} de {{total}}"
+    "imageAlt": "{{title}}, imagen {{number}} de {{total}}"
   },
   "composer": {
     "errors": {
@@ -452,7 +452,7 @@
       "ask": "Preguntar",
       "post": "Publicar"
     },
-    "audienceLine": "{{identity}} · Toda la comunidad de Hockia",
+    "audience": "Toda la comunidad de Hockia",
     "kind": {
       "groupAria": "Tipo de publicación",
       "post": "Publicación",
@@ -594,7 +594,7 @@
       "alt": "Imagen de la publicación",
       "seeAllAnswers": "Ver todas las respuestas",
       "unnamedMember": "Integrante",
-      "topAnswerMeta": "· {{identity}} · Respuesta destacada",
+      "topAnswerLabel": "Respuesta destacada",
       "unknownAuthor": "Sin nombre",
       "deleteQuestionTitle": "¿Eliminar esta pregunta?",
       "deletePostTitle": "¿Eliminar esta publicación?",
@@ -617,7 +617,8 @@
       "title": "¿Cuál es tu objetivo?",
       "body": "Elige hasta tres, o dilo con tus palabras. Lo usamos para mostrarte lo que te sirve. Nadie más lo ve.",
       "other": "Otro…",
-      "save": "Ese es mi objetivo · {{picked}} de {{max}}",
+      "save": "Ese es mi objetivo",
+      "saveCount": "{{picked}} de {{max}}",
       "cancel": "Cancelar",
       "later": "Más tarde"
     },
@@ -772,7 +773,7 @@
     },
     "complete": {
       "title": "Completar tu perfil",
-      "subtitle": "{{percent}}% listo · los clubes filtran por esto",
+      "subtitle": "{{percent}}% listo. Los clubes filtran por esto",
       "cta": "Editar"
     },
     "applicants": {
@@ -790,7 +791,7 @@
       "title_one": "{{count}} jugador/a disponible",
       "title_other": "{{count}} jugadores/as disponibles",
       "title_many": "{{count}} jugadores/as disponibles",
-      "subtitle": "Disponibles · encajan con tu equipo",
+      "subtitle": "Disponibles y encajan con tu equipo",
       "cta": "Ver"
     },
     "crest": {
@@ -804,9 +805,9 @@
       "cta": "Agregar"
     },
     "brand": {
-      "subtitleSearches_one": "Esta semana · en {{count}} búsqueda",
-      "subtitleSearches_other": "Esta semana · en {{count}} búsquedas",
-      "subtitleSearches_many": "Esta semana · en {{count}} búsquedas"
+      "subtitleSearches_one": "En {{count}} búsqueda esta semana",
+      "subtitleSearches_other": "En {{count}} búsquedas esta semana",
+      "subtitleSearches_many": "En {{count}} búsquedas esta semana"
     },
     "umpire": {
       "title": "Agregar tu nivel de arbitraje",
@@ -864,7 +865,7 @@
   "postParts": {
     "unnamedClub": "Un club",
     "unnamedMember": "Integrante de Hockia",
-    "viewProfileAria": "{{name}} · ver perfil",
+    "viewProfileAria": "{{name}}, ver perfil",
     "like": "Me gusta",
     "unlike": "Quitar me gusta",
     "likeWithTotal": "Me gusta, {{total}}",
@@ -897,9 +898,9 @@
       "chip": "OPORTUNIDAD ABIERTA"
     },
     "photos": {
-      "subtitle_one": "Sumó {{count}} foto · {{age}}",
-      "subtitle_other": "Sumó {{count}} fotos · {{age}}",
-      "subtitle_many": "Sumó {{count}} fotos · {{age}}",
+      "subtitle_one": "Sumó {{count}} foto",
+      "subtitle_other": "Sumó {{count}} fotos",
+      "subtitle_many": "Sumó {{count}} fotos",
       "photoAria": "Foto {{number}} de {{total}}"
     },
     "reference": {
@@ -923,8 +924,8 @@
       "deleteConfirm": "Eliminar"
     },
     "video": {
-      "subtitleFullMatch": "Partido completo · público · {{age}}",
-      "subtitleHighlight": "Highlight · {{age}}",
+      "subtitleFullMatch": "Partido completo, público",
+      "subtitleHighlight": "Highlight",
       "badgeFullMatch": "PARTIDO COMPLETO",
       "badgeHighlight": "HIGHLIGHT",
       "fullMatchTitle": "Partido completo",
