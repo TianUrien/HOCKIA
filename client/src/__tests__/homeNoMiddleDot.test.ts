@@ -12,9 +12,26 @@
  * Same idea as supabase/functions/_shared/email-polish.test.ts. Code comments
  * are skipped: only what a member can read or hear counts.
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
+
+// The helpers import the Supabase client, which throws without its environment
+// variables (CI has none).
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: vi.fn(),
+    rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
+    functions: { invoke: vi.fn() },
+    auth: {
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+    },
+  },
+  AUTH_STORAGE_KEY: 'hockia-auth',
+  SUPABASE_URL: 'https://test.supabase.local',
+  SUPABASE_ANON_KEY: 'test-anon-key',
+}))
 
 const SRC = join(__dirname, '..')
 
