@@ -54,10 +54,14 @@ function FeedCardSentinel({ index, onVisible, children }: { index: number; onVis
  * the new card set, "Roles for you" after the 2nd item, "You're all caught up"
  * at the end (H13). Owns the one comments sheet and the one Community deck.
  */
-export function HomeV1Feed({ prependItemRef, header }: {
+export function HomeV1Feed({ prependItemRef, header, afterFirst }: {
   prependItemRef?: React.RefObject<((item: HomeFeedItem) => void) | null>
-  /** Next step + people row — kept on screen when the feed fails (H12b). */
+  /** What the member must act on — kept on screen when the feed fails (H12b). */
   header: ReactNode
+  /** Goal, gear and people: after the first feed item, so a post is on the
+   *  first screen (founder 2026-11-18). Right under the header when the feed
+   *  has nothing to show. */
+  afterFirst?: ReactNode
 }) {
   const t = useHomeT()
   const feed = useHomeFeed({ v2: true })
@@ -157,6 +161,9 @@ export function HomeV1Feed({ prependItemRef, header }: {
 
         {firstLoad && <FirstPostSkeleton />}
 
+        {/* No feed item to sit under (empty or failed feed): straight after the header. */}
+        {!firstLoad && items.length === 0 && afterFirst}
+
         {error && items.length === 0 && (
           // H12b: the header + Next step + people stay; the feed says so inline.
           <div className="flex flex-col items-center gap-1 px-8 py-12 text-center" role="alert" data-testid="home-feed-error">
@@ -180,6 +187,10 @@ export function HomeV1Feed({ prependItemRef, header }: {
                 </div>
               </FeedCardSentinel>
             </ItemBoundary>
+            {idx === 0 && afterFirst && (
+              // The band is the top border, so nothing shows when every block is hidden.
+              <div className="border-t-8 border-surface-subtle pt-2 empty:hidden" data-testid="home-after-first">{afterFirst}</div>
+            )}
             {idx === RAIL_AFTER - 1 && (
               <ItemBoundary>
                 <RailSlot />
