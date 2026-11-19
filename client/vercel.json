@@ -131,6 +131,13 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap.xml",
+      "statusCode": 301
+    }
+  ],
   "rewrites": [
     {
       "source": "/robots.txt",
