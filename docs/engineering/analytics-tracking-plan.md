@@ -240,6 +240,14 @@ non-recruiting coaches whose `career_entry_count` is 0, after the views card and
 - Check after a release: `select event_name, count(*) from analytics_events where created_at >
   now() - interval '1 day' group by 1` must still list the events the release touched.
 
+## Home module positions after 2026-11-18
+
+Source: Home layout change of 2026-11-18 (goal, gear and people moved after the first feed
+item). Module ids and their `position` values are unchanged so earlier numbers stay
+comparable by id; from this date `v1_people_new` and `v1_people_available` are seen after
+the first feed card, so their impressions depend on the feed having at least one item
+scrolled past. Compare them by date, not across it.
+
 ## Share on Home prompt (added 2026-11-18)
 
 Source: production on 2026-11-18 (read-only). In the 8 days after the 2026-11-10 "facts only"

@@ -29,8 +29,10 @@ const PostComposerModal = lazy(() => import('@/components/home/PostComposerModal
  * "Your activity" (H3) because old native apps link to it.
  *   1 Header: wordmark · "+" New post · Search
  *   2 Next step: one card, "1 of N" dots
- *   3 People: "New in the community" — clubs + recruiting coaches get "Available now"
- *   4 Feed (get_home_feed_v2) with "Roles for you" after the 2nd item
+ *   3 Feed (get_home_feed_v2): the first item is on the first screen (2026-11-18)
+ *   4 After the 1st item: goal, gear and deals, people ("New in the community";
+ *     clubs + recruiting coaches get "Available now")
+ *   5 "Roles for you" after the 2nd item
  */
 export default function HomePage() {
   const t = useHomeT()
@@ -80,13 +82,20 @@ export default function HomePage() {
             prependItemRef={prependItemRef}
             header={
               <>
-                {/* Goal first, then the roles card, then gear and deals (Figma YG G1 / HR1, founder 2026-10-25). */}
+                {/* Only what the member must act on stays above the feed, so a
+                    post is on the first screen (founder 2026-11-18). */}
                 {/* No country on the profile: ask first, everything below picks by place (2026-11-07). */}
                 <CountryConfirmCard />
                 {/* Brands: their own results first, the feed below (2026-11-07). */}
                 <BrandHomeSummary />
-                <GoalCard />
                 <NextStepCard onCompose={openComposer} />
+              </>
+            }
+            afterFirst={
+              <>
+                {/* Goal, then gear and deals, then people (Figma YG G1 / HR1, founder
+                    2026-10-25): same order, now after the first feed item. */}
+                <GoalCard />
                 <GearRail />
                 <PeopleRow kind={clubSide ? 'available' : 'new'} />
               </>
