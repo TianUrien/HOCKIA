@@ -45,7 +45,7 @@ function leagueFor(club: InviteCardData['club'], gender: string | null): string 
 
 function packageLine(benefits: string[] | null): string | null {
   const labels = (benefits ?? []).map((b) => b.trim()).filter(Boolean).map((b) => benefitLabel(b) ?? b.charAt(0).toUpperCase() + b.slice(1).toLowerCase())
-  return labels.length ? [...new Set(labels)].join(' · ') : null
+  return labels.length ? [...new Set(labels)].join(', ') : null
 }
 
 export default function InviteCard({ inviteId, opportunityId, isMine, fallbackText }: Props) {

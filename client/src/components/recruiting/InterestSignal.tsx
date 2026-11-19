@@ -25,7 +25,7 @@ export default function InterestSignal({ result, variant = 'full', className = '
   const t = useRecruitingT()
   if (!result.isApplicable) return null
   const label = interestLevelLabel(result.level)
-  const tooltip = result.reasons.length > 0 ? t('interestSignal.tooltip', { label, reasons: result.reasons.join(' · ') }) : label
+  const tooltip = result.reasons.length > 0 ? t('interestSignal.tooltip', { label, reasons: result.reasons.join('. ') }) : label
 
   return (
     <div className={['flex flex-col gap-1', className].join(' ')}>

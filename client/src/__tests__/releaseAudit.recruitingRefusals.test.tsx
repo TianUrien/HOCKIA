@@ -230,7 +230,7 @@ describe('B · application status × every surface', () => {
     expect(applicationStatusPill('pending', '2026-09-30T10:00:00Z', true, NOW).label).toBe('In review')
     expect(applicationStatusPill('pending', '2026-09-22T10:00:00Z', true, NOW).label).toBe('In review') // 13 days
     const long = applicationStatusPill('pending', '2026-09-21T10:00:00Z', true, NOW) // 14 days
-    expect(long.label).toBe('No reply · 14d')
+    expect(long.label).toBe('No reply in 14d')
     expect(long.tone).toBe('grey')
     expect(applicationStatusPill('pending', '2026-09-01T10:00:00Z', false, NOW).label).toBe('Opportunity closed')
     // A status this build does not know yet behaves like pending, not like a crash.

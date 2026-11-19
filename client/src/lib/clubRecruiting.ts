@@ -89,7 +89,7 @@ export function closedBreakdown(p: Pick<Pipeline, 'noReply' | 'filled' | 'withdr
   if (p.noReply > 0) parts.push(tClub('recruitingCopy.closedNoReply', { count: p.noReply, days: expiryDays }))
   if (p.filled > 0) parts.push(tClub('recruitingCopy.closedFilled', { count: p.filled }))
   if (p.withdrawn > 0) parts.push(tClub('recruitingCopy.withdrawn', { count: p.withdrawn }))
-  return parts.length ? parts.join(' · ') : null
+  return parts.length ? parts.join(', ') : null
 }
 
 /**
@@ -101,7 +101,7 @@ export function toReviewClosedNote(p: Pick<Pipeline, 'noReply' | 'withdrawn'>): 
   const parts: string[] = []
   if (p.noReply > 0) parts.push(tClub('recruitingCopy.closedSoFar', { count: p.noReply }))
   if (p.withdrawn > 0) parts.push(tClub('recruitingCopy.withdrawn', { count: p.withdrawn }))
-  return parts.length ? parts.join(' · ') : null
+  return parts.length ? parts.join(', ') : null
 }
 
 /**
@@ -318,6 +318,6 @@ export function decisionToast(firstName: string, status: 'shortlisted' | 'maybe'
 /** "Player · Midfielder · Defender" — the role line under every person row. */
 export function personRoleLine(p: { role: string | null; position: string | null; secondaryPosition: string | null }): string {
   const positions = [p.position, p.secondaryPosition].filter((v, i, a): v is string => Boolean(v) && a.indexOf(v) === i).map((v) => humanizeToken(v) ?? v)
-  return [roleLabel((p.role ?? 'player') as 'player'), ...positions].join(' · ')
+  return [roleLabel((p.role ?? 'player') as 'player'), ...positions].join(', ')
 }
 

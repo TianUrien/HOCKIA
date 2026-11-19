@@ -14,7 +14,7 @@
     "roleClosed": "Opportunity closed",
     "withdrawnMessage": "This player withdrew their application",
     "movedOnMessage": "This application has already moved on, so it wasn’t declined",
-    "noReplyDays": "No reply · {{days}}d"
+    "noReplyDays": "No reply in {{days}}d"
   },
   "statusReason": {
     "positionFilled": "Position already filled",
@@ -78,7 +78,7 @@
     "closesInDays_one": "Closes in {{count}} day",
     "closesInDays_other": "Closes in {{count}} days",
     "closesOn": "Closes {{date}}",
-    "noDeadline": "No deadline · closes when filled",
+    "noDeadline": "No deadline, closes when filled",
     "applyBy": "Apply by {{date}}",
     "appliedOn": "Applied {{date}}",
     "appliedToday": "Applied today",
@@ -131,7 +131,7 @@
       "detail": "The club pays for the season"
     },
     "compensationNotStated": "Compensation not stated",
-    "notListed": "Package not listed · ask the club",
+    "notListed": "Package not listed, ask the club",
     "paidOrUnpaid": "Paid or unpaid",
     "euPassport": "EU passport"
   },

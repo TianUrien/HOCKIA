@@ -56,7 +56,7 @@ describe('Card / Role', () => {
   })
   it('shows "Club · flag city · league", a category-coloured team tag and the closing status', () => {
     card(false, { application_deadline: '2027-02-13' })
-    expect(screen.getByTestId('role-card-subline')).toHaveTextContent('Hockey Team Bologna · 🇮🇹 Bologna · Serie A1')
+    expect(screen.getByTestId('role-card-subline')).toHaveTextContent('Hockey Team Bologna, 🇮🇹 Bologna, Serie A1')
     expect(screen.getByTestId('category-tag').className).toMatch(/bg-category-(women|men|mixed)-soft/)
     expect(screen.getByTestId('role-card-apply-by').textContent).toBe('Closes 13 Feb')
   })

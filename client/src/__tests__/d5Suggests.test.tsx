@@ -235,7 +235,7 @@ describe('D5.1 · Hockia suggests', () => {
       expect(reasons.length).toBeGreaterThan(0)
       expect(reasons.length).toBeLessThanOrEqual(4)
     }
-    expect(screen.getAllByText('Player · Midfielder · Defender · 🇦🇷')).toHaveLength(5)
+    expect(screen.getAllByText('Player, Midfielder, Defender, 🇦🇷')).toHaveLength(5)
     expect(container.querySelectorAll('[data-kind="missing"] svg.text-ink-3').length).toBeGreaterThan(0)
     expect(container.querySelectorAll('[data-kind="met"] svg.text-positive').length).toBeGreaterThan(0)
     noAmber(container)

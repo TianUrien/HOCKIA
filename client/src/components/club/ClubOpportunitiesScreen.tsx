@@ -39,7 +39,7 @@ const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
 
 function whenLine(r: ClubRole): string {
   const from = r.start_date ? tClub('clubRoles.starts', { date: monthDay(r.start_date) }) : tClub('clubRoles.startsNow')
-  return [from, formatDurationText(r.duration_text)].filter(Boolean).join(' · ')
+  return [from, formatDurationText(r.duration_text)].filter(Boolean).join(', ')
 }
 
 function closedLabel(r: ClubRole): { label: string; tone: 'positive' | 'grey' } {
@@ -83,7 +83,7 @@ function RoleCard({ role, expiryDays, cover, onReview, onChanged, onEdit, onPost
     t('clubRoles.posted', { date: monthDay(rolePostedAt(role)) }),
     open ? whenLine(role) : role.closed_at ? t('clubRoles.closedOn', { date: monthDay(role.closed_at) }) : null,
     role.location_city?.trim() || null,
-  ].filter(Boolean).join(' · ')
+  ].filter(Boolean).join(', ')
   const stat = (value: number, label: string, accent = false) => {
     const lit = accent && value > 0
     return (

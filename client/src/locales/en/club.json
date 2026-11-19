@@ -73,8 +73,8 @@
       "descriptionLength": "Keep “About the opportunity” to {{max}} characters."
     },
     "check": {
-      "subPlayer": "Step 3 of 3 · How players will see it",
-      "subCoach": "Step 3 of 3 · How coaches will see it",
+      "subPlayer": "Step 3 of 3: How players will see it",
+      "subCoach": "Step 3 of 3: How coaches will see it",
       "titlePlayer": "What players ask first",
       "titleCoach": "What coaches ask first"
     },
@@ -283,7 +283,7 @@
     "closedOn": "Closed {{date}}",
     "filled": "filled",
     "notFilled": "not filled",
-    "withReason": "{{closed}} · {{reason}}"
+    "withReason": "{{closed}}, {{reason}}"
   },
   "newContext": {
     "problems": {
@@ -298,25 +298,25 @@
   "clubEditLib": {
     "yearRange": "Choose a year between {{min}} and {{max}}.",
     "linked": "Linked",
-    "linkedLeague": "Linked · {{league}}",
+    "linkedLeague": "Linked: {{league}}",
     "photos_one": "{{count}} photo",
     "photos_other": "{{count}} photos"
   },
   "clubSettings": {
     "groupFooter": "Your league and crest show on your opportunities and profile. Recruiting lives in Opportunities.",
-    "notLinked": "Not linked yet · link your club",
-    "linkedLeague": "Linked · {{league}}",
-    "linkedNoLeague": "Linked · league not set",
+    "notLinked": "Not linked yet. Link your club",
+    "linkedLeague": "Linked: {{league}}",
+    "linkedNoLeague": "Linked, league not set",
     "contactIntro": "So players and coaches can reach the club directly. Your sign-in email is never shown.",
     "contactSwitchLabel": "Show on your profile",
     "contactSwitchHelp": "Off: players message you on Hockia.",
-    "contactEmpty": "Private · players message you on Hockia",
-    "contactShown": "Shown on your profile · {{email}}",
-    "contactPrivate": "Private · {{email}}"
+    "contactEmpty": "Private. Players message you on Hockia",
+    "contactShown": "Shown on your profile: {{email}}",
+    "contactPrivate": "Private: {{email}}"
   },
   "manageMedia": {
     "title": "Media",
-    "photosHeading": "Photos · {{count}}",
+    "photosHeading": "Photos {{count}}",
     "cancel": "Cancel",
     "done": "Done",
     "reorder": "Reorder",
@@ -426,7 +426,7 @@
   },
   "clubSetup": {
     "title": "About your club",
-    "subtitle": "Step 1 of 2 · what players see next to every opportunity.",
+    "subtitle": "Step 1 of 2: what players see next to every opportunity.",
     "attest": "I’m 18 or over and I’m allowed to recruit for this club.",
     "saving": "Saving…",
     "continue": "Continue",
@@ -452,7 +452,7 @@
       "cityAria": "City: {{value}}",
       "cityAriaEmpty": "City: choose",
       "choose": "Choose",
-      "year": "Year founded · optional",
+      "year": "Year founded, optional",
       "yearNotSet": "Not set"
     },
     "sheets": {
@@ -487,14 +487,14 @@
   "postRoleStart": {
     "title": "Post an opportunity",
     "aiTitle": "Start with Hockia AI",
-    "aiSub": "Beta · say it in your own words",
+    "aiSub": "Beta. Say it in your own words",
     "aiPlaceholder": "Left back for our men’s 1st team, paid, with housing, from January",
     "aiAria": "Describe the opportunity in your own words",
     "drafting": "Drafting your opportunity…",
     "draft": "Draft my opportunity",
     "aiNote": "Hockia AI fills in the opportunity, the offer and the description. Nothing is posted until you check it.",
     "postAgain": "Post again",
-    "againRow": "{{title}} · {{team}} team",
+    "againRow": "{{title}}, {{team}} team",
     "scratch": "Start from scratch",
     "scratchSub": "The three steps, empty"
   },
@@ -540,21 +540,21 @@
   "postRole": {
     "steps": {
       "title1": "What are you looking for?",
-      "sub1": "Step 1 of 3 · The opportunity",
+      "sub1": "Step 1 of 3: The opportunity",
       "part1": "The position",
       "title2": "What do you offer?",
-      "sub2": "Step 2 of 3 · The offer",
+      "sub2": "Step 2 of 3: The offer",
       "back2": "The opportunity",
       "part2": "The offer",
       "title3": "Check and post",
-      "sub3": "Step 3 of 3 · How players will see it",
+      "sub3": "Step 3 of 3: How players will see it",
       "back3": "The offer",
       "title3Edit": "Check and save"
     },
     "cover": {
       "invalid": "Please use a JPG, PNG or WebP photo up to 10 MB.",
       "uploadFailed": "We couldn’t upload this photo. Please use a JPG, PNG or WebP up to 10 MB.",
-      "label": "Cover · optional",
+      "label": "Cover, optional",
       "uploading": "Uploading…",
       "change": "Change",
       "add": "Add photo",
@@ -584,15 +584,15 @@
     "back": "Back",
     "cancel": "Cancel",
     "checkTitle": "Check your opportunity",
-    "aiBadge": "Drafted by Hockia AI · Beta",
-    "againBadge": "Posted again · same details",
+    "aiBadge": "Drafted by Hockia AI, Beta",
+    "againBadge": "Posted again, same details",
     "editTitle": "Edit opportunity",
     "newTitle": "New opportunity",
     "saving": "Saving…",
     "saveDraft": "Save draft",
     "saveDraftShort": "Save draft",
     "stepOf": "Step {{step}} of 3",
-    "desktopTitle": "{{title}} · {{part}}",
+    "desktopTitle": "{{title}}: {{part}}",
     "form": {
       "type": "Opportunity type",
       "typePlayer": "Player",
@@ -638,7 +638,7 @@
       "done": "Done",
       "edit": "Edit",
       "needed": "Needed: {{items}}",
-      "optionalMissing": "Not set · optional: {{items}}"
+      "optionalMissing": "Optional, not set: {{items}}"
     },
     "ai": {
       "drafting": "Drafting…",
@@ -691,16 +691,16 @@
     "fit": {
       "position": "Position",
       "thisPosition": "this position",
-      "positionMatch": "Plays {{role}} · matches",
-      "positionSecond": "{{primary}} · plays {{role}} as a second position",
-      "positionSecondNoPrimary": "Another position · plays {{role}} as a second position",
-      "positionMiss": "{{primary}} · the opportunity is for a {{role}}",
+      "positionMatch": "Plays {{role}}, matches",
+      "positionSecond": "{{primary}}, plays {{role}} as a second position",
+      "positionSecondNoPrimary": "Another position, plays {{role}} as a second position",
+      "positionMiss": "{{primary}}, the opportunity is for a {{role}}",
       "positionNone": "No position on the profile yet. The opportunity is for a {{role}}",
       "category": "Category",
-      "categoryMatchTeam": "{{category}} · matches a {{team}} opportunity",
-      "categoryMatch": "{{category}} · matches this opportunity",
-      "categoryMissTeam": "{{category}} · the opportunity is for {{team}}",
-      "categoryMiss": "{{category}} · doesn’t match this opportunity",
+      "categoryMatchTeam": "{{category}}, matches a {{team}} opportunity",
+      "categoryMatch": "{{category}}, matches this opportunity",
+      "categoryMissTeam": "{{category}}, the opportunity is for {{team}}",
+      "categoryMiss": "{{category}}, doesn’t match this opportunity",
       "categoryNone": "No playing category on the profile yet",
       "open": "Open to play",
       "openYes": "Marked available",
@@ -773,7 +773,7 @@
     },
     "unsorted": "Unsorted",
     "backAria": "Back to status options",
-    "reasonHeading": "Reason for “{{status}}” · optional",
+    "reasonHeading": "Reason for “{{status}}”, optional",
     "skipReason": "Skip — just set status",
     "clear": "Clear",
     "viewProfile": "View Profile"
@@ -816,7 +816,7 @@
       "closed": "Closed"
     },
     "postOpportunity": "Post an opportunity",
-    "repliesHeading": "Your replies · last 30 days",
+    "repliesHeading": "Your replies in the last 30 days",
     "repliesAria": "Applicants answered",
     "postRole": "Post a role",
     "noClosed": "No closed opportunities yet.",
@@ -834,7 +834,7 @@
       "opportunities": "Opportunities",
       "league": "Club & league",
       "link": "Link your club",
-      "visitor": "{{name}} · {{section}}"
+      "visitor": "{{name}}: {{section}}"
     },
     "toast": {
       "complete": "Your club profile is now complete! Players and coaches see complete clubs first.",

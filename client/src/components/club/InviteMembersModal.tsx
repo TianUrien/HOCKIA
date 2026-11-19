@@ -226,7 +226,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                 <ul className="divide-y divide-line">
                   {results.map((m) => {
                     const isInvited = invited.has(m.id)
-                    const meta = [positionLabel(m.position), m.current_club || placeText(m.base_location)].filter(Boolean).join(' · ')
+                    const meta = [positionLabel(m.position), m.current_club || placeText(m.base_location)].filter(Boolean).join(', ')
                     return (
                       <li key={m.id} className="flex items-center gap-3 py-2.5">
                         <Avatar src={m.avatar_url} alt={m.full_name ?? ''} initials={m.full_name ? m.full_name.split(' ').map((n) => n[0]).join('') : '?'} size="md" role={m.role} />

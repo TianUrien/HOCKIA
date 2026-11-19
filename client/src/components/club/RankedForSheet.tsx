@@ -53,7 +53,7 @@ export function RankedForSheet({ open, contexts, activeId, roles, onPick, onClos
     const r = c.opportunity_id ? roles.get(c.opportunity_id) : undefined
     const pos = c.target_position ? positionLabel(c.target_position) : null
     const title = r?.title ?? c.label ?? null
-    return [pos, title].filter(Boolean).join(' · ') || contextPillLabel(c)
+    return [pos, title].filter(Boolean).join(', ') || contextPillLabel(c)
   }
   const roleDetail = (c: ContextLike) => {
     const n = c.opportunity_id ? roles.get(c.opportunity_id)?.toReview ?? 0 : 0

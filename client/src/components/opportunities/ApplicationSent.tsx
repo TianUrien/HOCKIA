@@ -86,7 +86,7 @@ export function ApplicationSent({ clubName, identity, roleLine, onClose }: Appli
             </li>
           ))}
         </ol>
-        {roleLine && <p className="mt-3 truncate border-t border-line pt-3 text-secondary text-ink-2" data-testid="application-sent-role">{roleLine} · {subline}</p>}
+        {roleLine && <p className="mt-3 truncate border-t border-line pt-3 text-secondary text-ink-2" data-testid="application-sent-role">{roleLine}, {subline}</p>}
       </div>
       {nudge && (
         <button

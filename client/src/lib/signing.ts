@@ -111,7 +111,7 @@ export function shortDayOf(iso: string | null | undefined, now = new Date()): st
  * so the offer reads "Immediately · 7 months", never "Not set".
  */
 export function offerStartLine(startDate: string | null | undefined, length: string | null | undefined): string {
-  return [longDay(startDate) ?? tInbox('signing.offer.immediately'), length?.trim() || null].filter(Boolean).join(' · ')
+  return [longDay(startDate) ?? tInbox('signing.offer.immediately'), length?.trim() || null].filter(Boolean).join(', ')
 }
 
 /**
@@ -143,7 +143,7 @@ export function offerPackageLine(pkg: string[] | null | undefined): string | nul
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
   })
   const labels = keys.map((k) => BENEFIT_TILES[k.toLowerCase()]?.label ?? k.charAt(0).toUpperCase() + k.slice(1))
-  return labels.length ? labels.join(' · ') : null
+  return labels.length ? labels.join(', ') : null
 }
 
 /** Pay reads like the role's (same field as Post a role). */
@@ -397,7 +397,7 @@ export function roadHeaderLine(shortlistedAt: string | null | undefined, applied
     : when.kind === 'today' ? tInbox('signing.road.header.shortlistedToday')
       : when.kind === 'yesterday' ? tInbox('signing.road.header.shortlistedYesterday')
         : tInbox('signing.road.header.shortlistedOn', { day: when.day })
-  return [shortlisted, applied ? tInbox('signing.road.header.applied', { day: applied }) : null].filter(Boolean).join(' · ')
+  return [shortlisted, applied ? tInbox('signing.road.header.applied', { day: applied }) : null].filter(Boolean).join(', ')
 }
 
 export type RoadAction ='make_offer' | 'edit_offer' | 'mark_signed' | null

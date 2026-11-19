@@ -30,8 +30,8 @@ describe('when / starts lines use the formatter', () => {
     expect(whenLine({ start_date: null, duration_text: null })).toBe('Starts immediately')
   })
   it('startsLine', () => {
-    expect(startsLine({ start_date: null, duration_text: '3' })).toBe('Starts immediately · 3 months')
+    expect(startsLine({ start_date: null, duration_text: '3' })).toBe('Starts immediately, 3 months')
     // Round 9: day first, year always on the header (lib/dayFirst).
-    expect(startsLine({ start_date: '2026-09-16', duration_text: 'Permanent ' })).toBe('Starts 16 Sep 2026 · Permanent')
+    expect(startsLine({ start_date: '2026-09-16', duration_text: 'Permanent ' })).toBe('Starts 16 Sep 2026, Permanent')
   })
 })

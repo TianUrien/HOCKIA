@@ -849,7 +849,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                   <div className="space-y-2 min-w-0 flex-1">
                     <h3 className="text-lg font-semibold text-gray-900 group-hover:text-hockia-primary transition-colors">{vacancy.title}</h3>
                     <span className={`inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-semibold ${roleBadgeStyle}`}>
-                      {badgeParts.join(' · ')}
+                      {badgeParts.join(', ')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -876,7 +876,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                     <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>{locationLabel || t('manage.locationTbd')}</span>
                   </div>
-                  <span className="text-gray-500">·</span>
+                  {' '}
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{vacancy.start_date ? formatDate(vacancy.start_date) : t('manage.startTbd')}</span>
