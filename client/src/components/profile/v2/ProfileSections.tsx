@@ -22,9 +22,11 @@ const CommentsTab = lazy(() => import('@/components/CommentsTab'))
  * title + "See all N", fact tiles, chips, the unified Posts & photos grid and
  * the Comments preview.
  */
-export function Section({ id, title, action, onAction, children, className }: {
+export function Section({ id, title, count, action, onAction, children, className }: {
   id: string
   title: string
+  /** How many items the section holds, shown after the title in its own element. */
+  count?: number | null
   action?: string | null
   onAction?: () => void
   children: ReactNode
@@ -33,7 +35,7 @@ export function Section({ id, title, action, onAction, children, className }: {
   return (
     <section id={id} className={cn('scroll-mt-[120px] pt-6', className)} data-testid={`profile-section-${id}`}>
       <div className="mb-3 flex items-center px-4">
-        <h2 className="min-w-0 flex-1 truncate text-[20px] font-semibold leading-6 tracking-[-0.08px] text-ink-1">{title}</h2>
+        <h2 className="min-w-0 flex-1 truncate text-[20px] font-semibold leading-6 tracking-[-0.08px] text-ink-1">{title}{typeof count === 'number' && <>{' '}<span className="ml-1 text-ink-3">{count}</span></>}</h2>
         {action && onAction && (
           <button type="button" onClick={onAction} className="-my-2 flex min-h-[44px] items-center pl-3 text-secondary font-semibold text-hockia-primary">{action}</button>
         )}
@@ -182,7 +184,7 @@ export function CommentsPreview({ profileId, profileRole, owner }: { profileId: 
   if (owner && count === 0) return null
 
   return (
-    <Section id="comments" title={count > 0 ? t('profileSections.commentsTitleCount', { count }) : t('profileSections.commentsTitle')} action={count > 0 ? t('profileSections.commentsSeeAll') : null} onAction={() => setOpen(true)}>
+    <Section id="comments" title={t('profileSections.commentsTitle')} count={count > 0 ? count : null} action={count > 0 ? t('profileSections.commentsSeeAll') : null} onAction={() => setOpen(true)}>
       <div className="flex flex-col gap-3.5 px-4">
         {rows.map((c) => (
           <div key={c.id} className="flex items-start gap-2.5">

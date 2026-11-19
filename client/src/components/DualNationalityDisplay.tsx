@@ -75,7 +75,7 @@ export default function DualNationalityDisplay({
         <span className="flex shrink-0 items-center gap-1">
           {held.map((c) => <Flag key={c.id} code={c.code} countryName={c.name} fallbackEmoji={c.flag_emoji} />)}
         </span>
-        <span className="min-w-0 truncate">{held.map((c) => nationalityLabel(c.nationality_name)).join(' · ')}</span>
+        <span className="min-w-0 truncate">{held.map((c) => nationalityLabel(c.nationality_name)).join(', ')}</span>
       </span>
     )
   }
@@ -160,7 +160,7 @@ function CompactDisplay({ primaryCountry, secondaryCountry, isEuCountry, classNa
   if (nationalities.length === 0) return null
 
   return (
-    <span className={`inline-flex flex-wrap items-center gap-x-2 gap-y-1 ${className}`}>
+    <span className={`inline-flex flex-wrap items-center gap-x-3 gap-y-1 ${className}`}>
       {nationalities.map((country, i) => {
         const isEu = isEuCountry(country.id)
         return (
@@ -172,7 +172,7 @@ function CompactDisplay({ primaryCountry, secondaryCountry, isEuCountry, classNa
                 {tc('nationality.euBadge')}
               </span>
             )}
-            {i < nationalities.length - 1 && <span className="text-gray-500 ml-1">·</span>}
+            {i < nationalities.length - 1 && ' '}
           </span>
         )
       })}
@@ -297,7 +297,6 @@ function CardDisplay({
     <div className={`flex flex-col gap-0.5 ${className}`}>
       {primaryCountry && (
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-400">•</span>
           <Flag code={primaryCountry.code} countryName={primaryCountry.name} fallbackEmoji={primaryCountry.flag_emoji} />
           <span>{primaryCountry.name}</span>
           {primaryIsEu && (
@@ -307,7 +306,6 @@ function CardDisplay({
       )}
       {secondaryCountry && (
         <div className="flex items-center gap-1.5">
-          <span className="text-gray-400">•</span>
           <Flag code={secondaryCountry.code} countryName={secondaryCountry.name} fallbackEmoji={secondaryCountry.flag_emoji} />
           <span>{secondaryCountry.name}</span>
           {secondaryIsEu && (

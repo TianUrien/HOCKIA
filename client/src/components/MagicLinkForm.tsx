@@ -96,7 +96,6 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
   if (sentTo) {
     const labelColor = variant === 'dark' ? 'text-white' : 'text-gray-900'
     const subColor = variant === 'dark' ? 'text-gray-500' : 'text-gray-600'
-    const mutedColor = variant === 'dark' ? 'text-gray-400' : 'text-gray-500'
     const linkColor = variant === 'dark' ? 'text-[#c084fc] hover:text-[#d8b4fe]' : 'text-hockia-primary hover:text-[#6B20D4]'
 
     return (
@@ -117,7 +116,7 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
           <p className="text-red-500 text-xs" role="alert">{error}</p>
         )}
 
-        <div className="flex items-center gap-3 pt-1">
+        <div className="flex items-center gap-5 pt-1">
           <button
             type="button"
             onClick={handleResend}
@@ -126,7 +125,7 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
           >
             {cooldown > 0 ? t('magicLink.resendIn', { seconds: cooldown }) : loading ? t('magicLink.resending') : t('magicLink.resend')}
           </button>
-          <span className={`text-xs ${mutedColor}`}>·</span>
+          {' '}
           <button
             type="button"
             onClick={handleUseDifferentEmail}

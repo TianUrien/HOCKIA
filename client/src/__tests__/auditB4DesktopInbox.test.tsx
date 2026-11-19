@@ -107,7 +107,7 @@ describe('one conversation row', () => {
     )
     const row = screen.getByTestId('conversation-item')
     expect(row).toHaveAttribute('aria-current', 'true')
-    expect(row.textContent).toContain('Player · Midfielder, Applied')
+    expect(row.textContent).toContain('Player, Midfielder, Applied')
     expect(screen.getByTestId('inbox-unread-dot')).toBeInTheDocument()
     // Never a number for unread.
     expect(row.textContent).not.toMatch(/\b2\b/)

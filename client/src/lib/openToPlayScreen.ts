@@ -29,7 +29,7 @@ export function openToPlayChecklist(input: {
   const video = [
     input.fullMatches > 0 ? tProfileEdit('openToPlay.checklist.fullMatches', { count: input.fullMatches }) : null,
     input.highlights > 0 ? tProfileEdit('openToPlay.checklist.highlights', { count: input.highlights }) : null,
-  ].filter(Boolean).join(' · ')
+  ].filter(Boolean).join(', ')
   const leagueName = input.league?.name?.trim() || null
   const notSet = tProfileEdit('openToPlay.checklist.notSet')
   return [
@@ -37,7 +37,7 @@ export function openToPlayChecklist(input: {
       key: 'passport',
       label: tProfileEdit('openToPlay.checklist.passport'),
       done: passports.length > 0,
-      detail: passports.length > 0 ? passports.map((p) => (p.flag ? `${p.flag} ${p.name}` : p.name)).join(' · ') : notSet,
+      detail: passports.length > 0 ? passports.map((p) => (p.flag ? `${p.flag} ${p.name}` : p.name)).join(', ') : notSet,
     },
     { key: 'video', label: tProfileEdit('openToPlay.checklist.video'), done: video.length > 0, detail: video || notSet },
     {

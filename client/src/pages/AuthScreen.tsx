@@ -235,11 +235,11 @@ export default function AuthScreen() {
             <p className="mt-2 text-[13px] leading-[18px] text-ink-3">{t('signIn.sentInApp')}</p>
           )}
           <div className="mt-4 w-full"><FormError>{error}</FormError></div>
-          <div className="mt-6 flex items-center gap-4 text-[15px] leading-[21px]">
+          <div className="mt-6 flex items-center gap-6 text-[15px] leading-[21px]">
             <button type="button" onClick={handleResendLink} disabled={cooldown > 0 || loading} className="h-11 font-semibold text-brand-primary disabled:opacity-40">
               {cooldown > 0 ? t('signIn.resendIn', { seconds: cooldown }) : loading ? t('signIn.resending') : t('signIn.resend')}
             </button>
-            <span className="text-ink-4">·</span>
+            {' '}
             <button type="button" onClick={() => { setSentTo(null); setCooldown(0); setError(null) }} className="h-11 font-medium text-ink-2">
               {t('signIn.differentEmail')}
             </button>

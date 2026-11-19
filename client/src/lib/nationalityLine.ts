@@ -20,6 +20,6 @@ export function nationalityLine(
       const extra = options.suffix?.(c)
       return extra ? `${base} ${extra}` : base
     })
-    .join(' · ')
+    .join(', ')
   return [flags, names].filter(Boolean).join(' ')
 }

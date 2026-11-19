@@ -45,9 +45,9 @@
       "from": "Desde {{date}}",
       "toNow": "{{from}} – actualidad",
       "sameYear": "{{startMonth}} – {{endMonth}} {{year}}",
-      "seasons_one": "{{start}} – {{end}} · {{count}} temporada",
-      "seasons_many": "{{start}} – {{end}} · {{count}} temporadas",
-      "seasons_other": "{{start}} – {{end}} · {{count}} temporadas",
+      "seasons_one": "{{start}} – {{end}}, {{count}} temporada",
+      "seasons_many": "{{start}} – {{end}}, {{count}} temporadas",
+      "seasons_other": "{{start}} – {{end}}, {{count}} temporadas",
       "range": "{{from}} – {{to}}",
       "yearToNow": "{{year}} – actualidad"
     },
@@ -58,9 +58,9 @@
       "emptyOwn": "Todavía no hay entradas en la trayectoria",
       "emptyPublic": "No hay entradas para mostrar",
       "emptyHint": "Agrega los clubes y equipos en los que jugaste.",
-      "count_one": "1 entrada · más recientes primero",
-      "count_many": "{{count}} entradas · más recientes primero",
-      "count_other": "{{count}} entradas · más recientes primero",
+      "count_one": "1 entrada, más recientes primero",
+      "count_many": "{{count}} entradas, más recientes primero",
+      "count_other": "{{count}} entradas, más recientes primero",
       "addEntry": "Agregar una entrada"
     },
     "item": {
@@ -368,7 +368,7 @@
     "search": {
       "heading": "Buscar tu club",
       "intro": "Al vincularlo, tu liga aparece junto al nombre de tu club y se pueden comparar niveles para calcular el encaje.",
-      "introOnboarding": "Paso 2 de 2 · Al vincularlo, tu liga aparece junto al nombre de tu club y se pueden comparar niveles para calcular el encaje.",
+      "introOnboarding": "Paso 2 de 2. Al vincularlo, tu liga aparece junto al nombre de tu club y se pueden comparar niveles para calcular el encaje.",
       "chooseCountry": "Elegir un país",
       "placeholder": "Nombre del club",
       "label": "Nombre del club",
@@ -380,7 +380,7 @@
       "notListed": "¿No aparece?",
       "noClub": "Todavía no hay ningún club llamado “{{query}}” en {{country}}",
       "addClub": "Agregar {{name}}",
-      "fromProfile": "{{place}} · según tu perfil",
+      "fromProfile": "{{place}}, según tu perfil",
       "alreadyLinked": "Este club ya está vinculado a otra cuenta. <button>Escríbenos</button> y lo resolvemos."
     },
     "leagues": {
@@ -461,11 +461,11 @@
       "category": "Categoría",
       "dob": "Fecha de nacimiento",
       "passports": "Pasaportes",
-      "addSecond": "{{passports}} · Agregar segundo",
+      "addSecond": "{{passports}}. Agregar segundo",
       "base": "Ubicación",
       "currentClub": "Club actual",
       "league": "Liga",
-      "leagueSelfReported": "{{league}} · autodeclarada",
+      "leagueSelfReported": "{{league}}, autodeclarada",
       "skills": "Habilidades",
       "about": "Sobre mí",
       "openToPlay": "Disponible para jugar",
@@ -745,7 +745,7 @@
       "highlights_one": "{{count}} highlight",
       "highlights_many": "{{count}} highlights",
       "highlights_other": "{{count}} highlights",
-      "leagueSelfReported": "{{league}} · autodeclarada"
+      "leagueSelfReported": "{{league}}, autodeclarada"
     },
     "consent": {
       "on": "Mientras “Disponible para jugar” esté activo, Hockia puede sugerir tu perfil a clubes que buscan {{role}}. Si lo desactivas, tu perfil deja de sugerirse.",
@@ -796,12 +796,12 @@
       "saveFailed": "No se pudo guardar todo. Intenta de nuevo."
     },
     "subtitle": {
-      "expired": "{{type}} · venció en {{until}}",
-      "expiredNoDate": "{{type}} · ya venció",
-      "fromUntil": "{{type}} · desde {{from}} hasta {{until}}",
-      "from": "{{type}} · desde {{from}}",
-      "until": "{{type}} · hasta {{until}}",
-      "noExpiry": "{{type}} · sin vencimiento"
+      "expired": "{{type}}, venció en {{until}}",
+      "expiredNoDate": "{{type}}, ya venció",
+      "fromUntil": "{{type}}, desde {{from}} hasta {{until}}",
+      "from": "{{type}}, desde {{from}}",
+      "until": "{{type}}, hasta {{until}}",
+      "noExpiry": "{{type}}, sin vencimiento"
     },
     "screen": {
       "title": "Pasaportes y permisos",
@@ -897,7 +897,7 @@
     "invalidImage": "Imagen no válida",
     "uploadFailed": "No se pudo subir la imagen. Prueba con otra.",
     "matchLevel": "Nivel del partido",
-    "matchLevelPlaceholder": "Internacional Sub-21 · Liga nacional",
+    "matchLevelPlaceholder": "Internacional Sub-21, Liga nacional",
     "format": "Formato",
     "formatLabel": "Formato del partido",
     "city": "Ciudad, provincia o estado",
@@ -959,6 +959,7 @@
   },
   "umpireSection": {
     "title": "Trayectoria arbitral",
+    "dateRange": "{{start}} al {{end}}",
     "add": "Agregar",
     "loading": "Cargando…",
     "emptyOwnTitle": "Todavía no hay registros en la trayectoria",

@@ -152,8 +152,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
     ? (coachCats && !coachCats.missing ? coachCats.value : null)
     : categoryToDisplay(profile.playing_category) || null
   const roleLine = isCoach
-    ? [coachSpec && !coachSpec.missing ? coachSpec.value : tEnum('role.coach'), category].filter(Boolean).join(' · ')
-    : [...positions, category].filter(Boolean).join(' · ') || tEnum('role.player')
+    ? [coachSpec && !coachSpec.missing ? coachSpec.value : tEnum('role.coach'), category].filter(Boolean).join(', ')
+    : [...positions, category].filter(Boolean).join(', ') || tEnum('role.player')
   const recruitsForTeam = isCoach && Boolean((profile as { coach_recruits_for_team?: boolean | null }).coach_recruits_for_team)
   // A person's flag means nationality; the place is text ("Based in Santander, Spain") — 16 Oct 2026.
   const place = useMemo(() => basedInLine(displayPlace(profile.base_location ?? null, (profile as { base_country_id?: number | null }).base_country_id ?? null, countries)), [profile, countries])
@@ -164,7 +164,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const showRecruiter = recruiter.enabled && !minor
   const fitLabel = showRecruiter && recruiter.fit ? fitChipLabel(recruiter.fit.state) : null
   const fitPill = fitLabel && recruiter.fit && recruiter.fit.state !== 'grey'
-    ? { state: recruiter.fit.state, suffix: recruiter.fitRoleTitle ? `· ${recruiter.fitRoleTitle}` : null }
+    ? { state: recruiter.fit.state, suffix: recruiter.fitRoleTitle ? t('playerProfileV2.fitFor', { role: recruiter.fitRoleTitle }) : null }
     : null
 
   // Hero photos: the gallery (first = cover), else the avatar.
@@ -544,7 +544,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
       {isCoach && (coachRoles.length > 0 || (owner && recruitsForTeam)) && (
         <Section
           id="roles"
-          title={coachRoles.length > 0 ? t('playerProfileV2.roles.titleCount', { count: coachRoles.length }) : t('playerProfileV2.roles.title')}
+          title={t('playerProfileV2.roles.title')}
+          count={coachRoles.length > 0 ? coachRoles.length : null}
           action={owner && props.onPostRole ? t('playerProfileV2.roles.post') : coachRoles.length > 2 ? t('playerProfileV2.roles.seeAll') : null}
           onAction={owner && props.onPostRole ? props.onPostRole : () => navigate('/opportunities')}
         >
@@ -569,7 +570,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         <div className="flex flex-col gap-3 px-4">
           {acceptedReferences.slice(0, 1).map((r) => {
             const p = r.profile
-            const who = [p?.fullName?.trim() || t('playerProfileV2.references.memberFallback'), humanizeToken(r.relationshipType)].filter(Boolean).join(' · ')
+            const who = [p?.fullName?.trim() || t('playerProfileV2.references.memberFallback'), humanizeToken(r.relationshipType)].filter(Boolean).join(', ')
             return (
               <button key={r.id} type="button" onClick={() => props.onOpenReference(r.id)} className="w-full text-left" data-testid="profile-reference">
                 <SquircleBox className="flex flex-col gap-3 bg-gold-soft px-[18px] py-4 shadow-[inset_0_0_0_0.5px_rgba(15,15,20,0.06)]">
@@ -578,7 +579,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
                     <EntityAvatar src={p?.avatarUrl ?? null} name={p?.fullName ?? null} role={p?.role} size={32} />
                     <span className="min-w-0">
                       <span className="block truncate text-[14px] font-semibold leading-[19px] text-ink-1">{who}</span>
-                      <span className="block truncate text-caption text-ink-2">{r.acceptedAt ? t('playerProfileV2.references.verifiedOn', { date: dayFirst(r.acceptedAt, { year: 'always' }) }) : t('playerProfileV2.references.verified')}</span>
+                      <span className="block truncate text-caption text-ink-2">{t('playerProfileV2.references.verified')}{r.acceptedAt && <>{' '}<span className="ml-1 text-ink-3">{dayFirst(r.acceptedAt, { year: 'always' })}</span></>}</span>
                     </span>
                   </span>
                 </SquircleBox>
@@ -609,7 +610,7 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             {data.career.map((e) => {
               const now = isCurrentEntry(e)
               const flag = flagForCountryName(countries, e.locationCountry) ?? e.worldClub?.flag ?? null
-              const sub = [e.positionRole?.trim() ? humanizeToken(e.positionRole) : null, [flag, e.locationCity?.trim() || countryLabel(e.locationCountry?.trim()) || null].filter(Boolean).join(' ') || null].filter(Boolean).join(' · ')
+              const sub = [e.positionRole?.trim() ? humanizeToken(e.positionRole) : null, [flag, e.locationCity?.trim() || countryLabel(e.locationCountry?.trim()) || null].filter(Boolean).join(' ') || null].filter(Boolean).join(', ')
               return (
                 <div key={e.id} className="flex items-start gap-3 py-2.5" data-testid="career-row">
                   <EntityAvatar src={e.worldClub?.avatar_url ?? null} name={e.clubName} role="club" size={40} />

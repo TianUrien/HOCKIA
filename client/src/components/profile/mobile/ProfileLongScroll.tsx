@@ -85,7 +85,7 @@ function SectionHeader({ title, count, action, onAction }: { title: string; coun
     <div className="flex items-center justify-between">
       <h2 className="text-[20px] font-bold leading-6 text-ink-1">
         {title}
-        {typeof count === 'number' && <span className="font-semibold text-ink-3"> · {count}</span>}
+        {typeof count === 'number' && <>{' '}<span className="ml-1 font-semibold text-ink-3">{count}</span></>}
       </h2>
       {action && (
         <button type="button" onClick={onAction} className="-my-2 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary" data-testid="section-header-action">
@@ -111,7 +111,7 @@ function LinkTile({ link }: { link: ScrollFullGameLink }) {
         <VideoLockBadge />
       )}
       <span className="truncate text-secondary font-semibold text-white">{title}</span>
-      <span className="truncate text-caption text-white/75">{[link.match_date ? monthYear(link.match_date) : null, videoLinkSite(link.video_url)].filter(Boolean).join(' · ')}</span>
+      <span className="truncate text-caption text-white/75">{[link.match_date ? monthYear(link.match_date) : null, videoLinkSite(link.video_url)].filter(Boolean).join(', ')}</span>
     </a>
   )
 }
@@ -137,7 +137,7 @@ export function ReferenceCard({ reference, onOpen }: { reference: PublicReferenc
   const t = useProfileT()
   const p = reference.profile
   const name = p?.fullName?.trim() || t('profileLongScroll.memberFallback')
-  const detail = p?.role === 'player' ? p.position : p?.role === 'coach' ? [humanizeToken(reference.relationshipType), p.currentClub].filter(Boolean).join(' · ') : humanizeToken(reference.relationshipType)
+  const detail = p?.role === 'player' ? p.position : p?.role === 'coach' ? [humanizeToken(reference.relationshipType), p.currentClub].filter(Boolean).join(', ') : humanizeToken(reference.relationshipType)
   const avatar = p?.avatarUrl ? getImageUrl(p.avatarUrl, 'avatar-md') ?? p.avatarUrl : null
   return (
     <button type="button" onClick={onOpen} className="w-full rounded-card border border-gold-line bg-white p-3.5 text-left" data-testid="reference-card">
@@ -164,9 +164,8 @@ export function CareerRow({ entry, last, flag, locationFlag = null }: { entry: S
   const isRep = entry.entryType === 'national_team'
   const span = careerSpan(entry)
   const metaFlag = locationFlag ?? entry.worldClub?.flag ?? flag
-  const metaText = [entry.locationCity?.trim() || countryLabel(entry.locationCountry?.trim()) || null, span].filter(Boolean).join(' · ')
-  const meta = [metaFlag, metaText].filter(Boolean).join(' ')
-  const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? t('profileLongScroll.representativeTeam') : entry.divisionLeague?.trim() || null].filter(Boolean).join(' · ')
+  const place = [metaFlag, entry.locationCity?.trim() || countryLabel(entry.locationCountry?.trim()) || null].filter(Boolean).join(' ')
+  const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? t('profileLongScroll.representativeTeam') : entry.divisionLeague?.trim() || null].filter(Boolean).join(', ')
   const crest = entry.worldClub?.avatar_url ? getImageUrl(entry.worldClub.avatar_url, 'avatar-sm') ?? entry.worldClub.avatar_url : null
   return (
     <div className={cn('flex gap-3', !last && 'pb-3')} data-testid="career-row" data-current={isNow || undefined}>
@@ -180,7 +179,7 @@ export function CareerRow({ entry, last, flag, locationFlag = null }: { entry: S
       <div className="min-w-0 flex-1">
         <p className="truncate text-row font-semibold text-ink-1">{entry.clubName}</p>
         {sub && <p className="truncate text-secondary text-ink-2">{sub}</p>}
-        {meta && <p className="truncate text-secondary text-ink-3">{meta}</p>}
+        {(place || span) && <p className="truncate text-secondary text-ink-3">{place}{place && span ? ' ' : null}{span && <span className={place ? 'ml-2' : undefined}>{span}</span>}</p>}
         {entry.signedViaHockia && <SignedThroughHockiaPill className="mt-1" />}
       </div>
     </div>
@@ -196,7 +195,7 @@ export function PostTile({ post, onOpen }: { post: UserPostFeedItem; onOpen: () 
         {src ? <SmoothImage src={src} alt="" eager className="object-cover" /> : <p className="line-clamp-4 p-3 text-secondary text-ink-2">{post.content}</p>}
       </div>
       {src && post.content && <p className="mt-1.5 line-clamp-2 text-secondary leading-[17px] text-ink-1">{post.content}</p>}
-      <p className="mt-1 flex items-center gap-1 text-caption text-ink-3"><Heart className="h-3 w-3" /> {post.like_count} · {monthYear(post.created_at)}</p>
+      <p className="mt-1 flex items-center gap-1 text-caption text-ink-3"><Heart className="h-3 w-3" /> <span>{post.like_count}</span>{' '}<span className="ml-1">{monthYear(post.created_at)}</span></p>
     </button>
   )
 }
@@ -417,7 +416,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
           onClose={() => setPlayer(null)}
           videoLabel={player.kind === 'highlight' ? t('profileLongScroll.videos.highlight') : player.kind === 'full_match' ? t('profileLongScroll.fullMatch') : t('profileLongScroll.videos.reel')}
           isOwner={owner}
-          caption={[player.title, duration(player.durationSeconds)].filter(Boolean).join(' · ')}
+          caption={[player.title, duration(player.durationSeconds)].filter(Boolean).join(', ')}
         />
       )}
 

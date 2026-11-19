@@ -119,7 +119,7 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
       fullMatchCount: 0, highlightCount: 0, age: null,
     }, { viewer: 'recruiter', today }).find((f) => f.id === 'passport')
     if (!fact) return { main: t('passports.screen.previewNotGiven'), lines: [] as string[] }
-    return { main: fact.missing ? t('passports.screen.previewPassportNotGiven') : [fact.value, fact.detail].filter(Boolean).join(' · '), lines: fact.extraLines.map((l) => l.text) }
+    return { main: fact.missing ? t('passports.screen.previewPassportNotGiven') : [fact.value, fact.detail].filter(Boolean).join(', '), lines: fact.extraLines.map((l) => l.text) }
   }, [heldPassports, draftPermits, countries, today, t])
 
   if (!profile || !user) return null

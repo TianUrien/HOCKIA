@@ -45,8 +45,8 @@
       "from": "From {{date}}",
       "toNow": "{{from}} – now",
       "sameYear": "{{startMonth}} – {{endMonth}} {{year}}",
-      "seasons_one": "{{start}} – {{end}} · {{count}} season",
-      "seasons_other": "{{start}} – {{end}} · {{count}} seasons",
+      "seasons_one": "{{start}} – {{end}}, {{count}} season",
+      "seasons_other": "{{start}} – {{end}}, {{count}} seasons",
       "range": "{{from}} – {{to}}",
       "yearToNow": "{{year}} – now"
     },
@@ -57,8 +57,8 @@
       "emptyOwn": "No career entries yet",
       "emptyPublic": "No career entries to show",
       "emptyHint": "Add the clubs and teams you have played for.",
-      "count_one": "1 entry · newest first",
-      "count_other": "{{count}} entries · newest first",
+      "count_one": "1 entry, newest first",
+      "count_other": "{{count}} entries, newest first",
       "addEntry": "Add an entry"
     },
     "item": {
@@ -359,7 +359,7 @@
     "search": {
       "heading": "Find your club",
       "intro": "Linking puts your league next to your name and lets fit compare levels.",
-      "introOnboarding": "Step 2 of 2 · Linking puts your league next to your name and lets fit compare levels.",
+      "introOnboarding": "Step 2 of 2. Linking puts your league next to your name and lets fit compare levels.",
       "chooseCountry": "Choose a country",
       "placeholder": "Club name",
       "label": "Club name",
@@ -371,7 +371,7 @@
       "notListed": "Not listed?",
       "noClub": "No club called “{{query}}” in {{country}} yet",
       "addClub": "Add {{name}}",
-      "fromProfile": "{{place}} · from your profile",
+      "fromProfile": "{{place}}, from your profile",
       "alreadyLinked": "This club is already linked to another account. <button>Contact us</button> and we’ll sort it out."
     },
     "leagues": {
@@ -452,11 +452,11 @@
       "category": "Category",
       "dob": "Date of birth",
       "passports": "Passports",
-      "addSecond": "{{passports}} · Add second",
+      "addSecond": "{{passports}}. Add second",
       "base": "Base location",
       "currentClub": "Current club",
       "league": "League",
-      "leagueSelfReported": "{{league}} · self-reported",
+      "leagueSelfReported": "{{league}}, self-reported",
       "skills": "Skills",
       "about": "About",
       "openToPlay": "Open to play",
@@ -734,7 +734,7 @@
       "fullMatches_other": "{{count}} full matches",
       "highlights_one": "{{count}} highlight",
       "highlights_other": "{{count}} highlights",
-      "leagueSelfReported": "{{league}} · self-reported"
+      "leagueSelfReported": "{{league}}, self-reported"
     },
     "consent": {
       "on": "While you’re open to play, Hockia can suggest your profile to clubs looking for {{role}}. Turn this off and you stop being suggested.",
@@ -785,12 +785,12 @@
       "saveFailed": "Could not save everything. Please try again."
     },
     "subtitle": {
-      "expired": "{{type}} · expired {{until}}",
-      "expiredNoDate": "{{type}} · expired",
-      "fromUntil": "{{type}} · from {{from}} until {{until}}",
-      "from": "{{type}} · from {{from}}",
-      "until": "{{type}} · until {{until}}",
-      "noExpiry": "{{type}} · no expiry"
+      "expired": "{{type}}, expired {{until}}",
+      "expiredNoDate": "{{type}}, expired",
+      "fromUntil": "{{type}}, from {{from}} until {{until}}",
+      "from": "{{type}}, from {{from}}",
+      "until": "{{type}}, until {{until}}",
+      "noExpiry": "{{type}}, no expiry"
     },
     "screen": {
       "title": "Passports & permits",
@@ -886,7 +886,7 @@
     "invalidImage": "Invalid image",
     "uploadFailed": "Upload failed. Please try another image.",
     "matchLevel": "Match level",
-    "matchLevelPlaceholder": "U21 International · National League",
+    "matchLevelPlaceholder": "U21 International, National League",
     "format": "Format",
     "formatLabel": "Match format",
     "city": "City, State/Province",
@@ -948,6 +948,7 @@
   },
   "umpireSection": {
     "title": "Officiating Journey",
+    "dateRange": "{{start}} to {{end}}",
     "add": "Add",
     "loading": "Loading…",
     "emptyOwnTitle": "No journey entries yet",

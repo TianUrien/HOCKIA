@@ -195,7 +195,7 @@ describe('Inbox › Requests rows (List item / Request)', () => {
     const rows = screen.getAllByTestId('request-row')
     expect(rows).toHaveLength(3)
     expect(rows[0]).toHaveAttribute('data-state', 'incoming')
-    expect(within(rows[0]).getByText('Player · Goalkeeper')).toBeInTheDocument()
+    expect(within(rows[0]).getByText('Player, Goalkeeper')).toBeInTheDocument()
     expect(within(rows[0]).getByTestId('request-detail')).toHaveTextContent('2 mutual friends')
     expect(within(rows[1]).getByTestId('request-detail')).toHaveTextContent('1 mutual friend')
     expect(within(rows[2]).getByTestId('request-detail')).toHaveTextContent('No mutual friends yet')

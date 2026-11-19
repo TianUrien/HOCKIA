@@ -109,7 +109,7 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
     return <FriendListItem key={p.id} name={name} avatarUrl={avatarOf(p)} role={p.role} meta={meta} flags={flags(p)} trailing={trailing} onOpen={open} />
   }
 
-  const title = own ? t('friendsScreen.titleOwn', { total: people.length }) : firstName ? t('friendsScreen.titleNamed', { firstName }) : t('friendsScreen.title')
+  const title = own ? t('friendsScreen.titleOwn', { count: people.length, total: people.length }) : firstName ? t('friendsScreen.titleNamed', { firstName }) : t('friendsScreen.title')
 
   return (
     <div className="min-h-screen bg-white pb-24 lg:hidden" data-testid={own ? 'friends-screen-own' : 'friends-screen-public'}>
@@ -168,7 +168,7 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
           <>
             {inCommon.length > 0 && (
               <>
-                <h2 className="pb-1 pt-3 text-[20px] font-semibold leading-6 text-ink-1">{t('friendsScreen.inCommon', { total: inCommon.length })}</h2>
+                <h2 className="pb-1 pt-3 text-[20px] font-semibold leading-6 text-ink-1">{t('friendsScreen.inCommon')}{' '}<span className="ml-1 text-ink-3">{inCommon.length}</span></h2>
                 <ul>{inCommon.map(row)}</ul>
                 {rest.length > 0 && <h2 className="pb-1 pt-5 text-[20px] font-semibold leading-6 text-ink-1">{t('friendsScreen.allFriends')}</h2>}
               </>
