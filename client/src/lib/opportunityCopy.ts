@@ -18,6 +18,7 @@ export type TileIcon = LucideIcon | HockiaIcon
 import { differenceInCalendarDays } from 'date-fns'
 import { dayFirst, parseDayFirst } from './dayFirst'
 import type { Vacancy } from '@/lib/supabase'
+import { intlLocale } from '@/i18n/format'
 import { compensationLabel } from '@/lib/opportunityIntent'
 import { humanizeToken, positionLabel } from '@/lib/identity'
 import { APPLICATION_STATUS_LABELS, roleClosedLabel } from '@/lib/applicationStatus'
@@ -411,10 +412,32 @@ export function closedRoleView(o: { isClosed: boolean; hasApplied: boolean; isPu
  * never an AI explanation or a stale note from an earlier status.
  */
 export function clubNoteFromFeedback(aiFeedback: unknown, status: string | null | undefined): string | null {
+  const note = clubNoteParts(aiFeedback, status)
+  return note ? note.translation ?? note.original : null
+}
+
+/**
+ * The club's own words, only when the note is being shown translated into the
+ * reader's language (ai_feedback.translations, written by the server). Shown
+ * below the translation so the reader can always see what the club wrote.
+ */
+export function clubNoteOriginalFromFeedback(aiFeedback: unknown, status: string | null | undefined): string | null {
+  const note = clubNoteParts(aiFeedback, status)
+  return note?.translation ? note.original : null
+}
+
+function clubNoteParts(aiFeedback: unknown, status: string | null | undefined): { original: string; translation: string | null } | null {
   if (status !== 'rejected' || !aiFeedback || typeof aiFeedback !== 'object' || Array.isArray(aiFeedback)) return null
   const fb = aiFeedback as Record<string, unknown>
   if (fb.source !== 'club' || fb.status !== 'rejected' || typeof fb.message !== 'string') return null
-  return fb.message.trim() || null
+  const original = fb.message.trim()
+  if (!original) return null
+  const all = fb.translations && typeof fb.translations === 'object' && !Array.isArray(fb.translations)
+    ? (fb.translations as Record<string, unknown>)
+    : null
+  const mine = all?.[intlLocale().slice(0, 2)]
+  const translation = typeof mine === 'string' && mine.trim() && mine.trim() !== original ? mine.trim() : null
+  return { original, translation }
 }
 
 /** "Applied 3 Sep 2026" — the full date on a closed role's application block (day first, like every date). */

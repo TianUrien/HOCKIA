@@ -317,6 +317,7 @@
     "yourApplication": "Your application",
     "clubNote": "The club’s note",
     "noteFrom": "From {{club}}",
+    "noteOriginal": "Translated automatically. Original note:",
     "closedTitle": "This opportunity is closed",
     "closedBody": "It’s no longer taking applications.",
     "declineNoteTitle": "Not this time · The club’s note",

@@ -7,6 +7,7 @@ import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail } from '../_shared/email-sender.ts'
 import { fetchSuggestions, suggestionsHtml, suggestionsText } from '../_shared/opportunity-suggestions.ts'
 import { offerDateLabel } from '../_shared/offer-email.ts'
+import { ensureNoteTranslation } from '../_shared/club-note-translation.ts'
 import { EMAIL_LOGO_HTML } from '../_shared/email-brand.ts'
 import { FOOTER_ES, readMemberLanguage } from '../_shared/member-language.ts'
 
@@ -47,6 +48,8 @@ interface StatusEntry {
   application_id: string | null
   /** The club's note on a decline (Figma 04 Club · Decline), when it wrote one. */
   note: string | null
+  /** The club's own words, when `note` is a translation of them into the reader's language. */
+  note_original?: string | null
   /** Offers only: the conversation that holds the offer card, and the last day to answer. */
   conversation_id?: string | null
   open_until?: string | null
@@ -188,7 +191,7 @@ Deno.serve(async (req: Request) => {
     // changed (the club changed its mind) is dropped, and a decline carries
     // the note the club sent with it.
     const appIds = rawEntries.map((e) => e.application_id).filter((v): v is string => Boolean(v))
-    const currentById = new Map<string, { status: string; note: string | null }>()
+    const currentById = new Map<string, { status: string; note: string | null; original: string | null }>()
     if (appIds.length) {
       const { data: apps } = await supabase
         .from('opportunity_applications')
@@ -197,12 +200,20 @@ Deno.serve(async (req: Request) => {
       for (const a of (apps ?? []) as { id: string; status: string; ai_feedback: Record<string, unknown> | null }[]) {
         const fb = a.ai_feedback && typeof a.ai_feedback === 'object' ? a.ai_feedback : null
         const note = fb && fb.status === a.status && (fb.source === 'club' || fb.source === 'ai') && typeof fb.message === 'string' ? fb.message : null
-        currentById.set(a.id, { status: a.status, note })
+        // A note the club wrote is read in the member's language, with the
+        // club's own words below it (translated here if not done at send time).
+        const translation = note && fb!.source === 'club' && a.status === 'rejected'
+          ? await ensureNoteTranslation(supabase, a.id, fb, language, player.id, 'notify-application-status')
+          : null
+        currentById.set(a.id, { status: a.status, note: translation ?? note, original: translation ? note : null })
       }
     }
     const statusEntries: StatusEntry[] = rawEntries
       .filter((e) => !e.application_id || !currentById.has(e.application_id) || currentById.get(e.application_id)!.status === e.status)
-      .map((e) => ({ ...e, note: e.status === 'rejected' && e.application_id ? currentById.get(e.application_id)?.note ?? null : null }))
+      .map((e) => {
+        const current = e.status === 'rejected' && e.application_id ? currentById.get(e.application_id) : undefined
+        return { ...e, note: current?.note ?? null, note_original: current?.original ?? null }
+      })
 
     // ── Offers in this batch (recruiting_update / offer_received, offer_withdrawn) ──
     // An offer is emailed only while it is still live: one withdrawn, answered
@@ -348,6 +359,15 @@ Deno.serve(async (req: Request) => {
            <a href="${offerUrl(e)}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">${es ? 'Ver la conversación' : 'See the conversation'} →</a>
          </td></tr>`
 
+    // The club's note; when it was translated, its own words follow in small type.
+    const originalLabel = es ? 'Traducción automática. Nota original:' : 'Translated automatically. Original note:'
+    const noteHtml = (e: StatusEntry) =>
+      `<div style="font-size:14px;color:#0e0b1a;margin-top:8px;padding:12px 14px;background:#f1eff6;border-radius:10px;line-height:1.45;">${escapeHtml(e.note ?? '')}${
+        e.note_original
+          ? `<div style="font-size:12px;color:#6b6878;margin-top:10px;padding-top:10px;border-top:1px solid #e0dcea;">${originalLabel} ${escapeHtml(e.note_original)}</div>`
+          : ''}</div>`
+    const noteOriginalText = (e: StatusEntry) => e.note_original ? ` ${originalLabel} "${e.note_original}"` : ''
+
     const entryHtmlEs = (e: StatusEntry) => e.status === 'offered' ? offerHtml(e) : e.status === 'offer_withdrawn' ? withdrawnHtml(e) : e.status === 'shortlisted'
       ? `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
            <div style="font-size:15px;font-weight:600;color:#0e0b1a;">⭐ Estás en la preselección de ${escapeHtml(e.club_name)}</div>
@@ -357,7 +377,7 @@ Deno.serve(async (req: Request) => {
       : `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
            <div style="font-size:15px;font-weight:600;color:#0e0b1a;">Esta vez no: ${escapeHtml(e.club_name)} eligió otra opción para ${escapeHtml(e.vacancy_title)}</div>
            ${e.note
-             ? `<div style="font-size:14px;color:#0e0b1a;margin-top:8px;padding:12px 14px;background:#f1eff6;border-radius:10px;line-height:1.45;">${escapeHtml(e.note)}</div>`
+             ? noteHtml(e)
              : `<div style="font-size:13px;color:#6b6878;margin-top:2px;">Muchas veces depende del encaje, no del nivel. Una respuesta clara es mejor que el silencio, y hay más oportunidades por delante.</div>`}
            ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">Ver tu postulación →</a>` : ''}
          </td></tr>`
@@ -371,7 +391,7 @@ Deno.serve(async (req: Request) => {
       : `<tr><td style="padding:12px 0;border-bottom:1px solid #e6e3ee;">
            <div style="font-size:15px;font-weight:600;color:#0e0b1a;">Not this time: ${escapeHtml(e.club_name)} went another way for ${escapeHtml(e.vacancy_title)}</div>
            ${e.note
-             ? `<div style="font-size:14px;color:#0e0b1a;margin-top:8px;padding:12px 14px;background:#f1eff6;border-radius:10px;line-height:1.45;">${escapeHtml(e.note)}</div>`
+             ? noteHtml(e)
              : `<div style="font-size:13px;color:#6b6878;margin-top:2px;">It often comes down to fit, not ability. A clear answer beats silence, and the right opening is out there.</div>`}
            ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6c2bd9;text-decoration:none;font-weight:600;">See your application →</a>` : ''}
          </td></tr>`
@@ -425,7 +445,7 @@ Deno.serve(async (req: Request) => {
         ]),
         ...rejected.flatMap((e) => [
           e.note
-            ? `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Su nota: "${e.note}"`
+            ? `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Su nota: "${e.note}"${noteOriginalText(e)}`
             : `Esta vez no: ${e.club_name} eligió otra opción para ${e.vacancy_title}. Muchas veces depende del encaje, no del nivel. Una respuesta clara es mejor que el silencio, y hay más oportunidades por delante.`,
           ...linkLine('Ver tu postulación', e),
           '',
@@ -440,7 +460,7 @@ Deno.serve(async (req: Request) => {
         ]),
         ...rejected.flatMap((e) => [
           e.note
-            ? `Not this time: ${e.club_name} went another way for ${e.vacancy_title}. Their note: "${e.note}"`
+            ? `Not this time: ${e.club_name} went another way for ${e.vacancy_title}. Their note: "${e.note}"${noteOriginalText(e)}`
             : `Not this time: ${e.club_name} went another way for ${e.vacancy_title}. It often comes down to fit, not ability. A clear answer beats silence, and the right opening is out there.`,
           ...linkLine('See your application', e),
           '',

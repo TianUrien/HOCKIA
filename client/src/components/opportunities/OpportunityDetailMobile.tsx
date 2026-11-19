@@ -1,4 +1,5 @@
 import { RoleAiEntry } from '@/components/hockiaAi/RoleAiEntry'
+import { ClubNoteOriginal } from './ClubNoteOriginal'
 import { roleViewerGate } from '@/lib/roleViewerGate'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -33,6 +34,7 @@ import {
   categoryTagClass,
   closedRoleView,
   clubNoteFromFeedback,
+  clubNoteOriginalFromFeedback,
   closesSoonLabel,
   compensationText,
   formatDurationText,
@@ -156,11 +158,12 @@ export function OpportunityDetailMobile({
   // A closed role also shows the applied date. The applicant's OWN row only
   // (RLS: applicant_id = auth.uid()) — never other applicants or counts.
   const [clubNote, setClubNote] = useState<string | null>(null)
+  const [clubNoteOriginal, setClubNoteOriginal] = useState<string | null>(null)
   const [appliedAt, setAppliedAt] = useState<string | null>(null)
   const userId = profile?.id ?? null
   const needsOwnRow = hasApplied && !!userId && (applicationStatus === 'rejected' || closed)
   useEffect(() => {
-    if (!needsOwnRow || !userId) { setClubNote(null); setAppliedAt(null); return }
+    if (!needsOwnRow || !userId) { setClubNote(null); setClubNoteOriginal(null); setAppliedAt(null); return }
     let cancelled = false
     void supabase
       .from('opportunity_applications')
@@ -172,6 +175,7 @@ export function OpportunityDetailMobile({
         if (cancelled) return
         const row = data as { applied_at?: string | null; ai_feedback?: unknown } | null
         setClubNote(clubNoteFromFeedback(row?.ai_feedback, applicationStatus))
+        setClubNoteOriginal(clubNoteOriginalFromFeedback(row?.ai_feedback, applicationStatus))
         setAppliedAt(row?.applied_at ?? null)
       })
     return () => { cancelled = true }
@@ -305,6 +309,7 @@ export function OpportunityDetailMobile({
               <div className="mt-3 border-t border-line pt-3" data-testid="club-note">
                 <p className="text-secondary font-semibold text-ink-2">{t('detail.clubNote')}</p>
                 <p className="mt-1.5 whitespace-pre-wrap break-words text-row leading-[21px] text-ink-1">{clubNote}</p>
+                <ClubNoteOriginal original={clubNoteOriginal} />
                 <p className="mt-1.5 text-caption text-ink-3">{t('detail.noteFrom', { club: clubName })}</p>
               </div>
             )}
@@ -333,6 +338,7 @@ export function OpportunityDetailMobile({
           <div className="rounded-card bg-surface-grouped p-3.5">
             <p className="text-secondary font-semibold text-ink-2">{t('detail.declineNoteTitle')}</p>
             <p className="mt-1.5 whitespace-pre-wrap text-row leading-[21px] text-ink-1">{clubNote}</p>
+            <ClubNoteOriginal original={clubNoteOriginal} />
             <p className="mt-1.5 text-caption text-ink-3">{t('detail.noteFrom', { club: clubName })}</p>
           </div>
         </section>

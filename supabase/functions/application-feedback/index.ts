@@ -47,6 +47,8 @@ import { checkUserRateLimit } from '../_shared/rate-limit.ts'
 import { recordAiUsage } from '../_shared/aiUsage.ts'
 import { captureException, setSentryUser } from '../_shared/sentry.ts'
 import { resolveAiLanguage, type MemberLanguage } from '../_shared/ai-language.ts'
+import { readMemberLanguage } from '../_shared/member-language.ts'
+import { ensureNoteTranslation } from '../_shared/club-note-translation.ts'
 import { BANNED_ES, clubFallbackMessageEs, reasonCopyEs, fallbackMessageEs, FEEDBACK_SPANISH_RULE, humanizePositionEs } from '../_shared/application-feedback-es.ts'
 
 // Env-driven so the model swaps/rolls back per-environment via the CLAUDE_MODEL
@@ -417,6 +419,7 @@ serve(async (req: Request) => {
         app.metadata && typeof app.metadata === 'object' && !Array.isArray(app.metadata)
           ? (app.metadata as Record<string, unknown>)
           : {}
+      const clubFeedback = { message: note, status: 'rejected', reason: bodyReason, source: 'club' }
       const { data: updated, error: updErr } = await supabase
         .from('opportunity_applications')
         .update({
@@ -424,7 +427,7 @@ serve(async (req: Request) => {
           // changed_via stays null = an in-app decision (the history table only
           // accepts email_action / auto_expiry / minor_freeze).
           metadata: { ...prevMeta, status_reason: bodyReason, changed_via: null } as unknown as Json,
-          ai_feedback: { message: note, status: 'rejected', reason: bodyReason, source: 'club' } as unknown as Json,
+          ai_feedback: clubFeedback as unknown as Json,
         })
         .eq('id', applicationId)
         // Same allow-list as above: if an offer/withdrawal landed in between,
@@ -439,6 +442,18 @@ serve(async (req: Request) => {
       if (!updated || updated.length === 0) {
         return jsonResponse({ error: 'invalid_status' }, 409, corsHeaders)
       }
+      // The applicant reads the note in their own language, with the original
+      // below it. Translated after the answer goes back to the club: the status
+      // email (next half-hour batch) and the app read it from ai_feedback, and
+      // the email translates it itself if this did not finish.
+      const translating = (async () => {
+        const target = await readMemberLanguage(supabase, app.applicant_id)
+        await ensureNoteTranslation(supabase, applicationId, clubFeedback, target, userId, 'application-feedback')
+      })().catch((err) => console.warn('application-feedback: note translation skipped —', String(err)))
+      // deno-lint-ignore no-explicit-any
+      const runtime = (globalThis as any).EdgeRuntime
+      if (runtime?.waitUntil) runtime.waitUntil(translating)
+      else await translating
       return jsonResponse({ ok: true }, 200, corsHeaders)
     }
 
