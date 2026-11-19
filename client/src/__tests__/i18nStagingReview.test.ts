@@ -36,7 +36,7 @@ describe('club inbox copy', () => {
   it('reads in Spanish', async () => {
     await i18n.changeLanguage('es')
     expect(inboxWaitingNotice(rows(2, 2))).toEqual({ title: '2 personas esperan una primera respuesta', sub: 'Todas se postularon a tus oportunidades.' })
-    expect(clubInboxRoleLine('player', null, true)).toMatch(/ · Se postuló$/)
+    expect(clubInboxRoleLine('player', null, true)).toMatch(/, Se postuló$/)
   })
 })
 

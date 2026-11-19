@@ -28,7 +28,6 @@ import {
 import { useWorldT } from '@/i18n/ns/world'
 
 /** Separator between facts; punctuation, not copy. */
-const DOT = '·'
 
 /**
  * Search v2, phone (Figma "New-Hockia" Search v2 42:195; founder rulings
@@ -259,7 +258,7 @@ export function SearchV2Screen() {
                           {meta && <span className="truncate">{meta}</span>}
                           {country && (
                             <>
-                              {meta && <span aria-hidden="true">{DOT}</span>}
+                              {meta ? ' ' : null}
                               <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} size="sm" className="shrink-0" />
                             </>
                           )}

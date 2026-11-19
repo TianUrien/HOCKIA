@@ -51,9 +51,9 @@
     "other": "Otros"
   },
   "coachRoles": {
-    "openLine_one": "Oportunidades para entrenar · {{count}} abierta",
-    "openLine_many": "Oportunidades para entrenar · {{count}} abiertas",
-    "openLine_other": "Oportunidades para entrenar · {{count}} abiertas",
+    "openLine_one": "Oportunidades para entrenar: {{count}} abierta",
+    "openLine_many": "Oportunidades para entrenar: {{count}} abiertas",
+    "openLine_other": "Oportunidades para entrenar: {{count}} abiertas",
     "postedLine_one": "Este año se publicó {{count}} oportunidad para entrenar en Hockia",
     "postedLine_many": "Este año se publicaron {{count}} oportunidades para entrenar en Hockia",
     "postedLine_other": "Este año se publicaron {{count}} oportunidades para entrenar en Hockia",

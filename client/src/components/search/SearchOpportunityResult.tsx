@@ -6,7 +6,6 @@ import { useEnumsT } from '@/i18n/ns/enums'
 import { countryLabel } from '@/i18n/countryNames'
 
 /** Separator between facts; punctuation, not copy. */
-const DOT = '·'
 
 interface SearchOpportunityResultProps {
   result: SearchOpportunityResultType
@@ -39,11 +38,11 @@ export function SearchOpportunityResult({ result }: SearchOpportunityResultProps
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900 truncate">{result.title}</p>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-gray-500 truncate">{result.club_name}</span>
             {location && (
               <>
-                <span className="text-xs text-gray-500">{DOT}</span>
+                {' '}
                 <span className="text-xs text-gray-400 truncate flex items-center gap-0.5">
                   <MapPin className="w-3 h-3" />
                   {location}
@@ -52,7 +51,7 @@ export function SearchOpportunityResult({ result }: SearchOpportunityResultProps
             )}
             {position && (
               <>
-                <span className="text-xs text-gray-500">{DOT}</span>
+                {' '}
                 <span className="text-xs text-gray-400">{position}</span>
               </>
             )}

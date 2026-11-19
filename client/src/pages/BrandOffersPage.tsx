@@ -373,7 +373,7 @@ function ActionsSheet({ offer, countries, onClose, onEdit, onDuplicate, onResume
     <BottomSheet open onClose={onClose} ariaLabel={t('offersPage.actions.aria', { title })}>
       <div className="px-5 pb-2" data-testid="offer-actions">
         <h2 className="text-title text-ink-1">{title}</h2>
-        <p className="mt-1 text-row text-ink-2">{[statusWord, countries].filter(Boolean).join(' · ')}</p>
+        <p className="mt-1 text-row text-ink-2">{statusWord}{statusWord && countries ? ' ' : null}{countries ? <span className={statusWord ? 'ml-2 text-ink-3' : undefined}>{countries}</span> : null}</p>
         <ul className="mt-3 divide-y divide-line border-t border-line">
           {items.map((it) => (
             <li key={it.key}>

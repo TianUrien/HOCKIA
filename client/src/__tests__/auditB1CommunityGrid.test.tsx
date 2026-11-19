@@ -66,16 +66,16 @@ describe('Community grid (phone card anatomy on every screen size)', () => {
   it('person cards: name / role · team / flags + EU · age · city', () => {
     render(<MemberPhotoGrid members={members} />)
     const ana = screen.getAllByTestId('member-tile').find((el) => el.textContent?.includes('Ana Ruiz'))!
-    expect(ana.textContent).toContain('Midfielder · Women’s')
+    expect(ana.textContent).toContain('Midfielder, Women’s')
     expect(ana.textContent).toContain('EU')
-    expect(ana.textContent).toContain('24 · Buenos Aires')
+    expect(ana.textContent).toContain('24, Buenos Aires')
   })
 
   it('hides empty lines: no nationality or place line, no "Nationality not listed", no chips over faces', () => {
     render(<MemberPhotoGrid members={members} />)
     const bea = screen.getAllByTestId('member-tile').find((el) => el.textContent?.includes('Bea Soto'))!
     const lines = bea.querySelectorAll('span.truncate')
-    expect([...lines].map((l) => l.textContent)).toEqual(['Bea Soto', 'Midfielder · Women’s'])
+    expect([...lines].map((l) => l.textContent)).toEqual(['Bea Soto', 'Midfielder, Women’s'])
     expect(screen.queryByText(/Nationality not listed/)).toBeNull()
     expect(screen.queryByText(/Open to play|Open to coach/)).toBeNull()
   })

@@ -7,10 +7,10 @@
       "add": "Add Photos"
     },
     "league": {
-      "menAndWomen": "{{league}} · men & women",
-      "menThenWomen": "{{men}} · men, {{women}} · women",
-      "men": "{{league}} · men",
-      "women": "{{league}} · women",
+      "menAndWomen": "{{league}}, men & women",
+      "menThenWomen": "{{men}} for men, {{women}} for women",
+      "men": "{{league}}, men",
+      "women": "{{league}}, women",
       "bandNote": "Hockia doesn't have a level for {{list}} yet. Until it does, fit can't compare levels for your opportunities."
     },
     "openRole": {
@@ -112,17 +112,17 @@
       "memberCount_other": "{{count}} members",
       "previewLabel": "Someone on Hockia",
       "previewDetail": "What players and coaches see",
-      "viewsLine_one": "profile view this week · <lock/> only you",
-      "viewsLine_other": "profile views this week · <lock/> only you",
+      "viewsLine_one": "profile view this week <lock/> only you",
+      "viewsLine_other": "profile views this week <lock/> only you",
       "seeWho": "See who",
-      "openRolesWithCount": "Open opportunities · {{count}}",
+      "openRolesWithCount": "Open opportunities ({{count}})",
       "openRoles": "Open opportunities",
       "postRole": "+ Post an opportunity",
       "seeAllRoles": "See all",
       "seeAllRolesCount_one": "See all {{count}} opportunities",
       "seeAllRolesCount_other": "See all {{count}} opportunities",
       "noOpenRoles": "No open opportunities right now.",
-      "squadWithCount": "Squad · {{count}}",
+      "squadWithCount": "Squad ({{count}})",
       "squad": "Squad",
       "manage": "Manage",
       "seeAllSquad": "See all",
@@ -168,7 +168,7 @@
       "removeConfirm": "Remove",
       "pendingTitle": "Pending invites",
       "pending": "Invitation pending",
-      "pendingViaLink": "Invitation pending · via link",
+      "pendingViaLink": "Invitation pending, via link",
       "cancelInvite": "Cancel",
       "tryAgain": "Try again",
       "emptyTitle": "No members yet",
@@ -262,7 +262,7 @@
     "clubCount_other": "{{count}} clubs",
     "leagueCount_one": "{{count}} league",
     "leagueCount_other": "{{count}} leagues",
-    "countsLine": "{{clubs}} · {{leagues}}"
+    "countsLine": "{{clubs}}, {{leagues}}"
   },
   "worldSearch": {
     "placeholder": "Search countries or clubs...",

@@ -236,7 +236,8 @@ describe('Inbox › Requests rows (List item / Request)', () => {
     expect(waiting).toHaveTextContent('Waiting')
     expect(waiting.className).toContain('text-ink-3')
     expect(waiting.className).not.toMatch(AMBER)
-    expect(within(row).getByText(/Club · sent 4d/)).toBeInTheDocument()
+    expect(within(row).getByText('sent 4d')).toBeInTheDocument()
+    expect(row).toHaveTextContent('Club sent 4d')
     expect(within(row).queryByRole('button')).toBeNull()
   })
 })
@@ -325,7 +326,7 @@ describe('My applications rows (List item / Application)', () => {
       app({ id: 'a3', status: 'rejected', active: false }),
     ]
     render(withQuery(<MyApplicationsPage />, '/opportunities/applications'))
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Active · 2', 'Archived · 1'])
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Active (2)', 'Archived (1)'])
     const rows = screen.getAllByTestId('application-row')
     expect(rows).toHaveLength(2)
     expect(within(rows[0]).getByTestId('application-role-title')).toHaveTextContent('Forward')

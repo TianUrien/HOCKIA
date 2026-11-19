@@ -151,7 +151,7 @@ describe('Opportunities · Roles by viewer', () => {
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(1))
     expect(screen.getByText('Head Coach, Men 1st XI')).toBeInTheDocument()
     expect(screen.queryByText('Striker wanted')).toBeNull()
-    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching opportunities · 1 open')
+    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching opportunities: 1 open')
     const card = screen.getByTestId('role-card')
     expect(card.textContent).not.toMatch(/fit|match|applicant|save/i)
     expect(within(card).getAllByRole('button')).toHaveLength(1)
@@ -164,7 +164,7 @@ describe('Opportunities · Roles by viewer', () => {
     tables = { opportunities: both }
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(2))
-    expect(screen.getAllByRole('tab').map((t) => t.getAttribute('aria-label') ?? t.textContent)).toEqual(['Open opportunities · 2', 'Applied'])
+    expect(screen.getAllByRole('tab').map((t) => t.getAttribute('aria-label') ?? t.textContent)).toEqual(['Open opportunities (2)', 'Applied'])
     expect(screen.queryByTestId('coach-roles-open-line')).toBeNull()
   })
 
@@ -206,7 +206,7 @@ describe('Opportunities · no coaching role open', () => {
     expect(screen.queryByTestId('role-card')).toBeNull()
     expect(screen.getByText('No coaching opportunities open right now')).toBeInTheDocument()
     expect(screen.getByTestId('coach-roles-posted-line').textContent).toBe('4 coaching opportunities were posted on Hockia this year')
-    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching opportunities · 0 open')
+    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching opportunities: 0 open')
     const alerts = screen.getByRole('switch', { name: 'Coaching opportunity alerts' })
     expect(alerts).toHaveAttribute('aria-checked', 'true')
     fireEvent.click(alerts)
@@ -335,7 +335,7 @@ describe('Opportunities · My opportunities (coach who recruits)', () => {
     myRoles = { ...myRoles, open: [ownRole(['pending'])] }
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(1))
-    fireEvent.click(screen.getByRole('tab', { name: 'My opportunities · 1' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'My opportunities (1)' }))
     await waitFor(() => expect(screen.getByTestId('coach-my-roles')).toBeInTheDocument())
     expect(screen.queryByTestId('role-card')).toBeNull()
     expect(screen.getByTestId('coach-recruiting-for').textContent).toBe('Recruiting for Barnes HC')

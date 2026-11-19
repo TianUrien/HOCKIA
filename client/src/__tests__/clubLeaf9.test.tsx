@@ -87,7 +87,7 @@ describe('club Your week', () => {
 // ── Inbox (DEV NOTE 355:914) ──────────────────────────────────────────────
 describe('club Inbox', () => {
   it('role line is "Player · position", plus "Applied"', () => {
-    expect(clubInboxRoleLine('player', 'Forward', true)).toBe('Player · Forward · Applied')
+    expect(clubInboxRoleLine('player', 'Forward', true)).toBe('Player · Forward, Applied')
     expect(clubInboxRoleLine('player', 'Forward', false)).toBe('Player · Forward')
     expect(clubInboxRoleLine('coach', null, false)).toBe('Coach')
   })

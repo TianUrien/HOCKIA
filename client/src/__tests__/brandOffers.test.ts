@@ -56,19 +56,19 @@ describe('brand offers: list groups and words (Figma B1-all)', () => {
   })
 
   it('writes the status line for each state', () => {
-    expect(offerStatusLine(offer(), NOW)).toBe('158 shown · 31 opened · 12 went to your store · 5 contacted')
-    expect(offerStatusLine(offer({ not_useful: 2 }), NOW)).toBe('158 shown · 31 opened · 12 went to your store · 5 contacted · 2 not useful')
-    expect(offerStatusLine(offer({ code_copies: 3 }), NOW)).toBe('158 shown · 31 opened · 12 went to your store · 3 copied the code · 5 contacted')
+    expect(offerStatusLine(offer(), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 5 contacted')
+    expect(offerStatusLine(offer({ not_useful: 2 }), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 5 contacted, 2 not useful')
+    expect(offerStatusLine(offer({ code_copies: 3 }), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 3 copied the code, 5 contacted')
     expect(offerStatusLine(offer({ status: 'in_review' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'draft' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'paused', updated_at: '2026-10-20T10:00:00Z' }), NOW)).toBe("Paused 3 days ago. Members don't see it.")
     expect(offerStatusLine(offer({ status: 'not_approved', review_note: 'remove "best price in Spain".' }), NOW)).toBe('Taken down: remove "best price in Spain". Edit and publish again.')
     expect(shortDate('2027-07-31T23:59:59Z')).toBe('31 Jul')
-    expect(offerStatusLine(offer({ status: 'ended', ended_at: '2026-09-30T10:00:00Z', shown: 212, contacted: 9 }), NOW)).toBe('Ended 30 Sep · 212 shown · 12 went to your store · 9 contacted')
+    expect(offerStatusLine(offer({ status: 'ended', ended_at: '2026-09-30T10:00:00Z', shown: 212, contacted: 9 }), NOW)).toBe('Ended 30 Sep. 212 shown, 12 went to your store, 9 contacted')
   })
 
   it('counts live offers against the free limit', () => {
-    expect(liveLimitLine([offer(), offer({ status: 'draft' }), offer()])).toBe(`2 of ${OFFER_LIVE_LIMIT} live · free for every brand for now`)
+    expect(liveLimitLine([offer(), offer({ status: 'draft' }), offer()])).toBe(`2 of ${OFFER_LIVE_LIMIT} live. Free for every brand for now`)
   })
 
   it('says yesterday and N days ago', () => {
@@ -112,7 +112,7 @@ describe('brand offers: content rules (Figma B2)', () => {
     expect(offerReasonLine('England', 'player')).toBe('You see this because you live in England and play.')
     expect(offerReasonLine('Spain', 'club')).toBe('You see this because you live in Spain and run a club.')
     expect(offerReasonLine(null, 'coach')).toBe('You see this because of where you live.')
-    expect(audienceLine(['England', 'Netherlands'], ['player', 'coach'])).toBe('England, Netherlands · Players, coaches')
+    expect(audienceLine(['England', 'Netherlands'], ['player', 'coach'])).toBe('England, Netherlands. Players, coaches')
   })
 
   it('turns server refusals into plain words', () => {

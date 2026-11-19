@@ -51,8 +51,8 @@
     "other": "Other"
   },
   "coachRoles": {
-    "openLine_one": "Coaching opportunities · {{count}} open",
-    "openLine_other": "Coaching opportunities · {{count}} open",
+    "openLine_one": "Coaching opportunities: {{count}} open",
+    "openLine_other": "Coaching opportunities: {{count}} open",
     "postedLine_one": "{{count}} coaching opportunity was posted on Hockia this year",
     "postedLine_other": "{{count}} coaching opportunities were posted on Hockia this year",
     "closedOn": "Closed {{date}}",

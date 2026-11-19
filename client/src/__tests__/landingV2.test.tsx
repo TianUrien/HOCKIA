@@ -286,9 +286,9 @@ describe('Landing v3 — open opportunities', () => {
     expect(within(cards[0]).getByRole('heading', { level: 3 })).toHaveTextContent('Forward')
     expect(cards[0]).toHaveTextContent('Hockey Team Bologna')
     expect(cards[0]).toHaveTextContent('🇮🇹')
-    expect(cards[0]).toHaveTextContent('Bologna, Italy · Serie A1')
+    expect(cards[0]).toHaveTextContent('Bologna, Italy, Serie A1')
     expect(cards[0]).toHaveTextContent("Women's")
-    expect(cards[0]).toHaveTextContent('Starts 16 Sep · 3 months')
+    expect(cards[0]).toHaveTextContent('Starts 16 Sep, 3 months')
     expect(within(cards[0]).getByRole('list', { name: 'Package' })).toHaveTextContent('HousingFlightsJob')
     expect(cards[0]).toHaveTextContent('Apply in the app')
     expect(cards[0]).toHaveTextContent('View opportunity')
@@ -299,7 +299,7 @@ describe('Landing v3 — open opportunities', () => {
 
     expect(cards[1]).toHaveAttribute('href', '/opportunities/r2')
     expect(cards[1]).toHaveTextContent('Head coach')
-    expect(cards[1]).toHaveTextContent('Starts immediately · 12 months')
+    expect(cards[1]).toHaveTextContent('Starts immediately, 12 months')
     // Max three chips + the overflow.
     expect(within(cards[1]).getByRole('list', { name: 'Package' })).toHaveTextContent('HousingCarVisa+2')
 
@@ -330,7 +330,7 @@ describe('Landing v3 — open opportunities', () => {
     const cards = await screen.findAllByTestId('role-card')
     expect(cards).toHaveLength(3)
     expect(cards[0]).not.toHaveTextContent('🇮🇹')
-    expect(cards[0]).toHaveTextContent('Bologna, Italy · Serie A1')
+    expect(cards[0]).toHaveTextContent('Bologna, Italy, Serie A1')
   })
 })
 
@@ -365,10 +365,10 @@ describe('landingRoles helpers', () => {
     const card = toOpenRoleCard(ROWS[0], NOW)!
     expect(card).toMatchObject({
       id: 'r1', clubName: 'Hockey Team Bologna', crestUrl: 'https://cdn/htb.png', city: 'Bologna', country: 'Italy',
-      league: 'Serie A1', position: 'Forward', team: "Women's", when: 'Starts 16 Sep · 3 months',
+      league: 'Serie A1', position: 'Forward', team: "Women's", when: 'Starts 16 Sep, 3 months',
       packages: ['Housing', 'Flights', 'Job'], createdAt: '2026-10-03T12:00:00Z', flag: null,
     })
-    expect(placeLine(card)).toBe('Bologna, Italy · Serie A1')
+    expect(placeLine(card)).toBe('Bologna, Italy, Serie A1')
     const unknown = toOpenRoleCard(ROWS[2], NOW)!
     expect(unknown.clubName).toBeNull()
     expect(unknown.crestUrl).toBeNull()
@@ -393,10 +393,10 @@ describe('landingRoles helpers', () => {
   })
 
   it('when line: day first, bare integers mean months, nothing → null', () => {
-    expect(whenLine({ start_date: '2026-09-16', duration: '3 months' }, NOW)).toBe('Starts 16 Sep · 3 months')
+    expect(whenLine({ start_date: '2026-09-16', duration: '3 months' }, NOW)).toBe('Starts 16 Sep, 3 months')
     expect(whenLine({ start_date: '2027-01-10', duration: null }, NOW)).toBe('Starts 10 Jan 2027')
-    expect(whenLine({ start_date: null, duration: 'Full season' }, NOW)).toBe('Starts immediately · Full season')
-    expect(whenLine({ start_date: null, duration: '1' }, NOW)).toBe('Starts immediately · 1 month')
+    expect(whenLine({ start_date: null, duration: 'Full season' }, NOW)).toBe('Starts immediately, Full season')
+    expect(whenLine({ start_date: null, duration: '1' }, NOW)).toBe('Starts immediately, 1 month')
     expect(whenLine({ start_date: null, duration: '' }, NOW)).toBeNull()
   })
 
