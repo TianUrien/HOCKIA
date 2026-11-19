@@ -23,7 +23,7 @@ export function CommentListItem({ name, avatarUrl, role, meta, text, actions }: 
       <Avatar src={avatarUrl} initials={name.slice(0, 2) || '?'} size="sm" className="mt-0.5 flex-shrink-0" role={role} />
       <div className="min-w-0 flex-1">
         <p className="flex min-w-0 items-baseline gap-1.5">
-          <span className="min-w-0 truncate text-row font-semibold text-ink-1">{name}</span>
+          <span className="min-w-0 truncate text-row font-semibold text-ink-1">{name}</span>{' '}
           <span className="shrink-0 text-caption text-ink-2 lg:text-secondary" data-testid="comment-meta">{meta}</span>
         </p>
         <p className="whitespace-pre-wrap break-words text-row text-ink-1">{text}</p>

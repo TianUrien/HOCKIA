@@ -33,10 +33,10 @@ export function PostHeader({ authorId, name, avatarUrl, role, subtitle, age, pro
     <>
       <Avatar src={avatarUrl} initials={initialsOf(name)} size="sm" role={(role ?? undefined) as never} className={cn('shrink-0', !small && '!h-9 !w-9')} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[14px] font-semibold leading-[19px] text-ink-1">{display}</span>
+        <span className="block truncate text-[14px] font-semibold leading-[19px] text-ink-1">{display}</span>{' '}
         {age ? (
           <span className="mt-0.5 flex min-w-0 items-baseline gap-2 text-caption">
-            <span className="min-w-0 truncate text-ink-2">{subtitle}</span>
+            <span className="min-w-0 truncate text-ink-2">{subtitle}</span>{' '}
             <span className="shrink-0 text-ink-3">{age}</span>
           </span>
         ) : (

@@ -18,6 +18,7 @@ export function SectionHeader({ title, chip, action }: SectionHeaderProps) {
     <div className="mb-3 flex items-center justify-between gap-2">
       <div className="flex items-center gap-2">
         <h2 className="text-lg font-extrabold text-[#14141c]">{title}</h2>
+        {chip && ' '}
         {chip && (
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${

@@ -55,7 +55,7 @@ describe('goal ask card (G1)', () => {
     fireEvent.click(screen.getByTestId('goal-option-get_sponsor'))
     fireEvent.click(screen.getByTestId('goal-option-keep_playing'))
     expect(screen.getByTestId('goal-option-keep_playing')).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByTestId('goal-save')).toHaveTextContent('That’s my goal3 of 3')
+    expect(screen.getByTestId('goal-save')).toHaveTextContent('That’s my goal 3 of 3')
     fireEvent.click(screen.getByTestId('goal-save'))
     await waitFor(() => expect(rpc).toHaveBeenCalledWith('set_my_goal', { p_options: ['play_abroad', 'move_up', 'get_sponsor'], p_other_text: null }))
     expect(track).toHaveBeenCalledWith('goal_set', 'member_goal', undefined, expect.objectContaining({ count: 3, has_text: false, role: 'player', surface: 'home' }))

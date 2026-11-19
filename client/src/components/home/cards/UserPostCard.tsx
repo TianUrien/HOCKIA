@@ -246,8 +246,8 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
                   className="!h-5 !w-5"
                   role={topAnswer.author_role}
                 />
-                <span className="truncate font-semibold text-ink-1">{topAnswer.author_name || t('cards.post.unnamedMember')}</span>
-                <span className="shrink-0 text-ink-2">{identityLine(topAnswer.author_role)}</span>
+                <span className="truncate font-semibold text-ink-1">{topAnswer.author_name || t('cards.post.unnamedMember')}</span>{' '}
+                <span className="shrink-0 text-ink-2">{identityLine(topAnswer.author_role)}</span>{' '}
                 <span className="shrink-0 text-ink-3">{t('cards.post.topAnswerLabel')}</span>
               </span>
               <span className="mt-1 line-clamp-3 block text-[14px] leading-[19px] text-ink-1">{topAnswer.content}</span>

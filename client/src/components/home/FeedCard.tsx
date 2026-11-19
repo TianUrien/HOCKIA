@@ -71,7 +71,7 @@ export function FeedCardHeader({ authorId, name, avatarUrl, role, createdAt, pro
       <div className="min-w-0 flex-1">
         <p className="truncate text-row font-semibold text-ink-1">{displayName}</p>
         <p className="flex min-w-0 items-baseline gap-2 text-secondary">
-          {context ? <span className="min-w-0 truncate text-ink-2">{context}</span> : null}
+          {context ? <><span className="min-w-0 truncate text-ink-2">{context}</span>{' '}</> : null}
           <time dateTime={createdAt} className="shrink-0 text-ink-3">{timeAgo}</time>
         </p>
       </div>

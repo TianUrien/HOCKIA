@@ -155,7 +155,7 @@ export function PostCommentsSection({
             name={comment.author_name || t('comments.unnamedAuthor')}
             avatarUrl={comment.author_avatar}
             role={comment.author_role}
-            meta={<>{identityLine(comment.author_role)}<time dateTime={comment.created_at} className="ml-2 text-ink-3">{getTimeAgo(comment.created_at, true)}</time></>}
+            meta={<>{identityLine(comment.author_role)}{' '}<time dateTime={comment.created_at} className="ml-2 text-ink-3">{getTimeAgo(comment.created_at, true)}</time></>}
             text={comment.content}
             actions={
               user && comment.author_id === user.id ? (

@@ -970,7 +970,7 @@ export function PostComposerModal({
                 <div>
                   <p className="text-row font-semibold text-ink-1">{profile.full_name}</p>
                   <p className="flex flex-wrap items-baseline gap-x-2 text-secondary">
-                    <span className="text-ink-2">{identityLine(profile.role)}</span>
+                    <span className="text-ink-2">{identityLine(profile.role)}</span>{' '}
                     <span className="text-ink-3">{t('composer.audience')}</span>
                   </p>
                 </div>

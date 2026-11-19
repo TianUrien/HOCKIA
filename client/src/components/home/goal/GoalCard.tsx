@@ -178,7 +178,7 @@ function AskCard({ role, initial, changing, onDone, onLater, onCancel }: AskCard
         <div className={cn('flex items-center gap-3', count > 0 ? 'mt-4' : '-mb-2 mt-1')}>
           {count > 0 ? (
             <Button className="flex-1 rounded-full" loading={saving} onClick={() => void save()} data-testid="goal-save">
-              <span>{t('goal.ask.save')}</span>
+              <span>{t('goal.ask.save')}</span>{' '}
               <span className="ml-2 font-normal tabular-nums opacity-80">{t('goal.ask.saveCount', { picked: count, max: GOAL_MAX })}</span>
             </Button>
           ) : null}
