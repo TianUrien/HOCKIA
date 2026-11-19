@@ -299,4 +299,70 @@ describe('MediaLightbox video slide — tap-to-play on touch devices', () => {
       }
     }
   })
+
+  describe('fullscreen button', () => {
+    type FsVideo = HTMLVideoElement & { webkitEnterFullscreen?: () => void }
+    const proto = window.HTMLElement.prototype as unknown as { requestFullscreen?: unknown }
+    let original: PropertyDescriptor | undefined
+    let rejections: unknown[]
+    const onRejection = (reason: unknown) => { rejections.push(reason) }
+
+    beforeEach(() => {
+      original = Object.getOwnPropertyDescriptor(proto, 'requestFullscreen')
+      rejections = []
+      process.on('unhandledRejection', onRejection)
+    })
+    afterEach(() => {
+      process.off('unhandledRejection', onRejection)
+      if (original) Object.defineProperty(proto, 'requestFullscreen', original)
+      else delete proto.requestFullscreen
+    })
+
+    function openControls() {
+      const { video, wrapper } = renderVideoLightbox()
+      const native = vi.fn()
+      ;(video as FsVideo).webkitEnterFullscreen = native
+      fireEvent.pointerDown(wrapper, { clientX: 100, clientY: 100 })
+      fireEvent.pointerUp(wrapper, { clientX: 100, clientY: 100 })
+      return { native, button: screen.getByRole('button', { name: 'Fullscreen' }) }
+    }
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+    it('uses the element fullscreen API when it works', async () => {
+      const request = vi.fn(() => Promise.resolve())
+      Object.defineProperty(proto, 'requestFullscreen', { configurable: true, writable: true, value: request })
+      const { native, button } = openControls()
+      fireEvent.click(button)
+      await settle()
+      expect(request).toHaveBeenCalledTimes(1)
+      expect(native).not.toHaveBeenCalled()
+    })
+
+    it('falls back to the video player when requestFullscreen rejects, with no unhandled rejection', async () => {
+      // Android WebView (OPPO, Android 16): the function exists and rejects.
+      const request = vi.fn(() => Promise.reject(new TypeError('Fullscreen is not supported')))
+      Object.defineProperty(proto, 'requestFullscreen', { configurable: true, writable: true, value: request })
+      const { native, button } = openControls()
+      fireEvent.click(button)
+      await settle()
+      expect(request).toHaveBeenCalledTimes(1)
+      expect(native).toHaveBeenCalledTimes(1)
+      expect(rejections).toEqual([])
+    })
+
+    it('falls back when requestFullscreen throws', async () => {
+      Object.defineProperty(proto, 'requestFullscreen', { configurable: true, writable: true, value: () => { throw new TypeError('nope') } })
+      const { native, button } = openControls()
+      expect(() => fireEvent.click(button)).not.toThrow()
+      await settle()
+      expect(native).toHaveBeenCalledTimes(1)
+    })
+
+    it('falls back when the element has no requestFullscreen (iPhone Safari)', () => {
+      Object.defineProperty(proto, 'requestFullscreen', { configurable: true, writable: true, value: undefined })
+      const { native, button } = openControls()
+      fireEvent.click(button)
+      expect(native).toHaveBeenCalledTimes(1)
+    })
+  })
 })

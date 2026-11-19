@@ -581,20 +581,35 @@ function LightboxVideoSlide({
     const el = wrapperRef.current
     if (!el) return
     if (document.fullscreenElement) {
-      void document.exitFullscreen()
+      // exitFullscreen returns a promise that can reject; nothing to do then.
+      void Promise.resolve(document.exitFullscreen()).catch(() => {})
       return
     }
-    // iPhone Safari has no Element fullscreen API (requestFullscreen is
-    // undefined on divs) — fall back to the video's native fullscreen
-    // player via webkitEnterFullscreen, or the button silently dies.
-    if (typeof el.requestFullscreen === 'function') {
-      void el.requestFullscreen()
+    // The video's own fullscreen player. The only path on iPhone Safari (no
+    // Element fullscreen API on a div), and the way out when the API exists
+    // but refuses, so the button never silently dies.
+    const nativeVideoFullscreen = () => {
+      const video = videoRef.current as
+        | (HTMLVideoElement & { webkitEnterFullscreen?: () => void })
+        | null
+      try {
+        video?.webkitEnterFullscreen?.()
+      } catch {
+        // Not ready or not allowed: nothing else to try.
+      }
+    }
+    if (typeof el.requestFullscreen !== 'function') {
+      nativeVideoFullscreen()
       return
     }
-    const video = videoRef.current as
-      | (HTMLVideoElement & { webkitEnterFullscreen?: () => void })
-      | null
-    video?.webkitEnterFullscreen?.()
+    // Some Android WebViews expose requestFullscreen and then reject it
+    // ("Fullscreen is not supported", Sentry JAVASCRIPT-REACT-EV, 2026-11-19);
+    // older engines throw or return nothing instead of a promise.
+    try {
+      void Promise.resolve(el.requestFullscreen()).catch(nativeVideoFullscreen)
+    } catch {
+      nativeVideoFullscreen()
+    }
   }, [])
 
   const formatTime = (seconds: number) => {
