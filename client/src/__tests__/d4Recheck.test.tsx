@@ -142,7 +142,7 @@ describe('2 · withdrawn applicants reach the club', () => {
     expect(screen.getAllByTestId('applicant-row')).toHaveLength(1)
     expect(screen.queryByTestId('applicant-status-tag')).toBeNull()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Closed · 1' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Closed 1' }))
     const closed = screen.getAllByTestId('applicant-row')
     expect(closed).toHaveLength(1)
     expect(closed[0].textContent).toContain('Facundo Diaz')
@@ -165,7 +165,7 @@ describe('2 · withdrawn applicants reach the club', () => {
     expect(sel.className).toContain('text-brand-text')
     expect(sel.className).not.toContain('bg-ink-1')
     expect(sel).not.toHaveAttribute('aria-pressed')
-    expect(screen.getByRole('tab', { name: 'Closed · 1' }).className).toContain('border-line')
+    expect(screen.getByRole('tab', { name: 'Closed 1' }).className).toContain('border-line')
   })
 })
 
@@ -255,7 +255,7 @@ describe('4b · player steps: Offer reads skipped when no offer was made', () =>
     fx.offerMade = false
     inRouter(<OwnApplicationRoad applicationId="a1" status="signed" onChanged={vi.fn()} />)
     const offer = screen.getByTestId('player-road-steps').querySelector('[data-skipped="true"]')
-    expect(offer?.textContent).toBe('Offer · skipped')
+    expect(offer?.textContent).toBe('Offer, skipped')
     expect(offer?.getAttribute('data-done')).toBe('false')
   })
 })
@@ -314,9 +314,9 @@ describe('4e · a / an before the club name', () => {
 
 describe('4f · a role without a start date starts immediately', () => {
   it('offer start line never reads "Not set"', () => {
-    expect(offerStartLine(null, '7 months')).toBe('Immediately · 7 months')
+    expect(offerStartLine(null, '7 months')).toBe('Immediately, 7 months')
     expect(offerStartLine(null, null)).toBe('Immediately')
-    expect(offerStartLine('2026-10-01', '7 months')).toBe('1 Oct 2026 · 7 months')
+    expect(offerStartLine('2026-10-01', '7 months')).toBe('1 Oct 2026, 7 months')
   })
 })
 
@@ -328,7 +328,7 @@ describe('4g · one date format on the road and the offer card', () => {
     expect(accepted.find((s) => s.key === 'offer')?.detail).toBe('Sam accepted · 2 Oct')
     const sent = roadSteps({ status: 'offered', talked: true, trial: false, firstName: 'Sam', now: NOW, offer: { status: 'live', open_until: '2026-10-09', responded_at: null, sent_at: '2026-09-30T10:00:00Z' } })
     expect(sent.find((s) => s.key === 'offer')?.detail).toBe('Sent · open until 9 Oct')
-    expect(roadHeaderLine('2026-10-02T09:00:00Z', '2026-09-17T09:00:00Z', NOW)).toBe('Shortlisted today · applied 17 Sep')
+    expect(roadHeaderLine('2026-10-02T09:00:00Z', '2026-09-17T09:00:00Z', NOW)).toBe('Shortlisted today, applied 17 Sep')
     const signed = roadSteps({ status: 'signed', talked: true, trial: false, firstName: 'Sam', now: NOW, signedAt: '2026-10-02T15:00:00Z' })
     expect(signed.find((s) => s.key === 'signed')?.detail).toBe('Signed through Hockia · 2 Oct')
   })

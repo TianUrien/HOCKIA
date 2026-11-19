@@ -14,7 +14,6 @@ import { RoleCard } from '@/components/opportunities/RoleCard'
 import LocationAutocomplete, { type LocationSelection } from '@/components/LocationAutocomplete'
 import { SettingsSwitch } from '@/components/settings/settingsUi'
 import { BENEFIT_TILES, genderPill, CATEGORY_DOT_ON_PHOTO_CLASSES } from '@/lib/opportunityCopy'
-import { clubLeagueLine } from '@/lib/clubProfileCopy'
 import {
   COACH_POSITIONS, coachTeamHint, DESCRIPTION_MAX, DURATION_OPTIONS, durationLabel, LEVELS, PACKAGE_KEYS, PAY_OPTIONS, PLAYER_POSITIONS, TITLE_MAX,
   checkStepCopy, draftAsVacancy, draftFromRow, draftToEditPatch, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, recruitingTarget, roleChecklist, rolePostedPath,
@@ -381,8 +380,8 @@ export default function PostRoleScreen({ draftId }: Props) {
   const previewTitle = draft.title.trim() || positionLabel(draft.position) || (isPlayer ? t('postRole.preview.titlePlayer') : t('postRole.preview.titleCoach'))
   const previewClub = cover.clubName ?? profile?.full_name ?? t('postRole.preview.club')
   const league = draft.gender === 'Women' || draft.gender === 'Girls'
-    ? clubLeagueLine(null, profile?.womens_league_division)?.replace(/ · women$/, '')
-    : clubLeagueLine(profile?.mens_league_division, null)?.replace(/ · men$/, '')
+    ? profile?.womens_league_division?.trim() || null
+    : profile?.mens_league_division?.trim() || null
 
   // The card exactly as members will see it: the hiring club, and "posted by"
   // the coach when a coach recruits for one (same identity as the lists).
@@ -505,7 +504,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                   <CrestTile src={cover.crestUrl} name={previewClub} size={36} radius={10} />
                   <span className="min-w-0">
                     <span className="block truncate text-[16px] font-semibold leading-[21px] text-white">{previewTitle}</span>
-                    <span className="block truncate text-caption text-white/80">{[previewClub, draft.country.trim() || null].filter(Boolean).join(' · ')}</span>
+                    <span className="block truncate text-caption text-white/80">{[previewClub, draft.country.trim() || null].filter(Boolean).join(', ')}</span>
                   </span>
                 </div>
               </RoleCover>

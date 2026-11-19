@@ -107,9 +107,9 @@ export default function PublishConfirmationModal({
                   Before you publish:
                 </h3>
                 <ul className="text-sm text-ink-2 space-y-1">
-                  <li>• This opportunity will be visible to candidates globally</li>
-                  <li>• Candidates will be able to apply immediately</li>
-                  <li>• You can edit or close it anytime after publishing</li>
+                  <li>This opportunity will be visible to candidates globally</li>
+                  <li>Candidates will be able to apply immediately</li>
+                  <li>You can edit or close it anytime after publishing</li>
                 </ul>
               </div>
             </div>

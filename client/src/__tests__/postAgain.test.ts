@@ -22,8 +22,8 @@ describe('Club speed CS3 · Post again', () => {
   })
   it('reads the closed line', () => {
     const day = () => '12 Sep'
-    expect(closedRoleLine('2026-09-12', 'withdrawn', day)).toBe('Closed 12 Sep · not filled')
-    expect(closedRoleLine('2026-09-12', 'filled', day)).toBe('Closed 12 Sep · filled')
+    expect(closedRoleLine('2026-09-12', 'withdrawn', day)).toBe('Closed 12 Sep, not filled')
+    expect(closedRoleLine('2026-09-12', 'filled', day)).toBe('Closed 12 Sep, filled')
     expect(closedRoleLine(null, null, day)).toBe('Closed')
   })
   it('is offered on the closed role sheet, the start sheet and desktop (desktop and coaches open the Post flow with postAgainId)', () => {

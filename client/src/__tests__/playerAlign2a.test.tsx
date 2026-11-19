@@ -314,7 +314,7 @@ describe('My applications rows (List item / Application)', () => {
     expect(applicationStatusPill('rejected', null, true).label).toBe('Not this time')
     expect(applicationStatusPill('pending', null, false)).toEqual({ label: 'Opportunity closed', tone: 'grey' })
     const old = new Date(Date.now() - 16 * 86_400_000).toISOString()
-    expect(applicationStatusPill('pending', old, true)).toMatchObject({ label: 'No reply · 16d', tone: 'grey' })
+    expect(applicationStatusPill('pending', old, true)).toMatchObject({ label: 'No reply in 16d', tone: 'grey' })
     for (const cls of Object.values(APPLICATION_TONE_TEXT)) expect(cls).not.toMatch(AMBER)
   })
 
@@ -329,7 +329,7 @@ describe('My applications rows (List item / Application)', () => {
     const rows = screen.getAllByTestId('application-row')
     expect(rows).toHaveLength(2)
     expect(within(rows[0]).getByTestId('application-role-title')).toHaveTextContent('Forward')
-    expect(within(rows[0]).getByText('Hockey Team Bologna · Italy')).toBeInTheDocument()
+    expect(within(rows[0]).getByText('Hockey Team Bologna, Italy')).toBeInTheDocument()
     const replied = within(rows[0]).getByTestId('application-status')
     expect(replied).toHaveTextContent('Replied')
     expect(replied.className).toContain('bg-surface-grouped text-ink-2')
@@ -354,7 +354,7 @@ describe('My applications rows (List item / Application)', () => {
   it('the help card’s "Message <club>" is a Link button', () => {
     applications = [app({ id: 'a5', status: 'pending', appliedAt: new Date(Date.now() - 16 * 86_400_000).toISOString(), club: { id: 'club-3', name: 'CASI', avatarUrl: null, role: 'club' } })]
     render(withQuery(<MyApplicationsPage />, '/opportunities/applications'))
-    expect(screen.getByTestId('application-status')).toHaveTextContent('No reply · 16d')
+    expect(screen.getByTestId('application-status')).toHaveTextContent('No reply in 16d')
     expect(screen.getByTestId('application-status').className).toContain('text-ink-2')
     const link = screen.getByTestId('no-reply-message-link')
     expect(link).toHaveTextContent('Message CASI')
@@ -392,7 +392,7 @@ describe('Apply sheet', () => {
     for (const r of rows) expect(r.querySelector('svg')).not.toBeNull()
     expect(screen.getByPlaceholderText('Add a note to the club (optional)')).toBeInTheDocument()
     expect(screen.getByText('0 / 500')).toBeInTheDocument()
-    expect(screen.getByText('Optional · max 500 characters')).toBeInTheDocument()
+    expect(screen.getByText('Optional, max 500 characters')).toBeInTheDocument()
     const send = screen.getByTestId('send-application')
     expect(send).toHaveTextContent('Send application')
     expect(send).not.toBeDisabled()

@@ -14,7 +14,7 @@
     "roleClosed": "Oportunidad cerrada",
     "withdrawnMessage": "Esta postulación fue retirada por quien la envió",
     "movedOnMessage": "Esta postulación ya avanzó, así que no se rechazó",
-    "noReplyDays": "Sin respuesta · {{days}} d"
+    "noReplyDays": "Sin respuesta en {{days}} d"
   },
   "statusReason": {
     "positionFilled": "Puesto ya cubierto",
@@ -81,7 +81,7 @@
     "closesInDays_other": "Cierra en {{count}} días",
     "closesInDays_many": "Cierra en {{count}} días",
     "closesOn": "Cierra el {{date}}",
-    "noDeadline": "Sin fecha límite · cierra cuando se cubre",
+    "noDeadline": "Sin fecha límite, cierra cuando se cubre",
     "applyBy": "Postulaciones hasta el {{date}}",
     "appliedOn": "Postulación del {{date}}",
     "appliedToday": "Postulación de hoy",
@@ -134,7 +134,7 @@
       "detail": "El club paga por la temporada"
     },
     "compensationNotStated": "Pago sin especificar",
-    "notListed": "Condiciones sin detallar · consultar al club",
+    "notListed": "Condiciones sin detallar, consultar al club",
     "paidOrUnpaid": "Con o sin pago",
     "euPassport": "Pasaporte de la UE"
   },
@@ -184,7 +184,7 @@
     "show_one": "Mostrar {{count}} oportunidad",
     "show_other": "Mostrar {{count}} oportunidades",
     "show_many": "Mostrar {{count}} oportunidades",
-    "passportHint": "{{nationality}} · {{eligible}} de {{total}} oportunidades abiertas"
+    "passportHint": "{{nationality}}: {{eligible}} de {{total}} oportunidades abiertas"
   },
   "roleLifecycle": {
     "closed": "Oportunidad cerrada.",
@@ -256,9 +256,9 @@
     "notePlaceholderNamedOptional": "Agregar una nota para {{name}} (opcional)",
     "notePlaceholderClubOptional": "Agregar una nota para el club (opcional)",
     "maxCharacters": "Máximo 500 caracteres",
-    "optionalMaxCharacters": "Opcional · máximo 500 caracteres",
+    "optionalMaxCharacters": "Opcional, máximo 500 caracteres",
     "cancel": "Cancelar",
-    "clubWillSee": "Lo que va a ver el club · toca un dato para editarlo",
+    "clubWillSee": "Lo que va a ver el club. Toca un dato para editarlo",
     "highlightIncludedTitle": "Tu video de highlights va incluido",
     "highlightIncludedAria": "Video de highlights incluido",
     "rows": {
@@ -307,7 +307,7 @@
     "reviewsClub": "El club la revisa y responde por acá",
     "onBehalf": "{{name}} publicó esta oportunidad en nombre de {{club}}. Los mensajes le llegan a quien la publicó.",
     "postedBy": "Publicada por {{name}}",
-    "clubPostedBy": "{{club}} · publicada por {{name}}",
+    "clubPostedBy": "{{club}}, publicada por {{name}}",
     "coachNamed": "Entrenador/a {{name}}",
     "sentNamed": "{{name}} va a revisar tu perfil. Te avisamos cuando responda. Puedes hacer el seguimiento en \"Postulaciones\".",
     "sentClub": "El club va a revisar tu perfil. Te avisamos cuando responda. Puedes hacer el seguimiento en \"Postulaciones\".",
@@ -394,7 +394,7 @@
     "unknownClub": "Club sin nombre",
     "loadFailed": "No se pudieron cargar las oportunidades. Revisa tu conexión e intenta de nuevo.",
     "tabTitle": "Oportunidades de hockey sobre césped para jugadores/as y entrenadores/as en todo el mundo | Hockia",
-    "clubSubtitleNamed": "{{name}} · tus oportunidades",
+    "clubSubtitleNamed": "{{name}}, tus oportunidades",
     "clubSubtitle": "Tus oportunidades",
     "title": "Oportunidades",
     "postOpportunity": "Publicar una oportunidad",
@@ -411,7 +411,7 @@
       "openShort": "Abiertas"
     },
     "quickFiltersAria": "Filtros rápidos",
-    "filtersCount": "Filtros · {{count}}",
+    "filtersCount": "Filtros {{count}}",
     "subtitleUmpire": "Lo que buscan los clubes en toda la red de Hockia.",
     "subtitle": "Oportunidades abiertas de clubes y entrenadores/as",
     "subtitleCount_one": "{{count}} oportunidad abierta de clubes y entrenadores/as",
@@ -460,7 +460,7 @@
       "answerTitle": "Recibes la respuesta",
       "answerDetail": "En preselección o esta vez no"
     },
-    "clubPostedBy": "{{club}} · publicada por {{name}}",
+    "clubPostedBy": "{{club}}, publicada por {{name}}",
     "whatHappensNext": "Qué sigue",
     "viewApplications": "Ver mis postulaciones",
     "backToList": "Volver a oportunidades",
@@ -479,7 +479,7 @@
   },
   "road": {
     "yourApplication": "Tu postulación",
-    "skippedStep": "{{label}} · paso omitido",
+    "skippedStep": "{{label}}, paso omitido",
     "withdrawFailed": "No se pudo retirar la postulación. Intenta de nuevo.",
     "confirmSigning": "Confirmar incorporación",
     "seeOffer": "Ver la oferta",
@@ -506,7 +506,7 @@
     "noteOriginal": "Traducción automática. Nota original:",
     "closedTitle": "Esta oportunidad está cerrada",
     "closedBody": "Ya no recibe postulaciones.",
-    "declineNoteTitle": "Esta vez no · La nota del club",
+    "declineNoteTitle": "Esta vez no. La nota del club",
     "facts": {
       "team": "Equipo",
       "coachingOpportunity": "Oportunidad para entrenador/a",
@@ -518,11 +518,11 @@
     },
     "asks": {
       "position": "Posición",
-      "positionRequired": "{{position}} · requisito",
+      "positionRequired": "{{position}}, requisito",
       "category": "Categoría",
       "passport": "Pasaporte",
       "euPassportRequired": "Se requiere pasaporte de la UE",
-      "euPassportMissing": "Se requiere pasaporte de la UE · no figura en tu perfil",
+      "euPassportMissing": "Se requiere pasaporte de la UE. No figura en tu perfil",
       "passportAny": "Cualquiera",
       "level": "Nivel",
       "specialist": "Especialista",
@@ -604,7 +604,7 @@
     "playerTag": "Jugador/a",
     "coachTag": "Entrenador/a",
     "deadlinePassed": "Fecha límite vencida",
-    "dialogAriaTitled": "{{title}} · detalles de la oportunidad",
+    "dialogAriaTitled": "{{title}}, detalles de la oportunidad",
     "dialogAria": "Detalles de la oportunidad",
     "close": "Cerrar",
     "coachBadge": "Entrenador/a",
@@ -643,7 +643,7 @@
     "postedOn": "Publicada el {{date}}"
   },
   "detailPage": {
-    "documentTitle": "{{title}} • Oportunidades",
+    "documentTitle": "Oportunidades: {{title}}",
     "documentTitleLoading": "Oportunidad",
     "tabTitleLoading": "Oportunidad de hockey sobre césped | Hockia",
     "tabTitle": "{{title}} en {{club}} | Hockia",

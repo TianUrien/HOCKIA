@@ -20,10 +20,10 @@ describe('Club speed CS2 · Start with Hockia AI', () => {
 
   it('summarises the four parts, with Not set · optional and Needed', () => {
     const [role, offer, where, about] = checkSummary(applyAiDraft(base, ai), { fromClub: true })
-    expect(role.lines[0]).toBe("Defender · Left back · Men's team")
+    expect(role.lines[0]).toBe("Defender, Left back, Men's team")
     expect(role.optionalMissing).toEqual(['level'])
     expect(role.neededMissing).toEqual([])
-    expect(offer.lines).toEqual(['Starts 1 Jan 2027 · Full season', 'Paid · Housing'])
+    expect(offer.lines).toEqual(['Starts 1 Jan 2027, Full season', 'Paid, Housing'])
     expect(where.lines[0]).toMatch(/from your club profile$/)
     expect(about.lines[0]).toContain('left back')
 

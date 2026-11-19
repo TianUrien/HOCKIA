@@ -237,7 +237,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
                     : isNew && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-[2px] text-caption font-semibold text-brand-primary">{t('applicantsScreen.newTag')}</span>}
                   {tag && <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[2px] text-caption font-semibold text-ink-2" data-testid="applicant-status-tag">{tag}</span>}
                 </span>
-                <span className="block truncate text-secondary text-ink-2">{[personRoleLine(a.person), country].filter(Boolean).join(' · ')}</span>
+                <span className="block truncate text-secondary text-ink-2">{[personRoleLine(a.person), country].filter(Boolean).join(', ')}</span>
                 {a.fit?.state && a.fit.state !== 'grey' ? <span className="mt-1 flex"><FitBadge state={a.fit.state} /></span> : null}
               </span>
               {right && <span className={cn('shrink-0 text-secondary font-semibold', clubReplyLineClass(a.status === 'pending' && isClubReplyUrgent(a.appliedAt, days)))}>{right}</span>}

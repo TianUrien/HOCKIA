@@ -119,7 +119,7 @@ export function OpportunityDetailMobile({
   const city = vacancy.location_city?.trim() || ''
   const country = countryLabel(vacancy.location_country?.trim()) || ''
   const identity = identityProp ?? roleIdentity({ publisherRole, publisherName: clubName, publisherAvatar: clubLogo })
-  const placeLine = [countryFlag && (city || country) ? `${countryFlag} ${city || country}` : city || country, league].filter(Boolean).join(' · ')
+  const placeLine = [countryFlag && (city || country) ? `${countryFlag} ${city || country}` : city || country, league].filter(Boolean).join(', ')
   const benefits = roleBenefits(vacancy)
   const customBenefits = vacancy.custom_benefits ?? []
   const specialists = vacancy.specialist_skills_wanted ?? []
@@ -186,7 +186,7 @@ export function OpportunityDetailMobile({
     const url = `${getShareOrigin()}/opportunities/${vacancy.id}`
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: `${headline.title} · ${clubName}`, url })
+        await navigator.share({ title: `${headline.title}, ${clubName}`, url })
         return
       }
       await navigator.clipboard.writeText(url)
@@ -218,10 +218,10 @@ export function OpportunityDetailMobile({
   const applyBySub = vacancy.application_deadline
     ? (deadlineDays !== null && deadlineDays >= 0 ? closesSoonLabel(vacancy.application_deadline) : t('detail.deadlinePassed'))
     : t('detail.untilFilled')
-  const eyebrow = [identity.hiringClub?.name ?? clubName, pill?.label].filter(Boolean).join(' · ').toUpperCase()
+  const eyebrow = [identity.hiringClub?.name ?? clubName, pill?.label].filter(Boolean).join(', ').toUpperCase()
   const words = vacancy.description?.trim() ?? ''
   const wordsLong = words.length > 260
-  const coachRoleLabel = identity.postedBy ? [identity.postedBy.roleLabel ?? t('detail.coach'), identity.hiringClub?.name].filter(Boolean).join(' · ') : null
+  const coachRoleLabel = identity.postedBy ? [identity.postedBy.roleLabel ?? t('detail.coach'), identity.hiringClub?.name].filter(Boolean).join(', ') : null
 
   return (
     <div className="bg-white pb-[calc(84px+env(safe-area-inset-bottom))]" data-testid="role-detail">
@@ -390,7 +390,7 @@ export function OpportunityDetailMobile({
               ))}
             </span>
           ))}
-          {askRow(t('detail.asks.available'), `${startsValue}${duration ? ` · ${duration}` : ''}`)}
+          {askRow(t('detail.asks.available'), `${startsValue}${duration ? `, ${duration}` : ''}`)}
         </div>
         {!closed && !isPublisher && relevant && (
           <p className="mt-3 flex items-center gap-2 rounded-[12px] bg-positive-soft px-3 py-2.5 text-secondary text-positive" data-testid="role-eligibility">
@@ -406,7 +406,7 @@ export function OpportunityDetailMobile({
           {wordsLong && (
             <button type="button" onClick={() => setWordsOpen((o) => !o)} className="mt-1.5 text-secondary font-semibold text-brand-primary" aria-expanded={wordsOpen}>{wordsOpen ? t('detail.wordsLess') : t('detail.wordsMore')}</button>
           )}
-          {(vacancy.requirements ?? []).length > 0 && <p className="mt-2 whitespace-pre-wrap text-row text-ink-2">{(vacancy.requirements ?? []).join(' · ')}</p>}
+          {(vacancy.requirements ?? []).length > 0 && <p className="mt-2 whitespace-pre-wrap text-row text-ink-2">{(vacancy.requirements ?? []).join(', ')}</p>}
         </section>
       )}
 

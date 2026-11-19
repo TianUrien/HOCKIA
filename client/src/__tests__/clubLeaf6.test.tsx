@@ -43,8 +43,8 @@ const ctx = (p: Partial<ContextLike> & { id: string }): ContextLike => ({
 describe('evidence line (DEV NOTE 332:742)', () => {
   it('shows only non-zero counts, in the Figma wording', () => {
     expect(evidenceLine({ fullMatches: 2, highlights: 0, career: 0, lastActiveAt: null }, NOW)?.text).toBe('2 full matches')
-    expect(evidenceLine({ fullMatches: 0, highlights: 6, career: 7, lastActiveAt: null }, NOW)?.text).toBe('6 highlights · 7 career')
-    expect(evidenceLine({ fullMatches: 1, highlights: 4, career: 0, lastActiveAt: null }, NOW)?.text).toBe('1 full match · 4 highlights')
+    expect(evidenceLine({ fullMatches: 0, highlights: 6, career: 7, lastActiveAt: null }, NOW)?.text).toBe('6 highlights, 7 career')
+    expect(evidenceLine({ fullMatches: 1, highlights: 4, career: 0, lastActiveAt: null }, NOW)?.text).toBe('1 full match, 4 highlights')
     expect(evidenceLine({ fullMatches: 0, highlights: 0, career: 1, lastActiveAt: null }, NOW)).toEqual({ kind: 'career', text: '1 career entry' })
   })
   it('shows no activity line when there is no evidence (ruling 2026-10-11)', () => {
@@ -95,7 +95,7 @@ describe('row lines', () => {
     { id: 2, name: 'Italy', flag_emoji: '🇮🇹', code: 'IT' },
   ]
   it('writes out one or two nationalities with flags', () => {
-    expect(nationalityLine([1, 2], countries)).toBe('🇦🇷 🇮🇹 Argentina · Italy')
+    expect(nationalityLine([1, 2], countries)).toBe('🇦🇷 🇮🇹 Argentina, Italy')
     expect(nationalityLine([1, 1], countries)).toBe('🇦🇷 Argentina')
     expect(nationalityLine([null, null], countries)).toBeNull()
   })
@@ -109,7 +109,7 @@ describe('row lines', () => {
       availableFrom: '2026-01-01',
       availabilityDuration: null,
     }, NOW)
-    expect(line).toBe('CA Tigre · Serie A Elite · self-reported · Age 24 · EU passport · Available now')
+    expect(line).toBe('CA Tigre, Serie A Elite · self-reported, Age 24, EU passport, Available now')
   })
   it('leaves missing facts out of the compact row', () => {
     expect(rowFactsLine({ currentClub: null, league: null, age: null, passports: [], openToPlay: false, availableFrom: null, availabilityDuration: null }, NOW)).toBeNull()
@@ -118,7 +118,7 @@ describe('row lines', () => {
 
 describe('recruiting context + per-role shortlist', () => {
   it('pill reads position · team, else the saved label', () => {
-    expect(contextPillLabel(ctx({ id: 'c1' }))).toBe('Midfielder · Men\'s')
+    expect(contextPillLabel(ctx({ id: 'c1' }))).toBe('Midfielder, Men\'s')
     expect(contextPillLabel(ctx({ id: 'c2', target_position: null, target_category: null, label: 'Summer scouting' }))).toBe('Summer scouting')
     expect(contextPillLabel(null)).toBe('No context')
   })
@@ -147,10 +147,10 @@ describe('recruiting context + per-role shortlist', () => {
     expect(shortlistForContext(lists, null)?.id).toBe('d')
   })
   it('source line: applicants win; scouted shows the save date', () => {
-    expect(shortlistSourceLine({ applied: true, position: 'midfielder', shortlistedAt: '2026-09-23T10:00:00', savedAt: '2026-09-01T10:00:00' })).toBe('Applied to Midfielder · shortlisted 23 Sep')
-    expect(shortlistSourceLine({ applied: false, position: null, shortlistedAt: null, savedAt: '2026-09-20T10:00:00' })).toBe('Scouted · saved 20 Sep')
-    expect(shortlistHeaderLine(4)).toBe('4 players · only your club sees this')
-    expect(shortlistHeaderLine(1)).toBe('1 player · only your club sees this')
+    expect(shortlistSourceLine({ applied: true, position: 'midfielder', shortlistedAt: '2026-09-23T10:00:00', savedAt: '2026-09-01T10:00:00' })).toBe('Applied to Midfielder, shortlisted 23 Sep')
+    expect(shortlistSourceLine({ applied: false, position: null, shortlistedAt: null, savedAt: '2026-09-20T10:00:00' })).toBe('Scouted, saved 20 Sep')
+    expect(shortlistHeaderLine(4)).toBe('4 players. Only your club sees this')
+    expect(shortlistHeaderLine(1)).toBe('1 player. Only your club sees this')
   })
 })
 
@@ -257,7 +257,7 @@ describe('Find players screen (D1.9)', () => {
     expect(screen.queryByText('Too Young')).toBeNull()
     expect(screen.getAllByText('Strong fit')).toHaveLength(2)
     expect(screen.getAllByText('Possible fit')).toHaveLength(1)
-    expect(screen.getByText('Midfielder · Men\'s')).toBeTruthy()
+    expect(screen.getByText('Midfielder, Men\'s')).toBeTruthy()
     expect(screen.getByText('2 full matches')).toBeTruthy()
     expect(screen.queryByText(/^Active /)).toBeNull()
   })
@@ -274,7 +274,7 @@ describe('Find players screen (D1.9)', () => {
 
   it('header count is the active role list count', () => {
     renderAt(<FindPlayersScreen />)
-    expect(screen.getByTestId('find-players-shortlist-link').textContent).toBe('Shortlist · 2')
+    expect(screen.getByTestId('find-players-shortlist-link').textContent).toBe('Shortlist 2')
   })
 
   it('filters narrow the list', () => {
@@ -306,15 +306,15 @@ describe('Find players screen (D1.9)', () => {
 describe('Shortlist screen (D1.10)', () => {
   it('lists scouted and applicants with source lines, private note and privacy footer', () => {
     renderAt(<ShortlistScreen />, '/dashboard/shortlist')
-    expect(screen.getByText('2 players · only your club sees this')).toBeTruthy()
-    expect(screen.getByRole('tab', { name: 'All · 2' })).toBeTruthy()
-    expect(screen.getByRole('tab', { name: 'Applied · 1' })).toBeTruthy()
-    expect(screen.getByRole('tab', { name: 'Scouted · 1' })).toBeTruthy()
-    expect(screen.getByText('Scouted · saved 23 Sep')).toBeTruthy()
-    expect(screen.getByText('Applied to Midfielder · shortlisted 23 Sep')).toBeTruthy()
+    expect(screen.getByText('2 players. Only your club sees this')).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'All 2' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Applied 1' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Scouted 1' })).toBeTruthy()
+    expect(screen.getByText('Scouted, saved 23 Sep')).toBeTruthy()
+    expect(screen.getByText('Applied to Midfielder, shortlisted 23 Sep')).toBeTruthy()
     expect(screen.getByTestId('shortlist-note').textContent).toBe('Ask when the season ends.')
     expect(screen.getByText('Players are never told they’re on your shortlist. Notes are private to your club.')).toBeTruthy()
-    fireEvent.click(screen.getByRole('tab', { name: 'Applied · 1' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Applied 1' }))
     expect(screen.getAllByTestId('shortlist-row')).toHaveLength(1)
   })
 

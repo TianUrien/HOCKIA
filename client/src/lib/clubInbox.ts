@@ -80,7 +80,7 @@ export function applicationCardTitle(app: Pick<ClubApplication, 'roleTitle' | 'r
   const pos = positionLabel(app.rolePosition)
   const title = app.roleTitle?.trim() || null
   const parts = pos && title && title.toLowerCase() === pos.toLowerCase() ? [pos] : [pos, title].filter(Boolean)
-  return parts.length ? tInbox('clubInbox.cardTitle', { role: parts.join(' · ') }) : tInbox('clubInbox.cardTitleNone')
+  return parts.length ? tInbox('clubInbox.cardTitle', { role: parts.join(', ') }) : tInbox('clubInbox.cardTitleNone')
 }
 
 const STATUS_NOTE_KEYS = new Set([
@@ -95,7 +95,7 @@ const statusNote = (status: string): string | null =>
  *  urgent (amber) only while the club still has to act and ≤5 days are left. */
 export function applicationCardDetail(app: ClubApplication, expiryDays = DEFAULT_EXPIRY_DAYS, now = new Date()): { text: string; urgent: boolean } {
   const applied = monthDay(app.appliedAt)
-  const join = (tail: string | null) => [applied, tail].filter(Boolean).join(' · ')
+  const join = (tail: string | null) => [applied, tail].filter(Boolean).join(', ')
   if (app.status === 'pending' && !pendingOnOpenRole(app)) return { text: join(roleClosedLabel()), urgent: false }
   if (app.status === 'pending') {
     const days = daysLeftToReply(app.appliedAt, expiryDays, now)

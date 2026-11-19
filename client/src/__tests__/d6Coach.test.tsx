@@ -248,8 +248,8 @@ describe('Opportunities · no coaching role open', () => {
     const rows = screen.getAllByTestId('coach-closed-role')
     expect(rows).toHaveLength(2)
     expect(rows[0].textContent).toContain('Head Coach Wanted')
-    expect(rows[0].textContent).toContain('San Vicente · Spain · Closed 20 Sep')
-    expect(rows[1].textContent).toContain('Concordia 1906 · Croatia · Closed 2 Dec 2025')
+    expect(rows[0].textContent).toContain('San Vicente, Spain Closed 20 Sep')
+    expect(rows[1].textContent).toContain('Concordia 1906, Croatia Closed 2 Dec 2025')
     const pills = screen.getAllByTestId('coach-closed-role-status')
     expect(pills.map((p) => p.textContent)).toEqual(['Not this time', 'No reply'])
     for (const p of pills) {

@@ -86,7 +86,7 @@ export function RailCard({ data, countryName, onOpen, fluid = false }: { data: R
   const pill = genderPill(vacancy.gender)
   const family = categoryFamily(vacancy.gender)
   const lead = positionLabel(vacancy.position) || roleHeadline(vacancy).title
-  const sub = [clubName, countryName].filter(Boolean).join(' · ')
+  const sub = [clubName, countryName].filter(Boolean).join(', ')
   return (
     <button
       ref={press.ref}

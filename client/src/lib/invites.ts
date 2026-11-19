@@ -137,14 +137,14 @@ export function roleOfferLine(r: Pick<InviteRole, 'compensation' | 'benefits'>):
     .sort((a, b) => BENEFIT_ORDER.indexOf(a) - BENEFIT_ORDER.indexOf(b))
     .map(benefitTile)
   const parts = [paid ? tInbox('invites.offerLine.paid') : null, ...benefits].filter(Boolean) as string[]
-  return parts.length ? parts.join(' · ') : null
+  return parts.length ? parts.join(', ') : null
 }
 
 /** "Midfielder · Men’s 1st player" — position first, then the club's title (D3.2 role card). */
 export function inviteRoleLabel(r: Pick<InviteRole, 'title' | 'position' | 'opportunity_type'>): string {
   const pos = r.opportunity_type !== 'coach' && r.position ? positionLabel(r.position) : null
   const title = r.title?.trim() || null
-  if (pos && title && title.toLowerCase() !== pos.toLowerCase()) return `${pos} · ${title}`
+  if (pos && title && title.toLowerCase() !== pos.toLowerCase()) return `${pos}, ${title}`
   return title || pos || tInbox('invites.roleFallback')
 }
 

@@ -284,7 +284,7 @@ export default function ClubEditScreen() {
 
         <Group label={t('clubEdit.groups.contact')}>
           <Row label={t('clubEdit.rows.website')} value={websiteLabel(profile.website)} onClick={() => setEditing('website')} />
-          <Row label={t('clubEdit.rows.links')} value={links.length ? links.join(' · ') : null} onClick={() => setEditing('links')} />
+          <Row label={t('clubEdit.rows.links')} value={links.length ? links.join(', ') : null} onClick={() => setEditing('links')} />
           <Row label={t('clubEdit.rows.contact')} value={contactRowValue(profile.contact_email, profile.contact_email_public)} onClick={() => setEditing('contact')} />
         </Group>
       </div>
