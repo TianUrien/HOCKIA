@@ -109,7 +109,7 @@ describe('row lines', () => {
       availableFrom: '2026-01-01',
       availabilityDuration: null,
     }, NOW)
-    expect(line).toBe('CA Tigre, Serie A Elite, self-reported, Age 24, EU passport, Available now')
+    expect(line).toBe('CA Tigre, Serie A Elite, self-reported, Age\u00a024, EU passport, Available now')
   })
   it('leaves missing facts out of the compact row', () => {
     expect(rowFactsLine({ currentClub: null, league: null, age: null, passports: [], openToPlay: false, availableFrom: null, availabilityDuration: null }, NOW)).toBeNull()
