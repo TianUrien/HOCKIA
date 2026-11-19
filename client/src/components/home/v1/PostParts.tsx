@@ -12,14 +12,17 @@ import { useHomeT } from '@/i18n/ns/home'
 
 /**
  * Post header (Figma "post header"): 36 pt avatar (32 on the signing card),
- * name 14 semibold, a 12 pt line under it ("Highlight · 2h"), ⋯ in a 44 box.
+ * name 14 semibold, a 12 pt line under it ("Highlight" then "2h" in its own
+ * element, never a dot separator), ⋯ in a 44 box.
  */
-export function PostHeader({ authorId, name, avatarUrl, role, subtitle, profilePath, small = false, menu }: {
+export function PostHeader({ authorId, name, avatarUrl, role, subtitle, age, profilePath, small = false, menu }: {
   authorId: string
   name: string | null
   avatarUrl: string | null
   role?: string | null
   subtitle: ReactNode
+  /** The time, shown after the subtitle in its own element. */
+  age?: string | null
   profilePath: string | null
   small?: boolean
   menu?: ReactNode
@@ -31,7 +34,14 @@ export function PostHeader({ authorId, name, avatarUrl, role, subtitle, profileP
       <Avatar src={avatarUrl} initials={initialsOf(name)} size="sm" role={(role ?? undefined) as never} className={cn('shrink-0', !small && '!h-9 !w-9')} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[14px] font-semibold leading-[19px] text-ink-1">{display}</span>
-        <span className="mt-0.5 block truncate text-caption text-ink-3">{subtitle}</span>
+        {age ? (
+          <span className="mt-0.5 flex min-w-0 items-baseline gap-2 text-caption">
+            <span className="min-w-0 truncate text-ink-2">{subtitle}</span>
+            <span className="shrink-0 text-ink-3">{age}</span>
+          </span>
+        ) : (
+          <span className="mt-0.5 block truncate text-caption text-ink-3">{subtitle}</span>
+        )}
       </span>
     </>
   )

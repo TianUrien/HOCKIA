@@ -40,7 +40,7 @@ export function VideoAddedCard({ item }: Props) {
       />
       <FeedCardCaption icon={<Video />}>
         {label}
-        {title ? <span className="text-gray-500"> · {title}</span> : null}
+        {title ? <span className="ml-2 text-gray-500">{title}</span> : null}
       </FeedCardCaption>
       <FeedCardMedia>
         <Suspense fallback={<div className="aspect-video animate-pulse bg-gray-100" />}>

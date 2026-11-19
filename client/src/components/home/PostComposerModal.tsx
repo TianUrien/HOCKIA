@@ -969,7 +969,10 @@ export function PostComposerModal({
                 />
                 <div>
                   <p className="text-row font-semibold text-ink-1">{profile.full_name}</p>
-                  <p className="text-secondary text-ink-2">{t('composer.audienceLine', { identity: identityLine(profile.role) })}</p>
+                  <p className="flex flex-wrap items-baseline gap-x-2 text-secondary">
+                    <span className="text-ink-2">{identityLine(profile.role)}</span>
+                    <span className="text-ink-3">{t('composer.audience')}</span>
+                  </p>
                 </div>
               </div>
             )}
@@ -1085,7 +1088,7 @@ export function PostComposerModal({
                                   <RoleBadge role={person.role} />
                                 </div>
                                 <p className="text-xs text-gray-500 truncate">
-                                  {[positionLabel(person.position), person.current_club, placeText(person.base_location)].filter(Boolean).join(' · ')}
+                                  {[positionLabel(person.position), person.current_club, placeText(person.base_location)].filter(Boolean).join(', ')}
                                 </p>
                               </div>
                             </button>
@@ -1125,7 +1128,7 @@ export function PostComposerModal({
                       <input
                         value={signingRole}
                         onChange={(e) => setSigningRole(e.target.value.slice(0, 60))}
-                        placeholder={[positionLabel(selectedPerson.position), t('composer.signing.rolePlaceholder')].filter(Boolean).join(' · ')}
+                        placeholder={[positionLabel(selectedPerson.position), t('composer.signing.rolePlaceholder')].filter(Boolean).join(', ')}
                         className="w-full bg-transparent text-body text-ink-1 placeholder:text-ink-4 focus:outline-none"
                       />
                     </label>

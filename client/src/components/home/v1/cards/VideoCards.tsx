@@ -41,7 +41,8 @@ export function VideoCard({ item }: { item: VideoAddedFeedItem }) {
         name={item.uploader_name}
         avatarUrl={item.uploader_avatar_url}
         role={item.uploader_role}
-        subtitle={full ? t('feedV1.video.subtitleFullMatch', { age }) : t('feedV1.video.subtitleHighlight', { age })}
+        subtitle={full ? t('feedV1.video.subtitleFullMatch') : t('feedV1.video.subtitleHighlight')}
+        age={age}
         profilePath={profilePath}
         menu={
           <FeedCardMenu

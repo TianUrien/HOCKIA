@@ -26,7 +26,6 @@ export function SectionHeader({ title, chip, action }: SectionHeaderProps) {
                 : 'bg-[#f4f0fd] text-hockia-primary'
             }`}
           >
-            {chip.tone === 'live' && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
             {chip.label}
           </span>
         )}

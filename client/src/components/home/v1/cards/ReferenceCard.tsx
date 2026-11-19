@@ -57,8 +57,9 @@ export function ReferenceCard({ item }: { item: ReferenceReceivedFeedItem }) {
             <span className="block truncate text-[14px] font-semibold leading-[19px] text-ink-1">
               {firstName(item.referee_name, nameFallback)} → {firstName(item.full_name, nameFallback)}
             </span>
-            <span className="block truncate text-caption text-ink-2">
-              {[t('feedV1.reference.label'), relationship(item.relationship_type)].filter(Boolean).join(' · ')}
+            <span className="flex min-w-0 items-baseline gap-2 text-caption">
+              <span className="shrink-0 text-ink-2">{t('feedV1.reference.label')}</span>
+              {relationship(item.relationship_type) ? <span className="min-w-0 truncate text-ink-3">{relationship(item.relationship_type)}</span> : null}
             </span>
           </span>
           <Star className="h-[22px] w-[22px] shrink-0 fill-gold-line text-gold-line" strokeWidth={1.5} aria-hidden="true" />

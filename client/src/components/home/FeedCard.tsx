@@ -6,7 +6,7 @@
  * the same on every card type:
  *
  *   [avatar]  Name                                        [right slot]
- *             Player · Old Lions · 2h
+ *             Player, Old Lions   2h
  *
  * Name → author profile. "Roles are never implicit" (00 Architecture): the
  * second line always opens with the role, then the club (from
@@ -47,7 +47,7 @@ interface FeedCardHeaderProps {
   createdAt: string
   /** Override the profile link (null = not linkable, e.g. brand authors). */
   profilePath?: string | null
-  /** Replaces the role · club line (e.g. an opportunity's location). */
+  /** Replaces the role and club line (e.g. an opportunity's location). */
   subtitle?: string | null
   /** Small text after the time, e.g. "Official". */
   right?: ReactNode
@@ -56,9 +56,10 @@ interface FeedCardHeaderProps {
 export function FeedCardHeader({ authorId, name, avatarUrl, role, createdAt, profilePath, subtitle, right }: FeedCardHeaderProps) {
   const t = useHomeT()
   const ctx = useAuthorContext(authorId)
-  // Figma: "Player · Old Lions · 2h" — the club (city only when no club is set).
+  // "Player, Old Lions" then the time in its own element: the club (city only
+  // when no club is set). No dot separators (founder rule 2026-11-19).
   const place = role === 'club' ? ctx?.city : ctx?.club ?? ctx?.city
-  const context = subtitle ?? [roleLabel(role), place].filter(Boolean).join(' · ')
+  const context = subtitle ?? [roleLabel(role), place].filter(Boolean).join(', ')
   const timeAgo = formatActivityAge(createdAt)
   const path = profilePath === undefined ? profilePathForRole(role, authorId) : profilePath
   const displayName = name || (role === 'club' ? t('feedCard.unnamedClub') : t('feedCard.unnamedMember'))
@@ -69,9 +70,9 @@ export function FeedCardHeader({ authorId, name, avatarUrl, role, createdAt, pro
       <Avatar src={avatarUrl} initials={initials} size="md" role={role ?? undefined} className="flex-shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-row font-semibold text-ink-1">{displayName}</p>
-        <p className="truncate text-secondary text-ink-2">
-          {context ? <>{context} <span aria-hidden="true">·</span> </> : null}
-          <time dateTime={createdAt}>{timeAgo}</time>
+        <p className="flex min-w-0 items-baseline gap-2 text-secondary">
+          {context ? <span className="min-w-0 truncate text-ink-2">{context}</span> : null}
+          <time dateTime={createdAt} className="shrink-0 text-ink-3">{timeAgo}</time>
         </p>
       </div>
     </>

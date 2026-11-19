@@ -3,7 +3,7 @@ import Avatar from '@/components/Avatar'
 
 /**
  * List item / Comment (Figma "03 · Components" 567:569): avatar 32, the name
- * (15 semibold) and "role · time" (12, ink-2) on ONE line, then the text.
+ * (15 semibold) and the role and time (12, ink-2) on ONE line, then the text.
  * `actions` is the quiet row under the text (Delete for the author, Report
  * for everyone else).
  */
@@ -11,8 +11,8 @@ interface CommentListItemProps {
   name: string
   avatarUrl: string | null
   role?: string | null
-  /** "Player · 2h" */
-  meta: string
+  /** The role, then the time in its own element (no dot separator). */
+  meta: ReactNode
   text: string
   actions?: ReactNode
 }
