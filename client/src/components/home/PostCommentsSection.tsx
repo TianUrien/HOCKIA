@@ -25,7 +25,7 @@ const INITIAL_LIMIT = 3
 
 /**
  * Comments under a post (Figma Post detail): "N comments" header, one row
- * per comment — 32px avatar, name · role · time, the text — and a pinned
+ * per comment — 32px avatar, name, role and time, the text — and a pinned
  * composer: avatar, grey pill input, purple send.
  */
 export function PostCommentsSection({
@@ -155,7 +155,7 @@ export function PostCommentsSection({
             name={comment.author_name || t('comments.unnamedAuthor')}
             avatarUrl={comment.author_avatar}
             role={comment.author_role}
-            meta={`${identityLine(comment.author_role)} · ${getTimeAgo(comment.created_at, true)}`}
+            meta={<>{identityLine(comment.author_role)}{' '}<time dateTime={comment.created_at} className="ml-2 text-ink-3">{getTimeAgo(comment.created_at, true)}</time></>}
             text={comment.content}
             actions={
               user && comment.author_id === user.id ? (

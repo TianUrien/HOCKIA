@@ -37,7 +37,7 @@
     "ariaLabel": "{{caption}}: {{percent}}%"
   },
   "dashboardCard": {
-    "ariaLabel": "{{title}} · {{cta}}"
+    "ariaLabel": "{{title}}, {{cta}}"
   },
   "clubHero": {
     "actionComplete": "Complete",
@@ -173,7 +173,7 @@
   "feedCard": {
     "unnamedClub": "A club",
     "unnamedMember": "A member",
-    "viewProfileAria": "{{name}} · view profile"
+    "viewProfileAria": "{{name}}, view profile"
   },
   "carousel": {
     "imageAlt": "{{title}} - image {{number}}",
@@ -266,8 +266,8 @@
     "addVideo": "Add video",
     "hintPhotoOrVideo": "Photo or video",
     "hintPhoto": "Photo",
-    "limitPhotoOrVideo": "Photo or video · up to {{max}}",
-    "limitPhotos": "Photos · up to {{max}}",
+    "limitPhotoOrVideo": "Photo or video, up to {{max}}",
+    "limitPhotos": "Photos, up to {{max}}",
     "uploadingVideo": "Uploading video...",
     "uploading": "Uploading...",
     "cancelUpload": "Cancel upload",
@@ -278,8 +278,8 @@
     "addPhotoTile": "Photo",
     "addVideoTile": "Video",
     "cancel": "Cancel",
-    "footer": "{{used}}/{{max}} items · Photos: up to 10 MB",
-    "footerWithVideo": "{{used}}/{{max}} items · Photos: up to 10 MB · Video: up to 100 MB, 3 min"
+    "footer": "{{used}}/{{max}} items. Photos: up to 10 MB.",
+    "footerWithVideo": "{{used}}/{{max}} items. Photos: up to 10 MB. Video: up to 100 MB, 3 min."
   },
   "profileViews": {
     "clubAndCoach": "{{clubs}} club and {{coaches}} coach viewed your profile this week",
@@ -375,10 +375,10 @@
     "fullscreen": "Fullscreen"
   },
   "mediaGrid": {
-    "playVideoAria": "Play video · {{title}}",
-    "viewImageAria": "View image · {{title}}",
+    "playVideoAria": "Play video, {{title}}",
+    "viewImageAria": "View image, {{title}}",
     "defaultAlt": "Post",
-    "imageAlt": "{{title}} · image {{number}} of {{total}}"
+    "imageAlt": "{{title}}, image {{number}} of {{total}}"
   },
   "composer": {
     "errors": {
@@ -416,7 +416,7 @@
       "ask": "Ask",
       "post": "Post"
     },
-    "audienceLine": "{{identity}} · Everyone on Hockia",
+    "audience": "Everyone on Hockia",
     "kind": {
       "groupAria": "Post type",
       "post": "Post",
@@ -556,7 +556,7 @@
       "alt": "Post image",
       "seeAllAnswers": "See all answers",
       "unnamedMember": "Member",
-      "topAnswerMeta": "· {{identity}} · Top answer",
+      "topAnswerLabel": "Top answer",
       "unknownAuthor": "Unknown",
       "deleteQuestionTitle": "Delete this question?",
       "deletePostTitle": "Delete this post?",
@@ -579,7 +579,8 @@
       "title": "What’s your goal?",
       "body": "Pick up to three, or say it in your words. We use it to show you what helps. Only you see it.",
       "other": "Other…",
-      "save": "That’s my goal · {{picked}} of {{max}}",
+      "save": "That’s my goal",
+      "saveCount": "{{picked}} of {{max}}",
       "cancel": "Cancel",
       "later": "Later"
     },
@@ -727,7 +728,7 @@
     },
     "complete": {
       "title": "Complete your profile",
-      "subtitle": "{{percent}}% done · clubs filter on it",
+      "subtitle": "{{percent}}% done. Clubs filter on it",
       "cta": "Edit"
     },
     "applicants": {
@@ -743,7 +744,7 @@
     "available": {
       "title_one": "{{count}} player available",
       "title_other": "{{count}} players available",
-      "subtitle": "Open to play · fit your team",
+      "subtitle": "Open to play and a fit for your team",
       "cta": "See"
     },
     "crest": {
@@ -757,8 +758,8 @@
       "cta": "Add"
     },
     "brand": {
-      "subtitleSearches_one": "This week · in {{count}} search",
-      "subtitleSearches_other": "This week · in {{count}} searches"
+      "subtitleSearches_one": "In {{count}} search this week",
+      "subtitleSearches_other": "In {{count}} searches this week"
     },
     "umpire": {
       "title": "Add your umpiring level",
@@ -815,7 +816,7 @@
   "postParts": {
     "unnamedClub": "A club",
     "unnamedMember": "A member",
-    "viewProfileAria": "{{name}} · view profile",
+    "viewProfileAria": "{{name}}, view profile",
     "like": "Like",
     "unlike": "Unlike",
     "likeWithTotal": "Like, {{total}}",
@@ -846,8 +847,8 @@
       "chip": "OPEN ROLE"
     },
     "photos": {
-      "subtitle_one": "Added {{count}} photo · {{age}}",
-      "subtitle_other": "Added {{count}} photos · {{age}}",
+      "subtitle_one": "Added {{count}} photo",
+      "subtitle_other": "Added {{count}} photos",
       "photoAria": "Photo {{number}} of {{total}}"
     },
     "reference": {
@@ -870,8 +871,8 @@
       "deleteConfirm": "Delete"
     },
     "video": {
-      "subtitleFullMatch": "Full match · public · {{age}}",
-      "subtitleHighlight": "Highlight · {{age}}",
+      "subtitleFullMatch": "Full match, public",
+      "subtitleHighlight": "Highlight",
       "badgeFullMatch": "FULL MATCH",
       "badgeHighlight": "HIGHLIGHT",
       "fullMatchTitle": "Full match",
