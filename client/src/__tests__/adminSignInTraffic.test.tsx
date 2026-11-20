@@ -40,7 +40,7 @@ describe('AdminSignInTraffic', () => {
         { kind: 'password_signin_failed', outcome: 'observed', attempts: 3 },
       ],
       sources: [{
-        network: 'a1b2c3d4', device: 'e5f6a7b8', device_label: 'Android 11 · IN2023 · WebView', platform: 'android',
+        network: 'a1b2c3d4', device: 'e5f6a7b8', device_label: 'Android 11, IN2023, WebView', platform: 'android',
         app_version: '1.26', country: 'AR', attempts: 55, oauth_starts: 55, failed_signins: 0, new_accounts: 0,
         would_limit: 15, refused: 0, first_seen: '2026-11-10T10:00:00Z', last_seen: '2026-11-10T10:04:00Z',
       }],
@@ -52,7 +52,7 @@ describe('AdminSignInTraffic', () => {
     expect(rpcCalls[0]).toEqual({ fn: 'admin_get_auth_attempts', args: { p_hours: 24 } })
     expect(screen.getByText('Rate limit: off')).toBeInTheDocument()
     expect(screen.getByText('Bot check required: off')).toBeInTheDocument()
-    expect(screen.getByText('Android 11 · IN2023 · WebView, android, 1.26, AR')).toBeInTheDocument()
+    expect(screen.getByText('Android 11, IN2023, WebView, android, 1.26, AR')).toBeInTheDocument()
     expect(screen.getByText('15 would be limited')).toBeInTheDocument()
     expect(screen.getByText(/10 per device and 40 per network every 5 minutes/)).toBeInTheDocument()
   })
