@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useAuthStore } from '@/lib/auth'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
-import { countryRolesDescription, countryRolesPath, countryRolesTitle, resolveRoleCountry } from '@/lib/seo/opportunitiesCountry'
+import { countryRolesPath, resolveRoleCountry } from '@/lib/seo/opportunitiesCountry'
 
 // Every screen is its own chunk: players on /opportunities and desktop
 // clubs never download the club phone screens.
@@ -45,15 +45,12 @@ export function OpportunitiesEntry() {
   return <Screen><OpportunitiesPage /></Screen>
 }
 
-function setMetaContent(selector: string, content: string) {
-  document.querySelector(selector)?.setAttribute('content', content)
-}
-
 /**
  * /opportunities/in/:slug: the open roles of one country. The server sends
  * this URL with the country's own head and the roles as text
  * (api/opportunities-country.ts); here the app shows the same list as
- * /opportunities with the country filter already set. The filter lives in
+ * /opportunities with the country filter already set (the list page writes
+ * the country's title and description itself). The filter lives in
  * the query string the list reads when it mounts, so it is written first.
  * A slug that is not a country goes to the full list.
  */
@@ -78,19 +75,6 @@ export function OpportunitiesCountryEntry() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [country?.code, hasFilter])
-
-  // After the list has mounted (its own effect writes the /opportunities
-  // head), so the country's title and description are the ones that stay.
-  useEffect(() => {
-    if (!country || !ready) return
-    const title = countryRolesTitle(country)
-    const description = countryRolesDescription(country)
-    document.title = title
-    setMetaContent('meta[name="description"]', description)
-    setMetaContent('meta[property="og:title"]', title)
-    setMetaContent('meta[property="og:description"]', description)
-    setMetaContent('meta[property="og:url"]', `https://inhockia.com${countryRolesPath(country)}`)
-  }, [country, ready])
 
   if (!country) return <Navigate to="/opportunities" replace />
   if (!ready && !hasFilter) return <Blank />

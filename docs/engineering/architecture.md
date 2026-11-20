@@ -124,7 +124,12 @@ Verified patterns:
   word that is not a country answers 404 noindex; a failed lookup answers 503.
   `/opportunities/<word>` (for example `/opportunities/australia`, which used
   to return the empty shell) answers 301 to the country page or 404. In the
-  app the route shows the usual list with the country filter set. The page is
+  app the route shows the usual list with the country filter set, and the
+  list page (`OpportunitiesPage`, a lazy chunk and so the last to write the
+  head) sets the same title, description and og tags the server sent. The
+  list people see is every open role, as on `/opportunities`; the 90-day rule
+  is an advertising rule, so it applies to the server text, the sitemap and
+  the structured data (the app's own `ItemList` included), not to the list. The page is
   linked from `/opportunities`, from `/world/<code>` while the country has
   open roles, from `llms.txt` and from the sitemap function.
 - **`/about` and `/faq`** (added 2026-11-20; source: founder approval of the
