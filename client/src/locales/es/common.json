@@ -81,6 +81,8 @@
   },
   "footer": {
     "copyright": "© {{year}} Hockia",
+    "about": "Acerca de",
+    "faq": "Preguntas frecuentes",
     "privacy": "Política de privacidad",
     "terms": "Términos",
     "termsLabel": "Términos del servicio",

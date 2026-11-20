@@ -23,6 +23,20 @@ export default function Footer() {
           {/* Links */}
           <div className="flex items-center gap-4 sm:gap-6 flex-wrap justify-center">
             <a
+              href="/about"
+              className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline-offset-4 hover:underline"
+            >
+              {t('footer.about')}
+            </a>
+
+            <a
+              href="/faq"
+              className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline-offset-4 hover:underline"
+            >
+              {t('footer.faq')}
+            </a>
+
+            <a
               href="/privacy-policy"
               className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline-offset-4 hover:underline"
               aria-label={t('footer.privacy')}

@@ -112,6 +112,19 @@ Verified patterns:
   function (its view applies the hidden-profile predicate) and the 90-day
   rule; no people are listed. A club's roles are matched by organisation
   name within its country, because the public API carries no club id.
+- **`/about` and `/faq`** (added 2026-11-20; source: founder approval of the
+  FAQ draft in the description of PR 576, relayed by the engineering lead):
+  the text lives once in `client/src/lib/seo/aboutFaq.ts` and feeds the React
+  pages, the no-JavaScript body and the JSON-LD (`FAQPage` on `/faq`,
+  `AboutPage` on `/about`) through `api/page-head.ts`. Public copy, English
+  only; change it only with founder approval. The answer about countries is
+  computed on every serve (edge cache 10 minutes): the number is the count of
+  countries with at least one club in `world_countries_with_directory`, and
+  the "new clubs are added every week" clause shows only when `world_clubs`
+  has a club created in each of the last four weeks. If the directory cannot
+  be read the answer is "Hockia is open worldwide." with no number. Both
+  routes are in `ProtectedRoute`'s public list, in the `sitemap` function's
+  static list (needs a function deploy) and in `llms.txt`.
 
 ### 2.2 Database (`supabase/migrations`)
 

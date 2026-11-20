@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
-const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callback', '/forgot-password', '/reset-password', '/privacy-policy', '/terms', '/developers', '/offline', '/opportunities', '/community', '/world', '/investors', '/invite', '/brands', '/marketplace', '/post', '/players', '/coaches', '/clubs', '/umpires', '/members', '/email-action', '/juniors-waitlist']
+const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callback', '/forgot-password', '/reset-password', '/privacy-policy', '/terms', '/developers', '/about', '/faq', '/offline', '/opportunities', '/community', '/world', '/investors', '/invite', '/brands', '/marketplace', '/post', '/players', '/coaches', '/clubs', '/umpires', '/members', '/email-action', '/juniors-waitlist']
 
 /**
  * ProtectedRoute - Centralized auth guard
@@ -29,6 +29,7 @@ const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callba
  * - /privacy-policy      Legal page
  * - /terms               Legal page  
  * - /developers          API documentation
+ * - /about, /faq         What Hockia is; frequently asked questions
  * - /offline             PWA offline fallback
  * - /opportunities/*     Public vacancy listings (read-only)
  * - /community/*         Public Q&A (read-only)
