@@ -45,6 +45,8 @@ import type { Json } from '../_shared/database.types.ts'
 import { targetIsInvisible } from '../_shared/profile-visibility.ts'
 import { captureException, setSentryUser } from '../_shared/sentry.ts'
 import { resolveAiLanguage, withOutputLanguage, type MemberLanguage } from '../_shared/ai-language.ts'
+import { recordAiUsage } from '../_shared/aiUsage.ts'
+import { fitVerdict } from '../_shared/opinion-verdict.ts'
 
 // ── Prompt version + constants ──────────────────────────────────────
 // Bump PROMPT_VERSION when the system prompt or output schema changes
@@ -656,7 +658,29 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
 }
 
 // ── Claude Sonnet call (inline, no shared helper) ───────────────────
-async function callClaude(systemPrompt: string, userPrompt: string): Promise<OpinionPayload> {
+// Tokens of every answered call of one request, so spend is logged even when
+// the answer is then refused by validation (written by logOpinionUsage).
+type OpinionUsage = { input: number | null; output: number | null; cached: number | null }
+
+/** A model answer that failed validation: worth one more try (a timeout or an API error is not). */
+class InvalidOpinionError extends Error {}
+
+/**
+ * One retry when the answer is unusable (empty, not JSON, verdict with no
+ * sentence inside the cap). Seen in production on 2026-11-20: two requests in
+ * a row failed that way and the recruiter got an error instead of an opinion.
+ */
+async function callClaudeWithRetry(systemPrompt: string, userPrompt: string, usageSink: OpinionUsage[]): Promise<OpinionPayload> {
+  try {
+    return await callClaude(systemPrompt, userPrompt, usageSink)
+  } catch (err) {
+    if (!(err instanceof InvalidOpinionError)) throw err
+    console.warn('[ai-opinion] unusable answer, retrying once:', String(err))
+    return await callClaude(systemPrompt, userPrompt, usageSink)
+  }
+}
+
+async function callClaude(systemPrompt: string, userPrompt: string, usageSink: OpinionUsage[]): Promise<OpinionPayload> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -668,7 +692,8 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<Opi
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 512,
+      // Room for the verdict plus four citations; 512 could cut the JSON short.
+      max_tokens: 1024,
       // Prompt caching: the system prompt is ~600 tokens of identical
       // RULES + SCHEMA on every call — cache it so we only pay full
       // input cost once per 5-minute window. User prompt is per-call.
@@ -683,7 +708,18 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<Opi
     const body = await response.text()
     throw new Error(`Anthropic API error (${response.status}): ${body}`)
   }
-  const data = await response.json() as { content: Array<{ type: string; text?: string }> }
+  const data = await response.json() as {
+    content: Array<{ type: string; text?: string }>
+    stop_reason?: string
+    usage?: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number }
+  }
+  usageSink.push({
+    input: data.usage?.input_tokens ?? null,
+    output: data.usage?.output_tokens ?? null,
+    cached: data.usage?.cache_read_input_tokens ?? null,
+  })
+  // Why the model stopped, kept in every validation error so a failure can be diagnosed.
+  const stop = data.stop_reason ?? 'unknown'
   // Extract text content. Claude returns content[].text for text blocks.
   const text = data.content
     .filter((c) => c.type === 'text')
@@ -699,11 +735,13 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<Opi
   try {
     parsed = JSON.parse(stripped)
   } catch {
-    throw new Error(`Claude returned non-JSON output: ${text.slice(0, 200)}`)
+    throw new InvalidOpinionError(`Claude returned non-JSON output (stop_reason ${stop}, ${text.length} chars): ${text.slice(0, 200)}`)
   }
   // Shape validation
   const obj = parsed as Record<string, unknown>
-  const verdict = typeof obj.verdict_short === 'string' ? obj.verdict_short : ''
+  const rawVerdict = typeof obj.verdict_short === 'string' ? obj.verdict_short : ''
+  // A verdict a few words over the cap keeps the whole sentences that fit.
+  const verdict = fitVerdict(rawVerdict, VERDICT_MAX_CHARS)
   const rawCitations = Array.isArray(obj.citations) ? obj.citations : []
   const citations: Citation[] = rawCitations
     .filter((c): c is Record<string, unknown> => typeof c === 'object' && c !== null)
@@ -713,10 +751,26 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<Opi
       claim: typeof c.claim === 'string' ? c.claim : '',
     }))
     .filter((c) => c.field && c.claim)
-  if (!verdict || verdict.length > VERDICT_MAX_CHARS) {
-    throw new Error(`Invalid verdict_short: empty or > ${VERDICT_MAX_CHARS} chars`)
+  if (!verdict) {
+    throw new InvalidOpinionError(`Invalid verdict_short: ${rawVerdict.trim() ? `no sentence within ${VERDICT_MAX_CHARS} chars (${rawVerdict.length} chars)` : 'empty'} (stop_reason ${stop})`)
   }
   return { verdict_short: verdict, citations }
+}
+
+/** One ai_usage_log row per answered model call of this request (never throws). */
+// deno-lint-ignore no-explicit-any
+async function logOpinionUsage(supabase: any, userId: string, usageSink: OpinionUsage[]): Promise<void> {
+  for (const usage of usageSink.splice(0)) {
+    await recordAiUsage(supabase, {
+      user_id: userId,
+      function: 'ai-opinion',
+      provider: 'claude',
+      model: MODEL,
+      input_tokens: usage.input,
+      output_tokens: usage.output,
+      cached_tokens: usage.cached,
+    })
+  }
 }
 
 // ── Content filter: enforce closed vocabulary ───────────────────────
@@ -1067,9 +1121,12 @@ serve(async (req: Request) => {
   // 8) LLM call + content filter.
   const userPrompt = buildUserPrompt(viewer, player, fit)
   let payload: OpinionPayload
+  const usage: OpinionUsage[] = []
   try {
-    payload = await callClaude(opinionSystemPrompt(lang), userPrompt)
+    payload = await callClaudeWithRetry(opinionSystemPrompt(lang), userPrompt, usage)
+    await logOpinionUsage(supabase, viewerId, usage)
   } catch (err) {
+    await logOpinionUsage(supabase, viewerId, usage)
     console.error('[ai-opinion] LLM call failed', err)
     captureException(err, { functionName: 'ai-opinion', tags: { stage: 'llm' } })
     await releaseQuotaSlot(supabase, viewerId, today)
