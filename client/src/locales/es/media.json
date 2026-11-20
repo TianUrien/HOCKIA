@@ -787,6 +787,7 @@
     },
     "hint": "Arrastra para moverla y acerca o aleja hasta que se vea bien. Así aparece en todo Hockia.",
     "failed": "No se pudo abrir esta imagen. Prueba con otra.",
+    "empty": "Esta imagen parece estar vacía. Elige una donde se vea tu logo o tu foto.",
     "stageLabel": "Posición de la imagen. Usa las flechas para moverla y más o menos para acercar o alejar.",
     "zoom": "Zoom",
     "zoomIn": "Acercar",

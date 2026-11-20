@@ -56,6 +56,24 @@ describe('analyseImage', () => {
     expect(analyseImage(data, 40, 40).transparent).toBe(false)
   })
 
+  it('flags a fully transparent image as empty', () => {
+    const a = analyseImage(pixels(30, 30, () => CLEAR), 30, 30)
+    expect(a.transparent).toBe(true)
+    expect(a.empty).toBe(true)
+  })
+
+  it('flags an all-white image as empty', () => {
+    expect(analyseImage(pixels(30, 30, () => WHITE), 30, 30).empty).toBe(true)
+  })
+
+  it('does not flag artwork, a flat colour or a photo as empty', () => {
+    expect(analyseImage(pixels(40, 40, (x, y) => (x >= 10 && x < 30 && y >= 15 && y < 25 ? RED : CLEAR)), 40, 40).empty).toBe(false)
+    expect(analyseImage(pixels(30, 30, () => BLUE), 30, 30).empty).toBe(false)
+    expect(analyseImage(pixels(30, 30, (x, y) => [(x * 8) % 256, (y * 8) % 256, ((x + y) * 5) % 256, 255]), 30, 30).empty).toBe(false)
+    // One faint mark is still artwork.
+    expect(analyseImage(pixels(30, 30, (x, y) => (x === 15 && y === 15 ? RED : CLEAR)), 30, 30).empty).toBe(false)
+  })
+
   it('survives an empty sample', () => {
     expect(analyseImage([], 0, 0).content).toEqual({ x: 0, y: 0, w: 1, h: 1 })
   })
@@ -168,9 +186,14 @@ describe('output', () => {
     expect(isSmallImage(320, 320)).toBe(false)
   })
 
-  it('keeps PNG for transparency and for PNG sources, JPEG for photos', () => {
-    expect(outputMimeType('image/jpeg', null)).toBe('image/png')
-    expect(outputMimeType('image/png', 'rgb(255, 255, 255)')).toBe('image/png')
-    expect(outputMimeType('image/jpeg', 'rgb(255, 255, 255)')).toBe('image/jpeg')
+  it('keeps PNG for a logo with transparency or a PNG source, JPEG otherwise', () => {
+    expect(outputMimeType('image/jpeg', null, 'logo')).toBe('image/png')
+    expect(outputMimeType('image/png', 'rgb(255, 255, 255)', 'crest')).toBe('image/png')
+    expect(outputMimeType('image/jpeg', 'rgb(255, 255, 255)', 'logo')).toBe('image/jpeg')
+  })
+
+  it("always stores a person's photo as JPEG, whatever was picked", () => {
+    expect(outputMimeType('image/png', 'rgb(255, 255, 255)', 'person')).toBe('image/jpeg')
+    expect(outputMimeType('image/png', null, 'person')).toBe('image/jpeg')
   })
 })

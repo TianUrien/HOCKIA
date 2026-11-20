@@ -72,7 +72,7 @@ export async function renderCrop(
   canvas.height = side
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Failed to get canvas context')
-  const mimeType = outputMimeType(options.sourceType, options.background)
+  const mimeType = outputMimeType(options.sourceType, options.background, options.kind)
   // JPEG has no transparency: canvas would put clear pixels on black.
   const fill = options.background ?? (mimeType === 'image/jpeg' ? 'rgb(255, 255, 255)' : null)
   if (fill) {

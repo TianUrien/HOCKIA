@@ -41,6 +41,8 @@ export interface ImageAnalysis {
   blankBackground: boolean
   /** Where the artwork is. The whole image unless the background is blank. */
   content: ContentBox
+  /** Nothing to show: a blank background with no artwork on it (a fully transparent or all-white file). */
+  empty: boolean
 }
 
 /** Shortest side under this many pixels looks soft on a profile header. */
@@ -71,7 +73,7 @@ function median(values: number[]): number {
  */
 export function analyseImage(rgba: ArrayLike<number>, width: number, height: number): ImageAnalysis {
   if (width < 2 || height < 2 || rgba.length < width * height * 4) {
-    return { transparent: false, uniformEdge: false, edgeColor: [255, 255, 255], blankBackground: false, content: FULL }
+    return { transparent: false, uniformEdge: false, edgeColor: [255, 255, 255], blankBackground: false, content: FULL, empty: false }
   }
   const at = (px: number, py: number) => (py * width + px) * 4
   const edge: number[] = []
@@ -94,6 +96,7 @@ export function analyseImage(rgba: ArrayLike<number>, width: number, height: num
   const blankBackground = transparent || (uniformEdge && nearWhite)
 
   let content = FULL
+  let empty = false
   if (blankBackground) {
     let minX = width, minY = height, maxX = -1, maxY = -1
     for (let py = 0; py < height; py++) {
@@ -109,9 +112,11 @@ export function analyseImage(rgba: ArrayLike<number>, width: number, height: num
     }
     if (maxX >= minX && maxY >= minY) {
       content = { x: minX / width, y: minY / height, w: (maxX - minX + 1) / width, h: (maxY - minY + 1) / height }
+    } else {
+      empty = true
     }
   }
-  return { transparent, uniformEdge, edgeColor, blankBackground, content }
+  return { transparent, uniformEdge, edgeColor, blankBackground, content, empty }
 }
 
 function differs(rgba: ArrayLike<number>, i: number, colour: [number, number, number]): boolean {
@@ -205,7 +210,12 @@ export function isSmallImage(width: number, height: number): boolean {
   return Math.min(width, height) < MIN_SHARP_SIDE
 }
 
-/** PNG keeps transparency and flat logo colours; photos stay JPEG. */
-export function outputMimeType(sourceType: string, background: string | null): 'image/png' | 'image/jpeg' {
+/**
+ * PNG keeps a logo's transparency and flat colours. A person's photo is always
+ * JPEG: it has no use for transparency, and a PNG photo at 1440 px is several
+ * megabytes where the JPEG is a few hundred kilobytes.
+ */
+export function outputMimeType(sourceType: string, background: string | null, kind: ImageKind): 'image/png' | 'image/jpeg' {
+  if (isPerson(kind)) return 'image/jpeg'
   return background === null || sourceType === 'image/png' ? 'image/png' : 'image/jpeg'
 }

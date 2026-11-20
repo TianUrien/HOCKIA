@@ -1,7 +1,8 @@
 /**
  * Crests and logos from the crop step: the fitted square and the picked file
  * are stored side by side under the owner's folder, a failed original never
- * blocks the square, and a person's own crop replaces the centre crop.
+ * blocks the square, a person's own crop replaces the centre crop, and no
+ * delete path leaves the kept original behind.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
@@ -22,7 +23,10 @@ vi.mock('@/lib/imageOptimization', async (original) => ({
   optimizeImage: (f: File, o: { mimeType?: string }) => optimizeImage(f, o),
 }))
 
+import { renderHook } from '@testing-library/react'
 import { deleteOrgImage, uploadOrgImage } from '@/lib/orgImageUpload'
+import { deleteStorageObject } from '@/lib/storage'
+import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
 import { uploadIdentityImage } from '@/lib/identityImage'
 import { isFittedOrgImage } from '@/lib/orgImage'
 
@@ -61,11 +65,13 @@ describe('uploadOrgImage', () => {
   })
 })
 
-describe('deleteOrgImage', () => {
-  it('removes a fitted file together with its original', async () => {
-    deleteOrgImage('https://cdn.test/storage/v1/object/public/avatars/owner-1/crest_fit_7.png', 'test')
-    await vi.waitFor(() => expect(remove).toHaveBeenCalledTimes(2))
-    expect(remove.mock.calls.map((c) => c[0][0]).sort()).toEqual(['owner-1/crest_fit_7.png', 'owner-1/crest_orig_7.png'])
+describe('removing a fitted crest or logo', () => {
+  const FITTED = 'https://cdn.test/storage/v1/object/public/avatars/owner-1/crest_fit_7.png'
+
+  it('removes the fitted file and its original in one call', async () => {
+    deleteOrgImage(FITTED, 'test')
+    await vi.waitFor(() => expect(remove).toHaveBeenCalledTimes(1))
+    expect(remove.mock.calls[0][0]).toEqual(['owner-1/crest_fit_7.png', 'owner-1/crest_orig_7.png'])
   })
 
   it('removes only the file itself for an older upload', async () => {
@@ -77,6 +83,38 @@ describe('deleteOrgImage', () => {
   it('does nothing without a URL', () => {
     deleteOrgImage(null, 'test')
     expect(remove).not.toHaveBeenCalled()
+  })
+
+  it('takes the original along on every path that deletes through the storage helper', async () => {
+    // By public URL (direct replace) and by path (queued deletions).
+    await deleteStorageObject({ bucket: 'avatars', publicUrl: FITTED.replace('crest', 'logo'), context: 'test' })
+    await deleteStorageObject({ bucket: 'avatars', path: 'owner-1/crest_fit_9.jpg', context: 'test' })
+    expect(remove.mock.calls[0][0]).toEqual(['owner-1/logo_fit_7.png', 'owner-1/logo_orig_7.png'])
+    expect(remove.mock.calls[1][0]).toEqual(['owner-1/crest_fit_9.jpg', 'owner-1/crest_orig_9.jpg'])
+  })
+
+  it('a queued replacement (edit modal, onboarding) removes the pair when the save lands', async () => {
+    const { result } = renderHook(() => usePendingStorageCleanup())
+    result.current.queue({ bucket: 'avatars', publicUrl: FITTED, context: 'edit-profile:replace-avatar' })
+    expect(remove).not.toHaveBeenCalled()
+    await result.current.flush()
+    expect(remove).toHaveBeenCalledTimes(1)
+    expect(remove.mock.calls[0][0]).toEqual(['owner-1/crest_fit_7.png', 'owner-1/crest_orig_7.png'])
+  })
+
+  it('a cancelled edit deletes nothing: the row still points at the old file', async () => {
+    const { result } = renderHook(() => usePendingStorageCleanup())
+    result.current.queue({ bucket: 'avatars', publicUrl: FITTED, context: 'edit-profile:replace-avatar' })
+    result.current.discard()
+    await result.current.flush()
+    expect(remove).not.toHaveBeenCalled()
+  })
+
+  it('never treats an original, a person photo or another bucket as a pair', async () => {
+    await deleteStorageObject({ bucket: 'avatars', path: 'owner-1/crest_orig_7.png', context: 'test' })
+    await deleteStorageObject({ bucket: 'avatars', path: 'owner-1/avatar_full_7.jpg', context: 'test' })
+    expect(remove.mock.calls[0][0]).toEqual(['owner-1/crest_orig_7.png'])
+    expect(remove.mock.calls[1][0]).toEqual(['owner-1/avatar_full_7.jpg'])
   })
 })
 

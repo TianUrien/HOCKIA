@@ -54,6 +54,8 @@ export default function ImageCropSheet({ file, kind, onDone }: ImageCropSheetPro
   const stageRef = useRef<HTMLDivElement>(null)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const person = isPerson(kind)
+  // A fully transparent or all-white file: nothing would show in the tile.
+  const empty = Boolean(ready?.analysis.empty)
 
   useEffect(() => {
     let cancelled = false
@@ -131,7 +133,7 @@ export default function ImageCropSheet({ file, kind, onDone }: ImageCropSheetPro
   }
 
   const confirm = async () => {
-    if (!ready || saving) return
+    if (!ready || saving || empty) return
     setSaving(true)
     try {
       onDone(await renderCrop(ready.image, crop, { kind, background: ready.background, sourceType: file.type, name: file.name }))
@@ -216,7 +218,11 @@ export default function ImageCropSheet({ file, kind, onDone }: ImageCropSheetPro
               </span>
             </div>
 
-            {ready && isSmallImage(width, height) && (
+            {empty && (
+              <p role="alert" className="mt-3 text-[13px] font-semibold text-ink-1" data-testid="image-crop-empty">{t('imageCrop.empty')}</p>
+            )}
+
+            {ready && !empty && isSmallImage(width, height) && (
               <p className="mt-2 text-[13px] text-ink-2" data-testid="image-crop-small">{t('imageCrop.small', { width, height })}</p>
             )}
           </>
@@ -225,7 +231,7 @@ export default function ImageCropSheet({ file, kind, onDone }: ImageCropSheetPro
         {/* Stays in view on short screens: the rest of the sheet scrolls under it. */}
         <div className={cn('sticky bottom-0 -mx-5 mt-4 grid gap-3 bg-white px-5 pb-3 pt-3', failed ? 'grid-cols-1' : 'grid-cols-2')}>
           <Button variant="secondary" block onClick={cancel} disabled={saving} data-testid="image-crop-cancel">{t(failed ? 'imageCrop.close' : 'imageCrop.cancel')}</Button>
-          {!failed && <Button block loading={saving} disabled={!ready} onClick={() => void confirm()} data-testid="image-crop-confirm">{t(`imageCrop.use.${kind}`)}</Button>}
+          {!failed && <Button block loading={saving} disabled={!ready || empty} onClick={() => void confirm()} data-testid="image-crop-confirm">{t(`imageCrop.use.${kind}`)}</Button>}
         </div>
       </div>
     </BottomSheet>

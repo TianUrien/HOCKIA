@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { logger } from './logger'
+import { orgOriginalUrl } from './orgImage'
 
 const PUBLIC_OBJECT_PREFIX = '/storage/v1/object/public/'
 
@@ -55,13 +56,18 @@ export const deleteStorageObject = async ({ bucket, path, publicUrl, context }: 
     return false
   }
 
+  // A fitted crest or logo has its picked file kept next to it (lib/orgImage.ts):
+  // the two go together on every path, so no caller can leave the original behind.
+  const companion = orgOriginalUrl(targetPath)
+  const paths = companion ? [targetPath, companion] : [targetPath]
+
   try {
-    const { error } = await supabase.storage.from(bucket).remove([targetPath])
+    const { error } = await supabase.storage.from(bucket).remove(paths)
     if (error) {
       throw error
     }
 
-    logger.debug('[storage] Deleted object', { bucket, path: targetPath, context })
+    logger.debug('[storage] Deleted object', { bucket, path: targetPath, companion, context })
     return true
   } catch (error) {
     logger.error('[storage] Failed to delete object', { bucket, path: targetPath, context, error })

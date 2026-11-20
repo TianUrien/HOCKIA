@@ -9,7 +9,7 @@ import type { ImageAnalysis } from '@/lib/imageFit'
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 
 let size = { width: 1200, height: 400 }
-let analysis: ImageAnalysis = { transparent: false, uniformEdge: true, edgeColor: [20, 60, 200], blankBackground: false, content: { x: 0, y: 0, w: 1, h: 1 } }
+let analysis: ImageAnalysis = { transparent: false, uniformEdge: true, edgeColor: [20, 60, 200], blankBackground: false, content: { x: 0, y: 0, w: 1, h: 1 }, empty: false }
 const renderCrop = vi.fn<(...args: unknown[]) => Promise<File>>(async () => new File(['sq'], 'out.png', { type: 'image/png' }))
 const loadImageFile = vi.fn(async () => ({ element: {} as HTMLImageElement, url: 'blob:test', ...size }))
 vi.mock('@/lib/imageCropRender', () => ({
@@ -26,7 +26,7 @@ const file = new File(['x'], 'wide.png', { type: 'image/png' })
 
 beforeEach(() => {
   size = { width: 1200, height: 400 }
-  analysis = { transparent: false, uniformEdge: true, edgeColor: [20, 60, 200], blankBackground: false, content: { x: 0, y: 0, w: 1, h: 1 } }
+  analysis = { transparent: false, uniformEdge: true, edgeColor: [20, 60, 200], blankBackground: false, content: { x: 0, y: 0, w: 1, h: 1 }, empty: false }
   renderCrop.mockClear()
   loadImageFile.mockClear()
 })
@@ -114,6 +114,21 @@ describe('ImageCropSheet', () => {
     render(<ImageCropSheet file={file} kind="logo" onDone={vi.fn()} />)
     await screen.findByTestId('image-crop-fill')
     expect(screen.queryByTestId('image-crop-small')).not.toBeInTheDocument()
+  })
+
+  it('refuses an image with nothing in it and says why', async () => {
+    analysis = { transparent: true, uniformEdge: false, edgeColor: [255, 255, 255], blankBackground: true, content: { x: 0, y: 0, w: 1, h: 1 }, empty: true }
+    const onDone = vi.fn()
+    render(<ImageCropSheet file={file} kind="crest" onDone={onDone} />)
+    expect(await screen.findByTestId('image-crop-empty')).toHaveTextContent('This image looks empty')
+    const confirm = screen.getByTestId('image-crop-confirm')
+    expect(confirm).toBeDisabled()
+    fireEvent.click(confirm)
+    expect(renderCrop).not.toHaveBeenCalled()
+    expect(onDone).not.toHaveBeenCalled()
+    // Cancel still works, so the member can pick another file.
+    fireEvent.click(screen.getByTestId('image-crop-cancel'))
+    expect(onDone).toHaveBeenCalledWith(null)
   })
 
   it('resolves null on cancel', async () => {

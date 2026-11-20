@@ -766,6 +766,7 @@
     },
     "hint": "Drag to move it and zoom until it looks right. This is how it appears across Hockia.",
     "failed": "This image could not be opened. Try another one.",
+    "empty": "This image looks empty. Choose one with your logo or photo in it.",
     "stageLabel": "Image position. Use the arrow keys to move it and plus or minus to zoom.",
     "zoom": "Zoom",
     "zoomIn": "Zoom in",
