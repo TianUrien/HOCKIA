@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { parseDayFirst } from '@/lib/dayFirst'
 import { nationalityLine } from '@/lib/nationalityLine'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ChevronRight, Info, Play } from 'lucide-react'
@@ -121,8 +122,8 @@ export default function ApplyToVacancyModal({
     }
   }
   const availableText = (() => {
-    const from = profile?.available_from ? new Date(profile.available_from) : null
-    const when = from && !Number.isNaN(from.getTime()) ? format(from, 'MMM yyyy', { locale: getDateFnsLocale() }) : null
+    const from = parseDayFirst(profile?.available_from)
+    const when = from ? format(from, 'MMM yyyy', { locale: getDateFnsLocale() }) : null
     const duration = profile?.availability_duration ? durationLabel(profile.availability_duration) : null
     return [when ?? t('apply.availableNow'), duration].filter(Boolean).join(', ')
   })()

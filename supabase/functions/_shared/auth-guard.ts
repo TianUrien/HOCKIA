@@ -79,18 +79,18 @@ export function deviceLabel(userAgent: string | null): string {
   const android = ua.match(/Android (\d+)[^;)]*;\s*([^;)]+?)(?:\s+Build\/[^;)]*)?[;)]/)
   if (android) {
     const model = android[2].trim()
-    const webview = /; wv\)/.test(ua) ? ' · WebView' : ''
-    return `Android ${android[1]} · ${model === 'K' ? 'model hidden' : model}${webview}`.slice(0, 80)
+    const webview = /; wv\)/.test(ua) ? ', WebView' : ''
+    return `Android ${android[1]}, ${model === 'K' ? 'model hidden' : model}${webview}`.slice(0, 80)
   }
   const ios = ua.match(/(iPhone|iPad|iPod)[^)]*OS (\d+)/)
-  if (ios) return `${ios[1]} · iOS ${ios[2]}`
+  if (ios) return `${ios[1]}, iOS ${ios[2]}`
   const browser = /Edg\//.test(ua) ? 'Edge'
     : /Firefox\//.test(ua) ? 'Firefox'
     : /Chrome\//.test(ua) ? 'Chrome'
     : /Safari\//.test(ua) ? 'Safari'
     : null
   const system = /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : null
-  if (browser || system) return `${system ?? 'Other'} · ${browser ?? 'other browser'}`
+  if (browser || system) return `${system ?? 'Other'}, ${browser ?? 'other browser'}`
   return 'other'
 }
 

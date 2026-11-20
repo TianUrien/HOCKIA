@@ -3,7 +3,7 @@ import { closesSoonLabel } from '@/lib/opportunityCopy'
 import { supabase } from '@/lib/supabase'
 import type { Vacancy } from '@/lib/supabase'
 import { clubNoteFromFeedback, clubNoteOriginalFromFeedback, formatDurationText } from '@/lib/opportunityCopy'
-import { dayFirst } from '@/lib/dayFirst'
+import { dayFirst, parseDayFirst } from '@/lib/dayFirst'
 import { daysUntil } from '@/lib/opportunityRails'
 import { getShareOrigin } from '@/lib/profileShare'
 import { tOpportunities } from '@/i18n/ns/opportunities'
@@ -59,8 +59,9 @@ export function roleDates(vacancy: Vacancy) {
   const deadlineDays = daysUntil(vacancy.application_deadline)
   const startsValue = (() => {
     if (!vacancy.start_date) return tOpportunities('detail.startsImmediately')
-    const d = new Date(vacancy.start_date)
-    return Number.isNaN(d.getTime()) ? tOpportunities('detail.startsImmediately') : d.toLocaleDateString(isEnglish() ? 'en-GB' : intlLocale(), { month: 'short', year: 'numeric' })
+    // start_date is a calendar day: read as a local day so it never slips into the month before.
+    const d = parseDayFirst(vacancy.start_date)
+    return !d ? tOpportunities('detail.startsImmediately') : d.toLocaleDateString(isEnglish() ? 'en-GB' : intlLocale(), { month: 'short', year: 'numeric' })
   })()
   const duration = formatDurationText(vacancy.duration_text)
   const applyByValue = vacancy.application_deadline ? dayFirst(vacancy.application_deadline, { year: 'never' }) ?? tOpportunities('detail.applyByOpen') : tOpportunities('detail.applyByOpen')
