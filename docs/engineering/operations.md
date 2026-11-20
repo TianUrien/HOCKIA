@@ -282,8 +282,10 @@ Source: the AI search visibility audit of 2026-11-18. IndexNow tells Bing
      (`client/api/indexnow-key.ts`).
   3. Set the same `INDEXNOW_KEY` as a secret of the production Supabase
      project and deploy `notify-vacancy`.
-  4. Verify the site in Bing Webmaster Tools (it can import from Search
-     Console); its IndexNow page lists the received URLs.
+  4. Verify the site in Bing Webmaster Tools; its IndexNow page lists the
+     received URLs. The import from Search Console failed for this domain
+     property (2026-11-20), so the site is verified with the file
+     `client/public/BingSiteAuth.xml`. Keep that file: Bing re-checks it.
 - Leave it unset on staging: staging pages are noindex.
 - Not verified from the repository: that the webhook also fires for updates
   that close a role. It is configured in the Supabase dashboard; if it is
