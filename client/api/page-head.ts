@@ -9,12 +9,14 @@
  * /opportunities, /world and /community also get a body block (open roles;
  * countries; what the directory is, with no people data) for crawlers that
  * do not run JavaScript; the app replaces it on boot. A failed lookup serves
- * the head alone, as before.
+ * the head alone, as before. /about and /faq get the founder-approved text
+ * (src/lib/seo/aboutFaq.ts) as body and JSON-LD.
  */
 import { renderStaticHtml } from '../src/lib/seo/opportunityHead'
 import { ROUTE_META, resolveRouteMeta } from '../src/lib/seo/routeMeta'
 import { communityBody, injectServerBody, opportunitiesBody, worldBody } from '../src/lib/seo/serverBody'
-import { fetchOpenRoles, restAnon } from './_publicData'
+import { aboutBody, aboutJsonLd, faqBody, faqJsonLd, injectJsonLd } from '../src/lib/seo/aboutFaq'
+import { fetchDirectoryFacts, fetchOpenRoles, restAnon } from './_publicData'
 
 export const config = { runtime: 'edge' }
 
@@ -52,7 +54,11 @@ export default async function handler(req: Request): Promise<Response> {
     )
     if (rows) html = injectServerBody(html, worldBody(rows.map((r) => ({ code: r.country_code, name: r.country_name, totalClubs: r.total_clubs ?? 0 })), intro))
   } else if (path === '/community') {
-    html = injectServerBody(html, communityBody(intro))
+    html = injectServerBody(html, communityBody(intro))  } else if (path === '/faq' || path === '/about') {
+    // The approved text, with the country count read from the directory now.
+    const facts = await fetchDirectoryFacts()
+    html = injectServerBody(html, path === '/faq' ? faqBody(facts) : aboutBody(facts))
+    html = injectJsonLd(html, path === '/faq' ? faqJsonLd(facts, siteUrlFor(host)) : aboutJsonLd(siteUrlFor(host)))
   }
   return new Response(html, {
     status: 200,

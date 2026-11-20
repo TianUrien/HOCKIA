@@ -60,6 +60,8 @@ import { useRevealFocusedField } from '@/hooks/useKeyboardInset'
 // initial-load gzip budget keeps headroom (2026-09-21: 477KB / 480KB).
 const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'))
 const DevelopersPage = lazyWithRetry(() => import('@/pages/DevelopersPage'))
+const AboutPage = lazyWithRetry(() => import('@/pages/AboutPage'))
+const FaqPage = lazyWithRetry(() => import('@/pages/FaqPage'))
 const CompleteProfile = lazyWithRetry(() => import('@/pages/CompleteProfile'))
 const DashboardRouter = lazyWithRetry(() => import('@/pages/DashboardRouter'))
 const HomePage = lazyWithRetry(() => import('@/pages/HomePage'))
@@ -424,6 +426,8 @@ function App() {
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/developers" element={<DevelopersPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/faq" element={<FaqPage />} />
                 <Route path="/offline" element={<OfflinePage />} />
                 
                 {/* World Directory (public) */}
