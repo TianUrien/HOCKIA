@@ -18,6 +18,7 @@ Hockia is free for players, coaches, clubs, umpires and brands.
 ## Key pages
 
 - [Open field hockey roles for players and coaches](https://inhockia.com/opportunities): every open role, with club, city and country.
+- [Open field hockey roles in Australia](https://inhockia.com/opportunities/in/australia): open roles by country, at /opportunities/in/ followed by the country name (for example new-zealand). A country has a page while it has open roles.
 - [World directory of field hockey clubs and leagues](https://inhockia.com/world): clubs by country, region and league.
 - [Community](https://inhockia.com/community): players, coaches, clubs and umpires on Hockia.
 - [Join Hockia](https://inhockia.com/signup): create a free profile.

@@ -112,6 +112,26 @@ Verified patterns:
   function (its view applies the hidden-profile predicate) and the 90-day
   rule; no people are listed. A club's roles are matched by organisation
   name within its country, because the public API carries no club id.
+- **`/opportunities/in/<country>`** (added 2026-11-20; source: founder
+  approval relayed by the engineering lead, for growth in Australia): the open
+  roles of one country, served by `client/api/opportunities-country.ts` with
+  its own title, description, canonical, `ItemList` JSON-LD and the roles as
+  text (helpers in `client/src/lib/seo/opportunitiesCountry.ts`). The slug is
+  the country's English name, under `/in/` so it cannot be read as a role id.
+  A country has a page only while it has an open role in the
+  `public-opportunities` list: with none, the URL answers 302 to
+  `/opportunities`; another spelling or the code answers 301 to the slug; a
+  word that is not a country answers 404 noindex; a failed lookup answers 503.
+  `/opportunities/<word>` (for example `/opportunities/australia`, which used
+  to return the empty shell) answers 301 to the country page or 404. In the
+  app the route shows the usual list with the country filter set, and the
+  list page (`OpportunitiesPage`, a lazy chunk and so the last to write the
+  head) sets the same title, description and og tags the server sent. The
+  list people see is every open role, as on `/opportunities`; the 90-day rule
+  is an advertising rule, so it applies to the server text, the sitemap and
+  the structured data (the app's own `ItemList` included), not to the list. The page is
+  linked from `/opportunities`, from `/world/<code>` while the country has
+  open roles, from `llms.txt` and from the sitemap function.
 - **`/about` and `/faq`** (added 2026-11-20; source: founder approval of the
   FAQ draft in the description of PR 576, relayed by the engineering lead):
   the text lives once in `client/src/lib/seo/aboutFaq.ts` and feeds the React

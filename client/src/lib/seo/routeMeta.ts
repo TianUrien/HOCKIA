@@ -55,6 +55,7 @@ export const ROUTE_META: RouteMetaEntry[] = [
   { match: /^\/world\/clubs\/[^/]+$/, dynamic: true },
   { match: /^\/world\/[^/]+$/, dynamic: true },
   { match: /^\/opportunities\/[0-9a-f-]{36}$/i, dynamic: true },
+  { match: /^\/opportunities\/in\/[^/]+$/, dynamic: true },
   { match: '/world', title: 'Field Hockey Clubs by Country – World Directory | Hockia', description: 'Browse field hockey clubs and leagues by country, region and division in the Hockia world directory.' },
   { match: '/marketplace', title: 'Field Hockey Brands & Gear | Hockia', description: 'Field hockey brands, sticks, equipment and offers for the Hockia community.' },
   { match: '/developers', title: 'Hockia for Developers – Public API & Data', description: 'Build on Hockia: public opportunities feed, sitemap and structured data for field hockey.' },

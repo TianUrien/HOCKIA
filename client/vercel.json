@@ -136,6 +136,16 @@
       "source": "/sitemap.xml",
       "destination": "/api/sitemap.xml",
       "statusCode": 301
+    },
+    {
+      "source": "/brands/playr",
+      "destination": "/brands/hockia",
+      "statusCode": 301
+    },
+    {
+      "source": "/brands/playr/:rest*",
+      "destination": "/brands/hockia/:rest*",
+      "statusCode": 301
     }
   ],
   "rewrites": [
@@ -158,6 +168,14 @@
     {
       "source": "/opportunities/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
       "destination": "/api/opportunity-page?id=:id"
+    },
+    {
+      "source": "/opportunities/in/:slug([a-zA-Z][a-zA-Z-]{1,60})",
+      "destination": "/api/opportunities-country?country=:slug"
+    },
+    {
+      "source": "/opportunities/:word((?!applications$|new$)[a-zA-Z][a-zA-Z-]{1,60})",
+      "destination": "/api/opportunities-country?word=:word"
     },
     {
       "source": "/opportunities",

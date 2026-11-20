@@ -19,6 +19,7 @@
  */
 import { BENEFIT_LABEL, escapeHtml, isStaleOpenRole, organisationName, roleLabel, type PublicOpportunityRow } from './opportunityHead'
 import type { WorldClubHead, WorldCountryHead } from './worldHead'
+import { countriesWithRoles, countryRolesHeading, countryRolesPath, inCountry, type RoleCountry } from './opportunitiesCountry'
 
 /** Roles listed on /opportunities; the public API returns at most 100 a page. */
 export const ROLE_LIST_MAX = 100
@@ -81,10 +82,34 @@ export function opportunitiesBody(rows: PublicOpportunityRow[], intro: string): 
   if (rows.length > 0) {
     parts.push(`<h2>${rows.length === 1 ? '1 open role' : `${rows.length} open roles`}</h2>`)
     parts.push(`<ul>\n${rows.map(roleItem).join('\n')}\n</ul>`)
+    const countries = countriesWithRoles(rows)
+    if (countries.length > 0) {
+      parts.push('<h2>Open roles by country</h2>')
+      parts.push(`<ul>\n${countries.map((c) => `<li><a href="${countryRolesPath(c)}">${escapeHtml(countryRolesHeading(c))}</a></li>`).join('\n')}\n</ul>`)
+    }
   } else {
     parts.push('<p>There are no open roles listed right now.</p>')
   }
   parts.push(FOOTER)
+  return parts.join('\n')
+}
+
+/**
+ * /opportunities/in/:slug: the open roles of one country. Only called with
+ * at least one role (a country without roles has no page). `worldCode` is
+ * the country's code in the world directory when it has a page there.
+ */
+export function countryRolesBody(country: RoleCountry, rows: PublicOpportunityRow[], description: string, worldCode: string | null): string {
+  const where = escapeHtml(inCountry(country))
+  const parts = [
+    `<h1>${escapeHtml(countryRolesHeading(country))}</h1>`,
+    `<p>${escapeHtml(description)}</p>`,
+    `<h2>${rows.length === 1 ? '1 open role' : `${rows.length} open roles`} in ${where}</h2>`,
+    `<ul>\n${rows.map(roleItem).join('\n')}\n</ul>`,
+  ]
+  const more = [`<a href="/opportunities">All open field hockey roles</a>`]
+  if (worldCode) more.unshift(`<a href="/world/${escapeHtml(worldCode.toLowerCase())}">Field hockey clubs in ${where}</a>`)
+  parts.push(`<p>${more.join(' | ')}</p>`, FOOTER)
   return parts.join('\n')
 }
 
@@ -114,6 +139,8 @@ export interface WorldCountryBody {
   leagues: string[]
   /** Regions with their own directory page. */
   provinces: { name: string; slug: string }[]
+  /** The country's open-roles page, when it has open roles now. */
+  openRoles?: RoleCountry | null
 }
 
 /** /world/:code: the clubs (links) and leagues of one country. */
@@ -129,6 +156,9 @@ export function countryBody(c: WorldCountryHead, extra: WorldCountryBody, descri
       '<h2>Regions</h2>',
       `<ul>\n${extra.provinces.map((p) => `<li><a href="/world/${escapeHtml(code)}/${escapeHtml(p.slug)}">${esc(p.name)}</a></li>`).join('\n')}\n</ul>`,
     )
+  }
+  if (extra.openRoles) {
+    parts.push(`<p><a href="${countryRolesPath(extra.openRoles)}">${escapeHtml(countryRolesHeading(extra.openRoles))}</a></p>`)
   }
   if (c.clubs.length > 0) {
     const more = c.totalClubs > c.clubs.length ? ` (${c.clubs.length} of ${c.totalClubs})` : ''

@@ -291,3 +291,32 @@ Source: the AI search visibility audit of 2026-11-18. IndexNow tells Bing
   that close a role. It is configured in the Supabase dashboard; if it is
   filtered to publishes, closes are not pinged (the role page still turns
   noindex and the sitemap drops it).
+
+## Checking that staging and production have the same functions (2026-11-20)
+
+Source: verification pass after the v2026.11.20 releases. The two databases
+can record the same migrations and still differ, because a migration marked
+as applied is not proof that its SQL ran.
+
+- Compare per function, ignoring comments and whitespace (both differ between
+  the two for harmless reasons: 33 functions differed by raw text, 1 by
+  content):
+  `md5(regexp_replace(regexp_replace(pg_get_functiondef(oid), '--[^\n]*', '', 'g'), '\s+', '', 'g'))`
+  over `pg_proc` in schema `public`, `prokind = 'f'`.
+- Found that day: `edit_endorsement` cut at 1200 characters on staging and
+  at 800 on production and in the repo. Fixed by
+  `20261120100000_restate_edit_endorsement.sql`.
+- Also compared that day, identical on both: row-level security flags, all
+  223 policies, table, column and function grants, constraints, indexes and
+  the 32 scheduled jobs. Same columns on every table.
+- Differences that are expected or harmless: the 18 webhook triggers (each
+  points at its own project); the column order of `profiles` and
+  `career_history`, which also changes the stored text of the `profiles_self`
+  view; on production the trigger on `reference_reminder_queue` is named with
+  a leading tab character.
+- One gap on staging, not fixed: the webhook trigger
+  `profile_references."notify-reference-response"` exists on production and
+  not on staging, so the reference-response email is never sent from staging.
+  Webhook triggers are created in the Supabase dashboard (they carry the
+  project's own secret header), not by a migration.
+
