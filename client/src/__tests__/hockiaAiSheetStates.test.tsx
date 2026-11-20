@@ -126,9 +126,9 @@ describe('Hockia AI sheet — answer states', () => {
     expect(screen.getByTestId('ai-user-bubble')).toHaveTextContent('Goalkeeper opportunities in Serie A1')
     const rows = screen.getAllByTestId('ai-role-result')
     expect(rows).toHaveLength(2)
-    expect(within(rows[0]).getByText('HC Bra · Goalkeeper')).toBeInTheDocument()
-    expect(within(rows[0]).getByText('Bra, Italy · Housing, Paid')).toBeInTheDocument()
-    expect(screen.getByText('From 24 open opportunities · updated today')).toBeInTheDocument()
+    expect(within(rows[0]).getByText('HC Bra, Goalkeeper')).toBeInTheDocument()
+    expect(within(rows[0]).getByText('Bra, Italy. Housing, Paid')).toBeInTheDocument()
+    expect(screen.getByText('From 24 open opportunities, updated today')).toBeInTheDocument()
     expect(container.textContent).not.toMatch(FORBIDDEN_PLAYER_TEXT)
     for (const row of rows) expect(row.outerHTML).not.toMatch(/gradient/)
 
@@ -148,7 +148,7 @@ describe('Hockia AI sheet — answer states', () => {
     ])
     renderSheet()
     expect(screen.getByText(/no goalkeeper roles in Italy/)).toBeInTheDocument()
-    expect(screen.getByText('From 24 open opportunities · updated today')).toBeInTheDocument()
+    expect(screen.getByText('From 24 open opportunities, updated today')).toBeInTheDocument()
     const chips = screen.getAllByTestId('ai-chip').map(c => c.textContent)
     expect(chips).toEqual(['Show all open opportunities', 'Browse all opportunities'])
     expect(screen.queryByTestId('ai-role-result')).toBeNull()
@@ -235,8 +235,8 @@ describe('lib/hockiaAi', () => {
   })
 
   it('fromOpenRolesCaption: singular, plural, unknown', () => {
-    expect(fromOpenRolesCaption(1)).toBe('From 1 open opportunity · updated today')
-    expect(fromOpenRolesCaption(24)).toBe('From 24 open opportunities · updated today')
+    expect(fromOpenRolesCaption(1)).toBe('From 1 open opportunity, updated today')
+    expect(fromOpenRolesCaption(24)).toBe('From 24 open opportunities, updated today')
     expect(fromOpenRolesCaption(undefined)).toBeNull()
     expect(fromOpenRolesCaption(null)).toBeNull()
     expect(fromOpenRolesCaption(-1)).toBeNull()
@@ -250,9 +250,9 @@ describe('lib/hockiaAi', () => {
   })
 
   it('role row text: club · position, league/location · package', () => {
-    expect(roleResultTitle(roles[0])).toBe('HC Bra · Goalkeeper')
+    expect(roleResultTitle(roles[0])).toBe('HC Bra, Goalkeeper')
     expect(roleResultTitle({ organization: null, position_label: null, title: 'Open opportunity' })).toBe('Open opportunity')
-    expect(roleResultMeta({ ...roles[0], league_label: 'Serie A1' })).toBe('Serie A1 · Housing, Paid')
+    expect(roleResultMeta({ ...roles[0], league_label: 'Serie A1' })).toBe('Serie A1. Housing, Paid')
     expect(roleResultMeta({ league_label: null, location_label: null, benefit_labels: [] })).toBeNull()
   })
 })
@@ -262,7 +262,7 @@ describe('Hockia AI sheet — context chip (rebrand page 17)', () => {
     chipValue = { kind: 'goal', topic: 'Your goal', fact: 'Play abroad' }
     useHockiaAiSheet.setState({ open: true, detent: 'medium', mode: 'chat', roleContext: null, seed: null })
     render(<MemoryRouter><HockiaAiSheet /></MemoryRouter>)
-    expect(screen.getByTestId('hockia-ai-context-chip')).toHaveTextContent('Your goal · Play abroad')
+    expect(screen.getByTestId('hockia-ai-context-chip')).toHaveTextContent('Your goal: Play abroad')
     expect(screen.getByTestId('hockia-ai-intro')).toHaveTextContent('I can see your profile and your goal.')
     expect(useDiscoverChat.getState().goalOn).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: 'Remove context' }))
@@ -277,7 +277,7 @@ describe('Hockia AI sheet — context chip (rebrand page 17)', () => {
     useDiscoverChat.setState({ goalOn: true })
     useHockiaAiSheet.setState({ open: true, detent: 'medium', mode: 'chat', roleContext: null, seed: null })
     render(<MemoryRouter><HockiaAiSheet /></MemoryRouter>)
-    expect(screen.getByTestId('hockia-ai-context-chip')).toHaveTextContent('Opportunities · 24 open')
+    expect(screen.getByTestId('hockia-ai-context-chip')).toHaveTextContent('Opportunities: 24 open')
     expect(useDiscoverChat.getState().goalOn).toBe(false)
   })
 
@@ -289,7 +289,7 @@ describe('Hockia AI sheet — context chip (rebrand page 17)', () => {
 
   it('no chip on a role chat (the role chip says it)', () => {
     chipValue = { kind: 'screen', topic: 'Opportunities', fact: '128 open' }
-    useHockiaAiSheet.setState({ open: true, detent: 'medium', mode: 'chat', seed: null, roleContext: { id: 'o1', title: 'Goalkeeper', organization: 'HC Bra', logoUrl: null, city: 'Bra', label: 'HC Bra · Goalkeeper' } })
+    useHockiaAiSheet.setState({ open: true, detent: 'medium', mode: 'chat', seed: null, roleContext: { id: 'o1', title: 'Goalkeeper', organization: 'HC Bra', logoUrl: null, city: 'Bra', label: 'HC Bra, Goalkeeper' } })
     render(<MemoryRouter><HockiaAiSheet /></MemoryRouter>)
     expect(screen.queryByTestId('hockia-ai-context-chip')).toBeNull()
   })

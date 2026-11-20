@@ -40,7 +40,7 @@ describe('RecruitingFunnelCard', () => {
     expect(items).toHaveLength(7)
     expect(items[0]).toMatch(/Opportunities posted3 roles2 clubs/)
     expect(items[1]).not.toMatch(/of roles posted/) // older roles keep being viewed: no share (2026-10-18)
-    expect(items[2]).toMatch(/27 applicants · 24% of viewers applied/) // 27 of 113
+    expect(items[2]).toMatch(/27 applicants, 24% of viewers applied/) // 27 of 113
     expect(items[3]).toMatch(/5% of applications/) // 2 of 42
     expect(items[6]).toMatch(/Signed0 signings—/) // zero people shows as a dash, never 0%
   })
@@ -48,11 +48,11 @@ describe('RecruitingFunnelCard', () => {
   it('shows the medians and the unanswered applications', async () => {
     wrap(<RecruitingFunnelCard days={30} />)
     const dl = await screen.findByTestId('funnel-medians')
-    expect(dl.textContent).toMatch(/31 h median · 3 opportunities/)
+    expect(dl.textContent).toMatch(/31 h median, 3 opportunities/)
     expect(dl.textContent).toMatch(/Invite answered in—/)
     expect(dl.textContent).toMatch(/Applications still unanswered38/)
     expect(await screen.findByText(/14\.5 d/)).toBeInTheDocument() // club's first reply, median
-    expect(dl.textContent).toMatch(/median · 21 replies/)
+    expect(dl.textContent).toMatch(/median, 21 replies/)
   })
 })
 

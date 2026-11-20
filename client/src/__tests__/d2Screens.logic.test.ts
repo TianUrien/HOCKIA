@@ -34,13 +34,13 @@ describe('openToPlayChecklist', () => {
     const rows = openToPlayChecklist({ passports: [{ name: 'Argentina', flag: '🇦🇷', isEu: false }], fullMatches: 1, highlights: 4, league: null })
     expect(rows.map((r) => [r.key, r.done, r.detail])).toEqual([
       ['passport', true, '🇦🇷 Argentina'],
-      ['video', true, '1 full match · 4 highlights'],
+      ['video', true, '1 full match, 4 highlights'],
       ['league', false, 'Not set'],
     ])
   })
   it('labels a self-reported league', () => {
     const [, , league] = openToPlayChecklist({ passports: [], fullMatches: 0, highlights: 0, league: { name: 'Torneo NOA', source: 'self_reported' } })
-    expect(league).toMatchObject({ done: true, detail: 'Torneo NOA · self-reported' })
+    expect(league).toMatchObject({ done: true, detail: 'Torneo NOA, self-reported' })
   })
 })
 
@@ -64,10 +64,10 @@ describe('isAdultByDob', () => {
 describe('appliedLine', () => {
   const now = new Date(2026, 8, 26, 12)
   it('pending → date + days left to reply', () => {
-    expect(appliedLine({ status: 'pending', appliedAt: new Date(2026, 8, 20, 9).toISOString(), expiryDays: 14 }, now)).toBe('20 Sep · 8 days left to reply')
+    expect(appliedLine({ status: 'pending', appliedAt: new Date(2026, 8, 20, 9).toISOString(), expiryDays: 14 }, now)).toBe('20 Sep, 8 days left to reply')
   })
   it('answered → date + the decision', () => {
-    expect(appliedLine({ status: 'shortlisted', appliedAt: new Date(2026, 8, 17).toISOString(), expiryDays: 14 }, now)).toBe('17 Sep · Shortlisted')
+    expect(appliedLine({ status: 'shortlisted', appliedAt: new Date(2026, 8, 17).toISOString(), expiryDays: 14 }, now)).toBe('17 Sep, Shortlisted')
   })
 })
 

@@ -24,7 +24,7 @@ const STEPS: { key: FunnelKey; label: string; icon: typeof UserPlus; bar: string
   { key: 'role_selected', label: 'Role selected', icon: BadgeCheck, bar: 'bg-blue-500', iconColor: 'text-blue-500' },
   { key: 'onboarding_started', label: 'Onboarding started', icon: PlayCircle, bar: 'bg-indigo-500', iconColor: 'text-indigo-500' },
   { key: 'onboarding_completed', label: 'Onboarding completed', icon: CheckCircle2, bar: 'bg-emerald-500', iconColor: 'text-emerald-500' },
-  { key: 'activated', label: 'Activated · first real action', icon: Sparkles, bar: 'bg-amber-500', iconColor: 'text-amber-500' },
+  { key: 'activated', label: 'Activated: first real action', icon: Sparkles, bar: 'bg-amber-500', iconColor: 'text-amber-500' },
 ]
 
 const DATE_OPTIONS: { label: string; days: number | null }[] = [
@@ -77,7 +77,7 @@ export function RegistrationFunnel() {
         <div>
           <h3 className="text-sm font-semibold text-gray-700">Registration Funnel</h3>
           <p className="text-xs text-gray-500 mt-0.5">
-            Web · real accounts only (bots &amp; test excluded). Exact, from Supabase.
+            Web. Real accounts only (bots &amp; test excluded). Exact, from Supabase.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -172,7 +172,7 @@ export function RegistrationFunnel() {
                     <p className="text-xs text-gray-400 pl-6">
                       {stepConversion}% from {STEPS[index - 1].label}
                       {stepConversion < 100 && (
-                        <span className="text-gray-500"> &middot; {100 - stepConversion}% drop-off</span>
+                        <span className="text-gray-500">, {100 - stepConversion}% drop-off</span>
                       )}
                     </p>
                   )}

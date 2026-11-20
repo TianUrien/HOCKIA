@@ -1,9 +1,6 @@
 import HockiaSocials from './HockiaSocials'
 import { useCommonT } from '@/i18n/ns/common'
 
-/** Decorative separator between the links (hidden from screen readers). */
-const BULLET = '•'
-
 export default function Footer() {
   const currentYear = new Date().getFullYear()
   const t = useCommonT()
@@ -33,8 +30,6 @@ export default function Footer() {
               {t('footer.privacy')}
             </a>
 
-            <span className="text-gray-400 dark:text-gray-600" aria-hidden="true">{BULLET}</span>
-
             <a
               href="/terms"
               className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline-offset-4 hover:underline"
@@ -43,8 +38,6 @@ export default function Footer() {
               {t('footer.terms')}
             </a>
 
-            <span className="text-gray-400 dark:text-gray-600" aria-hidden="true">{BULLET}</span>
-
             <a
               href="/developers"
               className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline-offset-4 hover:underline"
@@ -52,8 +45,6 @@ export default function Footer() {
             >
               {t('footer.developers')}
             </a>
-
-            <span className="text-gray-400 dark:text-gray-600" aria-hidden="true">{BULLET}</span>
 
             <a
               href="mailto:team@inhockia.com"

@@ -21,13 +21,13 @@ const NOW = new Date('2026-09-27T12:00:00Z')
 describe('row role line (DEV NOTE: always the opportunity)', () => {
   const base = { position: null, secondary_position: null, coach_specialization: null, coach_specialization_custom: null }
   it('Player · positions', () => {
-    expect(squadRoleLine({ ...base, role: 'player', position: 'midfielder', secondary_position: 'defender' })).toBe('Player · Midfielder · Defender')
-    expect(squadRoleLine({ ...base, role: 'player', position: 'midfielder', secondary_position: 'midfielder' })).toBe('Player · Midfielder')
+    expect(squadRoleLine({ ...base, role: 'player', position: 'midfielder', secondary_position: 'defender' })).toBe('Player, Midfielder, Defender')
+    expect(squadRoleLine({ ...base, role: 'player', position: 'midfielder', secondary_position: 'midfielder' })).toBe('Player, Midfielder')
     expect(squadRoleLine({ ...base, role: 'player' })).toBe('Player')
   })
   it('Coach · specialty, custom text when the specialty is Other', () => {
-    expect(squadRoleLine({ ...base, role: 'coach', coach_specialization: 'head_coach' })).toBe('Coach · Head coach')
-    expect(squadRoleLine({ ...base, role: 'coach', coach_specialization: 'other', coach_specialization_custom: 'Video analyst' })).toBe('Coach · Video analyst')
+    expect(squadRoleLine({ ...base, role: 'coach', coach_specialization: 'head_coach' })).toBe('Coach, Head coach')
+    expect(squadRoleLine({ ...base, role: 'coach', coach_specialization: 'other', coach_specialization_custom: 'Video analyst' })).toBe('Coach, Video analyst')
     expect(squadRoleLine({ ...base, role: 'coach' })).toBe('Coach')
   })
 })
@@ -45,9 +45,9 @@ describe('copy helpers', () => {
     expect(joinCountLine(3)).toBe('3 joined with this link')
   })
   it('Settings → Squad & invites subtitle', () => {
-    expect(squadSettingsSubtitle(0)).toBe('No members yet · share your invite link')
-    expect(squadSettingsSubtitle(1)).toBe('1 member · your invite link')
-    expect(squadSettingsSubtitle(12)).toBe('12 members · your invite link')
+    expect(squadSettingsSubtitle(0)).toBe('No members yet. Share your invite link')
+    expect(squadSettingsSubtitle(1)).toBe('1 member, your invite link')
+    expect(squadSettingsSubtitle(12)).toBe('12 members, your invite link')
   })
 })
 
@@ -170,7 +170,7 @@ describe('SquadScreen (D1.15)', () => {
     squad.remove.mockResolvedValue({ success: true })
     renderScreen()
     expect(screen.queryByText('No one yet')).toBeNull()
-    expect(screen.getByText('Coach · Assistant coach')).toBeTruthy()
+    expect(screen.getByText('Coach, Assistant coach')).toBeTruthy()
     const status = screen.getByTestId('squad-pending-status')
     expect(status.textContent).toBe('Invitation pending')
     expect(status.className).toContain('text-ink-2')
@@ -186,9 +186,9 @@ describe('SquadScreen (D1.15)', () => {
       { ...person('b', { role: 'coach', coach_specialization: 'head_coach' }), is_roster_member: false, is_test_account: false },
     ]
     renderScreen()
-    expect(screen.getByText('Members · 2')).toBeTruthy()
-    expect(screen.getByText('Player · Defender')).toBeTruthy()
-    expect(screen.getByText('Coach · Head coach')).toBeTruthy()
+    expect(screen.getByText('Members 2')).toBeTruthy()
+    expect(screen.getByText('Player, Defender')).toBeTruthy()
+    expect(screen.getByText('Coach, Head coach')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Options for Name a' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Options for Name b' })).toBeNull()
     fireEvent.click(screen.getByText('Name b'))

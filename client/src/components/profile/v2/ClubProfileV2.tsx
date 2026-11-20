@@ -120,11 +120,11 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
   const name = profile.full_name?.trim() || t('club.profile.nameFallback')
   const men = profile.mens_league_division?.trim() || null
   const women = profile.womens_league_division?.trim() || null
-  const leagueLine = [women ? t('club.profile.womensLeague', { league: women }) : null, men ? t('club.profile.mensLeague', { league: men }) : null].filter(Boolean).join(' · ') || null
+  const leagueLine = [women ? t('club.profile.womensLeague', { league: women }) : null, men ? t('club.profile.mensLeague', { league: men }) : null].filter(Boolean).join(', ') || null
   const flag = countries.find((c) => c.id === profile.nationality_country_id)?.flag_emoji ?? null
   const base = placeText(profile.base_location?.trim()) || null
   const founded = profile.year_founded ?? null
-  const placeLine = [base ? [flag, base].filter(Boolean).join(' ') : null, founded ? t('club.profile.founded', { year: founded }) : null].filter(Boolean).join(' · ') || null
+  const placeLine = [base ? [flag, base].filter(Boolean).join(' ') : null, founded ? t('club.profile.founded', { year: founded }) : null].filter(Boolean).join(', ') || null
   const openRoles = data.openRoles
   const recruiting = openRoles.length > 0
   const coverPhotos = useMemo(() => data.photos.map((p) => p.url).filter(Boolean).slice(0, 4), [data.photos])
@@ -203,7 +203,7 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
           : true
   )).map((a) => ({ id: a.id, label: t(a.label) }))
   const friendsHere = atClub.people.length
-  const socialText = [friendsHereLabel(friendsHere), data.memberCount > 0 ? t('club.profile.memberCount', { count: data.memberCount }) : null].filter(Boolean).join(' · ')
+  const socialText = [friendsHereLabel(friendsHere), data.memberCount > 0 ? t('club.profile.memberCount', { count: data.memberCount }) : null].filter(Boolean).join(', ')
   const pending = health.totals.pending
   // One primary per screen: applicants to review own it, else the next step does.
   const toReview = recruiting && pending > 0

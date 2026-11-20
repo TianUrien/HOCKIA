@@ -152,7 +152,7 @@ describe('Opportunities tab', () => {
     await waitFor(() => expect(screen.getByText('Midfield Maestro')).toBeInTheDocument())
     // Status badge contains "Published" text alongside CheckCircle icon
     expect(screen.getAllByText('Published').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText("Player · Men's · Midfielder")).toBeInTheDocument()
+    expect(screen.getByText("Player, Men's, Midfielder")).toBeInTheDocument()
     expect(screen.getByText('4 applicants')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /4 applicants/i }))

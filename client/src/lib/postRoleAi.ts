@@ -66,7 +66,7 @@ export interface SummarySection {
   neededMissing: string[]
 }
 
-const join = (xs: (string | null | undefined | false)[]) => xs.filter(Boolean).join(' · ')
+const join = (xs: (string | null | undefined | false)[]) => xs.filter(Boolean).join(', ')
 
 /** The four parts of "Check your role", each with an Edit. */
 export function checkSummary(d: PostRoleDraft, opts: { fromClub: boolean }): SummarySection[] {

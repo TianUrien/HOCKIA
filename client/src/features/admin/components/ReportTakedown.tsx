@@ -77,8 +77,8 @@ export function ContentPreviewLine({ preview, contentType }: { preview: ContentP
         {removed ? (
           <>
             {contentNoun(contentType).replace(/^./, (c) => c.toUpperCase())} removed by admin
-            {preview.removed_by_name ? ` · ${preview.removed_by_name}` : ''}
-            {preview.removed_at ? ` · ${formatAdminDateTime(preview.removed_at)}` : ''}
+            {preview.removed_by_name ? `, ${preview.removed_by_name}` : ''}
+            {preview.removed_at ? <>{' '}<span className="text-gray-500">{formatAdminDateTime(preview.removed_at)}</span></> : null}
           </>
         ) : (
           <>

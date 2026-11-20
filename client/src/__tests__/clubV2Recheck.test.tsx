@@ -112,9 +112,9 @@ const ctx = (p: Partial<ContextLike>): ContextLike => ({ id: 'c', type: 'custom'
 describe('saved context names', () => {
   it('a saved context shows its name; unnamed ones and role contexts keep Position · Team', () => {
     expect(contextPillLabel(ctx({ label: '[QA] Scout R8' }))).toBe('[QA] Scout R8')
-    expect(contextPillLabel(ctx({ label: '  ' }))).toBe('Midfielder · Men\'s')
-    expect(contextPillLabel(ctx({ label: null }))).toBe('Midfielder · Men\'s')
-    expect(contextPillLabel(ctx({ type: 'opportunity', opportunity_id: 'r', label: '[QA] Midfielder R8' }))).toBe('Midfielder · Men\'s')
+    expect(contextPillLabel(ctx({ label: '  ' }))).toBe('Midfielder, Men\'s')
+    expect(contextPillLabel(ctx({ label: null }))).toBe('Midfielder, Men\'s')
+    expect(contextPillLabel(ctx({ type: 'opportunity', opportunity_id: 'r', label: '[QA] Midfielder R8' }))).toBe('Midfielder, Men\'s')
   })
   it('the Recruiting for sheet lists the saved context by its name', () => {
     render(<RankedForSheet open contexts={[ctx({ id: 's1', label: '[QA] Scout R8' })]} activeId="s1" roles={new Map()} onPick={() => {}} onClose={() => {}} />)
@@ -175,7 +175,7 @@ describe('closed roles', () => {
   it('the chat card: a pending application on a closed role reads "Opportunity closed", never a countdown', () => {
     const base = { id: 'a', opportunityId: 'o', status: 'pending', appliedAt: '2026-09-27T14:50:42Z', updatedAt: null, roleTitle: 'Midfielder R5', rolePosition: 'midfielder' }
     const now = new Date('2026-09-30T12:00:00Z')
-    expect(applicationCardDetail({ ...base, roleStatus: 'closed' }, 14, now)).toEqual({ text: '27 Sep · Opportunity closed', urgent: false })
+    expect(applicationCardDetail({ ...base, roleStatus: 'closed' }, 14, now)).toEqual({ text: '27 Sep, Opportunity closed', urgent: false })
     expect(applicationCardDetail({ ...base, roleStatus: 'open' }, 14, now).text).toMatch(/days? left to reply/)
     // The chat picks a pending application on an open role first.
     const picked = pickApplication([{ ...base, id: 'closed', roleStatus: 'closed', appliedAt: '2026-09-01T00:00:00Z' }, { ...base, id: 'open', roleStatus: 'open' }])
@@ -210,10 +210,10 @@ describe('contact email copy', () => {
   it('one label, one help line, one subtitle rule', () => {
     expect(CONTACT_EMAIL_SWITCH_LABEL).toBe('Show on your profile')
     expect(CONTACT_EMAIL_SWITCH_HELP).toBe('Off: players message you on Hockia.')
-    expect(contactEmailSubtitle('a@b.co', false)).toBe('Private · a@b.co')
-    expect(contactEmailSubtitle('a@b.co', true)).toBe('Shown on your profile · a@b.co')
-    expect(contactRowValue('a@b.co', false)).toBe('Private · a@b.co')
-    expect(contactRowValue('a@b.co', true)).toBe('Shown on your profile · a@b.co')
+    expect(contactEmailSubtitle('a@b.co', false)).toBe('Private: a@b.co')
+    expect(contactEmailSubtitle('a@b.co', true)).toBe('Shown on your profile: a@b.co')
+    expect(contactRowValue('a@b.co', false)).toBe('Private: a@b.co')
+    expect(contactRowValue('a@b.co', true)).toBe('Shown on your profile: a@b.co')
     expect(contactRowValue('', true)).toBeNull()
   })
 })
@@ -230,7 +230,7 @@ describe('coach specialties', () => {
   })
   it('Inbox rows and Squad lines use it', () => {
     expect(roleDetailOf({ id: 'x', role: 'coach', position: null, coach_specialization: 'head_coach', coach_specialization_custom: null, mens_league_division: null, womens_league_division: null, umpire_level: null })).toBe('Head coach')
-    expect(squadRoleLine({ role: 'coach', position: null, secondary_position: null, coach_specialization: 'goalkeeper_coach', coach_specialization_custom: null })).toBe('Coach · Goalkeeper coach')
+    expect(squadRoleLine({ role: 'coach', position: null, secondary_position: null, coach_specialization: 'goalkeeper_coach', coach_specialization_custom: null })).toBe('Coach, Goalkeeper coach')
   })
 })
 

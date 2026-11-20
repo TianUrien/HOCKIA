@@ -45,7 +45,7 @@ function LinkTile({ title, href, date, locked }: { title: string; href: string; 
       <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
       {locked && <VideoLockBadge />}
       <span className="truncate text-caption font-semibold text-white">{title}</span>
-      <span className="truncate text-[11px] text-white/75">{[date ? date.slice(0, 7) : null, videoLinkSite(href)].filter(Boolean).join(' · ')}</span>
+      <span className="truncate text-[11px] text-white/75">{[date ? date.slice(0, 7) : null, videoLinkSite(href)].filter(Boolean).join(', ')}</span>
     </a>
   )
 }
@@ -110,7 +110,7 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
       <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
         <DetailNavBar
           parent={own ? t('videosScreen.parent') : firstName ?? t('videosScreen.parent')}
-          title={loading ? t('videosScreen.title') : t('videosScreen.titleCount', { total })}
+          title={loading ? t('videosScreen.title') : t('videosScreen.titleCount', { count: total, total })}
           showParent
           onBack={onBack}
           trailing={own && onManage ? <button type="button" onClick={onManage} className="h-11 px-3 text-row font-semibold text-hockia-primary">{t('videosScreen.manage')}</button> : undefined}
@@ -164,7 +164,7 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
           onClose={() => setPlaying(null)}
           videoLabel={kindLabel(playing.kind)}
           isOwner={own}
-          caption={[playing.title, formatVideoDuration(playing.durationSeconds)].filter(Boolean).join(' · ')}
+          caption={[playing.title, formatVideoDuration(playing.durationSeconds)].filter(Boolean).join(', ')}
           author={{ id: profile.id, name: profile.full_name ?? null, avatarUrl: avatar, role: profile.role ?? null, profilePath: own ? null : profilePath(profile.role, profile.username, profile.id) }}
         />
       )}

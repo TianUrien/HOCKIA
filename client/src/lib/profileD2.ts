@@ -53,7 +53,7 @@ export function appliedLine(application: AppliedLineInput, now = new Date()): st
   } else {
     tail = STATUS_LINE[application.status]?.() ?? null
   }
-  return [day, tail].filter(Boolean).join(' · ')
+  return [day, tail].filter(Boolean).join(', ')
 }
 
 export type LeagueSide = 'mens_league_id' | 'womens_league_id'

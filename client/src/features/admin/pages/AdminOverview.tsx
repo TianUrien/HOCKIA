@@ -195,7 +195,7 @@ export function AdminOverview() {
           value={ccStats?.total_users ?? 0}
           change={userChange}
           changePct={userChangePct}
-          subtitle={`DAU ${ccStats?.dau ?? 0} (yesterday) · WAU ${ccStats?.wau ?? 0} · MAU ${ccStats?.mau ?? 0}`}
+          subtitle={`DAU ${ccStats?.dau ?? 0} (yesterday), WAU ${ccStats?.wau ?? 0}, MAU ${ccStats?.mau ?? 0}`}
           loading={ccLoading}
         />
         <CommandCenterKPICard
@@ -212,7 +212,7 @@ export function AdminOverview() {
           changePct={appsChangePct}
           subtitle={ccStats?.application_conversion === null || ccStats?.application_conversion === undefined
             ? 'view-to-apply: no opportunity views yet'
-            : `${ccStats.application_conversion}% of viewers applied (${ccStats.applied_pairs} of ${ccStats.view_pairs} member·role pairs)`}
+            : `${ccStats.application_conversion}% of viewers applied (${ccStats.applied_pairs} of ${ccStats.view_pairs} pairs of member and role)`}
           loading={ccLoading}
         />
         <div className="relative">

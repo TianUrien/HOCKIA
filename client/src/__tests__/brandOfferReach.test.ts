@@ -17,8 +17,8 @@ describe('where an offer reaches', () => {
   })
 
   it('list rows and the offer page name the place', () => {
-    expect(audienceLine([], ['player'], { everywhere: true })).toBe('Everywhere · Players')
-    expect(audienceLine(['Argentina'], ['player', 'coach'], { regions: ['Europe'] })).toBe('Europe, Argentina · Players, coaches')
+    expect(audienceLine([], ['player'], { everywhere: true })).toBe('Everywhere. Players')
+    expect(audienceLine(['Argentina'], ['player', 'coach'], { regions: ['Europe'] })).toBe('Europe, Argentina. Players, coaches')
     expect(offerForLine(['player'], [], { everywhere: true })).toBe('Players everywhere')
     expect(offerForLine(['player'], ['United Kingdom'], { regions: ['Oceania'] })).toBe('Players who live in Oceania or the United Kingdom')
   })

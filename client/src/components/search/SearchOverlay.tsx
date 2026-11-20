@@ -23,7 +23,6 @@ import type { SearchResult, SearchPostResult, SearchPersonResult, SearchClubResu
 import { countryLabel, placeText } from '@/i18n/countryNames'
 
 /** Separator between facts; punctuation, not copy. */
-const DOT = '·'
 
 type TabType = 'all' | 'posts' | 'people' | 'clubs' | 'opportunities'
 
@@ -40,7 +39,7 @@ function CompactPersonRow({ result, onSelect }: { result: SearchPersonResult; on
   const t = useWorldT()
   const subtitle = [result.position, placeText(result.base_location), result.current_club]
     .filter(Boolean)
-    .join(' · ')
+    .join(', ')
 
   return (
     <button
@@ -157,11 +156,11 @@ function CompactOpportunityRow({ result, onSelect }: { result: SearchOpportunity
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 truncate">{result.title}</p>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 truncate">{result.club_name}</span>
           {location && (
             <>
-              <span className="text-xs text-gray-500">{DOT}</span>
+              {' '}
               <span className="text-xs text-gray-400 truncate flex items-center gap-0.5">
                 <MapPin className="w-3 h-3" />
                 {location}

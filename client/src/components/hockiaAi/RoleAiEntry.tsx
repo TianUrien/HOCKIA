@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { BetaPill } from './BetaPill'
 import { ChevronRight } from 'lucide-react'
 import type { Vacancy } from '@/lib/supabase'
@@ -22,7 +23,7 @@ export function RoleAiEntry({ vacancy, clubName, clubLogo, className }: { vacanc
   if (role !== 'player' && role !== 'coach') return null
   const position = positionLabel(vacancy.position)
   const city = vacancy.location_city?.trim() || null
-  const label = [position ?? vacancy.title, clubName].filter(Boolean).join(' · ')
+  const label = [position ?? vacancy.title, clubName].filter(Boolean).join(', ')
   const canApply = !applyRoleMismatch(vacancy.opportunity_type, role)
   return (
       <button
@@ -34,7 +35,11 @@ export function RoleAiEntry({ vacancy, clubName, clubLogo, className }: { vacanc
         <MascotAvatar size={36} />
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-5 text-ink-1">{t('roleEntry.title')} <BetaPill onSoft testId="role-ask-ai-beta" /></span>
-          <span className="block truncate text-caption text-ink-2">{[checkProfileAgainstRole(), canApply ? t('roleEntry.prepare') : null, city ? t('roleEntry.lifeIn', { city }) : null].filter(Boolean).join(' · ')}</span>
+          <span className="block truncate text-caption text-ink-2">
+            {[checkProfileAgainstRole(), canApply ? t('roleEntry.prepare') : null, city ? t('roleEntry.lifeIn', { city }) : null].filter(Boolean).map((action, i) => (
+              <Fragment key={i}>{i > 0 ? ' ' : null}<span className={i > 0 ? 'ml-2' : undefined}>{action}</span></Fragment>
+            ))}
+          </span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-brand-primary" strokeWidth={2} />
       </button>

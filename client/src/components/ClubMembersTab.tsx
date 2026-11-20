@@ -33,7 +33,7 @@ function buildMeta(member: ClubMember): string {
   const position = positionLabel(member.position)
   if (position) parts.push(position)
   if (member.base_location) parts.push(member.base_location)
-  return parts.join(' · ')
+  return parts.join(', ')
 }
 
 export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembersTabProps) {

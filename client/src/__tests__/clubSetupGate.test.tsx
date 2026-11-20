@@ -87,7 +87,7 @@ describe('LinkClubScreen onboarding mode', () => {
     const onSkip = vi.fn()
     const profile = { id: 'u1', role: 'club', full_name: '', nationality_country_id: null } as never
     const { unmount } = render(<LinkClubScreen profile={profile} mode="onboarding" onCancel={onCancel} onLinked={vi.fn()} onSkip={onSkip} />)
-    expect(screen.getByText(/^Step 2 of 2 · Linking puts your league/)).toBeTruthy()
+    expect(screen.getByText(/^Step 2 of 2\. Linking puts your league/)).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Back to About your club' }))
     expect(onCancel).toHaveBeenCalled()

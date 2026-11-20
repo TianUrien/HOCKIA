@@ -48,7 +48,10 @@ export function BulkDeclineSheet({ open, roleTitle, firstNames, names, onCancel,
       <div className="flex flex-col gap-4 px-5 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-1" data-testid="bulk-decline-sheet">
         <div>
           <h2 className="text-[22px] font-bold leading-[27px] tracking-[-0.13px] text-ink-1">{label}</h2>
-          <p className="mt-1 text-secondary text-ink-2">{[namesLine(names), roleTitle].filter(Boolean).join(' · ')}</p>
+          <p className="mt-1 text-secondary text-ink-2">
+            {namesLine(names)}
+            {roleTitle && <>{' '}<span className="ml-2 text-ink-3">{roleTitle}</span></>}
+          </p>
         </div>
         <p className="text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">{t('bulkDeclineSheet.reasonHeading')}</p>
         <div className="-mt-1.5 flex flex-wrap gap-2" role="radiogroup" aria-label={t('bulkDeclineSheet.reasonLabel')}>

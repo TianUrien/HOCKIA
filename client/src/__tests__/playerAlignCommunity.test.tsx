@@ -53,9 +53,9 @@ describe('status pill and club line', () => {
   })
   it('club second line = league on Hockia, else location', () => {
     const { rerender } = render(<RecruiterCandidateCard member={{ ...club, current_world_club_id: 'wc-lazio' }} onPreview={() => {}} />)
-    expect(screen.getByText('Club · Serie A Elite')).toBeInTheDocument()
+    expect(screen.getByText('Club, Serie A Elite')).toBeInTheDocument()
     rerender(<RecruiterCandidateCard member={{ ...club, year_founded: 1990 }} onPreview={() => {}} />)
-    expect(screen.getByText('Club · Rome, Italy')).toBeInTheDocument()
+    expect(screen.getByText('Club, Rome, Italy')).toBeInTheDocument()
   })
 })
 

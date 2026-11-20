@@ -114,7 +114,7 @@ function ageFromDob(dob: string | null | undefined, now = new Date()): number | 
 /** Every nationality, named ("🇦🇷 Argentina · 🇮🇹 Italy"), + EU when either passport is EU. */
 function passportText(passports: Country[]): string | null {
   if (passports.length === 0) return null
-  const names = passports.map((c) => [c.flag_emoji, countryLabel(c.common_name || c.name)].filter(Boolean).join(' ')).join(' · ')
+  const names = passports.map((c) => [c.flag_emoji, countryLabel(c.common_name || c.name)].filter(Boolean).join(' ')).join(', ')
   return passports.some((c) => isEuCountryCode(c.code)) ? tCommunity('fullPreview.passportWithEu', { names }) : names
 }
 
@@ -292,7 +292,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       default: return [tEnums('role.brand'), brandCategoryLabel(member.brand_category)]
     }
   })()
-  const subLine = [...subParts, place || null].filter(Boolean).join(' · ')
+  const subLine = [...subParts, place || null].filter(Boolean).join(', ')
   const title = isPerson && typeof age === 'number' ? t('fullPreview.nameWithAge', { name, age }) : name
 
   // ── Key facts (three per role; a missing value drops its tile)
@@ -336,7 +336,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
     if (friendship.isFriend) {
       const since = friendsSinceLabel(friendship.relationship?.accepted_at ?? null)
       const common = inCommon.count > 0 ? t('fullPreview.inCommonShort', { count: inCommon.count }) : null
-      return [since, common].filter(Boolean).join(' · ') || null
+      return [since, common].filter(Boolean).join(', ') || null
     }
     return inCommonCountLabel(inCommon.count)
   })()
@@ -537,7 +537,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
       idLine: (() => {
           if (!isPerson) return subLine
           const club = member.current_club?.trim() || null
-          return [...subParts, club].filter(Boolean).join(' · ')
+          return [...subParts, club].filter(Boolean).join(', ')
         })(),
       facts: facts,
       playsAt: (() => {
@@ -545,7 +545,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
           const club = member.current_club?.trim() || null
           if (!club) return null
           const team = member.role === 'player' ? teamLabel(member.playing_category) : coachTeam
-          return { label: member.role === 'coach' ? t('fullPreview.facts.coachesAt') : t('fullPreview.facts.playsAt'), value: [club, team].filter(Boolean).join(' · '), detail: getPlayerLeagueName(member.current_world_club_id, null) }
+          return { label: member.role === 'coach' ? t('fullPreview.facts.coachesAt') : t('fullPreview.facts.playsAt'), value: [club, team].filter(Boolean).join(', '), detail: getPlayerLeagueName(member.current_world_club_id, null) }
         })(),
       references: isPerson ? member.accepted_reference_count ?? 0 : 0,
       hasHighlights: isPerson && Boolean(member.highlight_video_url),
@@ -1243,7 +1243,7 @@ function ImmersivePage(p: ImmersivePageProps) {
   }, [p, p.details])
 
   const avatar = p.member.avatar_url ? getImageUrl(p.member.avatar_url, 'avatar-md') ?? p.member.avatar_url : null
-  const nationalityNames = p.nationalities.map((c) => [c.flag, c.name].filter(Boolean).join(' ')).join(' · ')
+  const nationalityNames = p.nationalities.map((c) => [c.flag, c.name].filter(Boolean).join(' ')).join(', ')
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-surface-inverse" data-member-id={p.member.id} data-testid="member-vdeck-page">
@@ -1452,7 +1452,7 @@ function DetailTile({ label, value, detail = null }: { label: string; value: str
 function DesktopPage(p: ImmersivePageProps) {
   const t = useCommunityT()
   const [whyOpen, setWhyOpen] = useState(false)
-  const nationalityNames = p.nationalities.map((c) => [c.flag, c.name].filter(Boolean).join(' ')).join(' · ')
+  const nationalityNames = p.nationalities.map((c) => [c.flag, c.name].filter(Boolean).join(' ')).join(', ')
   return (
     <div className="flex h-full w-full overflow-hidden bg-white" data-member-id={p.member.id} data-testid="member-desktop-page">
       {/* Photo column */}

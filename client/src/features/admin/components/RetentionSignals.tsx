@@ -105,7 +105,7 @@ export function RetentionCard({
         <>
           <p className="text-lg font-bold text-gray-400">N/A</p>
           <p className="text-[11px] text-gray-500 mt-0.5">
-            Not enough eligible data{checkpoint.cohort_size > 0 ? ` · ${checkpoint.cohort_size} still maturing` : ''}
+            Not enough eligible data{checkpoint.cohort_size > 0 ? `, ${checkpoint.cohort_size} still maturing` : ''}
           </p>
         </>
       ) : (
@@ -170,9 +170,9 @@ export function RetentionSignals({ periodDays = 90 }: { periodDays?: number }) {
         <div>
           <h3 className="text-sm font-semibold text-gray-900">Retention: do members come back?</h3>
           <p className="text-xs text-gray-500">
-            Signups in the last {periodDays} days ·{' '}
-            {summary ? RETENTION_METHOD_LABEL[summary.method] : 'returned that week (days N–N+6)'} ·{' '}
-            {summary ? RETENTION_ACTIVITY_LABEL[summary.activity].toLowerCase() : 'any active return'} · UTC
+            Signups in the last {periodDays} days,{' '}
+            {summary ? RETENTION_METHOD_LABEL[summary.method] : 'returned that week (days N–N+6)'},{' '}
+            {summary ? RETENTION_ACTIVITY_LABEL[summary.activity].toLowerCase() : 'any active return'}, UTC
           </p>
         </div>
         <Link

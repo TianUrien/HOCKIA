@@ -69,9 +69,9 @@ export function Ga4TopFunnel() {
       {/* Header + filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-gray-700">Acquisition Funnel · Anonymous (GA4)</h3>
+          <h3 className="text-sm font-semibold text-gray-700">Acquisition Funnel: Anonymous (GA4)</h3>
           <p className="text-xs text-gray-500 mt-0.5">
-            GA4 estimate · web + consented · bot-filtered by GA · lags 24–48h
+            GA4 estimate, web + consented, bot-filtered by GA, lags 24–48h
           </p>
         </div>
         <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden self-start">
@@ -164,7 +164,7 @@ export function Ga4TopFunnel() {
                     <p className="text-xs text-gray-400 pl-6">
                       {stepConversion}% from {parent.label}
                       {stepConversion < 100 && (
-                        <span className="text-gray-500"> &middot; {100 - stepConversion}% drop-off</span>
+                        <span className="text-gray-500">, {100 - stepConversion}% drop-off</span>
                       )}
                     </p>
                   )}

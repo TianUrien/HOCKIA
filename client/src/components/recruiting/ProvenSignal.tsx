@@ -34,7 +34,7 @@ export default function ProvenSignal({ result, variant = 'full', className = '' 
   const t = useRecruitingT()
   if (!result.isApplicable) return null
   const tier = evidenceLevelLabel(result.level)
-  const tooltip = result.reasons.length > 0 ? t('provenSignal.tooltip', { tier, reasons: result.reasons.join(' · ') }) : tier
+  const tooltip = result.reasons.length > 0 ? t('provenSignal.tooltip', { tier, reasons: result.reasons.join('. ') }) : tier
 
   return (
     <div className={['flex flex-col gap-1', className].join(' ')}>

@@ -5,7 +5,6 @@ import { useWorldT } from '@/i18n/ns/world'
 import { useEnumsT } from '@/i18n/ns/enums'
 
 /** Separator between facts; punctuation, not copy. */
-const DOT = '·'
 
 interface SearchBrandResultProps {
   result: SearchBrandResultType
@@ -39,15 +38,13 @@ export function SearchBrandResult({ result }: SearchBrandResultProps) {
               <BadgeCheck className="w-4 h-4 text-positive flex-shrink-0" aria-label={t('searchResults.verifiedBrand')} />
             )}
           </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="flex items-center gap-2 mt-0.5">
             {result.brand_category && (
               <span className="text-xs text-gray-500">
                 {isCategory(result.brand_category) ? tEnums(`brandCategory.${result.brand_category}`) : result.brand_category}
               </span>
             )}
-            {result.brand_bio && result.brand_category && (
-              <span className="text-xs text-gray-500">{DOT}</span>
-            )}
+            {result.brand_bio && result.brand_category ? ' ' : null}
             {result.brand_bio && (
               <span className="text-xs text-gray-400 truncate">
                 {result.brand_bio.length > 80 ? result.brand_bio.slice(0, 80) + '...' : result.brand_bio}

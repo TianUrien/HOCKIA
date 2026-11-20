@@ -145,7 +145,7 @@ export function AdminSpamSignals() {
           return <span className="text-gray-700" data-testid={`notice-sent-${row.id}`}>Sent to {people(justSent)}</span>
         }
         if (row.notice_sent_at) {
-          return <span className="text-gray-500">Sent to {people(row.notice_count ?? 0)} · {formatAdminDate(row.notice_sent_at)}</span>
+          return <span className="text-gray-500">Sent to {people(row.notice_count ?? 0)} on {formatAdminDate(row.notice_sent_at)}</span>
         }
         return <span className="text-gray-400">Not sent</span>
       },

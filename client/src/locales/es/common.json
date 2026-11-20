@@ -264,7 +264,7 @@
     "backTo": "Volver a {{parent}}"
   },
   "segmented": {
-    "withCount": "{{label}} · {{count}}",
+    "withCount": "{{label}} ({{count}})",
     "newLabel": "{{label}}, nuevo"
   },
   "shortcuts": {
@@ -372,7 +372,7 @@
     "sent": "Postulación enviada a {{club}}",
     "title": "Preparación para {{where}}",
     "body": "Lo que suele resolverse antes de mudarse. Solo si te sirve.",
-    "offerSuffix": " · Oferta para integrantes",
+    "offerSuffix": "Oferta para integrantes",
     "seeAll": "Ver todo para {{where}}",
     "notNow": "Ahora no"
   }

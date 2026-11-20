@@ -81,8 +81,8 @@ export default function ApplyToVacancyModal({
   const displayClub = clubName?.trim() || vacancy.organization_name?.trim() || t('apply.clubFallback')
   const identity = identityProp ?? roleIdentity({ publisherRole, publisherName: displayClub, publisherAvatar: clubLogo ?? null })
   const pill = vacancy.opportunity_type === 'player' ? genderPill(vacancy.gender) : null
-  const roleLine = [roleTitle(vacancy), pill?.label].filter(Boolean).join(' · ')
-  const subtitle = [applySubline(identity), league].filter(Boolean).join(' · ')
+  const roleLine = [roleTitle(vacancy), pill?.label].filter(Boolean).join(', ')
+  const subtitle = [applySubline(identity), league].filter(Boolean).join(', ')
   const [sending, setSending] = useState<'idle' | 'sending' | 'done'>('idle')
   const noteLabel = t('apply.noteOptional', { heading: noteHeading(identity) })
 
@@ -124,7 +124,7 @@ export default function ApplyToVacancyModal({
     const from = profile?.available_from ? new Date(profile.available_from) : null
     const when = from && !Number.isNaN(from.getTime()) ? format(from, 'MMM yyyy', { locale: getDateFnsLocale() }) : null
     const duration = profile?.availability_duration ? durationLabel(profile.availability_duration) : null
-    return [when ?? t('apply.availableNow'), duration].filter(Boolean).join(' · ')
+    return [when ?? t('apply.availableNow'), duration].filter(Boolean).join(', ')
   })()
   const contactText = profile?.contact_email_masked || (profile?.contact_email ? `${profile.contact_email.slice(0, 3)}…` : t('apply.contactLater'))
 
@@ -236,7 +236,7 @@ export default function ApplyToVacancyModal({
   if (isDesktop) {
     const age = calculateAge(profile?.date_of_birth)
     const flags = passports.map((c) => c.flag_emoji).filter(Boolean).join(' ')
-    const profileLine = [positionLabel(profile?.position), genderPill(profile?.gender)?.label, flags, profile?.base_location?.split(',')[0]?.trim()].filter(Boolean).join(' · ')
+    const profileLine = [positionLabel(profile?.position), genderPill(profile?.gender)?.label, flags, profile?.base_location?.split(',')[0]?.trim()].filter(Boolean).join(', ')
     const hasVideo = Boolean(profile?.highlight_video_url)
     const seer = identity.postedBy?.firstName ?? null
     return (

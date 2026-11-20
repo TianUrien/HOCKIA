@@ -44,7 +44,7 @@ export function SuggestionCard({ suggestion: s, rank, flags, reasons, shortliste
         <EntityAvatar src={avatar} name={s.full_name} role="player" size={48} className="shrink-0" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{name}</span>
-          <span className="block truncate text-[14px] leading-[19px] text-ink-2">{[roleLine, flags].filter(Boolean).join(' · ')}</span>
+          <span className="block truncate text-[14px] leading-[19px] text-ink-2">{[roleLine, flags].filter(Boolean).join(', ')}</span>
           {(s.fit_state === 'green' || s.fit_state === 'yellow') && (
             <span className="block pt-1"><FitBadge state={s.fit_state} /></span>
           )}

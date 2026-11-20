@@ -162,7 +162,7 @@ export function InboxRequests({
                   to={to}
                   avatar={<EntityAvatar src={person?.avatar_url} name={name} role={person?.role} size={52} />}
                   name={name}
-                  meta={t('requests.sentMeta', { identity: identityLine(person?.role, person?.position), age: formatActivityAge(request.createdAt) })}
+                  meta={<>{identityLine(person?.role, person?.position)}{' '}<span className="ml-2 text-ink-3">{t('requests.sentMeta', { age: formatActivityAge(request.createdAt) })}</span></>}
                   trailing={<span className="shrink-0 text-secondary text-ink-3" data-testid="request-waiting">{t('requests.waiting')}</span>}
                 />
               )
@@ -236,7 +236,7 @@ function ClubInvitationRow({ invite, busy, respond }: {
       avatar={<EntityAvatar src={invite.club.avatarUrl} name={name} role="club" size={52} />}
       name={name}
       meta={t('requests.clubInviteMeta')}
-      detail={t('requests.clubInviteDetail', { age: formatActivityAge(invite.createdAt) })}
+      detail={<>{t('requests.clubInviteDetail')}{' '}<span className="ml-2">{formatActivityAge(invite.createdAt)}</span></>}
       trailing={
         <span className="flex shrink-0 items-center gap-2">
           <button

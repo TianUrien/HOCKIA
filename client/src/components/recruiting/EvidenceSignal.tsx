@@ -110,7 +110,7 @@ export default function EvidenceSignal({ result, checklist = [], className = '' 
             ? 'cursor-pointer hover:bg-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40'
             : '',
         ].join(' ')}
-        title={result.reasons.length > 0 ? t('evidenceSignal.tooltip', { tier, reasons: result.reasons.join(' · ') }) : tier}
+        title={result.reasons.length > 0 ? t('evidenceSignal.tooltip', { tier, reasons: result.reasons.join('. ') }) : tier}
         aria-label={
           expandable
             ? t('evidenceSignal.ariaExpandable', { tier })

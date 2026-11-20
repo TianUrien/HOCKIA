@@ -52,7 +52,7 @@ function buildContextLine(v: FullGameVideo): string | null {
   if (v.competition) parts.push(v.competition)
   const date = formatMatchDate(v.match_date)
   if (date) parts.push(date)
-  return parts.length > 0 ? parts.join(' · ') : null
+  return parts.length > 0 ? parts.join(', ') : null
 }
 
 /** The stored position value (English, from the form's list) in the interface language. */
@@ -72,7 +72,7 @@ function buildPlayerLine(v: FullGameVideo): string | null {
   if (v.position_played) parts.push(tMedia('fullGames.row.position', { position: positionLabel(v.position_played) }))
   if (v.shirt_number !== null && v.shirt_number !== undefined) parts.push(tMedia('fullGames.row.shirt', { number: v.shirt_number }))
   if (v.minutes_played !== null && v.minutes_played !== undefined) parts.push(tMedia('fullGames.row.minutes', { count: v.minutes_played }))
-  return parts.length > 0 ? parts.join(' · ') : null
+  return parts.length > 0 ? parts.join(', ') : null
 }
 
 function buildOpponentLine(v: FullGameVideo): string | null {

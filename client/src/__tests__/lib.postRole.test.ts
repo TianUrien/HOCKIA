@@ -186,8 +186,8 @@ describe('Role posted (D1.26)', () => {
 // Founder review 2026-09-26: step 3 speaks for coaches on a coach role.
 describe('Post an opportunity · step 3 for coach roles', () => {
   it('headings name coaches on coach roles, players on player roles', () => {
-    expect(checkStepCopy('coach')).toEqual({ sub: 'Step 3 of 3 · How coaches will see it', checklistTitle: 'What coaches ask first' })
-    expect(checkStepCopy('player')).toEqual({ sub: 'Step 3 of 3 · How players will see it', checklistTitle: 'What players ask first' })
+    expect(checkStepCopy('coach')).toEqual({ sub: 'Step 3 of 3: How coaches will see it', checklistTitle: 'What coaches ask first' })
+    expect(checkStepCopy('player')).toEqual({ sub: 'Step 3 of 3: How players will see it', checklistTitle: 'What players ask first' })
   })
 
   it('ticks what coaches ask first from fields the form collects', () => {

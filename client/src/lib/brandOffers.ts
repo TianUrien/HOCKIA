@@ -163,7 +163,7 @@ export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contac
     (o.code_copies ?? 0) > 0 ? countPart('codeCopies', o.code_copies ?? 0) : null,
     countPart('contacted', o.contacted),
     (o.not_useful ?? 0) > 0 ? countPart('notUseful', o.not_useful ?? 0) : null,
-  ].filter(Boolean).join(' · ')
+  ].filter(Boolean).join(', ')
 }
 
 function countPart(key: 'shown' | 'opened' | 'storeVisits' | 'codeCopies' | 'contacted' | 'notUseful', n: number): string {
@@ -200,7 +200,7 @@ export function offerStatusLine(o: BrandOffer, now: Date = new Date()): string {
     case 'paused': return tBrands('offers.status.paused', { when: daysAgoWord(o.updated_at, now) })
     default: return tBrands('offers.status.ended', {
       date: shortDate(o.ended_at ?? o.updated_at),
-      counts: [countPart('shown', o.shown), countPart('storeVisits', o.store_visits ?? 0), countPart('contacted', o.contacted)].join(' · '),
+      counts: [countPart('shown', o.shown), countPart('storeVisits', o.store_visits ?? 0), countPart('contacted', o.contacted)].join(', '),
     })
   }
 }
@@ -300,7 +300,7 @@ export function audienceLine(countryNames: string[], roles: OfferRole[], place?:
   const who = roles.map((r) => OFFER_ROLES.find((x) => x.value === r)?.label ?? r)
   const whoText = who.length ? who[0] + (who.length > 1 ? ', ' + who.slice(1).map((w) => w.toLowerCase()).join(', ') : '') : ''
   const where = place?.everywhere ? tBrands('offers.everywhere') : [...(place?.regions ?? []).map(offerRegionLabel), ...countryNames].join(', ')
-  return [where, whoText].filter(Boolean).join(' · ')
+  return [where, whoText].filter(Boolean).join('. ')
 }
 
 /** The editor's reach line from get_brand_offer_reach (counts under 5 come back as null). */

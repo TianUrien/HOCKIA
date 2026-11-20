@@ -101,13 +101,13 @@
     "title": "Ajustes",
     "fallbackName": "Tu perfil",
     "signedInWith": "Sesión iniciada con {{provider}}",
-    "clubAdmin": "Club · admin",
-    "roleSignedIn": "{{role}} · sesión iniciada con {{provider}}",
+    "clubAdmin": "Admin del club",
+    "roleSignedIn": "{{role}}, sesión iniciada con {{provider}}",
     "providerEmail": "email",
     "signOut": "Cerrar sesión",
     "signingOut": "Cerrando sesión…",
     "deleteAccount": "Eliminar cuenta",
-    "madeFor": "Hockia · Hecho para el hockey sobre césped"
+    "madeFor": "Hockia. Hecho para el hockey sobre césped"
   },
   "club": {
     "label": "Club",
@@ -186,8 +186,8 @@
     "colPush": "Push",
     "colEmail": "Email",
     "tellMeFooter": "Por ahora, push y email van juntos: cada tipo tiene un solo ajuste. Los emails de mensajes y de visitas al perfil llegan agrupados en un resumen, nunca uno por evento.",
-    "pushSwitch": "{{title}} · push",
-    "emailSwitch": "{{title}} · email"
+    "pushSwitch": "{{title}}, push",
+    "emailSwitch": "{{title}}, email"
   },
   "kinds": {
     "messagesTitle": "Mensajes",
@@ -243,11 +243,11 @@
     "title": "¿Eliminar tu cuenta?",
     "body": "Esta acción es <strong>irreversible</strong>. Todos los datos de tu perfil, tus mensajes y tus archivos subidos se van a eliminar de forma permanente.",
     "loseAccess": "⚠️ Vas a perder el acceso a:",
-    "loseProfile": "• Tu perfil y toda tu información personal",
-    "loseMessages": "• Todos los mensajes y conversaciones",
-    "loseMedia": "• Todas las fotos y archivos subidos",
-    "loseApplications": "• Postulaciones y oportunidades",
-    "loseCareer": "• Trayectoria y registros",
+    "loseProfile": "Tu perfil y toda tu información personal",
+    "loseMessages": "Todos los mensajes y conversaciones",
+    "loseMedia": "Todas las fotos y archivos subidos",
+    "loseApplications": "Postulaciones y oportunidades",
+    "loseCareer": "Trayectoria y registros",
     "typeToConfirm": "Escribe <word>{{word}}</word> para confirmar:",
     "placeholder": "Escribe {{word}}",
     "cancel": "Cancelar",

@@ -277,7 +277,7 @@ export default function ClubHeroCard({
                   <span>{placeText(profile.base_location)}</span>
                 </span>
               )}
-              {profile.base_location && profile.year_founded && <MetaBullet />}
+              {profile.base_location && profile.year_founded && ' '}
               {profile.year_founded && (
                 <span className="inline-flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-gray-400" />
@@ -290,7 +290,7 @@ export default function ClubHeroCard({
               <MetaRow>
                 <span className="inline-flex items-center gap-1.5">
                   <Trophy className="w-4 h-4 text-gray-400" />
-                  <span>{leagues.join(' · ')}</span>
+                  <span>{leagues.join(', ')}</span>
                 </span>
               </MetaRow>
             )}
@@ -382,10 +382,6 @@ export default function ClubHeroCard({
 
 function MetaRow({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-wrap items-center gap-x-2 gap-y-1">{children}</div>
-}
-
-function MetaBullet() {
-  return <span className="text-gray-500" aria-hidden="true">·</span>
 }
 
 interface ChecklistRowProps {

@@ -153,7 +153,7 @@ export function ProfileViewersSection() {
                     {[
                       viewer.base_location,
                       viewer.view_count > 1 ? t('profileViewersSection.viewCount', { count: viewer.view_count }) : null,
-                    ].filter(Boolean).join(' · ')}
+                    ].filter(Boolean).join(', ')}
                   </p>
                 </div>
                 <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">

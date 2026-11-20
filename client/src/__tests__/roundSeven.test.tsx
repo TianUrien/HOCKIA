@@ -101,14 +101,14 @@ describe('2 · a withdrawn application is never described as unanswered', () => 
   })
   it('role card: "1 withdrawn" alone after a withdrawal; no-reply and withdrawn named separately', () => {
     expect(closedBreakdown({ noReply: 0, filled: 0, withdrawn: 1 }, 14)).toBe('1 withdrawn')
-    expect(closedBreakdown({ noReply: 2, filled: 0, withdrawn: 1 }, 14)).toBe('2 closed without a reply after 14 days · 1 withdrawn')
+    expect(closedBreakdown({ noReply: 2, filled: 0, withdrawn: 1 }, 14)).toBe('2 closed without a reply after 14 days, 1 withdrawn')
     expect(closedBreakdown({ noReply: 0, filled: 1, withdrawn: 0 }, 14)).toBe('1 closed when the opportunity was filled')
     expect(closedBreakdown({ noReply: 0, filled: 0, withdrawn: 0 }, 14)).toBeNull()
   })
   it('To review note: only real no-reply closes count as "closed on this opportunity"', () => {
     expect(toReviewClosedNote({ noReply: 0, withdrawn: 1 })).toBe('1 withdrawn')
     expect(toReviewClosedNote({ noReply: 1, withdrawn: 0 })).toBe('1 has closed without a reply on this opportunity so far')
-    expect(toReviewClosedNote({ noReply: 2, withdrawn: 1 })).toBe('2 have closed without a reply on this opportunity so far · 1 withdrawn')
+    expect(toReviewClosedNote({ noReply: 2, withdrawn: 1 })).toBe('2 have closed without a reply on this opportunity so far, 1 withdrawn')
     expect(toReviewClosedNote({ noReply: 0, withdrawn: 0 })).toBeNull()
     expect(src('components/club/ApplicantsScreen.tsx')).toContain('toReviewClosedNote(p)')
     expect(src('components/club/ClubOpportunitiesScreen.tsx')).toContain('closedBreakdown(p, expiryDays)')
@@ -289,7 +289,7 @@ describe('14 · dates outside the road read day first ("2 Oct")', () => {
     const applied = new Date(NOW); applied.setDate(applied.getDate() - 40)
     expect(appliedLine(applied.toISOString(), NOW)).toMatch(/^Applied \d{1,2} [A-Z][a-z]{2}$/)
     expect(appliedOnLine('2026-09-03T10:00:00')).toBe('Applied 3 Sep 2026')
-    expect(whenLine({ start_date: '2026-11-16T00:00:00', duration_text: '3' } as Pick<Vacancy, 'start_date' | 'duration_text'>, NOW)).toBe('16 Nov · 3 months')
+    expect(whenLine({ start_date: '2026-11-16T00:00:00', duration_text: '3' } as Pick<Vacancy, 'start_date' | 'duration_text'>, NOW)).toBe('16 Nov, 3 months')
   })
 })
 
@@ -327,7 +327,7 @@ describe('9 · the flag beside the entry comes from its own country before the l
       worldClub: { id: 'w1', club_name: 'E2E Test FC', avatar_url: null, flag: '🇦🇺' }, signedViaHockia: true,
     }
     render(<CareerRow entry={entry} last flag={null} locationFlag={flagForCountryName(countries, entry.locationCountry)} />)
-    expect(screen.getByText('🏴 Manchester · From Nov 2099')).toBeTruthy()
+    expect(screen.getByText('From Nov 2099').parentElement?.textContent).toBe('🏴 Manchester From Nov 2099')
     expect(screen.queryByText('Now')).toBeNull()
     expect(screen.getByText('Signed through Hockia')).toBeTruthy()
   })

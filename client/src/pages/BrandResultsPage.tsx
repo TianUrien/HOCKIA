@@ -155,8 +155,8 @@ function ResultsBody({ r, countryName, onGo }: { r: BrandResults; countryName: (
               <li key={c.profile_id} className="flex items-center gap-3">
                 <Avatar src={c.avatar_url} alt={c.full_name ?? ''} role={c.role} size="md" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-row font-semibold text-ink-1">{c.full_name ?? t('results.contacts.member')} · {roleLabelOne(c.role)}</p>
-                  <p className="truncate text-secondary text-ink-2">{c.offer_title ? t('results.contacts.fromOffer', { title: c.offer_title }) : t('results.contacts.fromAnOffer')} · {agoLine(c.at)}</p>
+                  <p className="truncate text-row font-semibold text-ink-1">{c.full_name ?? t('results.contacts.member')}{' '}<span className="ml-2 font-normal text-ink-2">{roleLabelOne(c.role)}</span></p>
+                  <p className="truncate text-secondary text-ink-2">{c.offer_title ? t('results.contacts.fromOffer', { title: c.offer_title }) : t('results.contacts.fromAnOffer')}{' '}<span className="ml-2 text-ink-3">{agoLine(c.at)}</span></p>
                 </div>
                 <button type="button" onClick={() => onGo(c.conversation_id ? `/messages?conversation=${c.conversation_id}` : '/messages')} className="h-9 shrink-0 rounded-full bg-brand-soft px-4 text-row font-semibold text-brand-primary">{t('results.contacts.message')}</button>
               </li>

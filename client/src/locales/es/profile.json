@@ -31,7 +31,7 @@
       "openToPlay": "Disponible para jugar"
     },
     "visitorTitle": {
-      "withSection": "{{name}} · {{section}}",
+      "withSection": "{{name}}, {{section}}",
       "media": "Multimedia",
       "videos": "Videos",
       "gallery": "Fotos",
@@ -215,7 +215,7 @@
       "opportunities": "Oportunidades"
     },
     "visitorTitle": {
-      "withSection": "{{name}} · {{section}}",
+      "withSection": "{{name}}, {{section}}",
       "media": "Multimedia",
       "journey": "Trayectoria",
       "references": "Referencias",
@@ -262,7 +262,7 @@
       "startConversation": "No se pudo iniciar la conversación. Intenta de nuevo."
     },
     "documentTitle": {
-      "named": "{{name}} · Árbitro/a | Hockia",
+      "named": "{{name}}, Árbitro/a | Hockia",
       "anonymous": "Árbitro/a | Hockia"
     },
     "tabs": {
@@ -330,9 +330,9 @@
     "count_one": "{{count}} conexión",
     "count_other": "{{count}} conexiones",
     "count_many": "{{count}} conexiones",
-    "countWithNames_one": "{{count}} conexión · {{names}}",
-    "countWithNames_other": "{{count}} conexiones · {{names}}",
-    "countWithNames_many": "{{count}} conexiones · {{names}}"
+    "countWithNames_one": "{{count}} conexión: {{names}}",
+    "countWithNames_other": "{{count}} conexiones: {{names}}",
+    "countWithNames_many": "{{count}} conexiones: {{names}}"
   },
   "useFriendship": {
     "toasts": {
@@ -363,7 +363,9 @@
     "memberFallback": "Integrante de Hockia",
     "accept": "Aceptar",
     "add": "Agregar",
-    "titleOwn": "Conexiones · {{total}}",
+    "titleOwn_one": "{{total}} conexión",
+    "titleOwn_many": "{{total}} conexiones",
+    "titleOwn_other": "{{total}} conexiones",
     "titleNamed": "Conexiones de {{firstName}}",
     "title": "Conexiones",
     "parent": "Perfil",
@@ -379,7 +381,7 @@
     "emptyPublic": "No hay conexiones para mostrar",
     "findPeople": "Buscar personas en Comunidad",
     "noMatch": "Nadie coincide con “{{query}}”.",
-    "inCommon": "En común · {{total}}",
+    "inCommon": "En común",
     "allFriends": "Todas las conexiones",
     "signInTitle": "Iniciar sesión para ver conexiones"
   },
@@ -764,7 +766,6 @@
     "photoPosition": "Foto {{index}} de {{count}}"
   },
   "profileSections": {
-    "commentsTitleCount": "Comentarios · {{count}}",
     "commentsTitle": "Comentarios",
     "commentsSeeAll": "Ver todo",
     "memberFallback": "Integrante",
@@ -778,7 +779,7 @@
     "previewSheet": "Ver como",
     "previewTitle": "Ver tu perfil como…",
     "cancel": "Cancelar",
-    "onlyYou": "Solo lo ves tú · Tu actividad",
+    "onlyYou": "Solo lo ves tú. Tu actividad",
     "applicantsToReview_one": "{{count}} postulación para revisar",
     "applicantsToReview_many": "{{count}} postulaciones para revisar",
     "applicantsToReview_other": "{{count}} postulaciones para revisar",
@@ -787,9 +788,9 @@
     "openRoles_one": "{{count}} oportunidad abierta",
     "openRoles_many": "{{count}} oportunidades abiertas",
     "openRoles_other": "{{count}} oportunidades abiertas",
-    "openRolesWithNames_one": "{{count}} oportunidad abierta · {{names}}",
-    "openRolesWithNames_many": "{{count}} oportunidades abiertas · {{names}}",
-    "openRolesWithNames_other": "{{count}} oportunidades abiertas · {{names}}",
+    "openRolesWithNames_one": "{{count}} oportunidad abierta: {{names}}",
+    "openRolesWithNames_many": "{{count}} oportunidades abiertas: {{names}}",
+    "openRolesWithNames_other": "{{count}} oportunidades abiertas: {{names}}",
     "postToReceive": "Publica una oportunidad para que deportistas puedan postularse",
     "reviewApplicants": "Revisar postulaciones",
     "postOpportunity": "+ Publicar una oportunidad",
@@ -822,9 +823,9 @@
     "friends_one": "{{count}} conexión",
     "friends_many": "{{count}} conexiones",
     "friends_other": "{{count}} conexiones",
-    "friendsInCommon_one": "{{count}} conexión · {{common}} en común",
-    "friendsInCommon_many": "{{count}} conexiones · {{common}} en común",
-    "friendsInCommon_other": "{{count}} conexiones · {{common}} en común",
+    "friendsInCommon_one": "{{count}} conexión, {{common}} en común",
+    "friendsInCommon_many": "{{count}} conexiones, {{common}} en común",
+    "friendsInCommon_other": "{{count}} conexiones, {{common}} en común",
     "action": {
       "friends": "Conexión",
       "requested": "Solicitud enviada",
@@ -855,7 +856,6 @@
       "detail": "Torneos y ligas"
     },
     "matches": {
-      "titleCount": "Partidos dirigidos · {{count}}",
       "title": "Partidos dirigidos",
       "add": "+ Agregar",
       "seeAll": "Ver todo",
@@ -869,8 +869,7 @@
       "ask": "Pedir una",
       "empty": "Todavía no hay referencias. Pueden escribirlas jugadores/as, entrenadores/as y clubes que estén entre tus conexiones en Hockia.",
       "memberFallback": "Integrante de Hockia",
-      "verified": "✓ Verificada en Hockia",
-      "verifiedOn": "✓ Verificada en Hockia · {{date}}"
+      "verified": "✓ Verificada en Hockia"
     },
     "posts": {
       "title": "Publicaciones y fotos",
@@ -897,6 +896,7 @@
       "posts": "Publicaciones",
       "about": "Información"
     },
+    "fitFor": "para {{role}}",
     "nameFallback": "Integrante de Hockia",
     "linkCopied": "Enlace copiado",
     "stats": {
@@ -917,9 +917,9 @@
     "friends_one": "{{count}} conexión",
     "friends_many": "{{count}} conexiones",
     "friends_other": "{{count}} conexiones",
-    "friendsInCommon_one": "{{count}} conexión · {{common}} en común",
-    "friendsInCommon_many": "{{count}} conexiones · {{common}} en común",
-    "friendsInCommon_other": "{{count}} conexiones · {{common}} en común",
+    "friendsInCommon_one": "{{count}} conexión, {{common}} en común",
+    "friendsInCommon_many": "{{count}} conexiones, {{common}} en común",
+    "friendsInCommon_other": "{{count}} conexiones, {{common}} en común",
     "action": {
       "friends": "Conexión",
       "requested": "Solicitud enviada",
@@ -961,7 +961,6 @@
       "reel": "Reel"
     },
     "roles": {
-      "titleCount": "Oportunidades abiertas · {{count}}",
       "title": "Oportunidades abiertas",
       "post": "+ Publicar una oportunidad",
       "seeAll": "Ver todo",
@@ -980,8 +979,7 @@
       "emptyCoach": "Todavía no hay referencias. Pueden escribirlas clubes, jugadores/as y entrenadores/as que sean conexiones en Hockia.",
       "emptyPlayer": "Todavía no hay referencias. Pueden escribirlas entrenadores/as e integrantes del equipo que sean conexiones en Hockia.",
       "memberFallback": "Integrante de Hockia",
-      "verified": "✓ Verificada en Hockia",
-      "verifiedOn": "✓ Verificada en Hockia · {{date}}"
+      "verified": "✓ Verificada en Hockia"
     },
     "career": {
       "title": "Trayectoria",
@@ -1008,7 +1006,7 @@
     "versus": "vs {{team}}",
     "fullMatch": "Partido completo",
     "memberFallback": "Integrante de Hockia",
-    "verifiedReference": "Verificada · escrita en Hockia",
+    "verifiedReference": "Verificada, escrita en Hockia",
     "representativeTeam": "selección",
     "videos": {
       "title": "Videos",
@@ -1063,7 +1061,7 @@
     }
   },
   "publicPlayerProfile": {
-    "documentTitle": "{{name}} • {{role}}",
+    "documentTitle": "{{name}}, {{role}}",
     "errors": {
       "invalidUrl": "La URL del perfil no es válida",
       "notFound": "No se encontró el perfil.",
@@ -1098,7 +1096,7 @@
   },
   "verifiedBadge": {
     "tooltip": "Verificado por Hockia",
-    "tooltipWithDate": "Verificado por Hockia · {{date}}",
+    "tooltipWithDate": "Verificado por Hockia, {{date}}",
     "ariaLabel": "Perfil verificado"
   },
   "pendingVerificationBadge": {
@@ -1118,8 +1116,8 @@
     "chartLabel": "Apariciones diarias en los últimos {{windowDays}} días"
   },
   "publicViewBanner": {
-    "clubView": "<strong>Vista de club</strong> · cómo te ven los clubes",
-    "publicView": "<strong>Vista pública</strong> · cómo te ven otras personas de Hockia",
+    "clubView": "<strong>Vista de club</strong>: cómo te ven los clubes",
+    "publicView": "<strong>Vista pública</strong>: cómo te ven otras personas de Hockia",
     "done": "Listo",
     "title": "Esta es la vista de tu perfil en la red.",
     "body": "Así ven tu perfil otras personas de Hockia.",
@@ -1258,7 +1256,7 @@
     "notGiven": "Sin datos",
     "notSet": "Sin completar",
     "selfReported": "autodeclarada",
-    "leagueSelfReported": "{{league}} · autodeclarada",
+    "leagueSelfReported": "{{league}}, autodeclarada",
     "leagueNotSet": "Liga sin completar",
     "leagueNotGiven": "Liga sin datos",
     "position": "Posición",
@@ -1289,7 +1287,7 @@
     "highlights_other": "{{count}} highlights",
     "coachFallback": "Entrenador/a",
     "anyCategory": "Cualquier categoría",
-    "currentRole": "{{role}} · rol actual",
+    "currentRole": "{{role}}, rol actual",
     "openToCoach": "Disponible para entrenar"
   },
   "keyFactsGrid": {
@@ -1310,9 +1308,9 @@
     "listed_one": "{{count}} en total",
     "listed_many": "{{count}} en total",
     "listed_other": "{{count}} en total",
-    "more_one": " · +{{count}} más",
-    "more_many": " · +{{count}} más",
-    "more_other": " · +{{count}} más",
+    "more_one": "+{{count}} más",
+    "more_many": "+{{count}} más",
+    "more_other": "+{{count}} más",
     "selections": "Selecciones",
     "references": "Referencias",
     "accepted_one": "1 aceptada",

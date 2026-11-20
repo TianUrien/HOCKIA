@@ -224,7 +224,7 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
                                 <button type="button" onClick={() => setEditing(null)} className="self-start text-secondary font-semibold text-brand-primary">{t('builder.done')}</button>
                               </div>
                             ) : (
-                              <Row onEdit={() => setEditing(c.key)} onRemove={() => removeCareer(c.key)} title={[c.club_name, c.city].filter(Boolean).join(' · ')} sub={[c.years, c.league].filter(Boolean).join(' · ')} tag={c.matched ? null : t('builder.checkClub')} />
+                              <Row onEdit={() => setEditing(c.key)} onRemove={() => removeCareer(c.key)} title={[c.club_name, c.city].filter(Boolean).join(', ')} sub={[c.years, c.league].filter(Boolean).join(', ')} tag={c.matched ? null : t('builder.checkClub')} />
                             )}
                           </div>
                         ))}
@@ -248,7 +248,7 @@ export function ProfileBuilder({ onClose }: { onClose: () => void }) {
                             </div>
                           ))}
                         </div>
-                        <p className="text-caption text-ink-2">{[draft.videos[0] && t('builder.videoLine', { title: draft.videos[0].title }), keptPhotos.length > 0 && t('builder.photosLine', { count: keptPhotos.length })].filter(Boolean).join(' · ')}</p>
+                        <p className="text-caption text-ink-2">{[draft.videos[0] && t('builder.videoLine', { title: draft.videos[0].title }), keptPhotos.length > 0 && t('builder.photosLine', { count: keptPhotos.length })].filter(Boolean).join(', ')}</p>
                         {draft.photos.some((x) => !x.ok) && <p className="text-caption text-ink-2" data-testid="builder-id-photo">{t('builder.idPhotos', { count: draft.photos.filter((x) => !x.ok).length })}</p>}
                       </Group>
                     )}

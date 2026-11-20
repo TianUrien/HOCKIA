@@ -40,7 +40,7 @@ export function roleTitle(v: { position: string | null; title: string; opportuni
 export function roleHeadline(v: { position: string | null; title: string | null; opportunity_type: string | null; gender?: string | null }): { title: string; detail: string | null } {
   const pos = v.position ? positionLabel(v.position) : null
   const team = genderPill(v.gender ?? null)?.label ?? null
-  const detail = [pos, team].filter(Boolean).join(' · ') || null
+  const detail = [pos, team].filter(Boolean).join(', ') || null
   const title = v.title?.trim() || detail || tOpportunities('role.fallbackTitle')
   return { title, detail }
 }
@@ -141,7 +141,7 @@ export function whenLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>, now =
   if (start) parts.push(start)
   const duration = formatDurationText(v.duration_text)
   if (duration) parts.push(duration)
-  return parts.length ? parts.join(' · ') : tOpportunities('dates.startsImmediately')
+  return parts.length ? parts.join(', ') : tOpportunities('dates.startsImmediately')
 }
 
 /** Detail header: "Starts 16 Sep 2026 · 3 months" (the header always carries the year). */
@@ -150,7 +150,7 @@ export function startsLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>): st
   const starts = v.start_date
     ? tOpportunities('dates.startsOn', { date: dayFirst(v.start_date, { year: 'always' }) ?? v.start_date })
     : tOpportunities('dates.startsImmediately')
-  return duration ? `${starts} · ${duration}` : starts
+  return duration ? `${starts}, ${duration}` : starts
 }
 
 /**
@@ -178,9 +178,9 @@ export function postedLine(v: Pick<Vacancy, 'created_at' | 'application_deadline
   const posted = postedLabel(days)
   if (closed) {
     const c = dayFirst(v.closed_at, { year: 'always' })
-    return `${posted} · ${c ? tOpportunities('dates.closedOn', { date: c }) : tOpportunities('dates.closed')}`
+    return `${posted}. ${c ? tOpportunities('dates.closedOn', { date: c }) : tOpportunities('dates.closed')}`
   }
-  return `${posted} · ${deadlineLine(v)}`
+  return `${posted}. ${deadlineLine(v)}`
 }
 
 /** Deadlines inside this many days read as a countdown (copy rule). */
@@ -224,7 +224,7 @@ export function postedOnlyLine(v: Pick<Vacancy, 'created_at'> & { closed_at?: st
   const posted = postedLabel(days)
   if (closed) {
     const c = dayFirst(v.closed_at, { year: 'always' })
-    return `${posted} · ${c ? tOpportunities('dates.closedOn', { date: c }) : tOpportunities('dates.closed')}`
+    return `${posted}. ${c ? tOpportunities('dates.closedOn', { date: c }) : tOpportunities('dates.closed')}`
   }
   return posted
 }

@@ -147,7 +147,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
   const fullMatches = read<string>('full_match_visibility', 'recruiters')
   const isPlayer = profile?.role === 'player'
   const languages = (profile?.languages ?? []).filter(Boolean)
-  const languageList = languages.join(' · ')
+  const languageList = languages.join(', ')
   const languageGroupLabel = tc('language.label')
   const dob = longDate(profile?.date_of_birth)
   const name = profile?.full_name?.trim() || t('hub.fallbackName')

@@ -278,7 +278,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                     {pending.length > 0 ? t('profile.invites.waiting', { count: pending.length, n: count(pending.length) }) : t('profile.invites.empty')}
                   </span>
                   <span className="block truncate text-secondary text-ink-2">
-                    {pending.length > 0 ? pending.slice(0, 2).map((p) => p.full_name ?? t('profile.invites.athlete')).join(' · ') : t('profile.invites.howAccept')}
+                    {pending.length > 0 ? pending.slice(0, 2).map((p) => p.full_name ?? t('profile.invites.athlete')).join(', ') : t('profile.invites.howAccept')}
                   </span>
                 </span>
               </div>
@@ -392,7 +392,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                 <h1 className="min-w-0 truncate font-display text-[30px] font-bold leading-[1.15] tracking-[-0.03em] text-ink-1">{brand.name}</h1>
                 <VerifiedBadge verified={brand.is_verified} className="shrink-0" />
               </div>
-              <p className="mt-1 truncate text-[15px] leading-[1.45] text-ink-2">{[category, placeLine].filter(Boolean).join(' · ')}</p>
+              <p className="mt-1 truncate text-[15px] leading-[1.45] text-ink-2">{[category, placeLine].filter(Boolean).join(', ')}</p>
             </div>
             <button type="button" onClick={() => void share()} aria-label={t('profile.hero.share')} className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border border-line bg-white text-ink-1 hover:bg-surface-subtle">
               <Share className="h-5 w-5" strokeWidth={1.8} />

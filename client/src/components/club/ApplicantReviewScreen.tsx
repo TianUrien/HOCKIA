@@ -294,7 +294,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
   const days = review?.status === 'pending' ? daysLeftToReply(review.appliedAt, review.expiryDays) : null
   const replyLine = days === null ? null : days === 0 ? t('applicantReview.closesToday') : t('applicantReview.daysLeftToReply', { daysLeft: daysLeftLabel(days) })
   const appliedLine = review
-    ? onRoad ? roadHeaderLine(roadData?.shortlistedAt, review.appliedAt) : [t('applicantReview.appliedOn', { date: monthDay(review.appliedAt) }), review.status === 'pending' ? replyLine : null].filter(Boolean).join(' · ')
+    ? onRoad ? roadHeaderLine(roadData?.shortlistedAt, review.appliedAt) : [t('applicantReview.appliedOn', { date: monthDay(review.appliedAt) }), review.status === 'pending' ? replyLine : null].filter(Boolean).join(', ')
     : ''
   const backToApplicants = () => {
     const from = (location.state as { from?: string } | null)?.from
@@ -394,7 +394,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
     if (review.status === 'rejected') return { label: t('applicantReview.status.notAFit'), brand: false }
     return { label: review.status, brand: false }
   })()
-  const heroLine = p ? [personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position }), review?.age ? String(review.age) : null, ...passports].filter(Boolean).join(' · ') : ''
+  const heroLine = p ? [personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position }), review?.age ? String(review.age) : null, ...passports].filter(Boolean).join(', ') : ''
   const statusNote = review && review.status !== 'pending' && !onRoad
     ? ({ shortlisted: t('applicantReview.statusNote.shortlisted'), maybe: t('applicantReview.statusNote.maybe'), rejected: t('applicantReview.statusNote.rejected'), no_response: t('applicantReview.statusNote.noResponse'), filled: t('applicantReview.statusNote.filled'), withdrawn: t('applicantReview.statusNote.withdrawn') } as Record<string, string>)[review.status] ?? null
     : null
@@ -468,7 +468,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                   />
                 </div>
                 <h1 className="text-[34px] font-bold leading-[41px] tracking-[-0.015em] text-ink-1" data-testid="review-name">{p.full_name}</h1>
-                <p className="-mt-1 text-[17px] leading-[22px] text-ink-2">{[personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position }), review.age ? String(review.age) : null].filter(Boolean).join(' · ')}</p>
+                <p className="-mt-1 text-[17px] leading-[22px] text-ink-2">{[personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position }), review.age ? String(review.age) : null].filter(Boolean).join(', ')}</p>
                 {nats.length > 0 && (
                   <div className="flex flex-wrap items-center gap-2" data-testid="review-nationalities">
                     {nats.map((c) => (
@@ -816,7 +816,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                       <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-[3px] text-[11px] font-semibold text-white">{t('applicantReview.fullMatch')}</span>
                       <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
                       <span className="truncate text-secondary font-semibold text-white">{l.match_title?.trim() || (l.opponent_team ? t('applicantReview.versus', { team: l.opponent_team }) : t('applicantReview.fullMatch'))}</span>
-                      <span className="truncate text-[11px] text-white/85">{[l.competition, l.minutes_played ? t('applicantReview.minutes', { minutes: l.minutes_played }) : null, l.shirt_number ? `#${l.shirt_number}` : null, videoLinkSite(l.video_url)].filter(Boolean).join(' · ')}</span>
+                      <span className="truncate text-[11px] text-white/85">{[l.competition, l.minutes_played ? t('applicantReview.minutes', { minutes: l.minutes_played }) : null, l.shirt_number ? `#${l.shirt_number}` : null, videoLinkSite(l.video_url)].filter(Boolean).join(', ')}</span>
                     </a>
                   ))}
                   {[...scroll.fullMatches, ...scroll.highlights].map((v, i) => (

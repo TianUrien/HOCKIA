@@ -35,7 +35,7 @@ export function clubLeadLeague(men: string | null | undefined, women: string | n
 /** "Open role · from Sep 1 · 7 months" — the public card's second line. */
 export function openRoleLine(role: Pick<ClubOpenRole, 'startDate' | 'durationText'>): string {
   const from = monthDay(role.startDate)
-  return [tWorld('club.openRole.label'), from ? tWorld('club.openRole.from', { date: from }) : null, formatDurationText(role.durationText)].filter(Boolean).join(' · ')
+  return [tWorld('club.openRole.label'), from ? tWorld('club.openRole.from', { date: from }) : null, formatDurationText(role.durationText)].filter(Boolean).join(', ')
 }
 
 

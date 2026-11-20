@@ -95,7 +95,7 @@ export function evidenceLine(e: { fullMatches: number; highlights: number; caree
   if (e.career > 0) {
     parts.push(parts.length === 0 ? tRecruiting('findPlayers.careerEntries', { count: e.career }) : tRecruiting('findPlayers.careerShort', { count: e.career }))
   }
-  if (parts.length) return { kind: e.fullMatches > 0 || e.highlights > 0 ? 'video' : 'career', text: parts.join(' · ') }
+  if (parts.length) return { kind: e.fullMatches > 0 || e.highlights > 0 ? 'video' : 'career', text: parts.join(', ') }
   void now
   return null
 }
@@ -150,7 +150,7 @@ export function nationalityLine(ids: (number | null | undefined)[], countries: C
     .slice(0, 2)
   if (!list.length) return null
   const flags = list.map((c) => c.flag_emoji).filter(Boolean).join(' ')
-  const names = list.map((c) => countryLabel(c.common_name || c.name)).join(' · ')
+  const names = list.map((c) => countryLabel(c.common_name || c.name)).join(', ')
   return flags ? `${flags} ${names}` : names
 }
 
@@ -199,7 +199,7 @@ export function rowFactsLine(input: {
     const fromPrefix = tProfile('keyFacts.fromDay', { day: '' })
     if (when) parts.push(when === tProfile('keyFacts.availableNow') ? when : fromPrefix && when.startsWith(fromPrefix) ? tRecruiting('findPlayers.availableFrom', { day: when.slice(fromPrefix.length) }) : when)
   }
-  return parts.length ? parts.join(' · ') : null
+  return parts.length ? parts.join(', ') : null
 }
 
 /** The recruiting context the "Ranked for" pill shows. */
@@ -224,7 +224,7 @@ export function contextPillLabel(ctx: ContextLike | null): string {
   if (name) return name
   const pos = ctx.target_position ? positionLabel(ctx.target_position) : null
   const team = genderPill(ctx.target_category)?.label ?? null
-  const joined = [pos, team].filter(Boolean).join(' · ')
+  const joined = [pos, team].filter(Boolean).join(', ')
   return joined || ctx.label?.trim() || tRecruiting('findPlayers.customSearch')
 }
 

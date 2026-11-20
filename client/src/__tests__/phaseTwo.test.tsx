@@ -198,7 +198,7 @@ describe('4 · Viewer-dependent colours', () => {
     expect(noReplyTone('applicant')).toBe('grey')
     expect(noReplyTone('club')).toBe('amber')
     const now = new Date('2026-09-27T12:00:00Z')
-    expect(applicationStatusPill('pending', '2026-09-10T12:00:00Z', true, now)).toMatchObject({ label: 'No reply · 17d', tone: 'grey' })
+    expect(applicationStatusPill('pending', '2026-09-10T12:00:00Z', true, now)).toMatchObject({ label: 'No reply in 17d', tone: 'grey' })
     expect(isClubReplyUrgent('2026-09-10T12:00:00Z', 20, now)).toBe(true)
     expect(isClubReplyUrgent('2026-09-25T12:00:00Z', 12, now)).toBe(false)
     expect(isClubReplyUrgent('2026-09-25T12:00:00Z', 4, now)).toBe(true)

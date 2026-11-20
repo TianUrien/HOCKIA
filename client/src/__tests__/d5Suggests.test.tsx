@@ -106,7 +106,7 @@ describe('copy + parsers', () => {
     expect(suggestsEntryDetail(5)).toBe('5 players')
     expect(suggestsEntryDetail(1)).toBe('1 player')
     expect(suggestsEntryDetail(0)).toBe('None yet')
-    expect(refineCaption(5)).toBe('From Hockia’s 5 suggestions for this opportunity · only facts from their profiles')
+    expect(refineCaption(5)).toBe('From Hockia’s 5 suggestions for this opportunity. Only facts from their profiles.')
   })
 
   it('parseRoleSuggestions: null for non-owners, at most 5, sorted by rank', () => {
@@ -235,7 +235,7 @@ describe('D5.1 · Hockia suggests', () => {
       expect(reasons.length).toBeGreaterThan(0)
       expect(reasons.length).toBeLessThanOrEqual(4)
     }
-    expect(screen.getAllByText('Player · Midfielder · Defender · 🇦🇷')).toHaveLength(5)
+    expect(screen.getAllByText('Player, Midfielder, Defender, 🇦🇷')).toHaveLength(5)
     expect(container.querySelectorAll('[data-kind="missing"] svg.text-ink-3').length).toBeGreaterThan(0)
     expect(container.querySelectorAll('[data-kind="met"] svg.text-positive').length).toBeGreaterThan(0)
     noAmber(container)
@@ -331,7 +331,7 @@ describe('D5.2 · refine', () => {
     expect(rows[0].textContent).toMatch(/Mattia Amorosini/)
     expect(screen.getAllByTestId('invite-button')).toHaveLength(2)
     expect(screen.queryByRole('button', { name: /^Message/ })).toBeNull()
-    expect(screen.getByTestId('refine-caption').textContent).toBe('From Hockia’s 5 suggestions for this opportunity · only facts from their profiles')
+    expect(screen.getByTestId('refine-caption').textContent).toBe('From Hockia’s 5 suggestions for this opportunity. Only facts from their profiles.')
     fireEvent.click(screen.getByRole('button', { name: 'Include forwards' }))
     expect(state.ask).toHaveBeenCalledWith('Include forwards')
     noAmber(container)

@@ -80,10 +80,10 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
     const from = profile?.available_from ? new Date(profile.available_from) : null
     const when = from && !Number.isNaN(from.getTime()) ? format(from, 'MMMM yyyy', { locale: getDateFnsLocale() }) : null
     const duration = profile?.availability_duration ? AVAILABILITY_LABELS[profile.availability_duration] ?? null : null
-    return [when ?? t('apply.now'), duration].filter(Boolean).join(' · ')
+    return [when ?? t('apply.now'), duration].filter(Boolean).join(', ')
   })()
   const contact = profile?.contact_email ? t('apply.contactEmail') : t('apply.contactHidden')
-  const roleLine = [vacancy ? positionLabel(vacancy.position) ?? vacancy.title : target.title, org ?? t('apply.theClub')].filter(Boolean).join(' · ')
+  const roleLine = [vacancy ? positionLabel(vacancy.position) ?? vacancy.title : target.title, org ?? t('apply.theClub')].filter(Boolean).join(', ')
   const appliedOn = draft?.kind === 'already' && draft.appliedAt ? dayFirst(draft.appliedAt, { year: 'never' }) : null
   const alreadyLine = appliedOn
     ? (org ? t('apply.alreadyOn', { org, date: appliedOn }) : t('apply.alreadyOnNoOrg', { date: appliedOn }))
@@ -135,7 +135,7 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
                     <p className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{roleLine}</p>
                   </div>
                 </div>
-                {[[t('apply.availableFrom'), available], [t('apply.passport'), passports.join(' · ') || t('apply.notGiven')], [t('apply.contact'), contact]].map(([k, v]) => (
+                {[[t('apply.availableFrom'), available], [t('apply.passport'), passports.join(', ') || t('apply.notGiven')], [t('apply.contact'), contact]].map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between gap-3 border-t-[0.5px] border-line px-3.5 py-2.5 text-[14px]">
                     <span className="text-ink-2">{k}</span><span className="truncate text-right font-semibold text-ink-1">{v}</span>
                   </div>

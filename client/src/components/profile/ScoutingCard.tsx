@@ -358,7 +358,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
         <span className="text-gray-900">
           {counts.recentPastClub ?? t('scoutingCard.listed', { count: counts.pastClubs })}
           {counts.pastClubs > 1 && counts.recentPastClub && (
-            <span className="text-gray-500">{t('scoutingCard.more', { count: counts.pastClubs - 1 })}</span>
+            <>{' '}<span className="ml-1 text-gray-500">{t('scoutingCard.more', { count: counts.pastClubs - 1 })}</span></>
           )}
         </span>
       ),
@@ -372,7 +372,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
         <span className="text-gray-900">
           {counts.recentSelection ?? t('scoutingCard.listed', { count: counts.selections })}
           {counts.selections > 1 && counts.recentSelection && (
-            <span className="text-gray-500">{t('scoutingCard.more', { count: counts.selections - 1 })}</span>
+            <>{' '}<span className="ml-1 text-gray-500">{t('scoutingCard.more', { count: counts.selections - 1 })}</span></>
           )}
         </span>
       ),
@@ -401,7 +401,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
     if (galleryCount > 0) mediaParts.push(t('scoutingCard.photos', { count: galleryCount }))
     rows.push({
       label: t('scoutingCard.media'),
-      value: <span className="text-gray-900">{mediaParts.join(' · ')}</span>,
+      value: <span className="text-gray-900">{mediaParts.join(', ')}</span>,
     })
   }
 

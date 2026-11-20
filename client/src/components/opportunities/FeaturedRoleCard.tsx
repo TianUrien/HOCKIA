@@ -37,10 +37,16 @@ export function FeaturedRoleCard({ vacancy, clubName, clubLogo, countryFlag, lea
   const family = categoryFamily(vacancy.gender)
   const status = roleStatus(vacancy, now)
   const city = vacancy.location_city?.trim() || countryLabel(vacancy.location_country?.trim()) || ''
-  const place = [countryFlag && city ? `${countryFlag} ${city}` : city, league].filter(Boolean).join(' · ')
+  const place = [countryFlag && city ? `${countryFlag} ${city}` : city, league].filter(Boolean).join(', ')
   const chips = [...(isPaid(vacancy) ? [t('list.paidChip')] : []), ...roleBenefits(vacancy).map((b) => b.label)].slice(0, 2)
   // The "New" tag (tone 'brand') is not repeated in the eyebrow; a deadline is.
-  const eyebrow = [t('list.featuredEyebrow'), status && status.tone !== 'brand' ? status.label.toUpperCase() : null].filter(Boolean).join(' · ')
+  const eyebrowStatus = status && status.tone !== 'brand' ? status.label.toUpperCase() : null
+  const eyebrow = (
+    <>
+      {t('list.featuredEyebrow')}
+      {eyebrowStatus && <>{' '}<span className="ml-2">{eyebrowStatus}</span></>}
+    </>
+  )
 
   if (layout === 'wide') {
     const stripColor = withAlpha((palette ?? HOCKIA_FALLBACK).stops[2], 0.62)

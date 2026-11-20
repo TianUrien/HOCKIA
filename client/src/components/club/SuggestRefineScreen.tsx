@@ -34,7 +34,7 @@ function factsLine(s: RoleSuggestion): string | null {
   const ev = s.evidence
   const avail = ev.available_from ? monthYear(ev.available_from) : null
   const parts = [ev.league_name, ev.eu_passport ? tRecruiting('suggestRefine.euPassport') : null, avail ? tRecruiting('suggestRefine.availableFrom', { date: avail }) : null].filter((p): p is string => !!p)
-  return parts.length ? parts.join(' · ') : null
+  return parts.length ? parts.join(', ') : null
 }
 
 /**

@@ -22,7 +22,8 @@ describe('ShortLinksPanel', () => {
     const r = screen.getByTestId('short-link-row-ig')
     expect(r).toHaveTextContent('Instagram bio')
     expect(r).toHaveTextContent('/l/ig')
-    expect(r).toHaveTextContent('Instagram · bio')
+    // The label, then the channel cell: source and campaign, with a space and no separator.
+    expect(r).toHaveTextContent(/Instagram bio.*Instagram bio/)
     expect(r).toHaveTextContent('42')
     expect(r).toHaveTextContent('7')
     expect(r).toHaveTextContent('3')
@@ -36,7 +37,7 @@ describe('ShortLinksPanel', () => {
     fireEvent.change(screen.getByPlaceholderText('Instagram bio'), { target: { value: 'LinkedIn Post' } })
     expect((screen.getByPlaceholderText('ig') as HTMLInputElement).value).toBe('linkedin-post')
     fireEvent.change(screen.getByPlaceholderText('instagram'), { target: { value: 'LinkedIn' } })
-    expect(screen.getByTestId('short-link-channel')).toHaveTextContent('Reports as LinkedIn · Social')
+    expect(screen.getByTestId('short-link-channel')).toHaveTextContent('Reports as LinkedIn, Social')
     fireEvent.change(screen.getByPlaceholderText('social'), { target: { value: 'social' } })
     fireEvent.click(screen.getByTestId('short-link-save'))
     await waitFor(() => expect(m.upsert).toHaveBeenCalledTimes(1))

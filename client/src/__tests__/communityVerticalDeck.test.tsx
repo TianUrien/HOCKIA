@@ -75,7 +75,7 @@ function renderDeck(onClose = vi.fn()) {
     <MemberFullPreview
       member={members[0]}
       onClose={onClose}
-      deck={{ members, startIndex: 0, contextLabel: 'All members · Newest' }}
+      deck={{ members, startIndex: 0, contextLabel: 'All members, Newest' }}
     />,
   )
 }
@@ -94,9 +94,9 @@ describe('Community preview: vertical deck on phones', () => {
     expect(screen.getByTestId('member-preview')).toHaveAttribute('data-deck', 'vertical')
     expect(screen.queryByTestId('member-deck-pager')).not.toBeInTheDocument()
     const card = within(activeCard())
-    expect(card.getByTestId('member-deck-context')).toHaveTextContent('All members · Newest')
+    expect(card.getByTestId('member-deck-context')).toHaveTextContent('All members, Newest')
     expect(card.getByRole('heading', { level: 2 })).toHaveTextContent('Ana Ruiz')
-    expect(card.getByText('Midfielder · Women’s · Old Lions')).toBeInTheDocument()
+    expect(card.getByText('Midfielder, Women’s, Old Lions')).toBeInTheDocument()
     expect(card.getByText('Based in Buenos Aires, Argentina')).toBeInTheDocument()
     expect(card.getByTestId('member-preview-friend')).toHaveTextContent('Add friend')
     expect(card.getByTestId('member-preview-message')).toBeInTheDocument()
@@ -108,7 +108,7 @@ describe('Community preview: vertical deck on phones', () => {
     fireEvent.click(within(activeCard()).getByTestId('member-vdeck-more'))
     const panel = within(screen.getByTestId('member-vdeck-details'))
     expect(panel.getByText('Plays at')).toBeInTheDocument()
-    expect(panel.getByText('Old Lions · Women’s')).toBeInTheDocument()
+    expect(panel.getByText('Old Lions, Women’s')).toBeInTheDocument()
     expect(panel.getByText('Nationalities and passports')).toBeInTheDocument()
     expect(panel.getByText('EU passport')).toBeInTheDocument()
     expect(panel.getByTestId('member-vdeck-references')).toHaveTextContent('3 accepted')

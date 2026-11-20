@@ -227,7 +227,7 @@ describe('new-opportunity notification line', () => {
       kind: 'opportunity_published' as NotificationRecord['kind'],
       metadata: { opportunity_title: 'Coach Test 5', club_name: 'E2E Test FC', position: 'head_coach', location_city: 'Manchester', location_country: 'England' },
     })
-    expect(getNotificationConfig(n).getDescription?.(n)).toBe('Head coach • Manchester, England')
+    expect(getNotificationConfig(n).getDescription?.(n)).toBe('Head coach, Manchester, England')
   })
   it('player positions still read as before', () => {
     const n = note({ kind: 'opportunity_published' as NotificationRecord['kind'], metadata: { position: 'midfielder' } })

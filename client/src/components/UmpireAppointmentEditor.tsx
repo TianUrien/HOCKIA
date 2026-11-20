@@ -21,8 +21,8 @@ import { deleteStorageObject } from '@/lib/storage'
 import { useProfileEditT } from '@/i18n/ns/profileEdit'
 
 // Proper names of hockey bodies, the same in every language.
-const ORGANIZER_EXAMPLE_APPOINTMENT = 'EuroHockey · FIH · England Hockey'
-const ORGANIZER_EXAMPLE_OTHER = 'FIH · USA Field Hockey · EuroHockey'
+const ORGANIZER_EXAMPLE_APPOINTMENT = 'EuroHockey, FIH, England Hockey'
+const ORGANIZER_EXAMPLE_OTHER = 'FIH, USA Field Hockey, EuroHockey'
 import type {
   UmpireAppointment,
   UmpireAppointmentInput,
@@ -431,7 +431,7 @@ export default function UmpireAppointmentEditor({
                     alt={t('umpireEditor.photoAlt')}
                     className="w-full h-40 object-cover rounded-lg border border-gray-200"
                   />
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-2 flex items-center gap-4">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
@@ -440,7 +440,7 @@ export default function UmpireAppointmentEditor({
                     >
                       {t('umpireEditor.replacePhoto')}
                     </button>
-                    <span className="text-gray-500">·</span>
+                    {' '}
                     <button
                       type="button"
                       onClick={handleRemoveImage}

@@ -198,8 +198,8 @@ describe('2 · dayFirst is the one date helper outside the signing road', () => 
   it('role copy: Starts / Apply by / Closed / Applied / the Post-a-role start summary', () => {
     expect(startsLine({ start_date: '2026-10-10', duration_text: null })).toBe('Starts 10 Oct 2026')
     expect(deadlineLine({ application_deadline: '2026-10-03' })).toBe('Apply by 3 Oct 2026')
-    expect(postedLine({ created_at: '2026-09-30T12:00:00Z', application_deadline: null, closed_at: '2026-10-03T12:00:00Z' }, now, true)).toBe('Posted 3 days ago · Closed 3 Oct 2026')
-    expect(whenLine({ start_date: '2026-09-16', duration_text: '3' }, now)).toBe('16 Sep · 3 months')
+    expect(postedLine({ created_at: '2026-09-30T12:00:00Z', application_deadline: null, closed_at: '2026-10-03T12:00:00Z' }, now, true)).toBe('Posted 3 days ago. Closed 3 Oct 2026')
+    expect(whenLine({ start_date: '2026-09-16', duration_text: '3' }, now)).toBe('16 Sep, 3 months')
     expect(appliedOnLine('2026-09-03T12:00:00Z')).toBe('Applied 3 Sep 2026')
     expect(appliedLine('2026-08-20T12:00:00Z', now)).toBe('Applied 20 Aug')
     expect(startLabel('2026-10-10', now)).toBe('10 Oct')

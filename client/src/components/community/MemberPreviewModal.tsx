@@ -480,7 +480,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               {(member.role === 'player' || member.role === 'coach') && positions.length > 0 && (
                 <div className="flex items-center gap-2 text-gray-700">
                   <Shield className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span>{positions.join(' • ')}</span>
+                  <span>{positions.join(', ')}</span>
                 </div>
               )}
 

@@ -228,7 +228,7 @@ export function AdminDataIssues() {
                       : 'bg-gray-100 text-gray-600'
                 }`}
               >
-                {isLoading ? '·' : tab.count}
+                {isLoading ? '…' : tab.count}
               </span>
             </button>
           ))}
