@@ -59,7 +59,7 @@ export function ReferenceCard({ item }: { item: ReferenceReceivedFeedItem }) {
             </span>
             <span className="flex min-w-0 items-baseline gap-2 text-caption">
               <span className="shrink-0 text-ink-2">{t('feedV1.reference.label')}</span>{' '}
-              {relationship(item.relationship_type) ? <span className="min-w-0 truncate text-ink-3">{relationship(item.relationship_type)}</span> : null}
+              {relationship(item.relationship_type) ? <span className="min-w-0 truncate text-ink-2">{relationship(item.relationship_type)}</span> : null}
             </span>
           </span>
           <Star className="h-[22px] w-[22px] shrink-0 fill-gold-line text-gold-line" strokeWidth={1.5} aria-hidden="true" />
