@@ -6,6 +6,8 @@ import { useToastStore } from '@/lib/toast'
 import Button from '../Button'
 import NativeVideoPlayer from './NativeVideoPlayer'
 import UploadVideoModal from './UploadVideoModal'
+import { ShareToHomePrompt } from '../home/ShareToHomePrompt'
+import { shareableVideo } from '@/lib/shareToHome'
 import ConfirmActionModal from '../ConfirmActionModal'
 import { useMediaT } from '@/i18n/ns/media'
 
@@ -52,6 +54,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
   const [uploadOpen, setUploadOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<PlayerVideoRow | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [shareVideo, setShareVideo] = useState<File | null>(null)
 
   const fetchVideos = useCallback(async () => {
     setLoading(true)
@@ -121,6 +124,8 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
           </Button>
         )}
       </div>
+
+      {!readOnly && <ShareToHomePrompt video={shareVideo} onDone={() => setShareVideo(null)} />}
 
       {loading ? (
         <div className="flex items-center justify-center py-8 text-gray-400">
@@ -228,7 +233,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
       <UploadVideoModal
         isOpen={uploadOpen}
         onClose={() => setUploadOpen(false)}
-        onUploaded={() => { void fetchVideos() }}
+        onUploaded={(_id, info) => { setShareVideo(shareableVideo(info)); void fetchVideos() }}
       />
       <ConfirmActionModal
         isOpen={!!deleteTarget}

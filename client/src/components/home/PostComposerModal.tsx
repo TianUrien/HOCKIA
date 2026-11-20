@@ -35,6 +35,8 @@ interface PostComposerModalProps {
   /** Photos to attach as the composer opens ("Share on Home?" after a profile
    *  upload). Each goes through the normal post-image upload. New posts only. */
   initialImageFiles?: File[]
+  /** "Share on Home?" for a profile video: uploaded as a Home video post on open. */
+  initialVideoFile?: File | null
 }
 
 interface ClubSearchResult {
@@ -72,6 +74,7 @@ export function PostComposerModal({
   onPostCreated,
   editingPost,
   initialImageFiles,
+  initialVideoFile,
 }: PostComposerModalProps) {
   const t = useHomeT()
   const { user, profile } = useAuthStore()
@@ -534,6 +537,17 @@ export function PostComposerModal({
       }
     })
   }, [user])
+
+  // "Share on Home?" for a video: start its upload once per open. The file is
+  // sent again as a Home video post (kind='post'); the profile video is a
+  // different product and cannot be attached to a post.
+  const seededVideoRef = useRef(false)
+  useEffect(() => {
+    if (!isOpen) { seededVideoRef.current = false; return }
+    if (seededVideoRef.current || editingPost || !initialVideoFile) return
+    seededVideoRef.current = true
+    handleMediaAddVideo(initialVideoFile)
+  }, [isOpen, editingPost, initialVideoFile, handleMediaAddVideo])
 
   const handleCancelUpload = useCallback(() => {
     const { uploads, cancelUpload } = useUploadManager.getState()
