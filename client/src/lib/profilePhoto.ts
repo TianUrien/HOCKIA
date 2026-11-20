@@ -28,9 +28,10 @@ export function profilePhotoFields(urls: ProfilePhotoUrls): { avatar_url: string
  * `full: false` (crests, logos) and PNG sources (often transparent: JPEG would
  * put them on black) upload the square only.
  */
-export async function uploadProfilePhoto(userId: string, file: File, { full = true }: { full?: boolean } = {}): Promise<ProfilePhotoUrls> {
+export async function uploadProfilePhoto(userId: string, file: File, { full = true, square: cropped }: { full?: boolean; square?: File } = {}): Promise<ProfilePhotoUrls> {
   const stamp = Date.now()
-  const square = await optimizeAvatarImage(file)
+  // `square`: the member's own crop from the crop step; without it, a centre crop.
+  const square = cropped ?? await optimizeAvatarImage(file)
   const ext = square.name.split('.').pop() || 'jpg'
   const path = `${userId}/avatar_${stamp}.${ext}`
   const { error } = await supabase.storage.from('avatars').upload(path, square, { upsert: true, cacheControl: '31536000' })

@@ -83,8 +83,7 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
               name={name}
               eager={priority}
               onError={() => setCrestFailed(true)}
-              className={`absolute right-[23px] top-[26px] h-[108px] w-[108px] rounded-[24px] p-2.5 ${LIGHT_SHADOW}`}
-              initialsClassName="text-[32px]"
+              className={`absolute right-[23px] top-[26px] h-[108px] w-[108px] ${LIGHT_SHADOW}`}
             />
           ) : (
             <span className="absolute right-[29px] top-8 block h-24 w-24 overflow-hidden rounded-full ring-1 ring-white/35">
@@ -104,7 +103,7 @@ export function ClubWideCard({ name, meta, coverUrl, crestUrl, crestColor = null
       <span aria-hidden="true" className={`pointer-events-none absolute inset-0 rounded-[24px] ${HAIRLINE_ON_PHOTO}`} />
       <span className="relative flex w-full items-center gap-3">
         {cover === 'photo' && crestSrc && (
-          <LogoTile src={crestSrc} name={name} className="h-11 w-11 shrink-0 rounded-[12px] p-1" initialsClassName="text-[14px]" />
+          <LogoTile src={crestSrc} name={name} className="h-11 w-11 shrink-0" />
         )}
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-[17px] font-semibold leading-[22px] text-white">{name}</span>

@@ -1,9 +1,10 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useEffect, useState, type ReactNode } from 'react'
 import { closesSoonLabel, deadlineDaysLeft } from '@/lib/opportunityCopy'
 import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users, Info, MessageCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
-import { Avatar, StorageImage } from './index'
+import { Avatar } from './index'
 import Button from './Button'
 import type { WorldClubInfo } from './OpportunityCard'
 import { levelSoughtLabel, compensationLabel, recruitmentProblemLabel } from '@/lib/opportunityIntent'
@@ -270,7 +271,7 @@ export default function VacancyDetailView({
               <div className="relative flex flex-col items-center text-center">
                 <button type="button" onClick={handleClubClick} className="flex flex-col items-center hover:opacity-80 transition-opacity">
                   {displayClubLogo ? (
-                    <StorageImage src={displayClubLogo} alt={displayClubName} imageSize="avatar-md" fetchPriority="high" className="w-20 h-20 rounded-xl object-cover shadow-sm" />
+                    <OrgLogo src={displayClubLogo} alt={displayClubName} imageSize="avatar-md" eager className="h-20 w-20 shadow-sm" />
                   ) : (
                     <Avatar initials={displayClubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="xl" className="rounded-xl" role="club" />
                   )}
@@ -298,7 +299,7 @@ export default function VacancyDetailView({
                       <span className="text-gray-400 text-sm">↳</span>
                       <button type="button" onClick={handleWorldClubClick} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/60 border border-gray-200 hover:bg-white transition-colors">
                         {worldClub.avatarUrl ? (
-                          <StorageImage src={worldClub.avatarUrl} alt={worldClub.clubName} imageSize="card-thumb" className="w-4 h-4 rounded-full object-cover" />
+                          <OrgLogo src={worldClub.avatarUrl} alt={worldClub.clubName} imageSize="card-thumb" className="h-4 w-4" />
                         ) : (
                           <Award className="w-3.5 h-3.5 text-gray-400" />
                         )}

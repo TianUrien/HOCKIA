@@ -383,7 +383,7 @@ export default function HeroIdentityCard({
                 className="inline-flex h-[30px] items-center gap-1.5 rounded-full bg-surface-grouped pl-2 pr-3 text-secondary font-semibold text-ink-1"
               >
                 {currentClubLogo ? (
-                  <img src={getImageUrl(currentClubLogo, 'card-thumb') ?? currentClubLogo} alt="" className="h-[15px] w-[15px] rounded-[3px] object-contain" />
+                  <img src={getImageUrl(currentClubLogo, 'card-thumb') ?? currentClubLogo} alt="" className="h-[15px] w-[15px] rounded-[25%] object-contain" />
                 ) : (
                   <Shield className="h-[15px] w-[15px]" strokeWidth={1.4} />
                 )}

@@ -35,6 +35,8 @@ Component anatomy lives in the Figma file "New-Hockia", page "03 · Components" 
 - Applicant rows: Warning tone at ≤ 5 days left; a violet "New" dot until viewed.
 - Conversation rows: amber dot only when the viewer owes a first reply; tab bar Inbox uses a red dot without numbers.
 - Avatars: 32 headers, 40 feed author, 52 rows, 56 cards/sheets, 80 page crests; people = circle, organisations = rounded square on white.
+- One shape per kind of image, everywhere (2026-11-20): a person's photo is a circle (`Avatar`); a club crest or brand logo is a white rounded square, radius 25 % of its side (`OrgLogo`; `Avatar` and `EntityAvatar` switch to it for clubs and brands). Never hand-write an `<img>` for a crest or logo and never pass a radius or padding to its tile. A file fitted by the crop step fills the tile edge to edge; an older upload sits whole inside it. Exceptions drawn on purpose: the crest circle in the new-signing art and the overlapping crest stacks; no-image placeholders keep their own shape.
+- Every photo, crest and logo upload goes through the shared adjust step (`useImageCrop` → `ImageCropSheet`), on the web and on phones; no screen uploads a centre crop on its own (2026-11-20).
 
 ## Forms
 - Text field: muted fill at rest, white with brand border on focus.

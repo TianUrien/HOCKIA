@@ -162,7 +162,7 @@ function Visual({ visual }: { visual: NextStepVisual }) {
     <span className="relative h-14 shrink-0" style={{ width: 40 + (urls.length - 1) * 20 }} aria-hidden="true">
       {urls.map((u, i) => (
         <span key={i} className="absolute top-2 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white p-1 ring-2 ring-white" style={{ left: i * 20 }}>
-          {u ? <img src={getImageUrl(u, 'avatar-sm') ?? u} alt="" className="h-full w-full object-contain" /> : <span className="h-full w-full bg-hockia-soft" />}
+          {u ? <img src={getImageUrl(u, 'avatar-sm') ?? u} alt="" className="h-full w-full rounded-[25%] object-contain" /> : <span className="h-full w-full bg-hockia-soft" />}
         </span>
       ))}
     </span>

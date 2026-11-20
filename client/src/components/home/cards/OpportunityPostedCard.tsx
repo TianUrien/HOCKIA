@@ -1,8 +1,8 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useNavigate } from 'react-router-dom'
 import { categoryTagClass } from '@/lib/opportunityCopy'
 import { positionLabel } from '@/lib/identity'
 import { Briefcase, MapPin, BadgeCheck } from 'lucide-react'
-import { StorageImage } from '@/components'
 import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardHeader, profilePathForRole } from '../FeedCard'
 import { useRolePrefetch } from '@/hooks/useRolePrefetch'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
@@ -87,13 +87,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
         {item.publisher_role === 'coach' && item.world_club_name && (
           <div className="mt-2 flex items-center gap-2">
             {item.world_club_avatar ? (
-              <StorageImage
-                src={item.world_club_avatar}
-                imageSize="card-thumb"
-                alt={item.world_club_name}
-                className="h-5 w-5 rounded-full object-cover flex-shrink-0"
-                containerClassName="h-5 w-5 flex-shrink-0"
-              />
+              <OrgLogo src={item.world_club_avatar} alt={item.world_club_name} imageSize="card-thumb" className="h-5 w-5" />
             ) : (
               <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-line bg-surface-muted">
                 <span className="text-[7px] font-bold text-ink-2">

@@ -1,3 +1,6 @@
+import { useImageCrop } from '@/components/media/ImageCropProvider'
+import { imageKindForRole, uploadIdentityImage } from '@/lib/identityImage'
+import { deleteOrgImage } from '@/lib/orgImageUpload'
 import { useEffect, useRef, useState } from 'react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
@@ -23,7 +26,7 @@ import { logger } from '@/lib/logger'
 import { useCountries } from '@/hooks/useCountries'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { validateImage } from '@/lib/imageOptimization'
-import { profilePhotoFields, uploadProfilePhoto } from '@/lib/profilePhoto'
+import { profilePhotoFields } from '@/lib/profilePhoto'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { deleteStorageObject } from '@/lib/storage'
 import { invalidateProfile } from '@/lib/profile'
@@ -102,6 +105,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
   const addToast = useToastStore((s) => s.addToast)
   const { countries, getCountryById } = useCountries()
   const fileRef = useRef<HTMLInputElement | null>(null)
+  const requestCrop = useImageCrop()
   const [editing, setEditing] = useState<EditField | null>(field)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -259,9 +263,12 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
     if (!file) return
     const check = validateImage(file, { maxFileSizeMB: 5 })
     if (!check.valid) { addToast(check.error ?? t('mobileEdit.errors.invalidImage'), 'error'); return }
+    const kind = imageKindForRole(profile.role)
+    const square = await requestCrop(file, kind)
+    if (!square) return
     setUploading(true)
     try {
-      const urls = await uploadProfilePhoto(user.id, file)
+      const urls = await uploadIdentityImage(user.id, kind, file, square)
       const publicUrl = urls.avatarUrl
       const previous = profile.avatar_url
       const previousFull = profile.avatar_full_url
@@ -269,7 +276,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
       if (updateError) throw updateError
       // Only once the row points at the new file is the old one safe to drop
       // (deleting first broke avatars — incident 2026-07-30).
-      if (previous && previous !== publicUrl) void deleteStorageObject({ bucket: 'avatars', publicUrl: previous, context: 'edit-profile:replace-avatar' })
+      if (previous && previous !== publicUrl) deleteOrgImage(previous, 'edit-profile:replace-avatar')
       if (previousFull && previousFull !== urls.avatarFullUrl) void deleteStorageObject({ bucket: 'avatars', publicUrl: previousFull, context: 'edit-profile:replace-avatar-full' })
       invalidateProfile({ userId: user.id, reason: 'edit-profile-avatar' })
       await refreshProfile()

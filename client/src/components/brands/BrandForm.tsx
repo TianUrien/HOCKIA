@@ -4,13 +4,17 @@
  * Form for creating and editing brand profiles.
  */
 
+import { cn } from '@/lib/utils'
+import { OrgLogo } from '@/components/ui/OrgLogo'
+import { useImageCrop } from '@/components/media/ImageCropProvider'
+import { uploadOrgImage } from '@/lib/orgImageUpload'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Camera, Loader2 } from 'lucide-react'
 import { Input, Button } from '@/components'
 import CountrySelect from '@/components/CountrySelect'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
-import { optimizeAvatarImage, optimizeImage, validateImage } from '@/lib/imageOptimization'
+import { optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { logger } from '@/lib/logger'
 import type { BrandCategory } from '@/hooks/useBrands'
@@ -97,6 +101,7 @@ export function BrandForm({
   const t = useBrandsT()
   const { user } = useAuthStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const requestCrop = useImageCrop()
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -259,37 +264,14 @@ export function BrandForm({
         throw new Error(validation.error)
       }
 
-      // Optimize the image. optimizeAvatarImage outputs JPEG, or PNG when the
-      // source is PNG (preserving logo transparency) — so derive the extension
-      // and content-type from the actual blob instead of hardcoding webp, which
-      // mislabeled every logo and dropped the PNG/transparency distinction.
-      const optimizedBlob = await optimizeAvatarImage(file)
-
-      // Generate a unique filename
-      const fileExt = optimizedBlob.type === 'image/png' ? 'png' : 'jpg'
-      const fileName = `${user.id}/brand-logo-${Date.now()}.${fileExt}`
-
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, optimizedBlob, {
-          contentType: optimizedBlob.type,
-          upsert: true,
-          cacheControl: '31536000',
-        })
-
-      if (uploadError) {
-        throw uploadError
-      }
-
-      // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName)
+      // The crop step returns the finished square (PNG when the logo is transparent).
+      const square = await requestCrop(file, 'logo')
+      if (!square) return
+      const logoUrl = await uploadOrgImage(user.id, 'logo', square, file)
 
       setFormData(prev => ({
         ...prev,
-        logo_url: urlData.publicUrl,
+        logo_url: logoUrl,
       }))
     } catch (err) {
       logger.error('[BrandForm] Error uploading logo:', err)
@@ -297,7 +279,7 @@ export function BrandForm({
     } finally {
       setUploadingLogo(false)
     }
-  }, [user, t])
+  }, [user, t, requestCrop])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -309,7 +291,7 @@ export function BrandForm({
   const handleLogoClick = useCallback(async () => {
     if (isNativePlatform()) {
       try {
-        const result = await pickImageNative('prompt')
+        const result = await pickImageNative('prompt', { crop: false })
         if (result) {
           await handleLogoUpload(result.file)
         }
@@ -419,16 +401,12 @@ export function BrandForm({
             type="button"
             onClick={handleLogoClick}
             disabled={uploadingLogo}
-            className="w-24 h-24 rounded-xl bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 transition-colors overflow-hidden relative"
+            className={cn('relative flex h-24 w-24 items-center justify-center transition-colors', formData.logo_url && !uploadingLogo ? '' : 'overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-100 hover:border-indigo-400 hover:bg-indigo-50')}
           >
             {uploadingLogo ? (
               <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
             ) : formData.logo_url ? (
-              <img
-                src={formData.logo_url}
-                alt={t('brandForm.logoAlt')}
-                className="w-full h-full object-contain p-2"
-              />
+              <OrgLogo src={formData.logo_url} alt={t('brandForm.logoAlt')} role="brand" eager className="h-full w-full" />
             ) : (
               <Camera className="w-8 h-8 text-gray-400" />
             )}

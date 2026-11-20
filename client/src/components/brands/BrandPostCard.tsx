@@ -5,6 +5,7 @@
  * Supports owner mode with edit/delete actions.
  */
 
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { MoreHorizontal, Pencil, Trash2, CheckCircle, Store } from 'lucide-react'
@@ -55,12 +56,7 @@ export function BrandPostCard({
         <div className="flex items-center gap-3 p-4 pb-0">
           <Link to={`/brands/${brandSlug}`} className="flex-shrink-0">
             {brandLogoUrl ? (
-              <img
-                src={getImageUrl(brandLogoUrl, 'avatar-sm') ?? undefined}
-                alt={brandName}
-                className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                decoding="async"
-              />
+              <OrgLogo src={brandLogoUrl} alt={brandName} role="brand" imageSize="avatar-sm" className="h-10 w-10" />
             ) : (
               <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
                 <Store className="w-5 h-5 text-gray-400" />

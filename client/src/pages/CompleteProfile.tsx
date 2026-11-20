@@ -1,3 +1,7 @@
+import { cn } from '@/lib/utils'
+import { ORG_SHAPE, orgImageClass } from '@/lib/orgImage'
+import { useImageCrop } from '@/components/media/ImageCropProvider'
+import { imageKindForRole, uploadIdentityImage } from '@/lib/identityImage'
 import type { TablesUpdate } from '@/lib/database.types'
 import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -11,7 +15,6 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { validateImage } from '@/lib/imageOptimization'
-import { uploadProfilePhoto } from '@/lib/profilePhoto'
 import { getImageUrl } from '@/lib/imageUrl'
 import { invalidateProfile } from '@/lib/profile'
 import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
@@ -73,6 +76,7 @@ export default function CompleteProfile() {
   const navigate = useNavigate()
   const t = useOnboardingT()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const requestCrop = useImageCrop()
   const profilePrefilledRef = useRef(false)
   const contactPrefilledRef = useRef<string | null>(null)
   // Mutex ref to prevent concurrent profile creation attempts (race condition guard)
@@ -624,7 +628,6 @@ export default function CompleteProfile() {
     if (!user) return
 
     try {
-      setUploadingAvatar(true)
       setError('')
 
       const validation = validateImage(file, { maxFileSizeMB: 5 })
@@ -633,10 +636,15 @@ export default function CompleteProfile() {
         return
       }
 
+      // Clubs and brands adjust a crest or logo (rounded square); everyone else a photo (circle).
+      const kind = imageKindForRole(userRole)
+      const square = await requestCrop(file, kind)
+      if (!square) return
+      setUploadingAvatar(true)
+
       let urls
       try {
-        // Clubs and brands upload a crest or logo: the square only.
-        urls = await uploadProfilePhoto(user.id, file, { full: userRole !== 'club' && userRole !== 'brand' })
+        urls = await uploadIdentityImage(user.id, kind, file, square)
       } catch (uploadError) {
         captureOnboardingError(uploadError, {
           role: userRole,
@@ -677,10 +685,12 @@ export default function CompleteProfile() {
   }
 
   // Handle avatar click — use native picker on Capacitor, file input on web
+  // A crest or logo previews as the organisation rounded square, a photo as a circle.
+  const orgPreview = Boolean(avatarUrl) && (userRole === 'club' || userRole === 'brand')
   const handleAvatarClick = async () => {
     if (isNativePlatform()) {
       try {
-        const result = await pickImageNative('prompt', { crop: userRole === 'club' || userRole === 'brand' })
+        const result = await pickImageNative('prompt', { crop: false })
         if (result) {
           await uploadAvatarFile(result.file)
         }
@@ -1396,10 +1406,10 @@ export default function CompleteProfile() {
               <div className="flex items-center gap-4">
                 <div
                   onClick={handleAvatarClick}
-                  className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center cursor-pointer hover:from-purple-200 hover:to-indigo-200 transition-all overflow-hidden border-2 border-white shadow-md"
+                  className={cn('relative w-20 h-20 flex items-center justify-center cursor-pointer transition-all overflow-hidden shadow-md', orgPreview ? cn(ORG_SHAPE, 'bg-white') : 'rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 hover:from-purple-200 hover:to-indigo-200 border-2 border-white')}
                 >
                   {avatarUrl ? (
-                    <img src={getImageUrl(avatarUrl, 'avatar-md') ?? avatarUrl} alt={t('complete.photo.previewAlt')} className="w-full h-full object-cover" loading="eager" decoding="async" />
+                    <img src={getImageUrl(avatarUrl, 'avatar-md') ?? avatarUrl} alt={t('complete.photo.previewAlt')} className={orgPreview ? orgImageClass(avatarUrl) : 'w-full h-full object-cover'} loading="eager" decoding="async" />
                   ) : (
                     <Camera className="w-8 h-8 text-purple-600" />
                   )}

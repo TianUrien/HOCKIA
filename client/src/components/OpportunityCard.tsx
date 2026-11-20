@@ -165,10 +165,10 @@ export default function OpportunityCard({
 
         {/* ── Identity: logo · title · creator ── */}
         <div className="mt-4 flex items-start gap-3.5">
-          {/* No `role` prop → a publisher with no logo gets a brand-purple
-              monogram (initials), not the generic role silhouette. */}
+          {/* A club's crest is a rounded square (role="club"); a coach's photo stays a circle. */}
           <Avatar
             src={publisherLogo}
+            role={cardType === 'club' ? 'club' : undefined}
             initials={getInitials(publisherName)}
             alt={publisherName}
             size="lg"
@@ -215,6 +215,7 @@ export default function OpportunityCard({
           >
             <Avatar
               src={worldClub.avatarUrl}
+              role="club"
               initials={getInitials(worldClub.clubName)}
               alt={worldClub.clubName}
               size="sm"

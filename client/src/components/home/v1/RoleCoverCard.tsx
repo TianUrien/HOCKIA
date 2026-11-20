@@ -67,7 +67,7 @@ export function RoleCoverCard({ clubId, clubName, crestUrl, title, subtitle, siz
       {chip && <GlassChip className={cn('absolute', feed ? 'left-4 top-4' : 'left-3 top-3')}>{chip}</GlassChip>}
       <div className={cn('pointer-events-none absolute inset-x-0 bottom-0 flex', feed ? 'items-center gap-3 p-4' : 'flex-col items-start gap-1 px-3 pb-3')}>
         {crestUrl ? (
-          <LogoTile src={crestUrl} name={clubName} className={cn('shrink-0 rounded-full p-1', feed ? 'h-11 w-11' : 'h-8 w-8')} initialsClassName="text-[11px]" />
+          <LogoTile src={crestUrl} name={clubName} className={cn('shrink-0', feed ? 'h-11 w-11' : 'h-8 w-8')} />
         ) : null}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[16px] font-semibold leading-[21px] text-white">{title}</span>

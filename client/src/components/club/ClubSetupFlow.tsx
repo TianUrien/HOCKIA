@@ -1,3 +1,6 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
+import { useImageCrop } from '@/components/media/ImageCropProvider'
+import { deleteOrgImage, uploadOrgImage } from '@/lib/orgImageUpload'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { rememberCrestColor } from '@/hooks/useClubCrestColors'
 import { Camera, Check, ChevronDown } from 'lucide-react'
@@ -10,9 +13,8 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { useCountries } from '@/hooks/useCountries'
-import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
+import { validateImage } from '@/lib/imageOptimization'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
-import { deleteStorageObject } from '@/lib/storage'
 import { getImageUrl } from '@/lib/imageUrl'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { cn } from '@/lib/utils'
@@ -52,6 +54,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
   const addToast = useToastStore((s) => s.addToast)
   const { getCountryById } = useCountries()
   const fileRef = useRef<HTMLInputElement | null>(null)
+  const requestCrop = useImageCrop()
   const [step, setStep] = useState<1 | 2>(1)
   const [draft, setDraft] = useState<ClubSetupDraft>(() => ({
     name: profile?.full_name ?? '',
@@ -83,21 +86,18 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
     if (!file) return
     const check = validateImage(file, { maxFileSizeMB: 5 })
     if (!check.valid) { addToast(check.error ?? t('clubSetup.crest.invalidImage'), 'error'); return }
+    const square = await requestCrop(file, 'crest')
+    if (!square) return
     setUploading(true)
     try {
-      const optimized = await optimizeAvatarImage(file)
-      const ext = optimized.name.split('.').pop() || 'jpg'
-      const path = `${user.id}/avatar_${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, optimized, { upsert: true, cacheControl: '31536000' })
-      if (uploadError) throw uploadError
-      const publicUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+      const publicUrl = await uploadOrgImage(user.id, 'crest', square, file)
       const previous = profile?.avatar_url ?? null
       const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
       if (updateError) throw updateError
       // Community club card colour (Cover=Crest), from the crest just uploaded.
-      rememberCrestColor(user.id, publicUrl, optimized)
+      rememberCrestColor(user.id, publicUrl, square)
       // The old file goes only once the row points at the new one (incident 2026-07-30).
-      if (previous && previous !== publicUrl) void deleteStorageObject({ bucket: 'avatars', publicUrl: previous, context: 'club-setup:replace-crest' })
+      if (previous && previous !== publicUrl) deleteOrgImage(previous, 'club-setup:replace-crest')
       trackDbEvent('onboarding_step', 'profile', user.id, { step: 'avatar_uploaded', role: 'club' })
       await fetchProfile(user.id, { force: true })
     } catch (err) {
@@ -109,7 +109,7 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
   }
   const pickCrest = async () => {
     if (isNativePlatform()) {
-      try { const result = await pickImageNative('prompt'); if (result) await uploadCrest(result.file) } catch (err) { logger.error('[ClubSetup] native picker failed', err); addToast(t('clubSetup.crest.pickerFailed'), 'error') }
+      try { const result = await pickImageNative('prompt', { crop: false }); if (result) await uploadCrest(result.file) } catch (err) { logger.error('[ClubSetup] native picker failed', err); addToast(t('clubSetup.crest.pickerFailed'), 'error') }
       return
     }
     fileRef.current?.click()
@@ -193,8 +193,8 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
         <p className="mt-1.5 text-[15px] leading-[21px] text-ink-2">{t('clubSetup.subtitle')}</p>
 
         <div className="mt-5 flex items-center gap-3.5">
-          <button type="button" onClick={() => void pickCrest()} disabled={uploading} aria-label={crest ? t('clubSetup.crest.change') : t('clubSetup.crest.add')} className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-grouped text-ink-2">
-            {uploading ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" /> : crest ? <img src={crest} alt="" className="h-full w-full object-cover" /> : <Camera className="h-6 w-6" strokeWidth={1.8} />}
+          <button type="button" onClick={() => void pickCrest()} disabled={uploading} aria-label={crest ? t('clubSetup.crest.change') : t('clubSetup.crest.add')} className={cn('flex h-[72px] w-[72px] shrink-0 items-center justify-center text-ink-2', crest && !uploading ? '' : 'overflow-hidden rounded-full bg-surface-grouped')}>
+            {uploading ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-ink-3 border-t-transparent" /> : crest ? <OrgLogo src={crest} eager className="h-full w-full" /> : <Camera className="h-6 w-6" strokeWidth={1.8} />}
           </button>
           <div className="min-w-0">
             <button type="button" onClick={() => void pickCrest()} disabled={uploading} className="text-row font-semibold text-hockia-primary">{crest ? t('clubSetup.crest.change') : t('clubSetup.crest.add')}</button>

@@ -1,3 +1,4 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Flag, Trash2, Shield } from 'lucide-react'
@@ -8,7 +9,6 @@ import { MoreMenu, type MoreMenuItem } from '@/components/safety/MoreMenu'
 import { usePostInteractions } from '@/hooks/usePostInteractions'
 import { useUserPosts } from '@/hooks/useUserPosts'
 import { Avatar } from '@/components'
-import { getImageUrl } from '@/lib/imageUrl'
 import { FeedMediaGrid } from '../FeedMediaGrid'
 import { MediaLightbox } from '../MediaLightbox'
 import { PostInteractionBar } from '../PostInteractionBar'
@@ -107,13 +107,11 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
     <MoreMenu items={menuItems} label={t('cards.transfer.menuLabel')} title={item.author_name ?? undefined} triggerClassName="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900" testId="post-more-menu" />
   ) : null
 
-  const clubAvatar = (
+  const clubAvatar = meta.club_avatar_url ? (
+    <OrgLogo src={meta.club_avatar_url} alt={meta.club_name} imageSize="avatar-md" className="h-16 w-16" />
+  ) : (
     <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200">
-      {meta.club_avatar_url ? (
-        <img src={getImageUrl(meta.club_avatar_url, 'avatar-md') ?? undefined} alt={meta.club_name} className="h-full w-full object-cover" decoding="async" />
-      ) : (
-        <Shield className="h-7 w-7 text-gray-400" />
-      )}
+      <Shield className="h-7 w-7 text-gray-400" />
     </div>
   )
   const clubName = (
