@@ -160,6 +160,14 @@
       "destination": "/api/opportunity-page?id=:id"
     },
     {
+      "source": "/opportunities/in/:slug([a-zA-Z][a-zA-Z-]{1,60})",
+      "destination": "/api/opportunities-country?country=:slug"
+    },
+    {
+      "source": "/opportunities/:word((?!applications$|new$)[a-zA-Z][a-zA-Z-]{1,60})",
+      "destination": "/api/opportunities-country?word=:word"
+    },
+    {
       "source": "/opportunities",
       "destination": "/api/page-head?path=/opportunities"
     },
