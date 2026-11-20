@@ -306,6 +306,17 @@ as applied is not proof that its SQL ran.
 - Found that day: `edit_endorsement` cut at 1200 characters on staging and
   at 800 on production and in the repo. Fixed by
   `20261120100000_restate_edit_endorsement.sql`.
-- Not compared that day: views, triggers, policies, grants and table
-  definitions.
+- Also compared that day, identical on both: row-level security flags, all
+  223 policies, table, column and function grants, constraints, indexes and
+  the 32 scheduled jobs. Same columns on every table.
+- Differences that are expected or harmless: the 18 webhook triggers (each
+  points at its own project); the column order of `profiles` and
+  `career_history`, which also changes the stored text of the `profiles_self`
+  view; on production the trigger on `reference_reminder_queue` is named with
+  a leading tab character.
+- One gap on staging, not fixed: the webhook trigger
+  `profile_references."notify-reference-response"` exists on production and
+  not on staging, so the reference-response email is never sent from staging.
+  Webhook triggers are created in the Supabase dashboard (they carry the
+  project's own secret header), not by a migration.
 
