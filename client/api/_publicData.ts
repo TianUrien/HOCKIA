@@ -4,6 +4,7 @@
  */
 import { fromPublicApi, type PublicApiOpportunity, type PublicOpportunityRow } from '../src/lib/seo/opportunityHead'
 import { advertisedRoles, ROLE_LIST_MAX } from '../src/lib/seo/serverBody'
+import { directoryFacts, weekWindows, type DirectoryFacts } from '../src/lib/seo/aboutFaq'
 
 function env(): { base: string; key: string } | null {
   const base = (process.env.VITE_SUPABASE_URL ?? '').trim().replace(/\/+$/, '')
@@ -53,4 +54,20 @@ export async function fetchOpenRoles(clientIp: string | null): Promise<PublicOpp
     console.error('[public-data] roles lookup failed', err instanceof Error ? err.message : String(err))
     return null
   }
+}
+
+/**
+ * What the world directory says now, for the countries answer on /faq:
+ * countries with at least one club, and whether a club was added in each
+ * of the last four weeks. Clubs only, no people. Unknown facts on failure,
+ * so the page renders the sentence without a number.
+ */
+export async function fetchDirectoryFacts(now: Date = new Date()): Promise<DirectoryFacts> {
+  const [countries, ...weeks] = await Promise.all([
+    restAnon<{ total_clubs: number | null }>('world_countries_with_directory?select=total_clubs'),
+    ...weekWindows(now).map((w) =>
+      restAnon<{ id: string }>(`world_clubs?select=id&created_at=gte.${encodeURIComponent(w.from)}&created_at=lt.${encodeURIComponent(w.to)}&limit=1`),
+    ),
+  ])
+  return directoryFacts(countries ? countries.map((c) => c.total_clubs) : null, weeks.map((w) => (w ? w.length > 0 : null)))
 }

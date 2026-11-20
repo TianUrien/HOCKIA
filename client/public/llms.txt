@@ -21,6 +21,8 @@ Hockia is free for players, coaches, clubs, umpires and brands.
 - [World directory of field hockey clubs and leagues](https://inhockia.com/world): clubs by country, region and league.
 - [Community](https://inhockia.com/community): players, coaches, clubs and umpires on Hockia.
 - [Join Hockia](https://inhockia.com/signup): create a free profile.
+- [About Hockia](https://inhockia.com/about): what Hockia is, who it is for and who runs it.
+- [Frequently asked questions](https://inhockia.com/faq): how clubs recruit, how to apply for a role and which countries are covered.
 - [Developers](https://inhockia.com/developers): the public API for open roles and structured data.
 - [Sitemap](https://inhockia.com/api/sitemap.xml)
 

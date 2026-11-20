@@ -188,6 +188,14 @@
       "destination": "/api/page-head?path=/developers"
     },
     {
+      "source": "/about",
+      "destination": "/api/page-head?path=/about"
+    },
+    {
+      "source": "/faq",
+      "destination": "/api/page-head?path=/faq"
+    },
+    {
       "source": "/terms",
       "destination": "/api/page-head?path=/terms"
     },

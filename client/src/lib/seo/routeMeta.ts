@@ -58,6 +58,8 @@ export const ROUTE_META: RouteMetaEntry[] = [
   { match: '/world', title: 'Field Hockey Clubs by Country – World Directory | Hockia', description: 'Browse field hockey clubs and leagues by country, region and division in the Hockia world directory.' },
   { match: '/marketplace', title: 'Field Hockey Brands & Gear | Hockia', description: 'Field hockey brands, sticks, equipment and offers for the Hockia community.' },
   { match: '/developers', title: 'Hockia for Developers – Public API & Data', description: 'Build on Hockia: public opportunities feed, sitemap and structured data for field hockey.' },
+  { match: '/about', title: 'About Hockia – The Field Hockey Network', description: 'Hockia is the field hockey network: a place where players, coaches, clubs, umpires and brands have a profile, find each other and work together.' },
+  { match: '/faq', title: 'Hockia FAQ – Frequently Asked Questions', description: 'Answers to common questions about Hockia, the field hockey network for players, coaches, clubs, umpires and brands.' },
   { match: '/terms', title: 'Terms & Conditions | Hockia', description: 'The terms that apply when you use Hockia.' },
   { match: '/privacy-policy', title: 'Privacy Policy | Hockia', description: 'How Hockia collects, uses and protects your data.' },
   { match: '/signup', title: 'Join Hockia – Create your field hockey profile', description: 'Create a free Hockia profile as a player, coach, club, umpire or brand and get found by the field hockey world.' },

@@ -56,7 +56,7 @@ const sample = (pattern: string) => pattern.replace(/:[A-Za-z]+/g, 'x')
  */
 const MEANT_TO_BE_PUBLIC = [
   '/', '/signup', '/signin', '/auth/callback', '/verify-email', '/forgot-password', '/reset-password',
-  '/privacy-policy', '/terms', '/developers', '/offline',
+  '/privacy-policy', '/terms', '/developers', '/about', '/faq', '/offline',
   '/world', '/post', '/marketplace', '/brands', '/investors', '/invite', '/email-action', '/juniors-waitlist',
   '/community', '/opportunities',
   '/members', '/players', '/coaches', '/clubs', '/umpires',
