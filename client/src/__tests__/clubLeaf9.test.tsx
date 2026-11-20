@@ -87,8 +87,8 @@ describe('club Your week', () => {
 // ── Inbox (DEV NOTE 355:914) ──────────────────────────────────────────────
 describe('club Inbox', () => {
   it('role line is "Player · position", plus "Applied"', () => {
-    expect(clubInboxRoleLine('player', 'Forward', true)).toBe('Player · Forward · Applied')
-    expect(clubInboxRoleLine('player', 'Forward', false)).toBe('Player · Forward')
+    expect(clubInboxRoleLine('player', 'Forward', true)).toBe('Player, Forward, Applied')
+    expect(clubInboxRoleLine('player', 'Forward', false)).toBe('Player, Forward')
     expect(clubInboxRoleLine('coach', null, false)).toBe('Coach')
   })
   it('the amber notice counts conversations the club never wrote in, and hides at 0', () => {
@@ -108,16 +108,16 @@ const app = (p: Partial<ClubApplication> = {}): ClubApplication => ({ id: 'a1', 
 describe('club Chat application card', () => {
   const now = new Date('2026-09-23T12:00:00Z')
   it('names the opportunity it applied to', () => {
-    expect(applicationCardTitle(app())).toBe('Applied to Midfielder · Men’s 1st player')
+    expect(applicationCardTitle(app())).toBe('Applied to Midfielder, Men’s 1st player')
     expect(applicationCardTitle(app({ roleTitle: 'Midfielder' }))).toBe('Applied to Midfielder')
   })
   it('pending: days left to reply, amber at 5 or fewer', () => {
-    expect(applicationCardDetail(app(), 14, now)).toEqual({ text: '17 Sep · 8 days left to reply', urgent: false })
-    expect(applicationCardDetail(app({ appliedAt: '2026-09-10T10:00:00Z' }), 14, now)).toEqual({ text: '10 Sep · 1 day left to reply', urgent: true })
+    expect(applicationCardDetail(app(), 14, now)).toEqual({ text: '17 Sep, 8 days left to reply', urgent: false })
+    expect(applicationCardDetail(app({ appliedAt: '2026-09-10T10:00:00Z' }), 14, now)).toEqual({ text: '10 Sep, 1 day left to reply', urgent: true })
   })
   it('closed without a reply says when', () => {
-    expect(applicationCardDetail(app({ status: 'no_response', appliedAt: '2026-09-03T10:00:00Z', updatedAt: '2026-09-18T10:00:00Z' }), 14, now)).toEqual({ text: '3 Sep · closed without a reply on 18 Sep', urgent: false })
-    expect(applicationCardDetail(app({ status: 'shortlisted' }), 14, now).text).toBe('17 Sep · shortlisted')
+    expect(applicationCardDetail(app({ status: 'no_response', appliedAt: '2026-09-03T10:00:00Z', updatedAt: '2026-09-18T10:00:00Z' }), 14, now)).toEqual({ text: '3 Sep, closed without a reply on 18 Sep', urgent: false })
+    expect(applicationCardDetail(app({ status: 'shortlisted' }), 14, now).text).toBe('17 Sep, shortlisted')
   })
   it('picks the pending application first, else the most recent', () => {
     expect(pickApplication([app({ id: 'old', status: 'rejected', appliedAt: '2026-08-01' }), app({ id: 'p', appliedAt: '2026-09-01' })])?.id).toBe('p')
@@ -128,7 +128,7 @@ describe('club Chat application card', () => {
     render(<MemoryRouter><ChatApplicationCard app={app({ appliedAt: new Date().toISOString() })} expiryDays={14} /></MemoryRouter>)
     const card = screen.getByTestId('chat-application-card')
     expect(card.getAttribute('href')).toBe('/dashboard/opportunities/r1/applicants')
-    expect(screen.getByText('Applied to Midfielder · Men’s 1st player')).toBeInTheDocument()
+    expect(screen.getByText('Applied to Midfielder, Men’s 1st player')).toBeInTheDocument()
     expect(screen.getByText(/14 days left to reply/)).toBeInTheDocument()
   })
 })
@@ -171,11 +171,11 @@ describe('New context', () => {
 // ── Settings — club (DEV NOTE 355:927) ────────────────────────────────────
 describe('Settings — club', () => {
   it('copy helpers', () => {
-    expect(clubLeagueSubtitle({ current_world_club_id: 'w', mens_league_division: 'Leinster Division 1A' })).toBe('Linked · Leinster Division 1A')
-    expect(clubLeagueSubtitle({ current_world_club_id: null })).toBe('Not linked yet · link your club')
-    expect(contactEmailSubtitle(null, false)).toBe('Private · players message you on Hockia')
-    expect(contactEmailSubtitle('a@b.co', true)).toBe('Shown on your profile · a@b.co')
-    expect(contactEmailSubtitle('a@b.co', false)).toBe('Private · a@b.co')
+    expect(clubLeagueSubtitle({ current_world_club_id: 'w', mens_league_division: 'Leinster Division 1A' })).toBe('Linked: Leinster Division 1A')
+    expect(clubLeagueSubtitle({ current_world_club_id: null })).toBe('Not linked yet. Link your club')
+    expect(contactEmailSubtitle(null, false)).toBe('Private. Players message you on Hockia')
+    expect(contactEmailSubtitle('a@b.co', true)).toBe('Shown on your profile: a@b.co')
+    expect(contactEmailSubtitle('a@b.co', false)).toBe('Private: a@b.co')
     expect(isValidContactEmail('')).toBe(true)
     expect(isValidContactEmail('nope')).toBe(false)
     expect(isValidContactEmail('a@b.co')).toBe(true)
@@ -185,10 +185,10 @@ describe('Settings — club', () => {
     render(withClient(<SettingsMobile section="hub" />))
     expect(screen.getByText('Kilkenny Hockey Club')).toBeInTheDocument()
     expect(screen.getByText('Signed in with email')).toBeInTheDocument()
-    expect(screen.getByText('Club · admin')).toBeInTheDocument()
-    expect(screen.getByText('Linked · Leinster Division 1A')).toBeInTheDocument()
+    expect(screen.getByText('Club admin')).toBeInTheDocument()
+    expect(screen.getByText('Linked: Leinster Division 1A')).toBeInTheDocument()
     expect(screen.getByText('Contact email')).toBeInTheDocument()
-    expect(screen.getByText('Private · players message you on Hockia')).toBeInTheDocument()
+    expect(screen.getByText('Private. Players message you on Hockia')).toBeInTheDocument()
     expect(screen.getByText('Your league and crest show on your opportunities and profile. Recruiting lives in Opportunities.')).toBeInTheDocument()
   })
   it('Contact email opens its sheet; a bad email is refused before saving', () => {

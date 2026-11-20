@@ -152,7 +152,7 @@ describe('AIOpinionPanel', () => {
     expect(screen.getByTestId('ai-opinion-verdict')).toHaveTextContent(
       'Hoofdklasse player open this week — strong availability.',
     )
-    expect(screen.getByRole('button', { name: /Why · 2 citations/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Why \(2 citations\)/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Regenerate/i })).toBeInTheDocument()
     // Footer indicator. Scoped to the span that wraps the label so we
     // don't collide with "Fresh" appearing inside the verdict text.
@@ -178,7 +178,7 @@ describe('AIOpinionPanel', () => {
     render(<AIOpinionPanel candidate={candidate} />)
     expect(screen.queryByTestId('ai-opinion-citations')).toBeNull()
 
-    await userEvent.click(screen.getByRole('button', { name: /Why · 1 citation/i }))
+    await userEvent.click(screen.getByRole('button', { name: /Why \(1 citation\)/i }))
 
     const list = screen.getByTestId('ai-opinion-citations')
     expect(list).toBeInTheDocument()

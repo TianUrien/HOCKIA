@@ -168,12 +168,12 @@ export default function DevelopersPage() {
               </p>
               <p className="font-medium">This includes:</p>
               <ul className="list-none space-y-2 ml-4">
-                <li>• Position title and type (player or coach)</li>
-                <li>• Location (city and country)</li>
-                <li>• Team category (Adult men, Adult women, Girls, Boys, Mixed)</li>
-                <li>• Requirements and benefits offered</li>
-                <li>• Club name and logo</li>
-                <li>• Application deadline and start date</li>
+                <li>Position title and type (player or coach)</li>
+                <li>Location (city and country)</li>
+                <li>Team category (Adult men, Adult women, Girls, Boys, Mixed)</li>
+                <li>Requirements and benefits offered</li>
+                <li>Club name and logo</li>
+                <li>Application deadline and start date</li>
               </ul>
               
               {/* Privacy emphasis */}
@@ -276,9 +276,9 @@ export default function DevelopersPage() {
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Rate Limits & Usage</h2>
             <ul className="list-none space-y-2 text-gray-700 mb-4">
-              <li>• <strong>60 requests per minute</strong> per IP address</li>
-              <li>• <strong>500 requests per hour</strong> per IP address</li>
-              <li>• Responses are cached for up to <strong>5 minutes</strong></li>
+              <li><strong>60 requests per minute</strong> per IP address</li>
+              <li><strong>500 requests per hour</strong> per IP address</li>
+              <li>Responses are cached for up to <strong>5 minutes</strong></li>
             </ul>
             <p className="text-gray-600 text-sm">
               This API is public, read-only, and provided as-is. We reserve the right to change or limit 

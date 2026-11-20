@@ -101,13 +101,13 @@
     "title": "Settings",
     "fallbackName": "Your profile",
     "signedInWith": "Signed in with {{provider}}",
-    "clubAdmin": "Club · admin",
-    "roleSignedIn": "{{role}} · signed in with {{provider}}",
+    "clubAdmin": "Club admin",
+    "roleSignedIn": "{{role}}, signed in with {{provider}}",
     "providerEmail": "email",
     "signOut": "Sign out",
     "signingOut": "Signing out…",
     "deleteAccount": "Delete account",
-    "madeFor": "Hockia · Made for field hockey"
+    "madeFor": "Hockia. Made for field hockey"
   },
   "club": {
     "label": "Club",
@@ -186,8 +186,8 @@
     "colPush": "Push",
     "colEmail": "Email",
     "tellMeFooter": "Push and Email move together for now. Each type has one setting. Email for messages and profile views is bundled into a digest, never one email per event.",
-    "pushSwitch": "{{title}} · push",
-    "emailSwitch": "{{title}} · email"
+    "pushSwitch": "{{title}}, push",
+    "emailSwitch": "{{title}}, email"
   },
   "kinds": {
     "messagesTitle": "Messages",
@@ -243,11 +243,11 @@
     "title": "Delete your account?",
     "body": "This action is <strong>irreversible</strong>. All your profile data, messages, and uploaded media will be permanently deleted.",
     "loseAccess": "⚠️ You will lose access to:",
-    "loseProfile": "• Your profile and all personal information",
-    "loseMessages": "• All messages and conversations",
-    "loseMedia": "• All uploaded photos and media",
-    "loseApplications": "• Applications and opportunities",
-    "loseCareer": "• Career history and records",
+    "loseProfile": "Your profile and all personal information",
+    "loseMessages": "All messages and conversations",
+    "loseMedia": "All uploaded photos and media",
+    "loseApplications": "Applications and opportunities",
+    "loseCareer": "Career history and records",
     "typeToConfirm": "Type <word>{{word}}</word> to confirm:",
     "placeholder": "Type {{word}}",
     "cancel": "Cancel",

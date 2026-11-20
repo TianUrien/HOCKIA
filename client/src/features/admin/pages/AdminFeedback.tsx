@@ -311,8 +311,7 @@ export function AdminFeedback() {
                 {s === 'all' ? 'All' : STATUS_LABEL[s as FeedbackStatusFilter]}
               </button>
             ))}
-            <span className="text-gray-500 mx-2">·</span>
-            <span className="text-gray-500 mr-1">Category:</span>
+            <span className="text-gray-500 ml-4 mr-1">Category:</span>
             {(['all', 'bug', 'confusing', 'idea', 'praise', 'other'] as CategoryFilter[]).map((c) => (
               <button
                 key={c}
@@ -326,8 +325,7 @@ export function AdminFeedback() {
                 {c === 'all' ? 'All' : CATEGORY_META[c as FeedbackCategoryFilter].label}
               </button>
             ))}
-            <span className="text-gray-500 mx-2">·</span>
-            <label className="inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-2">
+            <label className="inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-2 ml-4">
               <input
                 type="checkbox"
                 checked={urgentOnly}
@@ -430,11 +428,11 @@ function FeedbackRowItem({
                 {row.user_role}
               </span>
             )}
-            <span>·</span>
+            {' '}
             <span>{formatAdminDate(row.created_at)}</span>
             {row.route && (
               <>
-                <span>·</span>
+                {' '}
                 <code className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded">{row.route}</code>
               </>
             )}

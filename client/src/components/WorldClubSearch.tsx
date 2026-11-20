@@ -443,8 +443,8 @@ export default function WorldClubSearch({
                           <Flag code={club.country_code} countryName={club.country_name} fallbackEmoji={club.flag_emoji} size="sm" />
                           <span className="truncate">
                             {club.country_name}
-                            {club.province_name && ` · ${club.province_name}`}
-                            {leagueName && ` · ${leagueName}`}
+                            {club.province_name && `, ${club.province_name}`}
+                            {leagueName && `, ${leagueName}`}
                           </span>
                         </p>
                       </div>

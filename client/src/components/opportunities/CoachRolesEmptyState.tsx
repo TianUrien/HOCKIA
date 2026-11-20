@@ -91,12 +91,19 @@ export function CoachRolesEmptyState({
           <SectionTitle>{t('coachEmpty.recentlyClosed')}</SectionTitle>
           {recentlyClosed.map((role) => {
             const own = closedRoleOwnStatus(ownStatuses[role.id])
-            const meta = [closedRoleMeta(role), closedRoleDate(role.closedAt, now)].filter(Boolean).join(' · ')
+            const where = closedRoleMeta(role)
+            const when = closedRoleDate(role.closedAt, now)
             return (
               <button key={role.id} type="button" onClick={() => onOpenRole(role.id)} className="flex min-h-[52px] w-full items-center gap-3 py-2.5 text-left" data-testid="coach-closed-role">
                 <span className="min-w-0 flex-1">
                   <span className="line-clamp-2 block break-words text-row font-semibold text-ink-1">{role.title}</span>
-                  {meta && <span className="block truncate text-caption text-ink-3">{meta}</span>}
+                  {(where || when) && (
+                    <span className="block truncate text-caption text-ink-3">
+                      {where}
+                      {where && when ? ' ' : null}
+                      {when && <span className={where ? 'ml-2' : undefined}>{when}</span>}
+                    </span>
+                  )}
                 </span>
                 {own && <span className={`shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold ${STATUS_TONE_PILL.grey}`} data-testid="coach-closed-role-status">{own}</span>}
                 <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={2} aria-hidden="true" />

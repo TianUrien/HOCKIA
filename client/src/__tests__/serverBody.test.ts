@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { PublicOpportunityRow } from '@/lib/seo/opportunityHead'
 import type { WorldClubHead, WorldCountryHead } from '@/lib/seo/worldHead'
 import {
-  advertisedRoles, clubBody, countryBody, injectServerBody, opportunitiesBody, roleBody, rolesForClub, worldBody,
+  advertisedRoles, clubBody, communityBody, countryBody, injectServerBody, opportunitiesBody, roleBody, rolesForClub, worldBody,
 } from '@/lib/seo/serverBody'
 
 const SHELL = '<html><head><title>t</title></head><body>\n    <div id="root"></div>\n    <script type="module" src="/assets/index-abc.js"></script>\n  </body></html>'
@@ -112,5 +112,15 @@ describe('world bodies', () => {
   it('world: one link per country', () => {
     const html = worldBody([{ code: 'AR', name: 'Argentina', totalClubs: 46 }], 'Intro.')
     expect(html).toContain('<a href="/world/ar">Field hockey clubs in Argentina</a> (46)')
+  })
+
+  it('community: says who the directory is for, with no people data and no counts', () => {
+    const html = communityBody('Meet players & coaches.')
+    expect(html).toContain('<h1>The field hockey community on Hockia</h1>')
+    expect(html).toContain('<p>Meet players &amp; coaches.</p>')
+    expect(html).toContain('players, coaches, clubs, umpires and brands in field hockey')
+    for (const tab of ['players', 'coaches', 'clubs', 'umpires', 'brands']) expect(html).toContain(`<a href="/community/${tab}">`)
+    expect(html.split('h1').join('')).not.toMatch(/\d/)
+    expect(injectServerBody(SHELL, html)).toContain('data-server-body="1"')
   })
 })

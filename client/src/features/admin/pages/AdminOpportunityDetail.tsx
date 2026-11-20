@@ -261,7 +261,7 @@ export function AdminOpportunityDetail() {
             }`}>
               {vacancy.status}
             </span>
-            <span className="text-sm text-gray-500">•</span>
+            {' '}
             <span className="text-sm text-gray-500 capitalize">{vacancy.opportunity_type}</span>
           </div>
         </div>

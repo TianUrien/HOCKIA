@@ -1,4 +1,5 @@
 import { RoleAiEntry } from '@/components/hockiaAi/RoleAiEntry'
+import { ClubNoteOriginal } from './ClubNoteOriginal'
 import { roleViewerGate } from '@/lib/roleViewerGate'
 import type { ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -101,7 +102,7 @@ export function OpportunityDetailDesktop({
   const city = vacancy.location_city?.trim() || ''
   const country = countryLabel(vacancy.location_country?.trim()) || ''
   const identity = identityProp ?? roleIdentity({ publisherRole, publisherName: clubName, publisherAvatar: clubLogo })
-  const placeLine = [countryFlag && (city || country) ? `${countryFlag} ${city || country}` : city || country, league].filter(Boolean).join(' · ')
+  const placeLine = [countryFlag && (city || country) ? `${countryFlag} ${city || country}` : city || country, league].filter(Boolean).join(', ')
   const benefits = roleBenefits(vacancy)
   const customBenefits = vacancy.custom_benefits ?? []
   const specialists = vacancy.specialist_skills_wanted ?? []
@@ -117,12 +118,12 @@ export function OpportunityDetailDesktop({
   const { startsValue, duration, applyByValue, applyBySub } = roleDates(vacancy)
   const userId = profile?.id ?? null
   const needsOwnRow = hasApplied && !!userId && (applicationStatus === 'rejected' || closed)
-  const { clubNote, appliedAt } = useOwnApplicationRow(vacancy.id, userId, needsOwnRow, applicationStatus)
+  const { clubNote, clubNoteOriginal, appliedAt } = useOwnApplicationRow(vacancy.id, userId, needsOwnRow, applicationStatus)
   const appliedOn = appliedOnLine(appliedAt)
   const compensationKey = (vacancy.compensation ?? '').toLowerCase()
-  const eyebrow = [identity.hiringClub?.name ?? clubName, pill?.label].filter(Boolean).join(' · ').toUpperCase()
+  const eyebrow = [identity.hiringClub?.name ?? clubName, pill?.label].filter(Boolean).join(', ').toUpperCase()
   const words = vacancy.description?.trim() ?? ''
-  const coachRoleLabel = identity.postedBy ? [identity.postedBy.roleLabel ?? t('detail.coach'), identity.hiringClub?.name].filter(Boolean).join(' · ') : null
+  const coachRoleLabel = identity.postedBy ? [identity.postedBy.roleLabel ?? t('detail.coach'), identity.hiringClub?.name].filter(Boolean).join(', ') : null
   const showPostedBy = identity.kind === 'coach-for-club' && !!identity.postedBy
 
   const back = () => { if (onClose) onClose(); else navigate('/opportunities') }
@@ -149,7 +150,7 @@ export function OpportunityDetailDesktop({
         <aside className="sticky top-[88px] self-start" data-testid="role-detail-aside">
           <RoleCover coverUrl={vacancy.cover_url} crestUrl={identity.displayLogo} palette={palette} scrim="hero" className="rounded-[28px] shadow-[0_12px_30px_rgba(0,0,0,0.12)]" style={{ height: wide ? 520 : 460 }}>
             <div className="absolute right-4 top-4 flex items-center gap-2.5">
-              <button type="button" onClick={() => void shareRole(vacancy, `${headline.title} · ${clubName}`, addToast)} aria-label={t('detail.share')} className={GLASS_BUTTON} style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+              <button type="button" onClick={() => void shareRole(vacancy, `${headline.title}, ${clubName}`, addToast)} aria-label={t('detail.share')} className={GLASS_BUTTON} style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
                 <Share className="h-[18px] w-[18px]" strokeWidth={1.8} />
               </button>
               {showMore && (
@@ -258,6 +259,7 @@ export function OpportunityDetailDesktop({
                   <div className="mt-3 border-t border-line pt-3" data-testid="club-note">
                     <p className="text-secondary font-semibold text-ink-2">{t('detail.clubNote')}</p>
                     <p className="mt-1.5 whitespace-pre-wrap break-words text-row leading-[21px] text-ink-1">{clubNote}</p>
+                    <ClubNoteOriginal original={clubNoteOriginal} />
                     <p className="mt-1.5 text-caption text-ink-3">{t('detail.noteFrom', { club: clubName })}</p>
                   </div>
                 )}
@@ -282,6 +284,7 @@ export function OpportunityDetailDesktop({
                 <div className="rounded-card bg-surface-grouped p-4">
                   <p className="text-secondary font-semibold text-ink-2">{t('detail.declineNoteTitle')}</p>
                   <p className="mt-1.5 whitespace-pre-wrap text-row leading-[21px] text-ink-1">{clubNote}</p>
+                  <ClubNoteOriginal original={clubNoteOriginal} />
                   <p className="mt-1.5 text-caption text-ink-3">{t('detail.noteFrom', { club: clubName })}</p>
                 </div>
               </section>
@@ -326,7 +329,7 @@ export function OpportunityDetailDesktop({
                     ))}
                   </span>
                 ))}
-                {askRow(t('detail.asks.available'), `${startsValue}${duration ? ` · ${duration}` : ''}`)}
+                {askRow(t('detail.asks.available'), `${startsValue}${duration ? `, ${duration}` : ''}`)}
               </div>
               {!closed && !isPublisher && relevant && (
                 <p className="mt-3 flex items-center gap-2 rounded-[12px] bg-positive-soft px-3.5 py-2.5 text-secondary text-positive" data-testid="role-eligibility">
@@ -339,7 +342,7 @@ export function OpportunityDetailDesktop({
               <section className="pt-9">
                 <h2 className={H2}>{wordsHeading(identity)}</h2>
                 {words && <p className="mt-3 max-w-[72ch] whitespace-pre-wrap text-[17px] leading-[26px] text-ink-1" data-testid="role-words">{words}</p>}
-                {(vacancy.requirements ?? []).length > 0 && <p className="mt-2 whitespace-pre-wrap text-row text-ink-2">{(vacancy.requirements ?? []).join(' · ')}</p>}
+                {(vacancy.requirements ?? []).length > 0 && <p className="mt-2 whitespace-pre-wrap text-row text-ink-2">{(vacancy.requirements ?? []).join(', ')}</p>}
               </section>
             )}
 

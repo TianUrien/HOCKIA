@@ -74,8 +74,8 @@
       "descriptionLength": "“Sobre la oportunidad” puede tener hasta {{max}} caracteres."
     },
     "check": {
-      "subPlayer": "Paso 3 de 3 · Cómo la ve cada deportista",
-      "subCoach": "Paso 3 de 3 · Cómo la ve cada entrenador/a",
+      "subPlayer": "Paso 3 de 3: cómo la ve cada deportista",
+      "subCoach": "Paso 3 de 3: cómo la ve cada entrenador/a",
       "titlePlayer": "Lo primero que pregunta cada deportista",
       "titleCoach": "Lo primero que pregunta cada entrenador/a"
     },
@@ -286,7 +286,7 @@
     "closedOn": "Cerrada el {{date}}",
     "filled": "cubierta",
     "notFilled": "sin cubrir",
-    "withReason": "{{closed}} · {{reason}}"
+    "withReason": "{{closed}}, {{reason}}"
   },
   "newContext": {
     "problems": {
@@ -301,26 +301,26 @@
   "clubEditLib": {
     "yearRange": "El año tiene que estar entre {{min}} y {{max}}.",
     "linked": "Vinculado",
-    "linkedLeague": "Vinculado · {{league}}",
+    "linkedLeague": "Vinculado: {{league}}",
     "photos_one": "{{count}} foto",
     "photos_other": "{{count}} fotos",
     "photos_many": "{{count}} fotos"
   },
   "clubSettings": {
     "groupFooter": "Tu liga y tu escudo se muestran en tus oportunidades y en tu perfil. La búsqueda de incorporaciones está en Oportunidades.",
-    "notLinked": "Sin vincular · vincula tu club",
-    "linkedLeague": "Vinculado · {{league}}",
-    "linkedNoLeague": "Vinculado · liga sin definir",
+    "notLinked": "Sin vincular. Vincula tu club",
+    "linkedLeague": "Vinculado: {{league}}",
+    "linkedNoLeague": "Vinculado, liga sin definir",
     "contactIntro": "Para que jugadores/as y entrenadores/as puedan contactar a tu club directamente. Tu email de inicio de sesión nunca se muestra.",
     "contactSwitchLabel": "Mostrar en tu perfil",
     "contactSwitchHelp": "Desactivado: te escriben por Hockia.",
-    "contactEmpty": "Privado · te escriben por Hockia",
-    "contactShown": "Visible en tu perfil · {{email}}",
-    "contactPrivate": "Privado · {{email}}"
+    "contactEmpty": "Privado. Te escriben por Hockia",
+    "contactShown": "Visible en tu perfil: {{email}}",
+    "contactPrivate": "Privado: {{email}}"
   },
   "manageMedia": {
     "title": "Multimedia",
-    "photosHeading": "Fotos · {{count}}",
+    "photosHeading": "Fotos {{count}}",
     "cancel": "Cancelar",
     "done": "Listo",
     "reorder": "Reordenar",
@@ -435,7 +435,7 @@
   },
   "clubSetup": {
     "title": "Sobre tu club",
-    "subtitle": "Paso 1 de 2 · lo que ven jugadores/as junto a cada oportunidad.",
+    "subtitle": "Paso 1 de 2: lo que ven jugadores/as junto a cada oportunidad.",
     "attest": "Tengo 18 años o más y tengo autorización para buscar incorporaciones para este club.",
     "saving": "Guardando…",
     "continue": "Continuar",
@@ -461,7 +461,7 @@
       "cityAria": "Ciudad: {{value}}",
       "cityAriaEmpty": "Ciudad: elegir",
       "choose": "Elegir",
-      "year": "Año de fundación · opcional",
+      "year": "Año de fundación, opcional",
       "yearNotSet": "Sin definir"
     },
     "sheets": {
@@ -498,14 +498,14 @@
   "postRoleStart": {
     "title": "Publicar una oportunidad",
     "aiTitle": "Empezar con Hockia AI",
-    "aiSub": "Beta · con tus propias palabras",
+    "aiSub": "Beta. Con tus propias palabras",
     "aiPlaceholder": "Lateral izquierdo para la primera de caballeros, pago, con vivienda, desde enero",
     "aiAria": "Describe la oportunidad con tus palabras",
     "drafting": "Armando tu oportunidad…",
     "draft": "Armar mi oportunidad",
     "aiNote": "Hockia AI completa la oportunidad, la oferta y la descripción. No se publica nada hasta que lo revises.",
     "postAgain": "Volver a publicar",
-    "againRow": "{{title}} · equipo {{team}}",
+    "againRow": "{{title}}, equipo {{team}}",
     "scratch": "Empezar desde cero",
     "scratchSub": "Los tres pasos, vacíos"
   },
@@ -551,21 +551,21 @@
   "postRole": {
     "steps": {
       "title1": "¿Qué buscas?",
-      "sub1": "Paso 1 de 3 · La oportunidad",
+      "sub1": "Paso 1 de 3: la oportunidad",
       "part1": "La posición",
       "title2": "¿Qué ofreces?",
-      "sub2": "Paso 2 de 3 · La oferta",
+      "sub2": "Paso 2 de 3: la oferta",
       "back2": "La oportunidad",
       "part2": "La oferta",
       "title3": "Revisar y publicar",
-      "sub3": "Paso 3 de 3 · Cómo la ve cada deportista",
+      "sub3": "Paso 3 de 3: cómo la ve cada deportista",
       "back3": "La oferta",
       "title3Edit": "Revisar y guardar"
     },
     "cover": {
       "invalid": "Usa una foto JPG, PNG o WebP de hasta 10 MB.",
       "uploadFailed": "No se pudo subir esta foto. Usa una JPG, PNG o WebP de hasta 10 MB.",
-      "label": "Portada · opcional",
+      "label": "Portada, opcional",
       "uploading": "Subiendo…",
       "change": "Cambiar",
       "add": "Agregar foto",
@@ -595,15 +595,15 @@
     "back": "Volver",
     "cancel": "Cancelar",
     "checkTitle": "Revisar tu oportunidad",
-    "aiBadge": "Redactada por Hockia AI · Beta",
-    "againBadge": "Publicada de nuevo · mismos detalles",
+    "aiBadge": "Redactada por Hockia AI, Beta",
+    "againBadge": "Publicada de nuevo, mismos detalles",
     "editTitle": "Editar oportunidad",
     "newTitle": "Nueva oportunidad",
     "saving": "Guardando…",
     "saveDraft": "Guardar borrador",
     "saveDraftShort": "Guardar",
     "stepOf": "Paso {{step}} de 3",
-    "desktopTitle": "{{title}} · {{part}}",
+    "desktopTitle": "{{title}}: {{part}}",
     "form": {
       "type": "Tipo de oportunidad",
       "typePlayer": "Jugador/a",
@@ -649,7 +649,7 @@
       "done": "Listo",
       "edit": "Editar",
       "needed": "Falta: {{items}}",
-      "optionalMissing": "Sin definir · opcional: {{items}}"
+      "optionalMissing": "Opcional, sin definir: {{items}}"
     },
     "ai": {
       "drafting": "Redactando…",
@@ -711,16 +711,16 @@
     "fit": {
       "position": "Posición",
       "thisPosition": "esta posición",
-      "positionMatch": "Juega de {{role}} · coincide",
-      "positionSecond": "{{primary}} · juega de {{role}} como segunda posición",
-      "positionSecondNoPrimary": "Otra posición · juega de {{role}} como segunda posición",
-      "positionMiss": "{{primary}} · la oportunidad es para {{role}}",
+      "positionMatch": "Juega de {{role}}, coincide",
+      "positionSecond": "{{primary}}, juega de {{role}} como segunda posición",
+      "positionSecondNoPrimary": "Otra posición, juega de {{role}} como segunda posición",
+      "positionMiss": "{{primary}}, la oportunidad es para {{role}}",
       "positionNone": "El perfil todavía no tiene posición. La oportunidad es para {{role}}",
       "category": "Categoría",
-      "categoryMatchTeam": "{{category}} · coincide con una oportunidad de {{team}}",
-      "categoryMatch": "{{category}} · coincide con esta oportunidad",
-      "categoryMissTeam": "{{category}} · la oportunidad es para {{team}}",
-      "categoryMiss": "{{category}} · no coincide con esta oportunidad",
+      "categoryMatchTeam": "{{category}}, coincide con una oportunidad de {{team}}",
+      "categoryMatch": "{{category}}, coincide con esta oportunidad",
+      "categoryMissTeam": "{{category}}, la oportunidad es para {{team}}",
+      "categoryMiss": "{{category}}, no coincide con esta oportunidad",
       "categoryNone": "El perfil todavía no tiene categoría de juego",
       "open": "Disponible para jugar",
       "openYes": "Figura como disponible",
@@ -794,7 +794,7 @@
     },
     "unsorted": "Sin clasificar",
     "backAria": "Volver a las opciones de estado",
-    "reasonHeading": "Motivo de “{{status}}” · opcional",
+    "reasonHeading": "Motivo de “{{status}}”, opcional",
     "skipReason": "Omitir — solo cambiar el estado",
     "clear": "Quitar",
     "viewProfile": "Ver perfil"
@@ -838,7 +838,7 @@
       "closed": "Cerradas"
     },
     "postOpportunity": "Publicar una oportunidad",
-    "repliesHeading": "Tus respuestas · últimos 30 días",
+    "repliesHeading": "Tus respuestas en los últimos 30 días",
     "repliesAria": "Postulaciones respondidas",
     "postRole": "Publicar una oportunidad",
     "noClosed": "Todavía no hay oportunidades cerradas.",
@@ -856,7 +856,7 @@
       "opportunities": "Oportunidades",
       "league": "Club y liga",
       "link": "Vincular tu club",
-      "visitor": "{{name}} · {{section}}"
+      "visitor": "{{name}}: {{section}}"
     },
     "toast": {
       "complete": "¡El perfil de tu club está completo! Jugadores/as y entrenadores/as ven primero los clubes con perfil completo.",

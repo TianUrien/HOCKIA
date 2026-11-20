@@ -55,7 +55,7 @@ function VideoCard({ video, onPlay, onVisibility, onDelete }: { video: ProfileVi
       <ProfileVideoTile video={video} locked={locked} compact eager size={{ width: 120, height: 72 }} onOpen={onPlay} className="h-[72px] w-[120px] shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-row font-semibold text-ink-1">{video.title}</p>
-        <p className="text-secondary text-ink-2">{duration ? t('manageMedia.readyWithDuration', { duration }) : t('manageMedia.ready')}</p>
+        <p className="text-secondary text-ink-2">{duration && <><span className="tabular-nums">{duration}</span>{' '}</>}<span className={duration ? 'ml-1 text-ink-2' : undefined}>{t('manageMedia.ready')}</span></p>
         <button type="button" onClick={onVisibility} className="mt-1.5 inline-flex h-[26px] max-w-full items-center gap-1 whitespace-nowrap rounded-full bg-surface-grouped px-2.5 text-caption font-semibold text-ink-2">
           {locked ? <Lock className="h-3 w-3" strokeWidth={2.2} /> : null}
           {locked ? t('manageMedia.chipRecruiters') : t('manageMedia.chipEveryone')}
@@ -67,11 +67,11 @@ function VideoCard({ video, onPlay, onVisibility, onDelete }: { video: ProfileVi
   )
 }
 
-function Section({ title, action, onAction, secondary, onSecondary, children }: { title: string; action?: string; onAction?: () => void; secondary?: string; onSecondary?: () => void; children: React.ReactNode }) {
+function Section({ title, count, action, onAction, secondary, onSecondary, children }: { title: string; count?: number; action?: string; onAction?: () => void; secondary?: string; onSecondary?: () => void; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-body font-semibold text-ink-1">{title}</h2>
+        <h2 className="text-body font-semibold text-ink-1">{title}{typeof count === 'number' && <>{' '}<span className="ml-1 text-ink-2">{count}</span></>}</h2>
         <span className="flex items-center gap-4">
           {secondary && <button type="button" onClick={onSecondary} className="-my-3 flex min-h-[44px] items-center text-row font-semibold text-ink-2">{secondary}</button>}
           {action && <button type="button" onClick={onAction} className="-my-3 flex min-h-[44px] items-center text-row font-semibold text-hockia-primary" data-testid="media-section-link">{action}</button>}
@@ -239,7 +239,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
           {fullGames.videos.map((l) => (
             <div key={l.id} className="flex items-center gap-3">
               <a href={l.video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[72px] w-[120px] shrink-0 items-center justify-center rounded-card bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-5 w-5" />{l.visibility === 'recruiters' && <VideoLockBadge size="sm" />}</a>
-              <button type="button" onClick={() => setLinkForm({ open: true, edit: l })} className="min-w-0 flex-1 text-left"><span className="block truncate text-row font-semibold text-ink-1">{l.match_title || (l.opponent_team ? t('manageMedia.versus', { opponent: l.opponent_team }) : t('manageMedia.fullMatch'))}</span><span className="block truncate text-secondary text-ink-2">{[l.match_date?.slice(0, 7), l.competition].filter(Boolean).join(' · ') || t('manageMedia.linkedVideo')}</span></button>
+              <button type="button" onClick={() => setLinkForm({ open: true, edit: l })} className="min-w-0 flex-1 text-left"><span className="block truncate text-row font-semibold text-ink-1">{l.match_title || (l.opponent_team ? t('manageMedia.versus', { opponent: l.opponent_team }) : t('manageMedia.fullMatch'))}</span><span className="block truncate text-secondary text-ink-2">{[l.match_date?.slice(0, 7), l.competition].filter(Boolean).join(', ') || t('manageMedia.linkedVideo')}</span></button>
               <button type="button" onClick={() => setPending({ kind: 'link', link: l })} aria-label={l.match_title ? t('manageMedia.deleteLinkNamed', { title: l.match_title }) : t('manageMedia.deleteLink')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3"><Trash2 className="h-4 w-4" strokeWidth={1.8} /></button>
             </div>
           ))}
@@ -253,7 +253,8 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
         </Section>
 
         <Section
-          title={t('manageMedia.photosTitle', { total: gallery.photos.length })}
+          title={t('manageMedia.photosTitle')}
+          count={gallery.photos.length}
           action={gallery.photos.length > 0 ? (reordering ? t('manageMedia.done') : t('manageMedia.reorder')) : undefined}
           onAction={() => (reordering ? finishReorder() : (setDraftOrder(gallery.photos), setReordering(true)))}
           secondary={reordering ? t('manageMedia.cancel') : undefined}
@@ -334,7 +335,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
       <ConfirmActionModal isOpen={pending !== null} onClose={() => setPending(null)} onConfirm={() => void confirmDelete()} title={pendingTitle} description={t('manageMedia.removeBody')} confirmLabel={t('manageMedia.removeConfirm')} confirmTone="danger" confirmLoading={deleting} loadingLabel={t('manageMedia.removing')} />
 
       {playing && (
-        <MediaLightbox images={[{ video_id: playing.id, media_type: 'video', duration: playing.durationSeconds, order: 0 }]} initialIndex={0} onClose={() => setPlaying(null)} videoLabel={playing.kind === 'highlight' ? t('manageMedia.playerHighlight') : t('manageMedia.playerFullMatch')} isOwner caption={[playing.title, formatVideoDuration(playing.durationSeconds)].filter(Boolean).join(' · ')} />
+        <MediaLightbox images={[{ video_id: playing.id, media_type: 'video', duration: playing.durationSeconds, order: 0 }]} initialIndex={0} onClose={() => setPlaying(null)} videoLabel={playing.kind === 'highlight' ? t('manageMedia.playerHighlight') : t('manageMedia.playerFullMatch')} isOwner caption={[playing.title, formatVideoDuration(playing.durationSeconds)].filter(Boolean).join(', ')} />
       )}
       {photoIndex !== null && (
         <MediaLightbox images={shownPhotos.map((p, i) => ({ url: p.url, media_type: 'image', order: i }))} initialIndex={photoIndex} onClose={() => setPhotoIndex(null)} caption={shownPhotos[photoIndex]?.caption ?? null} />

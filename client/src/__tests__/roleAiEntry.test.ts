@@ -29,7 +29,7 @@ describe('Hockia AI · applicants summary (C3)', () => {
   it('only the publisher sees it, under To review', () => {
     expect(read('../components/club/ApplicantsScreen.tsx')).toContain("chip === 'pending' && !selecting && role && clubId && role.club_id === clubId")
     expect(read('../components/club/ApplicantsAiSummary.tsx')).toContain("t('summary.eyebrow')")
-    expect(read('../locales/en/hockiaAi.json')).toContain('Hockia AI · Summary · Beta')
+    expect(read('../locales/en/hockiaAi.json')).toContain('Hockia AI summary, beta')
   })
 })
 

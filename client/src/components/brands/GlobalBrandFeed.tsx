@@ -134,7 +134,7 @@ function ProductFeedCard({ item }: { item: ProductFeedItem }) {
               <CheckCircle className="w-4 h-4 text-indigo-500 flex-shrink-0" />
             )}
           </div>
-          <p className="text-xs text-gray-500">{t('globalFeed.addedProduct', { time: timeAgo })}</p>
+          <p className="text-xs text-gray-500">{t('globalFeed.addedProduct')}{' '}<span className="ml-2">{timeAgo}</span></p>
         </div>
       </div>
 

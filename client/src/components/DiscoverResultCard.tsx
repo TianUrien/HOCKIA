@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown, Globe2, Check } from 'lucide-react'
 import Avatar from '@/components/Avatar'
@@ -113,9 +113,9 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
   // Secondary line under the name: position(s) for a player, specialization
   // for a coach, league/region for a World-directory club.
   const positionLine = isWorldClub
-    ? [result.league_name, result.province_name, countryLabel(result.base_country_name)].filter(Boolean).join(' · ')
+    ? [result.league_name, result.province_name, countryLabel(result.base_country_name)].filter(Boolean).join(', ')
     : specializationLabel
-      || [result.position, result.secondary_position].filter(Boolean).map(s => (hasEnumsKey(`position.${s}`) ? te(`position.${s}` as never) : cap(s as string))).join(' · ')
+      || [result.position, result.secondary_position].filter(Boolean).map(s => (hasEnumsKey(`position.${s}`) ? te(`position.${s}` as never) : cap(s as string))).join(', ')
       || null
 
   const nationality = !isWorldClub ? nationalityLabel(result.nationality_name) : null
@@ -197,15 +197,15 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
             )}
 
             {metaItems.length > 0 && (
-              <div className="flex items-center gap-x-1.5 mt-1 text-xs text-gray-600">
+              <div className="flex items-center gap-x-3 mt-1 text-xs text-gray-600">
                 {metaItems.map((it, i) => (
-                  <span key={i} className="inline-flex items-center gap-x-1.5">
-                    {i > 0 && <span className="text-gray-500" aria-hidden="true">·</span>}
+                  <Fragment key={i}>
+                    {i > 0 ? ' ' : null}
                     <span className="inline-flex items-center gap-1">
                       {it.flag && <span aria-hidden="true">{it.flag}</span>}
                       <span>{it.text}</span>
                     </span>
-                  </span>
+                  </Fragment>
                 ))}
               </div>
             )}

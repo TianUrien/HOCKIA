@@ -83,7 +83,7 @@ export function AdminBrandOffers() {
               onClick={() => setTab(t.value)}
               className={cn('rounded-full px-4 py-1.5 text-sm font-semibold', tab === t.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500')}
             >
-              {t.label} · {counts[t.value]}
+              {t.label}{' '}<span className="font-normal text-gray-500">{counts[t.value]}</span>
             </button>
           ))}
         </div>
@@ -162,14 +162,14 @@ function OfferPanel({ offer, canTakeDown, busy, onTakeDown }: OfferPanelProps) {
   const f = shownFields(offer)
   const [dialogOpen, setDialogOpen] = useState(false)
   const countries = names(f.country_ids)
-  const where = [countries.join(', '), f.area?.trim()].filter(Boolean).join(' · ')
+  const where = [countries.join(', '), f.area?.trim()].filter(Boolean).join(', ')
   const who = f.roles.map((r) => OFFER_ROLES.find((x) => x.value === r)?.label ?? r).join(', ')
 
   const meta = useMemo(() => {
     const parts = [offer.brand_name]
     if (offer.live_at) parts.push(`live since ${shortDate(offer.live_at)}`)
     if (offer.brand_offer_count <= 1) parts.push('first offer from this brand')
-    return parts.join(' · ')
+    return parts.join(', ')
   }, [offer])
 
   const takeDown = async (reason: string) => {
@@ -210,7 +210,7 @@ function OfferPanel({ offer, canTakeDown, busy, onTakeDown }: OfferPanelProps) {
             <dt className="text-gray-500">Dates</dt>
             <dd className="text-gray-900">{f.starts_at ? `From ${shortDate(f.starts_at)}` : 'From publishing'}{f.ends_at ? `, until ${shortDate(f.ends_at)}` : ', no end date'}</dd>
             <dt className="text-gray-500">Brand</dt>
-            <dd className="text-gray-900">Free plan · {offer.brand_live_count} of {OFFER_LIVE_LIMIT} live</dd>
+            <dd className="text-gray-900">Free plan, {offer.brand_live_count} of {OFFER_LIVE_LIMIT} live</dd>
           </dl>
 
           {canTakeDown ? (

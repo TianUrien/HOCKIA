@@ -235,7 +235,7 @@ describe('step 2 · Your coaching (586:849 / 587:911)', () => {
     mocks.profile.current = stepTwoCoach()
     const onFinished = renderFlow()
     expect(screen.getByText('Step 2 of 2')).toBeInTheDocument()
-    expect(screen.getByText('Step 2 of 2 · clubs filter coaches by these.')).toBeInTheDocument()
+    expect(screen.getByText('Step 2 of 2. Clubs filter coaches by these.')).toBeInTheDocument()
     expect(screen.getByText('Pick every category you coach.')).toBeInTheDocument()
     expect(screen.getByText('Current club Optional')).toBeInTheDocument()
     expect(screen.getByText('Yes adds My opportunities and Find players to your app. You can change this in Settings.')).toBeInTheDocument()

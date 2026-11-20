@@ -67,6 +67,7 @@ See decisions/ADR-0004.
 | **Players never see counts, scores, levels or reply-time estimates** | Header comment and helpers in `client/src/lib/opportunityCopy.ts` |
 | **Status labels and copy come from shared helpers**, not inline strings | `lib/applicationStatus.ts`, `lib/opportunityCopy.ts`, `lib/clubInviteCopy.ts`, `lib/clubSquadCopy.ts`, `lib/careerCopy.ts`, `lib/videoCopy.ts`, `lib/invites.ts`, `lib/signing.ts` |
 | **Two languages (2026-11-16, Claude Code)**: new or changed member-facing copy goes into `client/src/locales/en` and `es` in the same PR; dates, times, numbers and lists come from `client/src/i18n/format.ts` or `lib/dayFirst.ts`. Admin stays English | ESLint `i18next/no-literal-string` on the files listed in `I18N_MIGRATED` (`client/eslint.config.js`; the list only grows) and `client/scripts/check-locales.mjs` (part of `npm run lint`); how-to in `client/src/locales/README.md` |
+| **No middle-dot or bullet separators in member-facing text (2026-11-19, founder decision, Claude Code)**: same-kind facts are joined with a comma ("Player, Argentina"); different kinds (a role, then a time) get no separator character, the second sits in its own element with a gap and the secondary text colour; a title of two phrases uses a full stop or a line break; the dot is never swapped for another glyph; English and Spanish change together. a label and its count read "Squad (24)" or "See all 5", or the count sits in its own element. Applies to every screen, the admin screens included (whole app done 2026-11-19) | `client/src/__tests__/appNoMiddleDot.test.ts` scans every source file and every locale file (code comments are skipped); per-area tests (`homeNoMiddleDot`, `recruitingNoMiddleDot`, `profileNoMiddleDot`, `communityNoMiddleDot`, `adminNoMiddleDot`) pin each area's helpers |
 | **No Save/bookmark surfaces in the player redesign** | Founder ruling (see memory); not machine-checked |
 | **Figma "03 Player" / "04 Club" pages are the source of truth for the redesign** | Component headers cite Figma node ids |
 
@@ -137,6 +138,12 @@ Verified in the 2026-09/10 migrations; older migrations predate some of these.
 12. **Applied only with the CLI**: `supabase db push --linked` after a
     `--dry-run`; never through a dashboard SQL editor or an MCP tool. See
     decisions/ADR-0001.
+13. **Rewrite a function from its latest body** (added 2026-11-18, source:
+    the `create_user_post` regression). Before a `CREATE OR REPLACE`, find the
+    newest migration that defines the function
+    (`grep -ln "FUNCTION public.<name>" supabase/migrations/* | tail -1`) and
+    start from that text. Twice a rewrite from an older copy dropped this
+    function's rate limit (2026-04-11 and 2026-09-20).
 
 ## 7. Edge function conventions (`supabase/functions`)
 

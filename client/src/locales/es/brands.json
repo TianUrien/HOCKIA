@@ -29,7 +29,7 @@
       "paused": "Pausada",
       "ended": "Finalizada"
     },
-    "liveLimitLine": "{{live}} de {{limit}} publicadas · gratis para todas las marcas por ahora",
+    "liveLimitLine": "{{live}} de {{limit}} publicadas. Gratis para todas las marcas por ahora",
     "counts": {
       "shown_one": "{{n}} vista",
       "shown_other": "{{n}} vistas",
@@ -63,7 +63,7 @@
       "takenDown": "Retirada. Puedes editarla y volver a publicarla.",
       "notPublished": "Todavía sin publicar",
       "paused": "Pausada {{when}}. La comunidad no la ve.",
-      "ended": "Finalizada el {{date}} · {{counts}}"
+      "ended": "Finalizada el {{date}}. {{counts}}"
     },
     "missing": {
       "photo": "Agregar una foto",
@@ -254,7 +254,7 @@
     },
     "products": {
       "title": "Productos",
-      "line": "{{seen}} vistas · {{store}} a la tienda"
+      "line": "{{seen}} vistas, {{store}} a la tienda"
     },
     "community": {
       "title": "Embajadores/as y seguidores/as",
@@ -680,7 +680,7 @@
   "globalFeed": {
     "emptyTitle": "Todavía no hay actividad",
     "emptyBody": "Cuando las marcas agreguen productos o compartan novedades, van a aparecer acá.",
-    "addedProduct": "Agregó un producto · {{time}}",
+    "addedProduct": "Agregó un producto",
     "learnMore": "Ver más",
     "viewBrand": "Ver marca",
     "postImageAlt": "Imagen de la publicación"
@@ -726,7 +726,7 @@
     "whyPrompt": "Cuéntanos por qué (opcional, la marca solo ve totales)",
     "seeOffer": "Ver oferta",
     "notUseful": "No es útil",
-    "fromBrandsBy": "De marcas · {{brand}}",
+    "fromBrandsBy": "De marcas: {{brand}}",
     "fromBrands": "De marcas",
     "openOffer": "Abrir oferta: {{title}}"
   },
@@ -759,7 +759,7 @@
     "liveOf": "{{live}} de {{limit}} publicadas",
     "drafts_one": "{{count}} borrador",
     "drafts_other": "{{count}} borradores",
-    "subtitleWithDrafts": "{{live}} · {{drafts}}",
+    "subtitleWithDrafts": "{{live}}, {{drafts}}",
     "tileShown": "Se mostró a",
     "tileOpened": "Abiertas",
     "tileStore": "A tu tienda",
@@ -875,7 +875,7 @@
       "storeTaps_one": "visita a tu tienda",
       "storeTaps_other": "visitas a tu tienda",
       "title": "Alcance de esta semana",
-      "seeViewers": "Solo tú ves esto · Últimos 7 días · Ver quién visitó",
+      "seeViewers": "Solo tú ves esto. Últimos 7 días. Ver quién visitó",
       "sheetLabel": "Visitas al perfil",
       "searches_one": "Tu marca apareció en {{n}} búsqueda en los últimos 7 días.",
       "searches_other": "Tu marca apareció en {{n}} búsquedas en los últimos 7 días.",
@@ -930,7 +930,7 @@
       "products": "Productos",
       "addProductAction": "+ Agregar producto",
       "addProduct": "Agregar producto",
-      "ambassadorsCount": "Embajadores/as · {{n}}",
+      "ambassadorsCount": "Embajadores/as ({{n}})",
       "ambassadors": "Embajadores/as",
       "inviteAction": "+ Invitar",
       "noAmbassadors": "Todavía no hay embajadores/as.",
@@ -1075,7 +1075,7 @@
     "lowSupply_other": "Por ahora, {{count}} marcas venden en {{where}}",
     "lowSupply_many": "Por ahora, {{count}} marcas venden en {{where}}",
     "offersTitle": "Ofertas para integrantes",
-    "offersSubtitle": "Solo en Hockia · {{country}}",
+    "offersSubtitle": "Solo en Hockia, {{country}}",
     "offersSubtitleNoCountry": "Solo en Hockia",
     "seeAll": "Ver todo",
     "allBrands": "Todas las marcas"

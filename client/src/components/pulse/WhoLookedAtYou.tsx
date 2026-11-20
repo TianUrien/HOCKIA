@@ -28,7 +28,7 @@ export function WhoLookedAtYou({ rows }: { rows: readonly WeekViewerRow[] }) {
 
   const caption = (v: ViewerLine) => {
     const flag = v.countryId != null ? getCountryById(v.countryId)?.flag_emoji ?? null : null
-    return [v.meta, flag].filter(Boolean).join(' · ')
+    return [v.meta, flag].filter(Boolean).join(' ')
   }
   const avatar = (v: ViewerLine, size: 48 | 44) =>
     v.hidden ? (

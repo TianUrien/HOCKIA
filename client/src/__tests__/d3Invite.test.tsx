@@ -54,9 +54,9 @@ describe('the sheet copy (D3.2)', () => {
       .toContain('we’re recruiting a goalkeeper for Club X, and')
   })
   it('role card: position · title, then the offer', () => {
-    expect(inviteRoleLabel(role())).toBe('Midfielder · Men’s 1st player')
+    expect(inviteRoleLabel(role())).toBe('Midfielder, Men’s 1st player')
     expect(inviteRoleLabel(role({ position: null }))).toBe('Men’s 1st player')
-    expect(roleOfferLine(role())).toBe('Paid · Housing · Flights · Insurance · Job')
+    expect(roleOfferLine(role())).toBe('Paid, Housing, Flights, Insurance, Job')
     expect(roleOfferLine(role({ compensation: null, benefits: [] }))).toBeNull()
   })
   it('the footer is gender-neutral', () => {
@@ -204,8 +204,8 @@ describe('Invite sheet (D3.2)', () => {
     // One role card (the active one); Change role lists the others.
     expect(screen.getAllByTestId('invite-role')).toHaveLength(1)
     expect(screen.getByTestId('invite-role').getAttribute('aria-checked')).toBe('true')
-    expect(screen.getByText('Midfielder · Men’s 1st player')).toBeTruthy()
-    expect(screen.getByText('Paid · Housing · Flights · Insurance · Job')).toBeTruthy()
+    expect(screen.getByText('Midfielder, Men’s 1st player')).toBeTruthy()
+    expect(screen.getByText('Paid, Housing, Flights, Insurance, Job')).toBeTruthy()
     const note = screen.getByRole('textbox', { name: 'Note to Facundo' }) as HTMLTextAreaElement
     expect(note.value).toMatch(/^Hi Facundo, we’re recruiting a midfielder for Kilkenny Hockey Club’s Men’s team/)
     expect(screen.getByTestId('invite-note-draft')).toBeTruthy()
@@ -233,7 +233,7 @@ describe('Invite sheet (D3.2)', () => {
   it('the template label has no sparkle (sparkle is for real AI text only)', () => {
     render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
     const label = screen.getByTestId('invite-note-draft')
-    expect(label.textContent).toContain('Drafted from the opportunity · tap to edit')
+    expect(label.textContent).toContain('Drafted from the opportunity. Tap to edit')
     expect(label.querySelector('.lucide-sparkles')).toBeNull()
     expect(label.querySelector('.lucide-pencil')).not.toBeNull()
   })
@@ -242,7 +242,7 @@ describe('Invite sheet (D3.2)', () => {
     inv.declined = ['r1']
     render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
     // The active role was passed on → said so, nothing preselected, the club picks.
-    expect(screen.getByTestId('invite-passed-active').textContent).toBe('Facundo passed on Midfielder · Men’s 1st player. Choose another opportunity.')
+    expect(screen.getByTestId('invite-passed-active').textContent).toBe('Facundo passed on Midfielder, Men’s 1st player. Choose another opportunity.')
     expect(screen.getAllByTestId('invite-role')).toHaveLength(2)
     expect(screen.getAllByTestId('invite-role').every((r) => r.getAttribute('aria-checked') === 'false')).toBe(true)
     expect((screen.getByTestId('invite-send') as HTMLButtonElement).disabled).toBe(true)
@@ -290,8 +290,8 @@ describe('Invitation in chat (D3.3)', () => {
   it('player: role facts, the note, View opportunity / Apply / Not interested — no fit, no counts', () => {
     inRouter(<InviteCard inviteId="i1" opportunityId="r1" isMine={false} fallbackText="x" />)
     expect(screen.getByText('Invitation to apply')).toBeTruthy()
-    expect(screen.getByText('Midfielder · Men’s 1st player')).toBeTruthy()
-    expect(screen.getByText('Housing · Flights · Insurance · Job')).toBeTruthy()
+    expect(screen.getByText('Midfielder, Men’s 1st player')).toBeTruthy()
+    expect(screen.getByText('Housing, Flights, Insurance, Job')).toBeTruthy()
     expect(screen.getByText('Leinster Division 1A')).toBeTruthy()
     expect(screen.getByText('Paid')).toBeTruthy()
     expect(screen.getByTestId('invite-card-note').textContent).toBe('Hi Facundo, would you like to apply?')

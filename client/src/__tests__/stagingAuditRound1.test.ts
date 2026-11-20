@@ -90,9 +90,9 @@ describe('Applicant note', () => {
 describe('Role headline', () => {
   it('title first, position · team second', () => {
     expect(roleHeadline({ title: '[QA] Midfielder test', position: 'midfielder', opportunity_type: 'player', gender: 'Men' }))
-      .toEqual({ title: '[QA] Midfielder test', detail: "Midfielder · Men's" })
+      .toEqual({ title: '[QA] Midfielder test', detail: "Midfielder, Men's" })
     expect(roleHeadline({ title: 'Head coach, 1st team', position: 'head_coach', opportunity_type: 'coach', gender: 'Boys' }))
-      .toEqual({ title: 'Head coach, 1st team', detail: 'Head coach · Boys' })
+      .toEqual({ title: 'Head coach, 1st team', detail: 'Head coach, Boys' })
     expect(roleHeadline({ title: '  ', position: 'forward', opportunity_type: 'player', gender: null }).title).toBe('Forward')
   })
 })
@@ -121,7 +121,7 @@ describe('Round 1 follow-up', () => {
   it('"No reply · Nd" is grey for the player, and still flags the long wait', () => {
     const now = new Date('2026-09-26T12:00:00Z')
     const pill = applicationStatusPill('pending', '2026-09-06T12:00:00Z', true, now)
-    expect(pill).toEqual({ label: 'No reply · 20d', tone: 'grey', waitingLong: true })
+    expect(pill).toEqual({ label: 'No reply in 20d', tone: 'grey', waitingLong: true })
     expect(applicationStatusPill('pending', '2026-09-20T12:00:00Z', true, now).waitingLong).toBeUndefined()
     for (const s of ['pending', 'shortlisted', 'maybe', 'rejected', 'withdrawn', 'no_response', 'filled']) {
       expect(applicationStatusPill(s, '2026-01-01T00:00:00Z', true, now).tone).not.toBe('amber')

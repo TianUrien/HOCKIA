@@ -18,6 +18,7 @@ export type TileIcon = LucideIcon | HockiaIcon
 import { differenceInCalendarDays } from 'date-fns'
 import { dayFirst, parseDayFirst } from './dayFirst'
 import type { Vacancy } from '@/lib/supabase'
+import { intlLocale } from '@/i18n/format'
 import { compensationLabel } from '@/lib/opportunityIntent'
 import { humanizeToken, positionLabel } from '@/lib/identity'
 import { APPLICATION_STATUS_LABELS, roleClosedLabel } from '@/lib/applicationStatus'
@@ -39,7 +40,7 @@ export function roleTitle(v: { position: string | null; title: string; opportuni
 export function roleHeadline(v: { position: string | null; title: string | null; opportunity_type: string | null; gender?: string | null }): { title: string; detail: string | null } {
   const pos = v.position ? positionLabel(v.position) : null
   const team = genderPill(v.gender ?? null)?.label ?? null
-  const detail = [pos, team].filter(Boolean).join(' · ') || null
+  const detail = [pos, team].filter(Boolean).join(', ') || null
   const title = v.title?.trim() || detail || tOpportunities('role.fallbackTitle')
   return { title, detail }
 }
@@ -140,7 +141,7 @@ export function whenLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>, now =
   if (start) parts.push(start)
   const duration = formatDurationText(v.duration_text)
   if (duration) parts.push(duration)
-  return parts.length ? parts.join(' · ') : tOpportunities('dates.startsImmediately')
+  return parts.length ? parts.join(', ') : tOpportunities('dates.startsImmediately')
 }
 
 /** Detail header: "Starts 16 Sep 2026 · 3 months" (the header always carries the year). */
@@ -149,7 +150,7 @@ export function startsLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>): st
   const starts = v.start_date
     ? tOpportunities('dates.startsOn', { date: dayFirst(v.start_date, { year: 'always' }) ?? v.start_date })
     : tOpportunities('dates.startsImmediately')
-  return duration ? `${starts} · ${duration}` : starts
+  return duration ? `${starts}, ${duration}` : starts
 }
 
 /**
@@ -177,9 +178,9 @@ export function postedLine(v: Pick<Vacancy, 'created_at' | 'application_deadline
   const posted = postedLabel(days)
   if (closed) {
     const c = dayFirst(v.closed_at, { year: 'always' })
-    return `${posted} · ${c ? tOpportunities('dates.closedOn', { date: c }) : tOpportunities('dates.closed')}`
+    return `${posted}. ${c ? tOpportunities('dates.closedOn', { date: c }) : tOpportunities('dates.closed')}`
   }
-  return `${posted} · ${deadlineLine(v)}`
+  return `${posted}. ${deadlineLine(v)}`
 }
 
 /** Deadlines inside this many days read as a countdown (copy rule). */
@@ -223,7 +224,7 @@ export function postedOnlyLine(v: Pick<Vacancy, 'created_at'> & { closed_at?: st
   const posted = postedLabel(days)
   if (closed) {
     const c = dayFirst(v.closed_at, { year: 'always' })
-    return `${posted} · ${c ? tOpportunities('dates.closedOn', { date: c }) : tOpportunities('dates.closed')}`
+    return `${posted}. ${c ? tOpportunities('dates.closedOn', { date: c }) : tOpportunities('dates.closed')}`
   }
   return posted
 }
@@ -411,10 +412,32 @@ export function closedRoleView(o: { isClosed: boolean; hasApplied: boolean; isPu
  * never an AI explanation or a stale note from an earlier status.
  */
 export function clubNoteFromFeedback(aiFeedback: unknown, status: string | null | undefined): string | null {
+  const note = clubNoteParts(aiFeedback, status)
+  return note ? note.translation ?? note.original : null
+}
+
+/**
+ * The club's own words, only when the note is being shown translated into the
+ * reader's language (ai_feedback.translations, written by the server). Shown
+ * below the translation so the reader can always see what the club wrote.
+ */
+export function clubNoteOriginalFromFeedback(aiFeedback: unknown, status: string | null | undefined): string | null {
+  const note = clubNoteParts(aiFeedback, status)
+  return note?.translation ? note.original : null
+}
+
+function clubNoteParts(aiFeedback: unknown, status: string | null | undefined): { original: string; translation: string | null } | null {
   if (status !== 'rejected' || !aiFeedback || typeof aiFeedback !== 'object' || Array.isArray(aiFeedback)) return null
   const fb = aiFeedback as Record<string, unknown>
   if (fb.source !== 'club' || fb.status !== 'rejected' || typeof fb.message !== 'string') return null
-  return fb.message.trim() || null
+  const original = fb.message.trim()
+  if (!original) return null
+  const all = fb.translations && typeof fb.translations === 'object' && !Array.isArray(fb.translations)
+    ? (fb.translations as Record<string, unknown>)
+    : null
+  const mine = all?.[intlLocale().slice(0, 2)]
+  const translation = typeof mine === 'string' && mine.trim() && mine.trim() !== original ? mine.trim() : null
+  return { original, translation }
 }
 
 /** "Applied 3 Sep 2026" — the full date on a closed role's application block (day first, like every date). */

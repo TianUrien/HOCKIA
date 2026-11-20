@@ -25,7 +25,7 @@ describe('KeyFactsGrid', () => {
     fireEvent.click(screen.getByText('Add date'))
     fireEvent.click(screen.getByText('Add another'))
     expect(onAction.mock.calls.map((c) => c[0])).toEqual(['add_league', 'add_date', 'add_passport'])
-    expect(screen.getByText(/United Kingdom · Visa/).className).toContain('text-amber-600')
+    expect(screen.getByText(/United Kingdom, Visa/).className).toContain('text-amber-600')
   })
 
   it('viewer: "not given" copy, no links', () => {
@@ -51,7 +51,7 @@ describe('KeyFactsGrid · coach', () => {
     render(<KeyFactsGrid facts={buildCoachKeyFacts({ ...coach, currentRole: 'Head coach, U21 women' }, { viewer: 'public', today })} />)
     const tile = screen.getByTestId('key-fact-coaches_at')
     expect(tile.textContent).toContain('Old Lions')
-    expect(tile.textContent).toContain('Head coach, U21 women · current role')
+    expect(tile.textContent).toContain('Head coach, U21 women, current role')
   })
   it('no role → the club alone; nothing → "Not set" with Add club for the owner', () => {
     const { unmount } = render(<KeyFactsGrid facts={buildCoachKeyFacts({ ...coach, currentRole: null }, { viewer: 'public', today })} />)

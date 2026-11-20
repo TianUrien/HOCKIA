@@ -67,7 +67,7 @@ function SliceTip({ active, payload, whole }: { active?: boolean; payload?: Arra
   return (
     <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-sm">
       <div className="font-medium text-gray-900">{name}</div>
-      <div className="text-gray-600 tabular-nums">{value.toLocaleString()} · {shareLabel(value, whole)}</div>
+      <div className="text-gray-600 tabular-nums">{value.toLocaleString()}{' '}<span className="text-gray-500">{shareLabel(value, whole)}</span></div>
     </div>
   )
 }

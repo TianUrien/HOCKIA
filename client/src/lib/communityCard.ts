@@ -142,7 +142,7 @@ export function placeLabel(place: DisplayPlace, withCountry = false): string | n
  */
 export function cardPlaceLine(age: number | null | undefined, place: string | null | undefined): string | null {
   const parts = [typeof age === 'number' ? String(age) : null, place || null].filter(Boolean)
-  return parts.length > 0 ? parts.join(' · ') : null
+  return parts.length > 0 ? parts.join(', ') : null
 }
 
 /** Up to two initials for the no-photo monogram. */
@@ -230,7 +230,7 @@ export function clubMetaLine(opts: {
     const unique = [...new Set(roles)]
     return unique.length > 0 ? tCommunity('card.recruitingFor', { positions: unique.join(', ') }) : tCommunity('card.recruiting')
   }
-  return [opts.league, opts.place].filter(Boolean).join(' · ') || tEnums('role.club')
+  return [opts.league, opts.place].filter(Boolean).join(', ') || tEnums('role.club')
 }
 
 /**

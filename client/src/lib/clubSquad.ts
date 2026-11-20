@@ -22,12 +22,12 @@ export interface SquadPerson {
 export function squadRoleLine(p: Pick<SquadPerson, 'role' | 'position' | 'secondary_position' | 'coach_specialization' | 'coach_specialization_custom'>): string {
   if (p.role === 'coach') {
     const label = coachSpecialtyLabel(p.coach_specialization, p.coach_specialization_custom)
-    return [roleLabel('coach'), label].filter(Boolean).join(' · ')
+    return [roleLabel('coach'), label].filter(Boolean).join(', ')
   }
   const positions = [p.position, p.secondary_position]
     .filter((v, i, a): v is string => Boolean(v) && a.indexOf(v) === i)
     .map((v) => positionLabel(v) ?? v)
-  return [roleLabel('player'), ...positions].join(' · ')
+  return [roleLabel('player'), ...positions].join(', ')
 }
 
 /** "Kilkenny Hockey Club" → "Kilkenny" for the empty-state line (Figma D1.15). */

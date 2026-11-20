@@ -164,7 +164,7 @@ export default function ClubFitChip({
 
   const label = clubFitStateLabel(fit.state)
   const tooltip = fit.reasons.length > 0
-    ? t('clubFitChip.tooltip', { label, reasons: fit.reasons.join(' · ') })
+    ? t('clubFitChip.tooltip', { label, reasons: fit.reasons.join('. ') })
     : label
   const ariaLabel = kind === 'coach'
     ? t('clubFitChip.ariaCoach', { label })
@@ -364,10 +364,7 @@ function ReasoningPopover({
       </span>
       <span className="block space-y-1 text-[11px] text-gray-700">
         {reasons.map((r, i) => (
-          <span key={i} className="flex gap-1.5">
-            <span className="text-gray-400 mt-0.5">·</span>
-            <span>{r}</span>
-          </span>
+          <span key={i} className="block">{r}</span>
         ))}
       </span>
     </span>,

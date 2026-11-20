@@ -246,7 +246,7 @@ export default function MemberCard({
                 <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">{t('memberCard.level')}</span>
                 <span className="text-gray-700">
                   {umpireLevel ?? ''}
-                  {umpireLevel && federation ? ' · ' : ''}
+                  {umpireLevel && federation ? ', ' : ''}
                   {federation ?? ''}
                 </span>
               </div>
@@ -277,7 +277,7 @@ export default function MemberCard({
           <div className="flex items-center gap-2.5">
             <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">{t('memberCard.position')}</span>
-            <span className="text-gray-700">{positions.map(positionLabelOf).join(' • ')}</span>
+            <span className="text-gray-700">{positions.map(positionLabelOf).join(', ')}</span>
           </div>
         ) : null}
 

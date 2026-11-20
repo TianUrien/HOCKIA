@@ -4,7 +4,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { playerApplicationStatusBadge, applicationStatusFallbackMessage, applicationStatusLabel, feedbackMessageKind } from '@/lib/applicationStatus'
-import { clubNoteFromFeedback } from '@/lib/opportunityCopy'
+import { clubNoteFromFeedback, clubNoteOriginalFromFeedback } from '@/lib/opportunityCopy'
+import { ClubNoteOriginal } from '@/components/opportunities/ClubNoteOriginal'
 import { dayFirst } from '@/lib/dayFirst'
 import { currentLanguage } from '@/i18n'
 import { useOpportunitiesT } from '@/i18n/ns/opportunities'
@@ -103,6 +104,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
   const [history, setHistory] = useState<HistoryRow[]>([])
   const [firstViewedAt, setFirstViewedAt] = useState<string | null>(null)
   const [aiMessage, setAiMessage] = useState<string | null>(null)
+  const [noteOriginal, setNoteOriginal] = useState<string | null>(null)
   const [messageKind, setMessageKind] = useState<MessageKind>('ai')
   const [deadline, setDeadline] = useState<string | null>(null)
   const [resolved, setResolved] = useState(false)
@@ -169,6 +171,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
       setLoading(false)
 
       // AI explanation for the current status (only once the club has responded).
+      setNoteOriginal(null)
       if (!status || !RESPONDED.includes(status)) {
         setAiMessage(null)
         return
@@ -179,6 +182,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
       if (clubNote) {
         setMessageKind('club')
         setAiMessage(clubNote)
+        setNoteOriginal(clubNoteOriginalFromFeedback((app as { ai_feedback?: unknown }).ai_feedback, status))
         return
       }
       if (DETERMINISTIC.includes(status)) {
@@ -297,6 +301,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
                   <div className="mt-1.5 rounded-lg bg-white p-2.5 ring-1 ring-gray-100" data-testid="timeline-club-note">
                     <p className="text-xs font-semibold text-gray-500">{t('timeline.clubNote')}</p>
                     <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-gray-700">{node.message}</p>
+                    <ClubNoteOriginal original={noteOriginal} className="mt-1.5 text-[11px] leading-relaxed text-gray-500" />
                   </div>
                 ) : node.message ? (
                   <p className="mt-1.5 flex gap-1.5 rounded-lg bg-white p-2.5 text-xs leading-relaxed text-gray-600 ring-1 ring-gray-100" data-testid="timeline-message">

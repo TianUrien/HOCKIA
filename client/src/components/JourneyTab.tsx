@@ -1407,7 +1407,7 @@ export default function JourneyTab({
                               )}
                               {(entry.position_role || entry.division_league) && (
                                 <p className="text-sm leading-normal text-gray-500">
-                                  {[entry.position_role, entry.division_league].filter(Boolean).join(' · ')}
+                                  {[entry.position_role, entry.division_league].filter(Boolean).join(', ')}
                                 </p>
                               )}
                               {entry.entry_type === 'national_team' && entry.represented_country_id != null && (() => {
@@ -1441,7 +1441,7 @@ export default function JourneyTab({
                             </span>
                             {(startLabel || entry.years) && (
                               <>
-                                <span className="text-gray-500">·</span>
+                                {' '}
                                 <span className="inline-flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
                                   {startLabel ? t('journey.entry.dateRange', { start: startLabel, end: endLabel }) : entry.years}
@@ -1450,13 +1450,13 @@ export default function JourneyTab({
                             )}
                             {durationLabel && (
                               <>
-                                <span className="text-gray-500">·</span>
-                                <span>{durationLabel}</span>
+                                {' '}
+                                <span className="ml-1.5">{durationLabel}</span>
                               </>
                             )}
                             {worldClub && (
                               <>
-                                <span className="text-gray-500">·</span>
+                                {' '}
                                 <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-ink-2">
                                   <Globe2 className="h-3 w-3" />
                                   {t('journey.entry.directory')}

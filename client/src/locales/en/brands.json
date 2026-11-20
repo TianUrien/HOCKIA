@@ -29,7 +29,7 @@
       "paused": "Paused",
       "ended": "Ended"
     },
-    "liveLimitLine": "{{live}} of {{limit}} live · free for every brand for now",
+    "liveLimitLine": "{{live}} of {{limit}} live. Free for every brand for now",
     "counts": {
       "shown_one": "{{n}} shown",
       "shown_other": "{{n}} shown",
@@ -56,7 +56,7 @@
       "takenDown": "Taken down. Edit and publish again.",
       "notPublished": "Not published yet",
       "paused": "Paused {{when}}. Members don't see it.",
-      "ended": "Ended {{date}} · {{counts}}"
+      "ended": "Ended {{date}}. {{counts}}"
     },
     "missing": {
       "photo": "Add a photo",
@@ -232,7 +232,7 @@
     },
     "products": {
       "title": "Products",
-      "line": "{{seen}} seen · {{store}} to store"
+      "line": "{{seen}} seen, {{store}} to store"
     },
     "community": {
       "title": "Ambassadors and followers",
@@ -656,7 +656,7 @@
   "globalFeed": {
     "emptyTitle": "No activity yet",
     "emptyBody": "When brands add products or share updates, they'll appear here.",
-    "addedProduct": "Added a product · {{time}}",
+    "addedProduct": "Added a product",
     "learnMore": "Learn more",
     "viewBrand": "View brand",
     "postImageAlt": "Post image"
@@ -702,7 +702,7 @@
     "whyPrompt": "Tell us why (optional, the brand only sees totals)",
     "seeOffer": "See offer",
     "notUseful": "Not useful",
-    "fromBrandsBy": "From brands · {{brand}}",
+    "fromBrandsBy": "From brands: {{brand}}",
     "fromBrands": "From brands",
     "openOffer": "Open offer: {{title}}"
   },
@@ -735,7 +735,7 @@
     "liveOf": "{{live}} of {{limit}} live",
     "drafts_one": "{{count}} draft",
     "drafts_other": "{{count}} drafts",
-    "subtitleWithDrafts": "{{live}} · {{drafts}}",
+    "subtitleWithDrafts": "{{live}}, {{drafts}}",
     "tileShown": "Shown to",
     "tileOpened": "Opened",
     "tileStore": "To your store",
@@ -850,7 +850,7 @@
       "storeTaps_one": "tap to your store",
       "storeTaps_other": "taps to your store",
       "title": "Reach this week",
-      "seeViewers": "Only you see this · Last 7 days · See who viewed",
+      "seeViewers": "Only you see this. Last 7 days. See who viewed",
       "sheetLabel": "Profile views",
       "searches_one": "Your brand appeared in {{n}} search in the last 7 days.",
       "searches_other": "Your brand appeared in {{n}} searches in the last 7 days."
@@ -900,7 +900,7 @@
       "products": "Products",
       "addProductAction": "+ Add product",
       "addProduct": "Add product",
-      "ambassadorsCount": "Ambassadors · {{n}}",
+      "ambassadorsCount": "Ambassadors ({{n}})",
       "ambassadors": "Ambassadors",
       "inviteAction": "+ Invite",
       "noAmbassadors": "No ambassadors yet.",
@@ -1042,7 +1042,7 @@
     "lowSupply_one": "{{count}} brand sells in {{where}} so far",
     "lowSupply_other": "{{count}} brands sell in {{where}} so far",
     "offersTitle": "Offers for members",
-    "offersSubtitle": "Only on Hockia · {{country}}",
+    "offersSubtitle": "Only on Hockia, {{country}}",
     "offersSubtitleNoCountry": "Only on Hockia",
     "seeAll": "See all",
     "allBrands": "All brands"

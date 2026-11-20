@@ -71,7 +71,8 @@ export function PhotosCard({ item }: { item: MediaAddedFeedItem }) {
         name={item.uploader_name}
         avatarUrl={item.uploader_avatar_url}
         role={item.uploader_role}
-        subtitle={t('feedV1.photos.subtitle', { count, age: formatActivityAge(item.created_at) })}
+        subtitle={t('feedV1.photos.subtitle', { count })}
+        age={formatActivityAge(item.created_at)}
         profilePath={profilePath}
         menu={<FeedCardMenu authorId={item.uploader_id} authorName={item.uploader_name} sharePath={profilePath ?? '/home'} report={{ subject: 'profile', contentId: null }} />}
       />

@@ -40,7 +40,7 @@ export function GetReadySheet() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-body font-semibold text-ink-1">{it.title}</span>
-                <span className="block truncate text-row text-ink-2">{it.brand_name}{it.kind === 'offer' ? t('getReady.offerSuffix') : ''}</span>
+                <span className="block truncate text-row text-ink-2">{it.brand_name}{it.kind === 'offer' ? <>{' '}<span className="ml-2 text-ink-3">{t('getReady.offerSuffix')}</span></> : null}</span>
               </span>
               <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" aria-hidden="true" />
             </button>

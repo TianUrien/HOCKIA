@@ -72,7 +72,7 @@ describe('ManageMediaScreen', () => {
 
   it('the photo grid keeps the owner order it was given', () => {
     renderScreen()
-    expect(screen.getByText('Photos · 2')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Photos 2' })).toBeTruthy()
     expect(screen.getAllByRole('button', { name: /^Photo \d$/ }).map((b) => b.getAttribute('aria-label'))).toEqual(['Photo 1', 'Photo 2'])
   })
 

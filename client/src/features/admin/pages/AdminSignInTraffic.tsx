@@ -77,12 +77,12 @@ export function AdminSignInTraffic() {
   const columns: Column<Row>[] = [
     {
       key: 'network',
-      label: 'Network · device',
+      label: 'Network and device',
       render: (_, row) => (
         <div className="min-w-[200px]">
-          <div className="font-mono text-xs text-gray-900">{row.network ?? 'unknown'} · {row.device ?? 'server'}</div>
+          <div className="font-mono text-xs text-gray-900">{row.network ?? 'unknown'}{' '}<span className="text-gray-500">{row.device ?? 'server'}</span></div>
           <div className="mt-1 text-xs text-gray-500">
-            {[row.device_label ?? 'Seen by the server only', row.platform, row.app_version, row.country].filter(Boolean).join(' · ')}
+            {[row.device_label ?? 'Seen by the server only', row.platform, row.app_version, row.country].filter(Boolean).join(', ')}
           </div>
         </div>
       ),
@@ -163,7 +163,7 @@ export function AdminSignInTraffic() {
                   {(k.wouldLimit > 0 || k.refused > 0) && (
                     <dd className="mt-0.5 text-xs text-gray-500">
                       {k.wouldLimit > 0 && `${k.wouldLimit} would be limited`}
-                      {k.wouldLimit > 0 && k.refused > 0 && ' · '}
+                      {k.wouldLimit > 0 && k.refused > 0 && ', '}
                       {k.refused > 0 && `${k.refused} refused`}
                     </dd>
                   )}

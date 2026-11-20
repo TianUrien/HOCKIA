@@ -58,7 +58,7 @@ function monthYear(iso: string | null | undefined): string | null {
 type Author = PublicReferenceCard['profile']
 function authorLine(author: Author, relationship: string): string {
   const rel = humanizeToken(relationship)
-  const detail = author?.role === 'coach' || author?.role === 'player' ? [rel, author.currentClub].filter(Boolean).join(' · ') : rel
+  const detail = author?.role === 'coach' || author?.role === 'player' ? [rel, author.currentClub].filter(Boolean).join(', ') : rel
   return identityLine(author?.role, detail)
 }
 function authorAvatar(author: Author, size: 'avatar-md' | 'avatar-lg' = 'avatar-md') {
@@ -148,7 +148,7 @@ export default function ReferencesScreen({ profileId, profileName, profileRole, 
   return (
     <div className="min-h-screen bg-white pb-24 lg:hidden" data-testid={own ? 'references-screen-own' : 'references-screen-public'}>
       <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
-        <DetailNavBar parent={own ? t('references.screen.parent') : firstName ?? t('references.screen.parent')} title={count === null ? t('references.screen.title') : t('references.screen.titleCount', { total: count })} showParent onBack={onBack} />
+        <DetailNavBar parent={own ? t('references.screen.parent') : firstName ?? t('references.screen.parent')} title={count === null ? t('references.screen.title') : t('references.screen.titleCount', { count, total: count })} showParent onBack={onBack} />
       </div>
 
       <div className="flex flex-col gap-3 px-5 pt-2">
@@ -171,7 +171,7 @@ export default function ReferencesScreen({ profileId, profileName, profileRole, 
 
         {own && incoming.length > 0 && (
           <section className="rounded-card bg-surface-grouped p-3.5">
-            <h2 className="text-secondary font-semibold text-ink-2">{t('references.screen.incomingTitle', { total: incoming.length })}</h2>
+            <h2 className="text-secondary font-semibold text-ink-2">{t('references.screen.incomingTitle')}{' '}<span className="ml-1 text-ink-2">{incoming.length}</span></h2>
             <ul className="mt-1 divide-y divide-line">
               {incoming.map((r) => {
                 const who = r.requesterProfile?.fullName?.trim() || t('references.screen.fallbackName')
@@ -226,7 +226,7 @@ export default function ReferencesScreen({ profileId, profileName, profileRole, 
 
         {own && refs.pendingReferences.length > 0 && (
           <section className="pt-2">
-            <h2 className="pb-1 text-secondary font-semibold text-ink-2">{t('references.screen.requestedTitle', { total: refs.pendingReferences.length })}</h2>
+            <h2 className="pb-1 text-secondary font-semibold text-ink-2">{t('references.screen.requestedTitle')}{' '}<span className="ml-1 text-ink-2">{refs.pendingReferences.length}</span></h2>
             <ul className="divide-y divide-line">
               {refs.pendingReferences.map((r) => {
                 const who = r.profile?.fullName?.trim() || t('references.screen.fallbackName')

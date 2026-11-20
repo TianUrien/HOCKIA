@@ -27,7 +27,7 @@ const CRESTS = [
 
 const ROLE: OpenRoleCard = {
   id: 'r1', clubName: 'Hockey Team Bologna', clubAccount: true, crestUrl: 'https://cdn/htb.png', city: 'Bologna', country: 'Italy',
-  flag: '🇮🇹', league: 'Serie A1', position: 'Forward', team: "Women's", when: 'Starts 16 Sep · 3 months',
+  flag: '🇮🇹', league: 'Serie A1', position: 'Forward', team: "Women's", when: 'Starts 16 Sep, 3 months',
   packages: ['Housing', 'Flights', 'Job', 'Car'], createdAt: '2026-10-03T12:00:00Z',
 }
 
@@ -95,7 +95,7 @@ describe('RoleCard', () => {
     expect(card.className).toMatch(/motion-reduce:transition-none/)
     expect(screen.getByRole('list', { name: 'Package' })).toHaveTextContent('HousingFlightsJob+1')
     expect(screen.getByLabelText('Posted 3d')).toHaveTextContent('3d')
-    expect(card).toHaveTextContent('🇮🇹 Bologna, Italy · Serie A1')
+    expect(card).toHaveTextContent('🇮🇹 Bologna, Italy, Serie A1')
   })
 })
 

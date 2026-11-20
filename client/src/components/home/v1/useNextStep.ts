@@ -114,7 +114,7 @@ export function useNextStep() {
         out.push({
           key: 'roles',
           title: t('nextStep.roles.title', { count: matched.length }),
-          subtitle: [positionLabel(profile.position) || null, matched[0].club_name].filter(Boolean).join(' · ') || null,
+          subtitle: [positionLabel(profile.position) || null, matched[0].club_name].filter(Boolean).join(', ') || null,
           cta: t('nextStep.roles.cta'),
           visual: { kind: 'crests', urls: matched.slice(0, 3).map((o) => o.club_avatar_url) },
           to: '/opportunities',

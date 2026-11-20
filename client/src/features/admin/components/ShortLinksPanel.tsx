@@ -195,7 +195,7 @@ export function ShortLinksPanel() {
               className={`${field} font-mono`}
               value={form.destination}
               onChange={(e) => setForm({ ...form, destination: e.target.value })}
-              placeholder="/  ·  /opportunities  ·  store  ·  https://…"
+              placeholder="/, /opportunities, store or https://…"
             />
             <span className="block mt-1 text-[11px] text-gray-400">
               "store" sends iPhones to the App Store and everyone else to Google Play with the tags in the install referrer.
@@ -208,7 +208,7 @@ export function ShortLinksPanel() {
               <span className={`block mt-1 text-[11px] ${channel.group === 'other' ? 'text-amber-600' : 'text-gray-500'}`} data-testid="short-link-channel">
                 {channel.group === 'other'
                   ? `Not a known channel. It will report as its own source "${channel.source}". Check the spelling.`
-                  : `Reports as ${displaySource(channel.source)} · ${displayGroup(channel.group)}`}
+                  : `Reports as ${displaySource(channel.source)}, ${displayGroup(channel.group)}`}
               </span>
             )}
           </label>
@@ -288,7 +288,7 @@ export function ShortLinksPanel() {
                   </td>
                   <td className="py-2 pr-3 text-gray-700">
                     {displaySource(r.normalized_source)}
-                    {r.utm_campaign && <span className="text-gray-400"> · {r.utm_campaign}</span>}
+                    {r.utm_campaign && <>{' '}<span className="text-gray-400">{r.utm_campaign}</span></>}
                   </td>
                   <td className="py-2 pr-3 font-mono text-xs text-gray-600 max-w-[16rem] truncate" title={r.destination}>{destinationLabel(r.destination)}</td>
                   <td className="py-2 pr-3" data-testid={`short-link-perf-${r.code}`}>

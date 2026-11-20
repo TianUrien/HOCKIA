@@ -144,7 +144,7 @@ export default function OfferDetailPage() {
         <BrandLogo name={offer.brand_name} url={offer.brand_logo_url} className="h-14 w-14 shrink-0 rounded-[16px]" initialsClassName="text-[18px]" />
         <button type="button" onClick={() => navigate(`/brands/${offer.brand_slug}`)} className="min-w-0 flex-1 text-left">
           <span className="block truncate text-body font-semibold text-ink-1">{offer.brand_name}</span>
-          <span className="block text-row text-ink-2">{[brandCategoryLabel(offer.brand_category), brandCountry].filter(Boolean).join(' · ')}</span>
+          <span className="block text-row text-ink-2">{[brandCategoryLabel(offer.brand_category), brandCountry].filter(Boolean).join(', ')}</span>
         </button>
         {user ? (
           <button

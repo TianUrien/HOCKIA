@@ -107,7 +107,13 @@ export function ChatHeader({ participant, onBack, backLabel: backLabelProp, prof
   if (isMobile) {
     // Figma Chat (100:636): "‹ Inbox" in purple, 32px avatar (clubs squared),
     // 15/semibold name, 12px role line, hairline below.
-    const roleLine = [detail?.line ?? identityLine(participant?.role), detail?.active ? t('chat.header.activeToday') : null].filter(Boolean).join(' · ')
+    const identityText = detail?.line ?? identityLine(participant?.role)
+    const roleLine = (
+      <>
+        {identityText}
+        {detail?.active ? <>{identityText ? ' ' : null}<span className={identityText ? 'ml-2 text-ink-3' : undefined}>{t('chat.header.activeToday')}</span></> : null}
+      </>
+    )
     const avatar = participant?.avatar_url ? getImageUrl(participant.avatar_url, 'avatar-sm') ?? participant.avatar_url : null
     const identity = (
       <>

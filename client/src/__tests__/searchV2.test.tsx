@@ -88,9 +88,9 @@ describe('Search v2 — results', () => {
       'Club', 'Player', 'Coach', 'Umpire', 'Brand',
     ])
     // Second line: position/role · club (+ flag), location for organisations.
-    expect(within(rows[1]).getByText('Forward · Lazio Hockey')).toBeInTheDocument()
+    expect(within(rows[1]).getByText('Forward, Lazio Hockey')).toBeInTheDocument()
     expect(within(rows[1]).getByAltText('Italy')).toBeInTheDocument()
-    expect(within(rows[2]).getByText('Head coach · Lazio Hockey')).toBeInTheDocument()
+    expect(within(rows[2]).getByText('Head coach, Lazio Hockey')).toBeInTheDocument()
     expect(within(rows[0]).getByText('Roma, Italy')).toBeInTheDocument()
   })
 
@@ -172,7 +172,7 @@ describe('Search v2 — empty query', () => {
 
 describe('Search v2 — helpers and wiring', () => {
   it('memberMetaLine: people read position · club, organisations read location, nothing is padded', () => {
-    expect(memberMetaLine({ role: 'player', position: 'midfielder', currentClub: 'HC Rotterdam' })).toBe('Midfielder · HC Rotterdam')
+    expect(memberMetaLine({ role: 'player', position: 'midfielder', currentClub: 'HC Rotterdam' })).toBe('Midfielder, HC Rotterdam')
     expect(memberMetaLine({ role: 'coach', position: 'Head Coach', currentClub: null, baseLocation: 'Lima' })).toBe('Head Coach')
     expect(memberMetaLine({ role: 'club', position: null, currentClub: null, baseLocation: 'Roma, Italy' })).toBe('Roma, Italy')
     expect(memberMetaLine({ role: 'umpire', position: null, baseLocation: 'Milano' })).toBe('Milano')

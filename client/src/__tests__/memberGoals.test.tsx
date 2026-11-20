@@ -35,11 +35,11 @@ describe('goal card rows: real data only (Figma G3 / G5)', () => {
   })
   it('club: open opportunities and applicants waiting, then post another; no roles = post a role', () => {
     const rows = goalRows('club', { options: ['fill_role'] }, { open_roles: 2, applicants_waiting: 4 }, null)
-    expect(rows.map((r) => r.text)).toEqual(['2 open opportunities · 4 applicants waiting', 'Post another opportunity in under a minute'])
+    expect(rows.map((r) => r.text)).toEqual(['2 open opportunities, 4 applicants waiting', 'Post another opportunity in under a minute'])
     expect(goalRows('club', { options: ['fill_role'] }, { open_roles: 0 }, null)[0].text).toBe('Post an opportunity in under a minute')
   })
   it('title joins the picks in option order, then the member’s words', () => {
-    expect(goalTitle('player', { options: ['get_sponsor', 'play_abroad'], other_text: 'Play in Germany' })).toBe('Play abroad · Get a sponsor · Play in Germany')
+    expect(goalTitle('player', { options: ['get_sponsor', 'play_abroad'], other_text: 'Play in Germany' })).toBe('Play abroad. Get a sponsor. Play in Germany')
   })
 })
 
@@ -55,7 +55,7 @@ describe('goal ask card (G1)', () => {
     fireEvent.click(screen.getByTestId('goal-option-get_sponsor'))
     fireEvent.click(screen.getByTestId('goal-option-keep_playing'))
     expect(screen.getByTestId('goal-option-keep_playing')).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByTestId('goal-save')).toHaveTextContent('That’s my goal · 3 of 3')
+    expect(screen.getByTestId('goal-save')).toHaveTextContent('That’s my goal 3 of 3')
     fireEvent.click(screen.getByTestId('goal-save'))
     await waitFor(() => expect(rpc).toHaveBeenCalledWith('set_my_goal', { p_options: ['play_abroad', 'move_up', 'get_sponsor'], p_other_text: null }))
     expect(track).toHaveBeenCalledWith('goal_set', 'member_goal', undefined, expect.objectContaining({ count: 3, has_text: false, role: 'player', surface: 'home' }))

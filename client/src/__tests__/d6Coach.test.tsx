@@ -151,7 +151,7 @@ describe('Opportunities · Roles by viewer', () => {
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(1))
     expect(screen.getByText('Head Coach, Men 1st XI')).toBeInTheDocument()
     expect(screen.queryByText('Striker wanted')).toBeNull()
-    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching opportunities · 1 open')
+    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching opportunities: 1 open')
     const card = screen.getByTestId('role-card')
     expect(card.textContent).not.toMatch(/fit|match|applicant|save/i)
     expect(within(card).getAllByRole('button')).toHaveLength(1)
@@ -164,7 +164,7 @@ describe('Opportunities · Roles by viewer', () => {
     tables = { opportunities: both }
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(2))
-    expect(screen.getAllByRole('tab').map((t) => t.getAttribute('aria-label') ?? t.textContent)).toEqual(['Open opportunities · 2', 'Applied'])
+    expect(screen.getAllByRole('tab').map((t) => t.getAttribute('aria-label') ?? t.textContent)).toEqual(['Open opportunities (2)', 'Applied'])
     expect(screen.queryByTestId('coach-roles-open-line')).toBeNull()
   })
 
@@ -206,7 +206,7 @@ describe('Opportunities · no coaching role open', () => {
     expect(screen.queryByTestId('role-card')).toBeNull()
     expect(screen.getByText('No coaching opportunities open right now')).toBeInTheDocument()
     expect(screen.getByTestId('coach-roles-posted-line').textContent).toBe('4 coaching opportunities were posted on Hockia this year')
-    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching opportunities · 0 open')
+    expect(screen.getByTestId('coach-roles-open-line').textContent).toBe('Coaching opportunities: 0 open')
     const alerts = screen.getByRole('switch', { name: 'Coaching opportunity alerts' })
     expect(alerts).toHaveAttribute('aria-checked', 'true')
     fireEvent.click(alerts)
@@ -248,8 +248,8 @@ describe('Opportunities · no coaching role open', () => {
     const rows = screen.getAllByTestId('coach-closed-role')
     expect(rows).toHaveLength(2)
     expect(rows[0].textContent).toContain('Head Coach Wanted')
-    expect(rows[0].textContent).toContain('San Vicente · Spain · Closed 20 Sep')
-    expect(rows[1].textContent).toContain('Concordia 1906 · Croatia · Closed 2 Dec 2025')
+    expect(rows[0].textContent).toContain('San Vicente, Spain Closed 20 Sep')
+    expect(rows[1].textContent).toContain('Concordia 1906, Croatia Closed 2 Dec 2025')
     const pills = screen.getAllByTestId('coach-closed-role-status')
     expect(pills.map((p) => p.textContent)).toEqual(['Not this time', 'No reply'])
     for (const p of pills) {
@@ -335,7 +335,7 @@ describe('Opportunities · My opportunities (coach who recruits)', () => {
     myRoles = { ...myRoles, open: [ownRole(['pending'])] }
     wrap(<OpportunitiesPage />)
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(1))
-    fireEvent.click(screen.getByRole('tab', { name: 'My opportunities · 1' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'My opportunities (1)' }))
     await waitFor(() => expect(screen.getByTestId('coach-my-roles')).toBeInTheDocument())
     expect(screen.queryByTestId('role-card')).toBeNull()
     expect(screen.getByTestId('coach-recruiting-for').textContent).toBe('Recruiting for Barnes HC')
@@ -397,7 +397,7 @@ describe('Coach key facts (D6.1)', () => {
     }, { viewer: 'recruiter', today: NOW })
     expect(facts.map((f) => f.label)).toEqual(['Specialization', 'Coaches at', 'Available', 'Passport', 'Categories', 'Age'])
     expect(byId(facts, 'specialization').value).toBe('Drag-flick coach')
-    expect(byId(facts, 'coaches_at')).toMatchObject({ value: 'Club Atlético Pacífico', detail: 'Head coach · current role' })
+    expect(byId(facts, 'coaches_at')).toMatchObject({ value: 'Club Atlético Pacífico', detail: 'Head coach, current role' })
     expect(byId(facts, 'available')).toMatchObject({ value: 'From 4 Jan 2027', detail: 'Open to relocating' })
     expect(byId(facts, 'passport')).toMatchObject({ value: '🇦🇷 Argentina', detail: 'No EU passport' })
     expect(byId(facts, 'categories').value).toBe('Any category')
@@ -409,7 +409,7 @@ describe('Coach key facts (D6.1)', () => {
       specialization: 'head_coach', categories: ['adult_women'], currentRole: null, currentClubName: null, openToCoach: false,
       availableFrom: null, passports: [{ name: 'Argentina', isEu: false }, { name: 'Italy', isEu: true }], age: 40,
     }, { viewer: 'public', today: NOW })
-    expect(byId(facts, 'passport')).toMatchObject({ value: 'Argentina · Italy', detail: 'EU passport' })
+    expect(byId(facts, 'passport')).toMatchObject({ value: 'Argentina, Italy', detail: 'EU passport' })
   })
 
   it('empty facts read "Not given" and are never hidden', () => {

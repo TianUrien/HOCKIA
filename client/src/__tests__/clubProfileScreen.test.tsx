@@ -5,26 +5,26 @@ import { clubLeagueLine, leagueBandNote, openRoleLine } from '@/lib/clubProfileC
 // the public open-role card's second line.
 describe('clubLeagueLine', () => {
   it('merges an identical men and women league', () => {
-    expect(clubLeagueLine('Leinster Division 1A', 'Leinster Division 1A')).toBe('Leinster Division 1A · men & women')
-    expect(clubLeagueLine('Premier Division', ' premier division ')).toBe('Premier Division · men & women')
+    expect(clubLeagueLine('Leinster Division 1A', 'Leinster Division 1A')).toBe('Leinster Division 1A, men & women')
+    expect(clubLeagueLine('Premier Division', ' premier division ')).toBe('Premier Division, men & women')
   })
   it('names each side when they differ', () => {
-    expect(clubLeagueLine('Premier Division', 'Serie A1')).toBe('Premier Division · men, Serie A1 · women')
+    expect(clubLeagueLine('Premier Division', 'Serie A1')).toBe('Premier Division for men, Serie A1 for women')
   })
   it('handles one side and none', () => {
-    expect(clubLeagueLine('Premier Division', null)).toBe('Premier Division · men')
-    expect(clubLeagueLine(null, 'Serie A1')).toBe('Serie A1 · women')
+    expect(clubLeagueLine('Premier Division', null)).toBe('Premier Division, men')
+    expect(clubLeagueLine(null, 'Serie A1')).toBe('Serie A1, women')
     expect(clubLeagueLine('', undefined)).toBeNull()
   })
 })
 
 describe('openRoleLine', () => {
   it('reads "Open opportunity · from 1 Sep · 7 months"', () => {
-    expect(openRoleLine({ startDate: '2026-09-01T00:00:00Z', durationText: '7' })).toBe('Open opportunity · from 1 Sep · 7 months')
+    expect(openRoleLine({ startDate: '2026-09-01T00:00:00Z', durationText: '7' })).toBe('Open opportunity, from 1 Sep, 7 months')
   })
   it('drops the parts it does not have', () => {
     expect(openRoleLine({ startDate: null, durationText: null })).toBe('Open opportunity')
-    expect(openRoleLine({ startDate: null, durationText: 'Permanent ' })).toBe('Open opportunity · Permanent')
+    expect(openRoleLine({ startDate: null, durationText: 'Permanent ' })).toBe('Open opportunity, Permanent')
   })
 })
 

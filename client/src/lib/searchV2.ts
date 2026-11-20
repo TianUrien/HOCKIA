@@ -56,7 +56,7 @@ export function memberMetaLine({ role, position, currentClub, baseLocation }: Me
   if (pos) parts.push(pos)
   if (currentClub?.trim()) parts.push(currentClub.trim())
   if (parts.length === 0 && (isOrganisationRole(role) || !pos) && baseLocation?.trim()) parts.push(baseLocation.trim())
-  return parts.join(' · ')
+  return parts.join(', ')
 }
 
 /** Public profile for a search hit, by role + id; `?ref=search` keeps the

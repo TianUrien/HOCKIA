@@ -334,3 +334,4 @@ repository (founder plan doc + session memory).
 | 2026-08-27 | Analytics events readable by members; a DEFINER view made `profiles_self` writable | Policies fixed; advisor hardening batch |
 | 2026-08-28 | Batch update re-stamped `updated_at` on 301 production profiles | Disable trigger for bulk writes; restore recipe |
 | 2026-09-25 | Five client write paths exploitable | Guard triggers on direct client writes |
+| 2026-11-18 | `create_user_post` had lost its rate limit, its video launch flag and its video kind guard since `20260920180000`, which rewrote it from an older body (found on staging and production with `pg_get_functiondef`) | `20261118170000` restores them, with a probe; rewrite a function from its latest body (standards.md §6 item 13) |

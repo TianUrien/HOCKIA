@@ -281,7 +281,7 @@ describe('getNotificationConfig', () => {
     })
     const config = getNotificationConfig(notification)
     expect(config.getTitle(notification)).toBe('Amsterdam HC published: Goalkeeper Coach')
-    expect(config.getDescription?.(notification)).toBe('Goalkeeper \u2022 Amsterdam, Netherlands')
+    expect(config.getDescription?.(notification)).toBe('Goalkeeper, Amsterdam, Netherlands')
     expect(config.getRoute?.(notification)).toBe('/opportunities/opp-1')
   })
 

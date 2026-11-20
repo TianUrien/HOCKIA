@@ -362,7 +362,7 @@ export function AdminReports() {
                         <Clock className="w-3 h-3" />
                         {formatAdminDateTime(report.created_at)}
                         {(previews.get(previewKey(report))?.report_count ?? 0) > 1 && (
-                          <> · {previews.get(previewKey(report))?.report_count} reports</>
+                          <>{' '}<span className="text-gray-500">{previews.get(previewKey(report))?.report_count} reports</span></>
                         )}
                       </span>
                     </div>

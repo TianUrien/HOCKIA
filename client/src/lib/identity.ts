@@ -68,7 +68,7 @@ const HUMANIZE_GROUPS = ['position', 'coachSpecialization', 'role', 'category']
 export function identityLine(role: RoleLike, detail?: string | null): string {
   const label = roleLabel(role)
   const extra = humanizeToken(detail)
-  return extra ? `${label} · ${extra}` : label
+  return extra ? `${label}, ${extra}` : label
 }
 
 /** Stored position / coaching-role enums → the words people read. Player

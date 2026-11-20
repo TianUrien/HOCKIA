@@ -128,11 +128,11 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
           label="Daily Active Users"
           info={<InfoTip metric="dau" interpretation={`${dau} people used Hockia on ${dauDay}, the last complete day. Today is never counted while it is still running. For a weekly-rhythm sport, daily spikes matter less than the weekly habit.`} />}
           value={dau.toLocaleString()}
-          sub={`active ${dauDay} · last complete day`}
+          sub={`active ${dauDay}, last complete day`}
         />
         <MetricTile
           label="Weekly Active Users"
-          info={<InfoTip metric="wau" interpretation={`${wau} people were active in the last 7 complete days${stickiness !== null ? ` · ${stickiness}% of everyone active this month came back within 7 days` : ''}.`} />}
+          info={<InfoTip metric="wau" interpretation={`${wau} people were active in the last 7 complete days${stickiness !== null ? `. ${stickiness}% of everyone active this month came back within 7 days` : ''}.`} />}
           value={wau.toLocaleString()}
           sub={stickiness !== null ? `${stickiness}% of monthly actives returned this week` : 'last 7 complete days'}
         />
@@ -161,7 +161,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
           label="Activated (photo + position)"
           info={<InfoTip metric="activation" value={data?.activation_pct} interpretation={`Of the ${data?.activation_cohort ?? 0} people who joined in the last ${days} days, ${data?.activation_activated ?? 0} completed onboarding, added a photo and set their position, ready to be found and contacted.`} />}
           value={`${data?.activation_pct ?? 0}%`}
-          sub={`${data?.activation_activated ?? 0} / ${data?.activation_cohort ?? 0} new users · onboarding + photo + position`}
+          sub={`${data?.activation_activated ?? 0} / ${data?.activation_cohort ?? 0} new users, onboarding + photo + position`}
         />
         <MetricTile
           label="Profile Completion"
@@ -185,8 +185,8 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
           info={<InfoTip metric="contributorShare" value={contributorPct} interpretation={`${browserPct}% of this week's actives only consumed content, ${contributorPct}% created it (${browsers} browsers, ${data?.contributors_7d ?? 0} contributors). Healthy communities sit anywhere above the 90-9-1 rule.`} />}
           value={
             <span>
-              {browserPct}% <span className="text-base font-medium text-gray-400">browse</span>{' '}
-              · {contributorPct}% <span className="text-base font-medium text-gray-400">create</span>
+              {browserPct}% <span className="text-base font-medium text-gray-400">browse</span>,{' '}
+              {contributorPct}% <span className="text-base font-medium text-gray-400">create</span>
             </span>
           }
           sub={
@@ -207,7 +207,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
               <span className="flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5 text-gray-400" />{content?.opportunities ?? 0} opps</span>
             </div>
           }
-          sub={`+ ${content?.comments ?? 0} comments · ${content?.messages ?? 0} messages`}
+          sub={`+ ${content?.comments ?? 0} comments, ${content?.messages ?? 0} messages`}
         />
       </div>
 
@@ -228,7 +228,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
             label="Opportunities Filled"
             info={<InfoTip metric="filled" interpretation={`${ns?.filled_period ?? 0} positions filled in the last ${days} days (${ns?.filled_all_time ?? 0} all-time). This is the end of the funnel everything else feeds.`} />}
             value={ns?.filled_period ?? 0}
-            sub={`${ns?.filled_all_time ?? 0} all-time · ${ns?.signings_all_time ?? 0} signings all-time`}
+            sub={`${ns?.filled_all_time ?? 0} all-time, ${ns?.signings_all_time ?? 0} signings all-time`}
           />
         </div>
       </div>

@@ -844,7 +844,7 @@ export default function BrandDashboard() {
                                   <p className="text-xs text-gray-500 truncate">
                                     {[ambassador.position, ambassador.current_club]
                                       .filter(Boolean)
-                                      .join(' \u00B7 ') || tEnums('role.player')}
+                                      .join(', ') || tEnums('role.player')}
                                   </p>
                                 </div>
                               </Link>
@@ -897,7 +897,7 @@ export default function BrandDashboard() {
                                   <p className="text-xs text-gray-500 truncate">
                                     {[ambassador.position, ambassador.current_club]
                                       .filter(Boolean)
-                                      .join(' \u00B7 ') || tEnums('role.player')}
+                                      .join(', ') || tEnums('role.player')}
                                   </p>
                                 </div>
                                 <span className="hidden sm:inline-flex"><RoleBadge role="player" /></span>

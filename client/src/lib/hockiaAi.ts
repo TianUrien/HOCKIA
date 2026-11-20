@@ -254,7 +254,7 @@ export function stripRankingLines(text: string | null | undefined): string {
 /** List item / Role result (534:2448): "Club · Position" then "League · package". */
 export function roleResultTitle(o: Pick<OpportunityResultItem, 'organization' | 'position_label' | 'title'>): string {
   const parts = [o.organization, o.position_label].filter((p): p is string => !!p && p.trim() !== '')
-  return parts.length > 0 ? parts.join(' · ') : o.title
+  return parts.length > 0 ? parts.join(', ') : o.title
 }
 
 export function roleResultMeta(
@@ -264,5 +264,5 @@ export function roleResultMeta(
   const first = o.league_label || placeText(o.location_label) || null
   const pkg = (o.benefit_labels ?? []).slice(0, 2).join(', ')
   const parts = [first, pkg || null].filter((p): p is string => !!p)
-  return parts.length > 0 ? parts.join(' · ') : null
+  return parts.length > 0 ? parts.join('. ') : null
 }

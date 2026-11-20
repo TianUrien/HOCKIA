@@ -52,7 +52,7 @@ export default function MyApplicationsPage() {
     // roles for the same position read identically).
     const role = r.title ? roleHeadline({ position: r.position, title: r.title, opportunity_type: r.opportunityType ?? 'player', gender: r.gender }) : null
     const headline = role?.title ?? t('applications.unavailable')
-    const sub = [r.club?.name, countryLabel(r.country)].filter(Boolean).join(' · ')
+    const sub = [r.club?.name, countryLabel(r.country)].filter(Boolean).join(', ')
     const applied = dayFirst(r.appliedAt)
     // Card (rebrand page 20 · My applications): crest, title, club, then
     // the status chip and "Applied <day>". In review violet with a dot,
