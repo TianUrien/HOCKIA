@@ -14,6 +14,7 @@ import SentryTestButton from '@/components/SentryTestButton'
 import RecruiterOnlyRoute from '@/components/RecruiterOnlyRoute'
 import ToastContainer from '@/components/ToastContainer'
 import UploadIndicator from '@/components/UploadIndicator'
+import { ImageCropProvider } from '@/components/media/ImageCropProvider'
 import { ProfileImagePreviewProvider } from '@/components/ProfileImagePreviewProvider'
 import InstallPrompt from '@/components/InstallPrompt'
 import CookieConsent from '@/components/CookieConsent'
@@ -390,6 +391,7 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <ProfileImagePreviewProvider>
+        <ImageCropProvider>
           <RouteMeta />
           <ToastContainer />
           <UploadIndicator />
@@ -670,6 +672,7 @@ function App() {
           </AgeGate>
           </TermsGate>
           </ShortLinkGate>
+        </ImageCropProvider>
         </ProfileImagePreviewProvider>
       </BrowserRouter>
     </ErrorBoundary>

@@ -13,6 +13,7 @@
  * via ?ref=community_preview).
  */
 
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -469,7 +470,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               {(member.role === 'player' || member.role === 'coach') && member.current_club && (
                 <div className="flex items-center gap-2 text-gray-700">
                   {clubLogo ? (
-                    <img src={getImageUrl(clubLogo, 'card-thumb') ?? clubLogo} alt="" loading="lazy" decoding="async" className="w-4 h-4 rounded-sm object-cover flex-shrink-0" />
+                    <OrgLogo src={clubLogo} imageSize="card-thumb" className="h-4 w-4" />
                   ) : (
                     <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   )}

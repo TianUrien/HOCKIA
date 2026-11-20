@@ -1,3 +1,4 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { openOutbound, tagOutboundLink } from '@/lib/outboundLink'
 import { useNavigate } from 'react-router-dom'
@@ -380,9 +381,9 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
           <div className="mt-6 flex items-center gap-5">
             <div className="relative shrink-0">
-              <div className={cn('flex h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-[24px]', logo && 'bg-white p-2 ring-1 ring-inset ring-line')}>
-                {logo ? <img src={logo} alt="" className="h-16 w-16 object-contain" decoding="async" /> : <RolePlaceholder role="brand" label="" />}
-              </div>
+              {logo
+                ? <OrgLogo src={logo} role="brand" eager className="h-[84px] w-[84px]" />
+                : <div className="h-[84px] w-[84px] overflow-hidden rounded-[24px]"><RolePlaceholder role="brand" label="" /></div>}
               <button type="button" onClick={props.onEdit} aria-label={t('profile.hero.changeLogo')} className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-hockia-primary text-white"><Camera className="h-3.5 w-3.5" strokeWidth={2} /></span>
               </button>
@@ -500,9 +501,9 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
           </div>
           <div className="absolute inset-x-4 bottom-6 flex flex-col items-start gap-1.5">
             <div className="relative">
-              <div className={cn('flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-[20px] shadow-[0_10px_14px_rgba(15,15,20,0.1),0_1px_1px_rgba(15,15,20,0.06)]', logo && 'bg-white p-2')}>
-                {logo ? <img src={logo} alt="" className="h-14 w-14 object-contain" decoding="async" /> : <RolePlaceholder role="brand" label="" />}
-              </div>
+              {logo
+                ? <OrgLogo src={logo} role="brand" eager className="h-[72px] w-[72px] shadow-[0_10px_14px_rgba(15,15,20,0.1),0_1px_1px_rgba(15,15,20,0.06)]" />
+                : <div className="h-[72px] w-[72px] overflow-hidden rounded-[20px] shadow-[0_10px_14px_rgba(15,15,20,0.1),0_1px_1px_rgba(15,15,20,0.06)]"><RolePlaceholder role="brand" label="" /></div>}
               {owner && (
                 <button type="button" onClick={props.onEdit} aria-label={t('profile.hero.changeLogo')} className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-hockia-primary text-white"><Camera className="h-3.5 w-3.5" strokeWidth={2} /></span>

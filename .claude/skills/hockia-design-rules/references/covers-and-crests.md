@@ -27,6 +27,9 @@ Why: a category-coloured cover clashed with clubs' crests; covers must feel like
 - **Brand without a cover**: brand ink + pitch, logo tile.
 - **Product placeholders**: soft gradient + a stick glyph.
 
+## Uploads: photos, crests and logos (2026-11-20)
+Nobody pre-formats a file. After picking, the member sees the adjust step with an automatic fit already applied (`client/src/lib/imageFit.ts`): transparent or white-background artwork is trimmed and centred at 80 % of the tile; a logo on a flat colour is shown whole and the square is completed with that colour; a photo fills from the centre. Stored: the fitted square (`<kind>_fit_<stamp>`, at most 1024 px for crests and logos, 1440 px for people, never enlarged) and the picked file in its own shape (`<kind>_orig_<stamp>`, `lib/orgImage.ts`). Transparent logos stay transparent PNGs, so they still float on covers and tinted surfaces. A person's photo is always stored as JPEG. A file with nothing in it (fully transparent or all white) is refused with a short message. The original is deleted with its square (`deleteStorageObject`), and the nightly orphan sweep counts it as in use while the square is (migration 20261120110000).
+
 ## Photos
 - Real field hockey photos, landscape for covers, no text or posters, action over posed.
 - Photo and category must match (no women's photo on a men's role).

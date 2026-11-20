@@ -1,3 +1,4 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { Link } from 'react-router-dom'
 import { Briefcase, MapPin } from 'lucide-react'
 import { positionLabel } from '@/lib/identity'
@@ -29,13 +30,11 @@ export function SearchOpportunityResult({ result }: SearchOpportunityResultProps
       className="block bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 transition-colors"
     >
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-          {result.club_avatar_url ? (
-            <img src={result.club_avatar_url} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <Briefcase className="w-5 h-5 text-gray-400" />
-          )}
-        </div>
+        {result.club_avatar_url ? (
+          <OrgLogo src={result.club_avatar_url} role="club" imageSize="avatar-md" className="h-12 w-12" />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0"><Briefcase className="w-5 h-5 text-gray-400" /></div>
+        )}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900 truncate">{result.title}</p>
           <div className="flex items-center gap-2 mt-0.5">

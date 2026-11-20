@@ -1,3 +1,4 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { MessageCircle, User, Globe, MapPin, Shield, Building2, Activity } from 'lucide-react'
@@ -10,7 +11,6 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
-import { getImageUrl } from '@/lib/imageUrl'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { getUmpireActivity } from '@/lib/umpireActivity'
 import { useCommunityT } from '@/i18n/ns/community'
@@ -289,7 +289,7 @@ export default function MemberCard({
             </div>
             <div className="flex items-center gap-2 mt-1.5 ml-[22px]">
               {clubLogo && (
-                <img src={getImageUrl(clubLogo, 'card-thumb') ?? clubLogo} alt="" loading="lazy" decoding="async" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
+                <OrgLogo src={clubLogo} imageSize="card-thumb" className="h-7 w-7" />
               )}
               <span className="text-gray-700 font-medium">{current_team}</span>
             </div>

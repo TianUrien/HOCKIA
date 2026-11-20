@@ -8,6 +8,7 @@
  * by redirecting to the country page.
  */
 
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { ArrowLeft, Building2, Trophy, CheckCircle, Clock, RefreshCw } from 'lucide-react'
@@ -507,11 +508,7 @@ export default function WorldProvincePage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {club.profile_avatar_url ? (
-                      <img
-                        src={club.profile_avatar_url}
-                        alt={club.club_name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
+                      <OrgLogo src={club.profile_avatar_url} alt={club.club_name} role="club" imageSize="avatar-sm" className="h-10 w-10" />
                     ) : (
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         club.is_claimed

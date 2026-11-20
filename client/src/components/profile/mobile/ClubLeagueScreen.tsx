@@ -176,7 +176,7 @@ export default function ClubLeagueScreen({ profile, parent: parentLabel, onBack,
         {worldClubId ? (
           <div className="flex items-center gap-3 rounded-card bg-surface-grouped py-3 pl-3.5 pr-3" data-testid="club-league-linked">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[10px] border-[0.5px] border-line bg-white">
-              {crestSrc ? <img src={crestSrc} alt="" className="h-[34px] w-[34px] object-contain" /> : <EntityAvatar src={null} name={club?.clubName ?? profile.full_name} role="club" size={34} />}
+              {crestSrc ? <img src={crestSrc} alt="" className="h-[34px] w-[34px] rounded-[25%] object-contain" /> : <EntityAvatar src={null} name={club?.clubName ?? profile.full_name} role="club" size={34} />}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[16px] font-medium leading-[21px] text-ink-1">{club?.clubName ?? profile.full_name}</span>

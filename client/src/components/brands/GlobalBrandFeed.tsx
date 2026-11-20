@@ -5,6 +5,7 @@
  * Displays items in reverse-chronological order with infinite scroll.
  */
 
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Loader2, Rss, Store, ExternalLink, CheckCircle, ArrowRight } from 'lucide-react'
@@ -109,13 +110,7 @@ function ProductFeedCard({ item }: { item: ProductFeedItem }) {
       <div className="flex items-center gap-3 p-4 pb-3">
         <Link to={`/brands/${item.brand_slug}`} className="flex-shrink-0">
           {item.brand_logo_url ? (
-            <img
-              src={getImageUrl(item.brand_logo_url, 'avatar-sm') ?? item.brand_logo_url}
-              alt={item.brand_name}
-              loading="lazy"
-              decoding="async"
-              className="w-10 h-10 rounded-full object-cover border border-gray-200"
-            />
+            <OrgLogo src={item.brand_logo_url} alt={item.brand_name} role="brand" imageSize="avatar-sm" className="h-10 w-10" />
           ) : (
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
               <Store className="w-5 h-5 text-gray-400" />
@@ -190,13 +185,7 @@ function PostFeedCard({ item }: { item: PostFeedItem }) {
       <div className="flex items-center gap-3 p-4 pb-3">
         <Link to={`/brands/${item.brand_slug}`} className="flex-shrink-0">
           {item.brand_logo_url ? (
-            <img
-              src={getImageUrl(item.brand_logo_url, 'avatar-sm') ?? item.brand_logo_url}
-              alt={item.brand_name}
-              loading="lazy"
-              decoding="async"
-              className="w-10 h-10 rounded-full object-cover border border-gray-200"
-            />
+            <OrgLogo src={item.brand_logo_url} alt={item.brand_name} role="brand" imageSize="avatar-sm" className="h-10 w-10" />
           ) : (
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
               <Store className="w-5 h-5 text-gray-400" />

@@ -7,6 +7,7 @@
  *   RESULTS  → live results streaming as the user types
  */
 
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { chipTone } from '@/components/ui/chipClasses'
 import { createPortal } from 'react-dom'
@@ -77,13 +78,11 @@ function CompactClubRow({ result, onSelect }: { result: SearchClubResult; onSele
       onClick={onSelect}
       className="flex items-center gap-3 w-full px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left"
     >
-      <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-        {result.avatar_url ? (
-          <img src={result.avatar_url} alt="" className="w-full h-full object-cover" />
+      {result.avatar_url ? (
+          <OrgLogo src={result.avatar_url} role="club" imageSize="avatar-sm" className="h-8 w-8" />
         ) : (
-          <Shield className="w-4 h-4 text-gray-400" />
+          <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0"><Shield className="w-4 h-4 text-gray-400" /></div>
         )}
-      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 truncate">{result.club_name}</p>
         <div className="flex items-center gap-1.5">
@@ -147,13 +146,11 @@ function CompactOpportunityRow({ result, onSelect }: { result: SearchOpportunity
       onClick={onSelect}
       className="flex items-center gap-3 w-full px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left"
     >
-      <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-        {result.club_avatar_url ? (
-          <img src={result.club_avatar_url} alt="" className="w-full h-full object-cover" />
+      {result.club_avatar_url ? (
+          <OrgLogo src={result.club_avatar_url} role="club" imageSize="avatar-sm" className="h-8 w-8" />
         ) : (
-          <Briefcase className="w-4 h-4 text-gray-400" />
+          <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0"><Briefcase className="w-4 h-4 text-gray-400" /></div>
         )}
-      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 truncate">{result.title}</p>
         <div className="flex items-center gap-2">

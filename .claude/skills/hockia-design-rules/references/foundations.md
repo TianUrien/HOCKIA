@@ -47,7 +47,7 @@ space: 2 4 6 8 12 16 20 24 32 40 48 64. Screen side padding 16; section gaps 24â
 | Chat cards | 16 | 2026-10-02 |
 | Legacy component cards / tiles not yet rebuilt | 16 / 8 | 2026-10-02 |
 | Pills, chips, buttons | fully round | |
-| Organisation avatars | rounded square on white | |
+| Organisation avatars (crests, logos) | rounded square on white, radius 25 % of the side (`OrgLogo`) | 2026-11-20 |
 Large surfaces use corner smoothing 0.6 (squircle; in code a small in-house helper: `clip-path` kills shadows, so crest tiles use plain radius + two-layer shadow).
 
 ## Elevation and finish ("premium pass", approved)

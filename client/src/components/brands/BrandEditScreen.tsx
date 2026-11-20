@@ -1,3 +1,6 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
+import { useImageCrop } from '@/components/media/ImageCropProvider'
+import { uploadOrgImage } from '@/lib/orgImageUpload'
 import { useRef, useState, type ReactNode } from 'react'
 import { ChevronRight, Lock } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
@@ -9,7 +12,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { useCountries } from '@/hooks/useCountries'
-import { optimizeAvatarImage, optimizeImage, validateImage } from '@/lib/imageOptimization'
+import { optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { getImageUrl } from '@/lib/imageUrl'
 import { BRAND_CATEGORY_OPTIONS, instagramHandleOf, normalizeInstagram, validateBrandUrl } from '@/lib/brandEdit'
 import type { BrandDetail } from '@/hooks/useBrand'
@@ -66,6 +69,7 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
   const addToast = useToastStore((s) => s.addToast)
   const { getCountryById } = useCountries()
   const logoRef = useRef<HTMLInputElement>(null)
+  const requestCrop = useImageCrop()
   const coverRef = useRef<HTMLInputElement>(null)
   const [editing, setEditing] = useState<Field | null>(null)
   const [draft, setDraft] = useState('')
@@ -132,14 +136,21 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
     if (!file || !user) return
     const check = validateImage(file, { maxFileSizeMB: kind === 'logo' ? 10 : 15 })
     if (!check.valid) { addToast(check.error ?? t('brandEdit.invalidImage'), 'error'); return }
+    const square = kind === 'logo' ? await requestCrop(file, 'logo') : null
+    if (kind === 'logo' && !square) return
     setUploading(kind)
     try {
-      const optimized = kind === 'logo' ? await optimizeAvatarImage(file) : await optimizeImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.85 })
-      const ext = optimized.type === 'image/png' ? 'png' : 'jpg'
-      const path = `${user.id}/brand-${kind}-${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, optimized, { contentType: optimized.type, upsert: true, cacheControl: '31536000' })
-      if (uploadError) throw uploadError
-      const url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+      let url: string
+      if (square) {
+        url = await uploadOrgImage(user.id, 'logo', square, file)
+      } else {
+        const optimized = await optimizeImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.85 })
+        const ext = optimized.type === 'image/png' ? 'png' : 'jpg'
+        const path = `${user.id}/brand-${kind}-${Date.now()}.${ext}`
+        const { error: uploadError } = await supabase.storage.from('avatars').upload(path, optimized, { contentType: optimized.type, upsert: true, cacheControl: '31536000' })
+        if (uploadError) throw uploadError
+        url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+      }
       const res = await onSave(kind === 'logo' ? { logo_url: url } : { cover_url: url })
       if (!res.success) throw new Error(res.error)
     } catch (err) {
@@ -174,8 +185,8 @@ export default function BrandEditScreen({ brand, onClose, onPreview, onSave }: {
       {/* Media: logo + one cover (tap to change) */}
       <div className="flex flex-col gap-2.5 bg-white p-4">
         <div className="flex items-center gap-3.5">
-          <button type="button" onClick={() => logoRef.current?.click()} disabled={uploading !== null} className={`flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[20px] ${logo ? 'border border-line bg-white' : ''}`} aria-label={t('brandEdit.changeLogo')}>
-            {logo ? <img src={logo} alt="" className="h-14 w-14 object-contain" /> : <RolePlaceholder role="brand" label="" />}
+          <button type="button" onClick={() => logoRef.current?.click()} disabled={uploading !== null} className={`flex h-[72px] w-[72px] shrink-0 items-center justify-center ${logo ? '' : 'overflow-hidden rounded-[20px]'}`} aria-label={t('brandEdit.changeLogo')}>
+            {logo ? <OrgLogo src={logo} role="brand" eager className="h-full w-full" /> : <RolePlaceholder role="brand" label="" />}
           </button>
           <div className="min-w-0 flex-1">
             <p className="text-[16px] font-semibold leading-[21px] text-ink-1">{t('brandEdit.logoTitle')}</p>

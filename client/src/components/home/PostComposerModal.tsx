@@ -1,3 +1,4 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { chipTone } from '@/components/ui/chipClasses'
 import { createPortal } from 'react-dom'
@@ -1208,13 +1209,11 @@ export function PostComposerModal({
                               }}
                               className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors text-left"
                             >
-                              <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                {club.avatar_url ? (
-                                  <img src={club.avatar_url} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  <Shield className="w-4 h-4 text-gray-400" />
-                                )}
-                              </div>
+                              {club.avatar_url ? (
+<OrgLogo src={club.avatar_url} imageSize="avatar-sm" className="h-8 w-8" />
+) : (
+<div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0"><Shield className="w-4 h-4 text-gray-400" /></div>
+)}
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium text-gray-900 truncate">{club.name}</p>
                                 <div className="flex items-center gap-1">
@@ -1263,13 +1262,11 @@ export function PostComposerModal({
                 {/* Selected club display */}
                 {selectedClub && (
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {selectedClub.avatar_url ? (
-                        <img src={selectedClub.avatar_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <Shield className="w-5 h-5 text-gray-400" />
-                      )}
-                    </div>
+                    {selectedClub.avatar_url ? (
+<OrgLogo src={selectedClub.avatar_url} imageSize="avatar-sm" className="h-10 w-10" />
+) : (
+<div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0"><Shield className="w-5 h-5 text-gray-400" /></div>
+)}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 truncate">{selectedClub.name}</p>
                       <div className="flex items-center gap-1">
@@ -1322,9 +1319,7 @@ export function PostComposerModal({
                     <div className="flex items-center gap-3">
                       {clubLogoUrl ? (
                         <div className="relative">
-                          <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 overflow-hidden">
-                            <img src={clubLogoUrl} alt={t('composer.transfer.logoAlt')} className="w-full h-full object-cover" />
-                          </div>
+                          <OrgLogo src={clubLogoUrl} alt={t('composer.transfer.logoAlt')} className="h-12 w-12" />
                           <button
                             type="button"
                             onClick={() => setClubLogoUrl(null)}

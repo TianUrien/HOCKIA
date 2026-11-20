@@ -4,9 +4,9 @@
  * Displays a brand in a card format for the directory grid.
  */
 
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { Link } from 'react-router-dom'
 import { Store, ExternalLink, CheckCircle } from 'lucide-react'
-import { getImageUrl } from '@/lib/imageUrl'
 import { dayFirst } from '@/lib/dayFirst'
 import type { Brand } from '@/hooks/useBrands'
 import { useEnumsT } from '@/i18n/ns/enums'
@@ -28,13 +28,7 @@ export function BrandCard({ brand }: BrandCardProps) {
       {/* Logo Section */}
       <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-6 relative">
         {brand.logo_url ? (
-          <img
-            src={getImageUrl(brand.logo_url, 'avatar-lg') ?? undefined}
-            alt={brand.name}
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
-            loading="lazy"
-            decoding="async"
-          />
+          <OrgLogo src={brand.logo_url} alt={brand.name} role="brand" imageSize="avatar-lg" className="h-full w-full transition-transform duration-200 group-hover:scale-105" />
         ) : (
           <Store className="w-16 h-16 text-gray-500 group-hover:text-gray-400 transition-colors" />
         )}

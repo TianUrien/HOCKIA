@@ -243,7 +243,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
                       className="flex w-full items-center gap-3 py-3 pl-3.5 pr-3 text-left"
                     >
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[10px] border-[0.5px] border-line bg-white">
-                        {crestFor(m.crest) ? <img src={crestFor(m.crest) as string} alt="" className="h-[34px] w-[34px] object-contain" /> : <EntityAvatar src={null} name={m.name} role="club" size={34} />}
+                        {crestFor(m.crest) ? <img src={crestFor(m.crest) as string} alt="" className="h-[34px] w-[34px] rounded-[25%] object-contain" /> : <EntityAvatar src={null} name={m.name} role="club" size={34} />}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[16px] font-medium leading-[21px] text-ink-1">{m.name}</span>
@@ -270,7 +270,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
                   data-testid="link-club-add"
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[10px] border-[0.5px] border-line bg-white">
-                    {crestFor(profile.avatar_url ?? null) ? <img src={crestFor(profile.avatar_url ?? null) as string} alt="" className="h-[34px] w-[34px] object-contain" /> : <EntityAvatar src={null} name={q} role="club" size={34} />}
+                    {crestFor(profile.avatar_url ?? null) ? <img src={crestFor(profile.avatar_url ?? null) as string} alt="" className="h-[34px] w-[34px] rounded-[25%] object-contain" /> : <EntityAvatar src={null} name={q} role="club" size={34} />}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[16px] font-medium leading-[21px] text-ink-1">{t('linkClub.search.addClub', { name: q })}</span>

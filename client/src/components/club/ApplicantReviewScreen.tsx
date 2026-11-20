@@ -792,7 +792,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                       <span className="flex min-w-0 items-center gap-1.5">
                         {review.playerClub.crest && (
                           <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center overflow-hidden rounded-[5px] border-[0.5px] border-line bg-white">
-                            <img src={getImageUrl(review.playerClub.crest, 'avatar-sm') ?? review.playerClub.crest} alt="" className="h-[18px] w-[18px] object-contain" />
+                            <img src={getImageUrl(review.playerClub.crest, 'avatar-sm') ?? review.playerClub.crest} alt="" className="h-[18px] w-[18px] rounded-[25%] object-contain" />
                           </span>
                         )}
                         <span className="truncate text-row font-medium text-ink-1">{review.playerClub.name}</span>
