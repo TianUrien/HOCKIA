@@ -1,8 +1,8 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useState, useRef, useEffect, useCallback, useId } from 'react'
 import { Building2, Check, ChevronDown, Globe2, Loader2, Plus, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import StorageImage from './StorageImage'
 import { fieldErrorRing, fieldErrorText, fieldInputBase, fieldLabel, fieldLabelRow, fieldOptionalTag } from '@/components/ui/fieldClasses'
 import Flag from './Flag'
 import { Trans } from 'react-i18next'
@@ -322,9 +322,9 @@ export default function WorldClubSearch({
       <div className={isField ? 'relative' : 'relative mt-1'}>
         <div className={`pointer-events-none absolute inset-y-0 left-0 flex items-center ${isField ? 'pl-3.5' : 'pl-3'}`}>
           {isField && isLinked && !isSearching ? (
-            <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-tile bg-white">
-              {crestUrl ? <img src={crestUrl} alt="" className="h-full w-full object-cover" /> : <Building2 className="h-4 w-4 text-ink-3" />}
-            </span>
+            crestUrl
+              ? <OrgLogo src={crestUrl} className="h-7 w-7" />
+              : <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-tile bg-white"><Building2 className="h-4 w-4 text-ink-3" /></span>
           ) : isSearching ? (
             <Loader2 className={`h-4 w-4 animate-spin ${isField ? 'text-ink-3' : 'text-gray-400'}`} />
           ) : isLinked ? (
@@ -421,15 +421,7 @@ export default function WorldClubSearch({
                     >
                       {/* Club avatar */}
                       {club.avatar_url ? (
-                        <StorageImage
-                          src={club.avatar_url}
-                          imageSize="card-thumb"
-                          alt=""
-                          className="h-full w-full rounded-lg object-cover"
-                          containerClassName="h-8 w-8 min-w-[2rem] rounded-lg"
-                          fallbackClassName="h-8 w-8 rounded-lg bg-gray-100"
-                          fallback={<Building2 className="h-4 w-4 text-gray-400" />}
-                        />
+                        <OrgLogo src={club.avatar_url} imageSize="card-thumb" className="h-8 w-8" />
                       ) : (
                         <div className="flex h-8 w-8 min-w-[2rem] items-center justify-center rounded-lg bg-gray-100">
                           <Building2 className="h-4 w-4 text-gray-400" />

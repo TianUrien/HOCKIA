@@ -778,5 +778,29 @@
     "share": "Compartir",
     "notNow": "Ahora no",
     "shared": "Compartido en Inicio."
+  },
+  "imageCrop": {
+    "title": {
+      "person": "Ajusta tu foto",
+      "crest": "Ajusta tu escudo",
+      "logo": "Ajusta tu logo"
+    },
+    "hint": "Arrastra para moverla y acerca o aleja hasta que se vea bien. Así aparece en todo Hockia.",
+    "failed": "No se pudo abrir esta imagen. Prueba con otra.",
+    "stageLabel": "Posición de la imagen. Usa las flechas para moverla y más o menos para acercar o alejar.",
+    "zoom": "Zoom",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "fit": "Mostrar completo",
+    "fill": "Llenar el cuadrado",
+    "preview": "Así se verá",
+    "small": "Esta imagen es pequeña ({{width}} × {{height}} px) y puede verse borrosa. Si puedes, usa una de al menos 320 px de ancho.",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "use": {
+      "person": "Usar foto",
+      "crest": "Usar escudo",
+      "logo": "Usar logo"
+    }
   }
 }

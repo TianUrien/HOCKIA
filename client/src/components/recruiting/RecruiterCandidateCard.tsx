@@ -15,6 +15,7 @@
  * UI ONLY — the verdict/fit data is computed upstream and passed through
  * unchanged. No chips over faces (founder ruling 2026-10-11).
  */
+import { isFittedOrgImage } from '@/lib/orgImage'
 import { useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import { DualNationalityDisplay } from '@/components'
@@ -301,7 +302,7 @@ export default function RecruiterCandidateCard({ member, verdict: verdictProp, f
             sizes="(max-width: 640px) 45vw, 200px"
             alt=""
             wrapperClassName={isBrand || member.role === 'club' ? 'bg-white' : undefined}
-            className={isBrand || member.role === 'club' ? 'bg-white object-contain p-5' : 'object-cover'}
+            className={(isBrand || member.role === 'club') && !isFittedOrgImage(rawHero) ? 'bg-white object-contain p-5' : 'object-cover'}
             priority={priority}
             onError={() => setHeroFailed(true)}
           />

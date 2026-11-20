@@ -1,3 +1,7 @@
+import { cn } from '@/lib/utils'
+import { OrgLogo } from '@/components/ui/OrgLogo'
+import { useImageCrop } from '@/components/media/ImageCropProvider'
+import { imageKindForRole, uploadIdentityImage } from '@/lib/identityImage'
 import type { TablesUpdate } from '@/lib/database.types'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { X, Upload, Loader2, Trophy, MapPin } from 'lucide-react'
@@ -12,7 +16,6 @@ import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { logger } from '@/lib/logger'
 import { validateImage } from '@/lib/imageOptimization'
-import { uploadProfilePhoto } from '@/lib/profilePhoto'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useCountries } from '@/hooks/useCountries'
 import { invalidateProfile } from '@/lib/profile'
@@ -375,6 +378,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
   const { addToast } = useToastStore()
   const { getCountryById } = useCountries()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const requestCrop = useImageCrop()
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const modalOpenRef = useRef(false)
@@ -607,6 +611,8 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
   }, [activeProfileId, formData, isOpen, role])
 
   if (!isOpen || !profile) return null
+  // A crest or logo previews as the organisation rounded square, a photo as a circle.
+  const orgPreview = Boolean(formData.avatar_url) && role === 'club'
 
   /** Upload a File to Supabase avatars bucket and update form state. */
   const uploadAvatarFile = async (file: File) => {
@@ -619,9 +625,13 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         return
       }
 
+      const kind = imageKindForRole(profile.role)
+      const square = await requestCrop(file, kind)
+      if (!square) return
+
       let urls
       try {
-        urls = await uploadProfilePhoto(profile.id, file)
+        urls = await uploadIdentityImage(profile.id, kind, file, square)
       } catch (uploadError) {
         captureOnboardingError(uploadError, {
           profileId: profile.id,
@@ -955,9 +965,11 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
               <div className="flex items-center gap-4">
                 <div 
                   onClick={handleImageClick}
-                  className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors overflow-hidden"
+                  className={cn('w-24 h-24 flex items-center justify-center cursor-pointer transition-colors', orgPreview ? '' : 'rounded-full bg-gray-100 hover:bg-gray-200 overflow-hidden')}
                 >
-                  {formData.avatar_url ? (
+                  {orgPreview ? (
+                    <OrgLogo src={formData.avatar_url} alt={t('modal.previewAlt')} role="club" imageSize="avatar-lg" eager className="h-full w-full" />
+                  ) : formData.avatar_url ? (
                     <StorageImage
                       src={formData.avatar_url}
                       imageSize="avatar-lg"

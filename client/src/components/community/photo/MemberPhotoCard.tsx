@@ -83,7 +83,7 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
           <img src={pitchVertical} alt="" width={174} height={230.229} className="absolute inset-0 h-full w-full" />
           <span className="absolute left-1/2 top-[21.5%] flex h-[88px] w-[88px] -translate-x-1/2 items-center justify-center">
             {brandLogo ? (
-              <LogoTile src={getImageUrl(brandLogo, 'avatar-md') ?? brandLogo} name={name} eager={priority} className="h-[88px] w-[88px] rounded-[20px] p-2.5" initialsClassName="text-[28px]" />
+              <LogoTile src={getImageUrl(brandLogo, 'avatar-md') ?? brandLogo} name={name} eager={priority} className="h-[88px] w-[88px]" />
             ) : (
               <>
                 <span className="block h-[88px] w-[88px] overflow-hidden rounded-full ring-[1.5px] ring-white/40"><RolePlaceholder role={isRoleAvatarRole(member.role) ? member.role : 'player'} label="" /></span>

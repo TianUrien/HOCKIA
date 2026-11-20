@@ -1,3 +1,5 @@
+import { useImageCrop } from '@/components/media/ImageCropProvider'
+import { deleteOrgImage, uploadOrgImage } from '@/lib/orgImageUpload'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { rememberCrestColor } from '@/hooks/useClubCrestColors'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -16,9 +18,8 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { useCountries } from '@/hooks/useCountries'
-import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
+import { validateImage } from '@/lib/imageOptimization'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
-import { deleteStorageObject } from '@/lib/storage'
 import { invalidateProfile } from '@/lib/profile'
 import { getImageUrl } from '@/lib/imageUrl'
 import { humanizeToken } from '@/lib/identity'
@@ -84,6 +85,7 @@ export default function ClubEditScreen() {
   const addToast = useToastStore((s) => s.addToast)
   const { getCountryById } = useCountries()
   const fileRef = useRef<HTMLInputElement | null>(null)
+  const requestCrop = useImageCrop()
   const [editing, setEditing] = useState<Field | null>(null)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -202,21 +204,18 @@ export default function ClubEditScreen() {
     if (!file) return
     const check = validateImage(file, { maxFileSizeMB: 5 })
     if (!check.valid) { addToast(check.error ?? t('clubEdit.crest.invalidImage'), 'error'); return }
+    const square = await requestCrop(file, 'crest')
+    if (!square) return
     setUploading(true)
     try {
-      const optimized = await optimizeAvatarImage(file)
-      const ext = optimized.name.split('.').pop() || 'jpg'
-      const path = `${user.id}/avatar_${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, optimized, { upsert: true, cacheControl: '31536000' })
-      if (uploadError) throw uploadError
-      const publicUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+      const publicUrl = await uploadOrgImage(user.id, 'crest', square, file)
       const previous = profile.avatar_url
       const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
       if (updateError) throw updateError
       // Community club card colour (Cover=Crest), from the crest just uploaded.
-      rememberCrestColor(user.id, publicUrl, optimized)
+      rememberCrestColor(user.id, publicUrl, square)
       // Drop the old file only once the row points at the new one (incident 2026-07-30).
-      if (previous && previous !== publicUrl) void deleteStorageObject({ bucket: 'avatars', publicUrl: previous, context: 'edit-club:replace-crest' })
+      if (previous && previous !== publicUrl) deleteOrgImage(previous, 'edit-club:replace-crest')
       invalidateProfile({ userId: user.id, reason: 'edit-club-crest' })
       await refreshProfile()
     } catch (err) {
@@ -228,7 +227,7 @@ export default function ClubEditScreen() {
   }
   const pickCrest = async () => {
     if (isNativePlatform()) {
-      try { const result = await pickImageNative('prompt'); if (result) await uploadCrest(result.file) } catch (err) { logger.error('[ClubEditScreen] native picker failed', err); addToast(t('clubEdit.crest.pickerFailed'), 'error') }
+      try { const result = await pickImageNative('prompt', { crop: false }); if (result) await uploadCrest(result.file) } catch (err) { logger.error('[ClubEditScreen] native picker failed', err); addToast(t('clubEdit.crest.pickerFailed'), 'error') }
       return
     }
     fileRef.current?.click()

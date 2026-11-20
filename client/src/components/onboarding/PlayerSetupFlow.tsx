@@ -1,3 +1,4 @@
+import { useImageCrop } from '@/components/media/ImageCropProvider'
 import type { TablesUpdate } from '@/lib/database.types'
 import { useEffect, useRef, useState } from 'react'
 import { Lock, Plus } from 'lucide-react'
@@ -91,6 +92,7 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
   const { getCountryById } = useCountries()
   const pendingCleanup = usePendingStorageCleanup()
   const fileRef = useRef<HTMLInputElement | null>(null)
+  const requestCrop = useImageCrop()
   const draftKey = user ? setupDraftKey(user.id) : null
 
   const [step, setStep] = useState<Step>(() => {
@@ -178,10 +180,12 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
     if (!file) return
     const check = validateImage(file, { maxFileSizeMB: 5 })
     if (!check.valid) { setError(check.error ?? t('player.photo.invalid')); return }
+    const square = await requestCrop(file, 'person')
+    if (!square) return
     setUploading(true)
     setError(null)
     try {
-      const { avatarUrl: publicUrl, avatarFullUrl: fullUrl } = await uploadProfilePhoto(user.id, file)
+      const { avatarUrl: publicUrl, avatarFullUrl: fullUrl } = await uploadProfilePhoto(user.id, file, { square })
       const previous = avatarUrl || profile?.avatar_url || null
       const previousFull = avatarFullUrl
       setAvatarUrl(publicUrl)

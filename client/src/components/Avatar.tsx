@@ -6,6 +6,7 @@ import { useProfileImagePreview } from './ProfileImagePreviewProvider'
 import RolePlaceholder from './RolePlaceholder'
 import { tCommon } from '@/i18n/ns/common'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
+import { ORG_SHAPE, orgImageClass } from '@/lib/orgImage'
 
 interface AvatarProps {
   src?: string | null
@@ -62,6 +63,9 @@ export default function Avatar({
   const placeholderRole = isRoleAvatarRole(role) ? role : 'player'
   const { openPreview } = useProfileImagePreview()
   const canPreview = Boolean(enablePreview && src)
+  // A club crest or brand logo is a rounded square on white, never a circle
+  // (same tile as OrgLogo). With no image the placeholder keeps its circle.
+  const orgImage = Boolean(src && !imageError && (role === 'club' || role === 'brand'))
 
   const optimizedSrc = useMemo(
     () => getImageUrl(src, AVATAR_SIZE_MAP[size] ?? 'avatar-sm'),
@@ -106,7 +110,8 @@ export default function Avatar({
   return (
     <div
       className={cn(
-        'relative aspect-square rounded-full overflow-hidden font-semibold text-white flex items-center justify-center flex-shrink-0',
+        'relative aspect-square overflow-hidden font-semibold text-white flex items-center justify-center flex-shrink-0',
+        orgImage ? cn(ORG_SHAPE, 'bg-white') : 'rounded-full',
         canPreview &&
           (previewInteraction === 'auto'
             ? 'cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-hockia-primary'
@@ -125,7 +130,8 @@ export default function Avatar({
             src={optimizedSrc ?? undefined}
             alt={alt || tCommon('avatar.alt')}
             className={cn(
-              'absolute inset-0 h-full w-full object-cover transition-opacity duration-200',
+              orgImage ? orgImageClass(src) : 'absolute inset-0 h-full w-full object-cover',
+              'transition-opacity duration-200',
               imageLoaded ? "opacity-100" : "opacity-0"
             )}
             loading={loading}
@@ -134,6 +140,7 @@ export default function Avatar({
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
           />
+          {orgImage && <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-black/10" />}
         </>
       ) : (
         // The accessible name is provided by the parent (e.g. a card or

@@ -30,7 +30,9 @@ export const isNativePlatform = (): boolean => Capacitor.isNativePlatform()
 /**
  * `crop: false` skips the phone's square crop step, so the whole photo comes
  * back: profile photos keep their shape for full-screen views and the round
- * avatar is a centred crop (founder, 2026-10-23). Crests and logos keep the crop.
+ * avatar is a centred crop (founder, 2026-10-23). Since 2026-11-20 every caller
+ * passes `crop: false`: the app's own crop step (ImageCropSheet) follows the
+ * pick for photos, crests and logos alike, on phones and on the web.
  */
 export async function pickImageNative(source?: 'camera' | 'photos' | 'prompt', { crop = true }: { crop?: boolean } = {}): Promise<NativeImageResult | null> {
   if (!isNativePlatform()) return null

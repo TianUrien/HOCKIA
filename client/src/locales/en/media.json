@@ -757,5 +757,29 @@
     "share": "Share",
     "notNow": "Not now",
     "shared": "Shared on Home."
+  },
+  "imageCrop": {
+    "title": {
+      "person": "Adjust your photo",
+      "crest": "Adjust your crest",
+      "logo": "Adjust your logo"
+    },
+    "hint": "Drag to move it and zoom until it looks right. This is how it appears across Hockia.",
+    "failed": "This image could not be opened. Try another one.",
+    "stageLabel": "Image position. Use the arrow keys to move it and plus or minus to zoom.",
+    "zoom": "Zoom",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fit": "Show it all",
+    "fill": "Fill the square",
+    "preview": "How it will look",
+    "small": "This image is small ({{width}} × {{height}} px) and may look soft. Use one at least 320 px wide if you can.",
+    "cancel": "Cancel",
+    "close": "Close",
+    "use": {
+      "person": "Use photo",
+      "crest": "Use crest",
+      "logo": "Use logo"
+    }
   }
 }

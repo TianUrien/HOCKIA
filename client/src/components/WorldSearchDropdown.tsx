@@ -1,3 +1,4 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Building2, Loader2 } from 'lucide-react'
@@ -243,19 +244,13 @@ export default function WorldSearchDropdown({
                         highlightedIndex === flatIndex ? 'bg-purple-50' : 'hover:bg-gray-50'
                       }`}
                     >
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {club.avatar_url ? (
-                          <img
-                            src={club.avatar_url}
-                            alt=""
-                            className="w-full h-full object-cover"
-                            loading="eager"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                          />
-                        ) : (
+                      {club.avatar_url ? (
+                        <OrgLogo src={club.avatar_url} imageSize="card-thumb" eager className="h-10 w-10" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
                           <Building2 className="w-4 h-4 text-gray-400" />
-                        )}
-                      </div>
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-900 text-sm truncate">{club.club_name}</p>
                         <p className="text-xs text-gray-400 truncate inline-flex items-center gap-1">

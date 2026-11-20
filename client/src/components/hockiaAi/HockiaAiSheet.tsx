@@ -1,3 +1,4 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { BetaPill } from './BetaPill'
@@ -216,7 +217,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   ] : []
   const roleChip = roleContext ? (
     <span className="mx-auto flex max-w-full items-center gap-2 rounded-full bg-white py-1 pl-1.5 pr-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-role-chip">
-      <img src={roleContext.logoUrl ?? undefined} alt="" className={cn('h-6 w-6 rounded-full object-contain', !roleContext.logoUrl && 'hidden')} />
+      {roleContext.logoUrl && <OrgLogo src={roleContext.logoUrl} className="h-6 w-6" />}
       <span className="truncate text-secondary font-semibold text-ink-1">{roleContext.label}</span>
       <button type="button" onClick={clearRole} aria-label={t('sheet.stopAskingRole')} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3"><X className="h-3.5 w-3.5" /></button>
     </span>

@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 import type { RoleLike } from '@/lib/identity'
 import { isOrganisationRole } from '@/lib/identity'
 import RolePlaceholder from '@/components/RolePlaceholder'
+import { OrgLogo } from '@/components/ui/OrgLogo'
 
 interface EntityAvatarProps {
   src?: string | null
@@ -16,32 +17,21 @@ interface EntityAvatarProps {
 /**
  * Identity rule from 00 Architecture: people (players, coaches, umpires)
  * are circles with a photo; clubs and brands are rounded squares with the
- * crest/logo on white, never cropped. One component so every row, card and
+ * crest/logo on white (OrgLogo). One component so every row, card and
  * header follows it.
  */
 export function EntityAvatar({ src, name, role, size = 48, className }: EntityAvatarProps) {
   const label = name ?? ''
   if (isOrganisationRole(role)) {
-    // Brands: rounded square (24 %). Clubs: the crest on white, or the
-    // Avatar / Placeholder shield in a circle when there is none.
-    const radius = !src && role !== 'brand' ? size / 2 : Math.round(size / 4)
+    // A crest or logo: THE organisation tile (OrgLogo). None yet: the
+    // Avatar / Placeholder, a rounded square for brands and a circle for clubs.
+    if (src) return <OrgLogo src={src} alt={label} role={role === 'brand' ? 'brand' : 'club'} className={className} style={{ width: size, height: size }} />
     return (
       <span
-        className={cn('flex shrink-0 items-center justify-center overflow-hidden', src ? 'border border-line bg-white' : '', className)}
-        style={{ width: size, height: size, borderRadius: radius }}
+        className={cn('flex shrink-0 items-center justify-center overflow-hidden', className)}
+        style={{ width: size, height: size, borderRadius: role === 'brand' ? Math.round(size / 4) : size / 2 }}
       >
-        {src ? (
-          <img
-            src={src}
-            alt={label}
-            loading="lazy"
-            className="object-contain"
-            style={{ width: size - 8, height: size - 8 }}
-          />
-        ) : (
-          // No crest / logo: Avatar / Placeholder (never initials).
-          <RolePlaceholder role={role === 'brand' ? 'brand' : 'club'} label="" />
-        )}
+        <RolePlaceholder role={role === 'brand' ? 'brand' : 'club'} label="" />
       </span>
     )
   }

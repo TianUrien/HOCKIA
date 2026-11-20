@@ -626,9 +626,9 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
             <span aria-hidden="true" className="absolute inset-0">
               <img src={pitchVertical} alt="" className="absolute inset-0 h-full w-full" />
               {isClub && crest ? (
-                <LogoTile src={crest} name={name} eager className={`absolute left-1/2 top-[29%] h-[150px] w-[150px] -translate-x-1/2 rounded-[32px] p-3.5 ${LIGHT_SHADOW}`} initialsClassName="text-[44px]" />
+                <LogoTile src={crest} name={name} eager className={`absolute left-1/2 top-[29%] h-[150px] w-[150px] -translate-x-1/2 ${LIGHT_SHADOW}`} />
               ) : brandLogo ? (
-                <LogoTile src={getImageUrl(brandLogo, 'avatar-lg') ?? brandLogo} name={name} eager className="absolute left-1/2 top-[33%] h-[140px] w-[140px] -translate-x-1/2 rounded-[28px] p-4" initialsClassName="text-[40px]" />
+                <LogoTile src={getImageUrl(brandLogo, 'avatar-lg') ?? brandLogo} name={name} eager className="absolute left-1/2 top-[33%] h-[140px] w-[140px] -translate-x-1/2" />
               ) : (
                 <span className={`absolute left-1/2 top-[33%] block h-[140px] w-[140px] -translate-x-1/2 overflow-hidden ring-[1.5px] ring-white/40 ${isBrand ? 'rounded-[28px]' : 'rounded-full'}`}>
                   <RolePlaceholder role={isRoleAvatarRole(member.role) ? member.role : 'player'} label="" />
@@ -670,7 +670,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
           {/* Identity */}
           <div data-preview-identity="" className="pointer-events-none absolute inset-x-5 bottom-[calc(24px+18px)] flex flex-col items-start gap-1.5">
             {isClub && current && crest && (
-              <LogoTile src={crest} name={name} eager className="mb-0.5 h-14 w-14 rounded-[16px] p-[5px]" initialsClassName="text-[18px]" />
+              <LogoTile src={crest} name={name} eager className="mb-0.5 h-14 w-14" />
             )}
             {fitPillText && fitState && <FitBadge state={fitState} surface="photo" suffix={fitSuffix} />}
             {!fitPillText && friendship.isIncomingRequest && !recruiterActions && (
@@ -1267,9 +1267,9 @@ function ImmersivePage(p: ImmersivePageProps) {
           <span aria-hidden="true" className="absolute inset-0">
             <img src={pitchVertical} alt="" className="absolute inset-0 h-full w-full" />
             {p.isClub && p.crest ? (
-              <LogoTile src={p.crest} name={p.name} eager className={`absolute left-1/2 top-[26%] h-[150px] w-[150px] -translate-x-1/2 rounded-[32px] p-3.5 ${LIGHT_SHADOW}`} initialsClassName="text-[44px]" />
+              <LogoTile src={p.crest} name={p.name} eager className={`absolute left-1/2 top-[26%] h-[150px] w-[150px] -translate-x-1/2 ${LIGHT_SHADOW}`} />
             ) : p.brandLogo ? (
-              <LogoTile src={getImageUrl(p.brandLogo, 'avatar-lg') ?? p.brandLogo} name={p.name} eager className="absolute left-1/2 top-[28%] h-[140px] w-[140px] -translate-x-1/2 rounded-[28px] p-4" initialsClassName="text-[40px]" />
+              <LogoTile src={getImageUrl(p.brandLogo, 'avatar-lg') ?? p.brandLogo} name={p.name} eager className="absolute left-1/2 top-[28%] h-[140px] w-[140px] -translate-x-1/2" />
             ) : (
               <span className={`absolute left-1/2 top-[28%] block h-[140px] w-[140px] -translate-x-1/2 overflow-hidden ring-[1.5px] ring-white/40 ${p.member.role === 'brand' ? 'rounded-[28px]' : 'rounded-full'}`}>
                 <RolePlaceholder role={isRoleAvatarRole(p.member.role) ? p.member.role : 'player'} label="" />
@@ -1309,7 +1309,7 @@ function ImmersivePage(p: ImmersivePageProps) {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col pb-[max(env(safe-area-inset-bottom),12px)]">
         <div data-preview-identity="" className="flex flex-col items-start gap-1.5 px-4">
           {p.isClub && p.current && p.crest && (
-            <LogoTile src={p.crest} name={p.name} eager className="mb-0.5 h-14 w-14 rounded-[16px] p-[5px]" initialsClassName="text-[18px]" />
+            <LogoTile src={p.crest} name={p.name} eager className="mb-0.5 h-14 w-14" />
           )}
           {p.fitPill}
           {p.incomingRequest && (
@@ -1475,9 +1475,9 @@ function DesktopPage(p: ImmersivePageProps) {
           <span aria-hidden="true" className="absolute inset-0">
             <img src={pitchVertical} alt="" className="absolute inset-0 h-full w-full" />
             {p.isClub && p.crest ? (
-              <LogoTile src={p.crest} name={p.name} eager className={`absolute left-1/2 top-1/2 h-[150px] w-[150px] -translate-x-1/2 -translate-y-1/2 rounded-[32px] p-3.5 ${LIGHT_SHADOW}`} initialsClassName="text-[44px]" />
+              <LogoTile src={p.crest} name={p.name} eager className={`absolute left-1/2 top-1/2 h-[150px] w-[150px] -translate-x-1/2 -translate-y-1/2 ${LIGHT_SHADOW}`} />
             ) : p.brandLogo ? (
-              <LogoTile src={getImageUrl(p.brandLogo, 'avatar-lg') ?? p.brandLogo} name={p.name} eager className="absolute left-1/2 top-1/2 h-[140px] w-[140px] -translate-x-1/2 -translate-y-1/2 rounded-[28px] p-4" initialsClassName="text-[40px]" />
+              <LogoTile src={getImageUrl(p.brandLogo, 'avatar-lg') ?? p.brandLogo} name={p.name} eager className="absolute left-1/2 top-1/2 h-[140px] w-[140px] -translate-x-1/2 -translate-y-1/2" />
             ) : (
               <span className={`absolute left-1/2 top-1/2 block h-[140px] w-[140px] -translate-x-1/2 -translate-y-1/2 overflow-hidden ring-[1.5px] ring-white/40 ${p.member.role === 'brand' ? 'rounded-[28px]' : 'rounded-full'}`}>
                 <RolePlaceholder role={isRoleAvatarRole(p.member.role) ? p.member.role : 'player'} label="" />
@@ -1516,7 +1516,7 @@ function DesktopPage(p: ImmersivePageProps) {
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-7 pb-5 pt-7" data-testid="member-desktop-details">
           <div className="flex items-center gap-3 pr-12">
             {p.isClub && p.current && p.crest && (
-              <LogoTile src={p.crest} name={p.name} eager className="h-14 w-14 shrink-0 rounded-[16px] border border-line p-[5px]" initialsClassName="text-[18px]" />
+              <LogoTile src={p.crest} name={p.name} eager className="h-14 w-14 shrink-0 border border-line" />
             )}
             <div className="flex min-w-0 flex-col gap-0.5">
               <h2 className="line-clamp-2 text-[28px] font-bold leading-[34px] tracking-[-0.01em] text-ink-1">{p.title}</h2>

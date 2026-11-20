@@ -1,12 +1,18 @@
 import { cn } from '@/lib/utils'
 import { LogoTile } from '@/components/community/photo/LogoTile'
 import RolePlaceholder from '@/components/RolePlaceholder'
+import { ORG_SHAPE } from '@/lib/orgImage'
 
-/** A brand's logo tile, or the brand Avatar / Placeholder (never initials). */
-export function BrandLogo({ name, url, className, initialsClassName, eager }: { name: string; url: string | null; className: string; initialsClassName?: string; eager?: boolean }) {
-  if (url) return <LogoTile src={url} name={name} role="brand" eager={eager} className={cn('ring-1 ring-line', className)} initialsClassName={initialsClassName} />
+/**
+ * A brand's logo tile, or the brand Avatar / Placeholder (never initials).
+ * `className` gives the size and shadow; the shape is always the organisation
+ * rounded square, so a radius passed by an older caller is dropped.
+ */
+export function BrandLogo({ name, url, className, eager }: { name: string; url: string | null; className: string; initialsClassName?: string; eager?: boolean }) {
+  const box = className.replace(/(^|\s)rounded-\S+/g, ' ').trim()
+  if (url) return <LogoTile src={url} name={name} role="brand" eager={eager} className={box} />
   return (
-    <span className={cn('block overflow-hidden', className)} aria-hidden="true">
+    <span className={cn('block overflow-hidden', ORG_SHAPE, box)} aria-hidden="true">
       <RolePlaceholder role="brand" label="" />
     </span>
   )

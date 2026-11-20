@@ -1,3 +1,4 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapPin, Building2, Shield } from 'lucide-react'
@@ -398,13 +399,7 @@ export default function MemberTile(props: MemberTileProps) {
           ) : roleNative && (
             <div className="flex items-center gap-1.5 text-xs text-gray-500 min-w-0 pt-2 border-t border-gray-100">
               {roleNative.kind === 'team' && clubLogo ? (
-                <img
-                  src={getImageUrl(clubLogo, 'card-thumb') ?? clubLogo}
-                  alt=""
-                  className="w-3.5 h-3.5 rounded-sm object-cover flex-shrink-0"
-                  loading="lazy"
-                  decoding="async"
-                />
+                <OrgLogo src={clubLogo} imageSize="card-thumb" className="h-3.5 w-3.5" />
               ) : roleNative.kind === 'federation' ? (
                 <Shield className="w-3 h-3 flex-shrink-0 text-gray-400" />
               ) : roleNative.kind === 'team' ? (

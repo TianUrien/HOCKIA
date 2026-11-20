@@ -1,3 +1,4 @@
+import { OrgLogo } from '@/components/ui/OrgLogo'
 import { Link } from 'react-router-dom'
 import { Shield } from 'lucide-react'
 import type { SearchClubResult as SearchClubResultType } from '@/hooks/useSearch'
@@ -20,13 +21,11 @@ export function SearchClubResult({ result }: SearchClubResultProps) {
 
   const content = (
     <div className="flex items-center gap-3">
-      <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-        {result.avatar_url ? (
-          <img src={result.avatar_url} alt="" className="w-full h-full object-cover" />
+      {result.avatar_url ? (
+          <OrgLogo src={result.avatar_url} role="club" imageSize="avatar-md" className="h-12 w-12" />
         ) : (
-          <Shield className="w-6 h-6 text-gray-400" />
+          <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0"><Shield className="w-6 h-6 text-gray-400" /></div>
         )}
-      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-gray-900 truncate">{result.club_name}</p>
         <div className="flex items-center gap-1.5 mt-0.5">
