@@ -136,6 +136,16 @@
       "source": "/sitemap.xml",
       "destination": "/api/sitemap.xml",
       "statusCode": 301
+    },
+    {
+      "source": "/brands/playr",
+      "destination": "/brands/hockia",
+      "statusCode": 301
+    },
+    {
+      "source": "/brands/playr/:rest*",
+      "destination": "/brands/hockia/:rest*",
+      "statusCode": 301
     }
   ],
   "rewrites": [
