@@ -9,6 +9,7 @@ import Header from '../components/Header'
 import Button from '../components/Button'
 import { OpportunityCardSkeleton } from '../components/Skeleton'
 import { OpportunitiesListJsonLd } from '../components/OpportunityJsonLd'
+import { isStaleOpenRole } from '@/lib/seo/opportunityHead'
 import { queryClient } from '@/lib/queryClient'
 import { qk } from '@/lib/queryKeys'
 import { monitor } from '@/lib/monitor'
@@ -32,6 +33,7 @@ import type { CrestPalette } from '@/lib/crestPalette'
 import { OpportunityFiltersSheet } from '@/components/opportunities/OpportunityFiltersSheet'
 import { EMPTY_ROLE_FILTERS, QUICK_CHIPS, applyRoleFilters, countActiveRoleFilters, isQuickChipOn, toggleQuickChip, type RoleFilters } from '@/lib/opportunityFilters'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { countryRolesDescription, countryRolesPath, countryRolesTitle, resolveRoleCountry } from '@/lib/seo/opportunitiesCountry'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { Chip } from '@/components/ui/Chip'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -81,7 +83,13 @@ const isSortValue = (v: string | null): v is SortValue =>
 
 export default function OpportunitiesPage() {
   const t = useOpportunitiesT()
-  useDocumentTitle(t('list.documentTitle'))
+  // On /opportunities/in/<country> the head is the country's, the one the
+  // server sent (api/opportunities-country.ts): Google indexes what the app
+  // ends with. This page is lazy, so it is the last to write the head.
+  const { pathname } = useLocation()
+  const pageCountry = resolveRoleCountry(/^\/opportunities\/in\/([^/]+)\/?$/.exec(pathname)?.[1])
+  const countryCode = pageCountry?.code ?? null
+  useDocumentTitle(pageCountry ? countryRolesTitle(pageCountry) : t('list.documentTitle'), { raw: Boolean(pageCountry) })
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user, profile } = useAuthStore()
@@ -395,16 +403,20 @@ export default function OpportunitiesPage() {
   useEffect(() => {
     // The tab title follows the interface language; the tags crawlers and
     // link previews read (description, og:*, twitter:*) stay in English.
-    document.title = tOpportunities('list.tabTitle')
-    const metaDescription = 'Open field hockey jobs for players and coaches: clubs across Europe, the Americas, Africa, Asia and Oceania recruiting on Hockia. Apply directly, free.'
+    const country = resolveRoleCountry(countryCode)
+    const title = country ? countryRolesTitle(country) : 'Field Hockey Jobs & Opportunities – Players & Coaches Worldwide | Hockia'
+    document.title = country ? title : tOpportunities('list.tabTitle')
+    const metaDescription = country
+      ? countryRolesDescription(country)
+      : 'Open field hockey jobs for players and coaches: clubs across Europe, the Americas, Africa, Asia and Oceania recruiting on Hockia. Apply directly, free.'
     const metaDescTag = document.querySelector('meta[name="description"]')
     if (metaDescTag) metaDescTag.setAttribute('content', metaDescription)
     const ogTitle = document.querySelector('meta[property="og:title"]')
-    if (ogTitle) ogTitle.setAttribute('content', 'Field Hockey Jobs & Opportunities – Players & Coaches Worldwide | Hockia')
+    if (ogTitle) ogTitle.setAttribute('content', title)
     const ogDesc = document.querySelector('meta[property="og:description"]')
     if (ogDesc) ogDesc.setAttribute('content', metaDescription)
     const ogUrl = document.querySelector('meta[property="og:url"]')
-    if (ogUrl) ogUrl.setAttribute('content', 'https://inhockia.com/opportunities')
+    if (ogUrl) ogUrl.setAttribute('content', `https://inhockia.com${country ? countryRolesPath(country) : '/opportunities'}`)
     return () => {
       document.title = 'Hockia | Field Hockey Community'
       const defaultDesc = 'Hockia is the field hockey network: player and coach profiles, clubs recruiting worldwide and open field hockey jobs. Join free.'
@@ -413,7 +425,7 @@ export default function OpportunitiesPage() {
       if (ogDesc) ogDesc.setAttribute('content', defaultDesc)
       if (ogUrl) ogUrl.setAttribute('content', 'https://inhockia.com')
     }
-  }, [])
+  }, [countryCode])
 
   const handleSyncNewVacancies = useCallback(async () => {
     if (isSyncingNewVacancies) return
@@ -478,6 +490,13 @@ export default function OpportunitiesPage() {
   }, [vacancies, filters.country, filters.applied, userApplications, sort])
 
   const totalFilteredCount = filteredOpportunities.length
+  // Structured data follows the 90-day advertising rule, like the server
+  // pages and the sitemap: an open role with no deadline stays in the list
+  // people see, but is not advertised to search engines after 90 days.
+  const advertisedOpportunities = useMemo(
+    () => filteredOpportunities.filter((v) => !isStaleOpenRole({ application_deadline: v.application_deadline, published_at: v.published_at, created_at: v.created_at ?? '' })),
+    [filteredOpportunities],
+  )
 
   // "Only roles my passports qualify for" — EU-only roles hide for a non-EU
   // player. Unknown nationality keeps everything (never hide for an
@@ -547,10 +566,10 @@ export default function OpportunitiesPage() {
 
   return (
     <>
-      {!isLoading && totalFilteredCount > 0 && (
+      {!isLoading && advertisedOpportunities.length > 0 && (
         <OpportunitiesListJsonLd
-          opportunities={filteredOpportunities}
-          totalCount={totalFilteredCount}
+          opportunities={advertisedOpportunities}
+          totalCount={advertisedOpportunities.length}
         />
       )}
 
