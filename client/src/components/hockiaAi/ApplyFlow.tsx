@@ -18,7 +18,7 @@ import { MascotAvatar } from './mascot'
 import type { ApplyTarget } from './hockiaAiSheetStore'
 import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 import { getDateFnsLocale } from '@/i18n/format'
-import { dayFirst } from '@/lib/dayFirst'
+import { dayFirst, parseDayFirst } from '@/lib/dayFirst'
 import { countryLabel } from '@/i18n/countryNames'
 
 /**
@@ -77,8 +77,8 @@ export function ApplyFlow({ target, onFindSimilar, onAddVideo, onClose }: { targ
     .map((id) => countries.find((c) => c.id === id)).filter(Boolean)
     .map((c) => (isEuCountryCode(c!.code) ? t('apply.euSuffix', { country: countryLabel(c!.common_name || c!.name) }) : countryLabel(c!.common_name || c!.name))), [profile, countries, t])
   const available = (() => {
-    const from = profile?.available_from ? new Date(profile.available_from) : null
-    const when = from && !Number.isNaN(from.getTime()) ? format(from, 'MMMM yyyy', { locale: getDateFnsLocale() }) : null
+    const from = parseDayFirst(profile?.available_from)
+    const when = from ? format(from, 'MMMM yyyy', { locale: getDateFnsLocale() }) : null
     const duration = profile?.availability_duration ? AVAILABILITY_LABELS[profile.availability_duration] ?? null : null
     return [when ?? t('apply.now'), duration].filter(Boolean).join(', ')
   })()

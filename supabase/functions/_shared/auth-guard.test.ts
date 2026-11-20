@@ -61,19 +61,19 @@ Deno.test('clientIp falls back to the first forwarded address, then to none', ()
 Deno.test('deviceLabel is coarse: system, major version, Android model', () => {
   assertEquals(
     deviceLabel('Mozilla/5.0 (Linux; Android 11; IN2023 Build/RP1A.201005.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0 Mobile Safari/537.36'),
-    'Android 11 · IN2023 · WebView',
+    'Android 11, IN2023, WebView',
   )
   assertEquals(
     deviceLabel('Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36'),
-    'Android 10 · model hidden',
+    'Android 10, model hidden',
   )
   assertEquals(
     deviceLabel('Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'),
-    'iPhone · iOS 18',
+    'iPhone, iOS 18',
   )
   assertEquals(
     deviceLabel('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15'),
-    'Mac · Safari',
+    'Mac, Safari',
   )
   assertEquals(deviceLabel('curl/8.4.0'), 'other')
   assertEquals(deviceLabel(null), 'unknown')

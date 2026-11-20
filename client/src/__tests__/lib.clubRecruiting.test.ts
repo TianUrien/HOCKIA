@@ -34,7 +34,7 @@ describe('club recruiting copy', () => {
   })
 
   it('writes the waiting notice from the oldest pending application, and hides at 0', () => {
-    expect(waitingNotice(['2026-09-15T00:00:00Z', '2026-09-20T00:00:00Z', '2026-09-22T00:00:00Z'], 14, NOW)).toEqual({
+    expect(waitingNotice(['2026-09-15T12:00:00Z', '2026-09-20T12:00:00Z', '2026-09-22T12:00:00Z'], 14, NOW)).toEqual({
       title: '3 applicants waiting for a reply',
       detail: 'The oldest closes in 5 days if you don’t answer.',
     })

@@ -18,7 +18,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { getShareOrigin } from '@/lib/profileShare'
 import { humanizeToken, positionLabel } from '@/lib/identity'
-import { dayFirst } from '@/lib/dayFirst'
+import { dayFirst, parseDayFirst } from '@/lib/dayFirst'
 import { setStatusBarForBackground } from '@/lib/nativeUi'
 import { getImageUrl } from '@/lib/imageUrl'
 import {
@@ -210,8 +210,9 @@ export function OpportunityDetailMobile({
   const compensationKey = (vacancy.compensation ?? '').toLowerCase()
   const startsValue = (() => {
     if (!vacancy.start_date) return t('detail.startsImmediately')
-    const d = new Date(vacancy.start_date)
-    return Number.isNaN(d.getTime()) ? t('detail.startsImmediately') : d.toLocaleDateString(isEnglish() ? 'en-GB' : intlLocale(), { month: 'short', year: 'numeric' })
+    // start_date is a calendar day: read as a local day so it never slips into the month before.
+    const d = parseDayFirst(vacancy.start_date)
+    return !d ? t('detail.startsImmediately') : d.toLocaleDateString(isEnglish() ? 'en-GB' : intlLocale(), { month: 'short', year: 'numeric' })
   })()
   const duration = formatDurationText(vacancy.duration_text)
   const applyByValue = vacancy.application_deadline ? dayFirst(vacancy.application_deadline, { year: 'never' }) ?? t('detail.applyByOpen') : t('detail.applyByOpen')

@@ -100,8 +100,10 @@ function dayMonth(d: Date, withYear: boolean): string {
  */
 export function shortDayOf(iso: string | null | undefined, now = new Date()): string | null {
   if (!iso) return null
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return null
+  // A date-only value ("2026-09-01", a DATE column) is a calendar day, not a
+  // timestamp: read as UTC midnight it showed the day before west of UTC.
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso.trim()) ? parseDay(iso) : new Date(iso)
+  if (!d || Number.isNaN(d.getTime())) return null
   return dayMonth(d, d.getFullYear() !== now.getFullYear())
 }
 
