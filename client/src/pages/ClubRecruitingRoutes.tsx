@@ -1,8 +1,9 @@
-import { lazy, Suspense, type ReactNode } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useAuthStore } from '@/lib/auth'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
+import { countryRolesDescription, countryRolesPath, countryRolesTitle, resolveRoleCountry } from '@/lib/seo/opportunitiesCountry'
 
 // Every screen is its own chunk: players on /opportunities and desktop
 // clubs never download the club phone screens.
@@ -42,6 +43,68 @@ export function OpportunitiesEntry() {
   const role = useAuthStore((s) => s.profile?.role)
   if (isPhone && role === 'club') return <Screen><ClubOpportunitiesScreen /></Screen>
   return <Screen><OpportunitiesPage /></Screen>
+}
+
+function setMetaContent(selector: string, content: string) {
+  document.querySelector(selector)?.setAttribute('content', content)
+}
+
+/**
+ * /opportunities/in/:slug: the open roles of one country. The server sends
+ * this URL with the country's own head and the roles as text
+ * (api/opportunities-country.ts); here the app shows the same list as
+ * /opportunities with the country filter already set. The filter lives in
+ * the query string the list reads when it mounts, so it is written first.
+ * A slug that is not a country goes to the full list.
+ */
+export function OpportunitiesCountryEntry() {
+  const { slug } = useParams<{ slug: string }>()
+  const country = resolveRoleCountry(slug)
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const [ready, setReady] = useState(false)
+  const hasFilter = Boolean(searchParams.get('country'))
+
+  // The list mounts once the filter is in the URL. After that, clearing the
+  // filter is the visitor's choice and is not written back.
+  useEffect(() => {
+    if (!country) return
+    if (hasFilter) {
+      setReady(true)
+    } else if (!ready) {
+      const next = new URLSearchParams(searchParams)
+      next.set('country', country.name)
+      navigate({ pathname: countryRolesPath(country), search: `?${next.toString()}` }, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [country?.code, hasFilter])
+
+  // After the list has mounted (its own effect writes the /opportunities
+  // head), so the country's title and description are the ones that stay.
+  useEffect(() => {
+    if (!country || !ready) return
+    const title = countryRolesTitle(country)
+    const description = countryRolesDescription(country)
+    document.title = title
+    setMetaContent('meta[name="description"]', description)
+    setMetaContent('meta[property="og:title"]', title)
+    setMetaContent('meta[property="og:description"]', description)
+    setMetaContent('meta[property="og:url"]', `https://inhockia.com${countryRolesPath(country)}`)
+  }, [country, ready])
+
+  if (!country) return <Navigate to="/opportunities" replace />
+  if (!ready && !hasFilter) return <Blank />
+  return <OpportunitiesEntry />
+}
+
+/**
+ * /opportunities/:word where the word is a country name (/opportunities/
+ * australia): the country's page. Anything else renders `fallback`, the
+ * role page, which shows its own not-found state.
+ */
+export function CountryWordRedirect({ word, fallback }: { word: string; fallback: ReactNode }) {
+  const country = word.length > 2 ? resolveRoleCountry(word) : null
+  return country ? <Navigate to={countryRolesPath(country)} replace /> : <>{fallback}</>
 }
 
 // The v2 applicant screens are for whoever publishes roles: clubs, and coaches

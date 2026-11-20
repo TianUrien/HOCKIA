@@ -12,6 +12,7 @@ import { captureException } from '../_shared/sentry.ts'
  * Includes:
  *   - Static pages (/, /opportunities, /signup, /community, /developers)
  *   - Dynamic opportunity pages (/opportunities/{id}) for all open, public opportunities
+ *   - Open roles per country (/opportunities/in/{country}) while the country has one
  * 
  * Excludes:
  *   - Closed/draft opportunities
@@ -39,6 +40,16 @@ const STATIC_PAGES = [
 
 function formatDate(date: Date): string {
   return date.toISOString().split('T')[0]
+}
+
+/** Country name → URL slug (australia, new-zealand). */
+function countrySlug(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 function escapeXml(str: string): string {
@@ -89,9 +100,12 @@ Deno.serve(async (req: Request) => {
         created_at,
         published_at,
         application_deadline,
+        location_country,
         club:profiles!opportunities_club_id_fkey(
           onboarding_completed,
-          is_test_account
+          is_test_account,
+          is_blocked,
+          frozen_minor_at
         )
       `)
       .eq('status', 'open')
@@ -116,6 +130,8 @@ Deno.serve(async (req: Request) => {
       return club && 
              club.onboarding_completed === true && 
              (club.is_test_account === false || club.is_test_account === null) &&
+             // Hidden publishers (blocked, frozen): same rule as profile_is_hidden.
+             club.is_blocked !== true && !club.frozen_minor_at &&
              !isStale(opp)
     })
 
@@ -146,6 +162,22 @@ Deno.serve(async (req: Request) => {
         'weekly',
         '0.8'
       ))
+    }
+
+    // Open roles per country (/opportunities/in/<name>): one entry for each
+    // country that has an open role now. The slug is the country's English
+    // name as in the countries table, the same rule as
+    // client/src/lib/seo/opportunitiesCountry.ts; a role whose country is
+    // spelled another way adds no entry.
+    const { data: countryNames } = await supabase.from('countries').select('name')
+    const knownSlugs = new Set((countryNames ?? []).map((c: any) => countrySlug(String(c.name ?? ''))))
+    const roleCountrySlugs = new Set<string>()
+    for (const opp of validOpportunities) {
+      const slug = countrySlug(String(opp.location_country ?? ''))
+      if (slug && knownSlugs.has(slug)) roleCountrySlugs.add(slug)
+    }
+    for (const slug of [...roleCountrySlugs].sort()) {
+      urlEntries.push(generateUrlEntry(`${SITE_URL}/opportunities/in/${slug}`, today, 'daily', '0.8'))
     }
 
     // World directory: countries that have clubs; claimed clubs; and

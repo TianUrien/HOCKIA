@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType, useParams } from 'react-router-dom'
 import { initializeAuth } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { initGA, trackPageView } from '@/lib/analytics'
@@ -67,6 +67,8 @@ const DashboardRouter = lazyWithRetry(() => import('@/pages/DashboardRouter'))
 const HomePage = lazyWithRetry(() => import('@/pages/HomePage'))
 const PulsePage = lazyWithRetry(() => import('@/pages/PulsePage'))
 const OpportunitiesEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.OpportunitiesEntry })))
+const OpportunitiesCountryEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.OpportunitiesCountryEntry })))
+const CountryWordRedirect = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.CountryWordRedirect })))
 // Same import function the role cards prefetch with (lib/prefetchRole).
 const OpportunityDetailPage = lazyWithRetry(loadOpportunityDetail)
 const CommunityPage = lazyWithRetry(() => import('@/pages/CommunityPage'))
@@ -347,6 +349,13 @@ function KeyboardShortcutsManager() {
   return <KeyboardShortcutsModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
 }
 
+/** /opportunities/:id is a role; a word there (/opportunities/australia) may be a country. */
+function RoleOrCountryRoute() {
+  const { id } = useParams<{ id: string }>()
+  if (id && /^[a-z][a-z-]{2,60}$/i.test(id)) return <CountryWordRedirect word={id} fallback={<OpportunityDetailPage />} />
+  return <OpportunityDetailPage />
+}
+
 function App() {
   const initRef = useRef(false)
   useRevealFocusedField()
@@ -505,7 +514,8 @@ function App() {
                 <Route path="/opportunities" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunitiesEntry /></ErrorBoundary>} />
                 <Route path="/opportunities/applications" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MyApplicationsPage /></ErrorBoundary>} />
                 <Route path="/applications/:applicationId/signing" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ConfirmSigningPage /></ErrorBoundary>} />
-                <Route path="/opportunities/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunityDetailPage /></ErrorBoundary>} />
+                <Route path="/opportunities/in/:slug" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunitiesCountryEntry /></ErrorBoundary>} />
+                <Route path="/opportunities/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RoleOrCountryRoute /></ErrorBoundary>} />
                 <Route path="/messages" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
                 <Route path="/messages/:conversationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
                 {/* Inbox tab (Figma 03 Player): Messages · Requests · Activity */}
