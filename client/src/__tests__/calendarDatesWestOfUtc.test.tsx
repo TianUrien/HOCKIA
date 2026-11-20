@@ -7,7 +7,11 @@
  * 31 Aug" and "Aug 2026" to members in Argentina. A date-only value is a
  * calendar day and reads the same everywhere.
  */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+
+// roleDetailShared imports the Supabase client, which needs env values CI does not have.
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
+
 import { shortDayOf } from '@/lib/signing'
 import { openRoleLine } from '@/lib/clubProfileCopy'
 import { roleDates } from '@/components/opportunities/roleDetailShared'
