@@ -16,14 +16,14 @@ const names = (id: number) => ({ 48: 'Argentina' } as Record<number, string>)[id
 // Brand Results (2026-11-07): one next step from real counts, never invented.
 describe('nextStep', () => {
   it('asks for a first offer when nothing is live', () => {
-    expect(nextStep(results({ offers: [] }), names)?.action).toBe('Create an offer')
+    expect(nextStep(results({ offers: [] }), names)?.action).toBe('Create a campaign')
   })
   it('names a country the brand sells to but no offer reaches', () => {
-    expect(nextStep(results({ market: [{ country_id: 48, n: 32, covered: false }] }), names)?.text).toBe('32 members live in Argentina and none of your offers reach them.')
+    expect(nextStep(results({ market: [{ country_id: 48, n: 32, covered: false }] }), names)?.text).toBe('32 members live in Argentina and none of your campaigns reach them.')
     expect(nextStep(results({ market: [{ country_id: 48, n: null, covered: false }] }), names)).toBeNull()
   })
   it('flags an offer shown a lot and never opened, then one marked not useful', () => {
-    expect(nextStep(results({ offers: [offer({ shown: 40 })] }), names)?.action).toBe('Edit offer')
+    expect(nextStep(results({ offers: [offer({ shown: 40 })] }), names)?.action).toBe('Edit campaign')
     expect(nextStep(results({ offers: [offer({ shown: 10, opened: 1, not_useful: 5 })] }), names)?.action).toBe('Edit audience')
   })
   it('says nothing when nothing needs doing', () => {

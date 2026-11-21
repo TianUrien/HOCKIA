@@ -35,6 +35,8 @@ async function shot(page: Page, name: string, fullPage = false) {
 }
 
 async function fillOffer(page: Page, title: string) {
+  // A campaign starts from what the brand wants members to do (2026-11-21).
+  await page.getByTestId('offer-objective-offer').click()
   await page.getByLabel('Title').fill(title)
   await page.getByLabel('What members get').fill('A free grip fitting at your club, for the best price in town.')
   await page.getByLabel('Link').fill('example.com/hockia')
@@ -100,6 +102,7 @@ test.describe('brand offers QA', () => {
     await expect(page.getByTestId('brand-offers')).toBeVisible({ timeout: 20_000 })
     await page.getByTestId('offers-new').click()
     await expect(page.getByTestId('offer-editor')).toBeVisible()
+    await page.getByTestId('offer-objective-offer').click()
     await page.getByLabel('Title').fill('Kit for your first season abroad')
     await page.getByLabel('What members get').fill('15% off your first full kit when you join a club in a new country.')
     await settle(page)

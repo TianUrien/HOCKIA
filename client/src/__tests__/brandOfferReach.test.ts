@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 
-import { EMPTY_OFFER, audienceLine, offerMissing, offerReasonLine, reachLine } from '@/lib/brandOffers'
+import { EMPTY_OFFER, campaignEnd, audienceLine, offerMissing, offerReasonLine, reachLine } from '@/lib/brandOffers'
 import { detailReasonLine, offerForLine } from '@/lib/memberOffers'
 
 // Brand evaluation 2026-11-07, P0: Everywhere, regions and the reach line.
-const base = { ...EMPTY_OFFER, image_url: 'https://cdn.example.com/kit.jpg', title: 'Kit', body: '15% off', link_url: 'https://shop.example.com', roles: ['player' as const] }
+const base = { ...EMPTY_OFFER, objective: 'offer' as const, ends_at: campaignEnd(new Date()), image_url: 'https://cdn.example.com/kit.jpg', title: 'Kit', body: '15% off', link_url: 'https://shop.example.com', roles: ['player' as const] }
 
 describe('where an offer reaches', () => {
   it('needs a place: Everywhere, a region or a country', () => {

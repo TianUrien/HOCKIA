@@ -1,9 +1,10 @@
 import { supabase } from '@/lib/supabase'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { OFFER_ROLES, countryInSentence, offerRegionLabel, type OfferRole } from '@/lib/brandOffers'
+import { OFFER_ROLES, countryInSentence, offerRegionLabel, type OfferObjective, type OfferRole } from '@/lib/brandOffers'
 import { withLazyText } from '@/lib/opportunityLazyText'
 import { formatList, isEnglish } from '@/i18n/format'
 import { tBrands } from '@/i18n/ns/brands'
+import { takeOfferContact, writeOfferContact } from '@/lib/offerContactMarker'
 
 /**
  * Brand offers, Phase 2: what members see (Figma "08 · Brands", P2; founder
@@ -72,6 +73,18 @@ export async function fetchOfferDetail(offerId: string): Promise<MemberOfferDeta
   return row ?? null
 }
 
+/**
+ * What the campaign asks the member to do (2026-11-21). Read from the public
+ * column of a live campaign; before the column exists, or on any failure, it
+ * is an offer, so the page keeps its store button.
+ */
+export async function fetchOfferObjective(offerId: string): Promise<OfferObjective> {
+  const { data, error } = await supabase.from('brand_offers').select('objective').eq('id', offerId).maybeSingle()
+  if (error) return 'offer'
+  const v = (data as { objective?: string } | null)?.objective
+  return v === 'ask' || v === 'product' || v === 'ambassador' ? v : 'offer'
+}
+
 export async function dismissOffer(offerId: string, reason: DismissReason | null): Promise<void> {
   const { error } = await supabase.rpc('dismiss_brand_offer', { p_offer_id: offerId, p_reason: reason as string })
   if (error) throw error
@@ -105,24 +118,19 @@ export function trackImpressionOnce(visitId: string, offerId: string, surface: O
   trackOffer('brand_offer_impression', offerId, surface)
 }
 
-// "Contacted" = the first message sent to the brand from an offer. Message on
-// the offer remembers which offer it came from; useChat reports it when that
-// message is actually sent.
-const CONTACT_KEY = 'hockia-offer-contact'
-export function rememberOfferContact(brandProfileId: string, offerId: string, surface: OfferSurface): void {
-  try { sessionStorage.setItem(CONTACT_KEY, JSON.stringify({ brandProfileId, offerId, surface, at: Date.now() })) } catch { /* private mode */ }
+// "Contacted" = the first message sent to the brand from a campaign. Message
+// on the campaign remembers which one it came from; useChat reports it when
+// that message is actually sent. The marker belongs to one member and one
+// brand, lasts 24 hours (2026-11-21; it was one hour of the same tab, which
+// lost a member who reopened the app to write), is used once, and is removed
+// on sign-out (lib/offerContactMarker.ts).
+export function rememberOfferContact(memberId: string, brandProfileId: string, offerId: string, surface: OfferSurface): void {
+  writeOfferContact(memberId, brandProfileId, { offerId, surface, at: Date.now() })
 }
-export function reportOfferContactIfPending(recipientId: string | null | undefined): void {
-  if (!recipientId) return
-  try {
-    const raw = sessionStorage.getItem(CONTACT_KEY)
-    if (!raw) return
-    const v = JSON.parse(raw) as { brandProfileId: string; offerId: string; surface: OfferSurface; at: number }
-    // Only the same brand, and only within the hour the member came from the offer.
-    if (v.brandProfileId !== recipientId || Date.now() - v.at > 3_600_000) return
-    sessionStorage.removeItem(CONTACT_KEY)
-    trackOffer('brand_offer_contact', v.offerId, v.surface)
-  } catch { /* ignore */ }
+export function reportOfferContactIfPending(memberId: string | null | undefined, recipientId: string | null | undefined): void {
+  if (!memberId || !recipientId) return
+  const v = takeOfferContact(memberId, recipientId)
+  if (v) trackOffer('brand_offer_contact', v.offerId, v.surface as OfferSurface)
 }
 
 // ── Copy ────────────────────────────────────────────────────────────────────

@@ -238,11 +238,11 @@ export function buildPushPayload(
       const offerTitle = getString(metadata, 'offer_title')
       return {
         title: es
-          ? (metadata?.change === true ? 'Tus cambios ya están publicados' : 'Tu oferta ya está publicada')
-          : (metadata?.change === true ? 'Your changes are live' : 'Your offer is live'),
+          ? (metadata?.change === true ? 'Tus cambios ya están publicados' : 'Tu campaña ya está publicada')
+          : (metadata?.change === true ? 'Your changes are live' : 'Your campaign is live'),
         body: es
-          ? (offerTitle ? `${offerTitle} ya está visible para integrantes de Hockia.` : 'Tu oferta ya está visible para integrantes de Hockia.')
-          : (offerTitle ? `${offerTitle} is now shown to members.` : 'Your offer is now shown to members.'),
+          ? (offerTitle ? `${offerTitle} ya está visible para integrantes de Hockia.` : 'Tu campaña ya está visible para integrantes de Hockia.')
+          : (offerTitle ? `${offerTitle} is now shown to members.` : 'Your campaign is now shown to members.'),
         url: '/dashboard/offers',
         tag: 'brand-offer-review',
       }
@@ -252,10 +252,10 @@ export function buildPushPayload(
       const takedown = metadata?.takedown === true
       return {
         title: es
-          ? (takedown ? 'Tu oferta se dio de baja' : 'Tu oferta necesita un cambio')
-          : (takedown ? 'Your offer was taken down' : 'Your offer needs a change'),
+          ? (takedown ? 'Tu campaña se dio de baja' : 'Tu campaña necesita un cambio')
+          : (takedown ? 'Your campaign was taken down' : 'Your campaign needs a change'),
         body: es
-          ? (offerTitle ? `${offerTitle}: revisa el motivo, edita tu oferta y publícala de nuevo.` : 'Revisa el motivo, edita tu oferta y publícala de nuevo.')
+          ? (offerTitle ? `${offerTitle}: revisa el motivo, edita tu campaña y publícala de nuevo.` : 'Revisa el motivo, edita tu campaña y publícala de nuevo.')
           : (offerTitle ? `${offerTitle}: see the reason, then edit and publish again.` : 'See the reason, then edit and publish again.'),
         url: '/dashboard/offers',
         tag: 'brand-offer-review',

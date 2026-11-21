@@ -10,6 +10,7 @@ test('brand: offer editor has the need picker', async ({ page }) => {
   await page.setViewportSize({ width: 393, height: 852 })
   await page.goto('/dashboard/offers/new')
   await expect(page.getByTestId('offer-editor')).toBeVisible({ timeout: 30_000 })
+  await page.getByTestId('offer-objective-product').click()
   await page.getByTestId('offer-need-moving_abroad').click()
   await expect(page.getByTestId('offer-need-moving_abroad')).toHaveAttribute('aria-pressed', 'true')
   await page.getByTestId('offer-need-picker').scrollIntoViewIfNeeded()

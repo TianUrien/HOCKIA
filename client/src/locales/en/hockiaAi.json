@@ -49,8 +49,8 @@
     "coachFind": "Find coaching opportunities for me",
     "prepareApplication": "Prepare my application",
     "brandAmbassadors": "Find ambassador candidates",
-    "brandOffersMonth": "How did my offers do this month?",
-    "brandWriteOffer": "Write a new offer for members",
+    "brandOffersMonth": "How did my campaigns do this month?",
+    "brandWriteOffer": "Write a new campaign for members",
     "umpireAddMatch": "Add my latest match",
     "umpireMissing": "What is missing from my record?",
     "umpireCountry": "Who are the umpires based in my country?"
@@ -76,7 +76,7 @@
   "context": {
     "chipLabel": "{{topic}}: {{fact}}",
     "yourOpportunities": "Your opportunities",
-    "yourOffers": "Your offers",
+    "yourOffers": "Your campaigns",
     "yourRecord": "Your record",
     "coachingOpportunities": "Coaching opportunities",
     "opportunities": "Opportunities",

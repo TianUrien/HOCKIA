@@ -50,8 +50,8 @@
     "coachFind": "Buscar oportunidades para entrenar",
     "prepareApplication": "Preparar mi postulación",
     "brandAmbassadors": "Buscar posibles embajadores/as",
-    "brandOffersMonth": "¿Cómo les fue a mis ofertas este mes?",
-    "brandWriteOffer": "Escribir una oferta nueva para integrantes",
+    "brandOffersMonth": "¿Cómo les fue a mis campañas este mes?",
+    "brandWriteOffer": "Escribir una campaña nueva para integrantes",
     "umpireAddMatch": "Agregar mi último partido",
     "umpireMissing": "¿Qué le falta a mi trayectoria?",
     "umpireCountry": "¿Qué árbitros/as hay en mi país?"
@@ -77,7 +77,7 @@
   "context": {
     "chipLabel": "{{topic}}: {{fact}}",
     "yourOpportunities": "Tus oportunidades",
-    "yourOffers": "Tus ofertas",
+    "yourOffers": "Tus campañas",
     "yourRecord": "Tu trayectoria",
     "coachingOpportunities": "Oportunidades para entrenar",
     "opportunities": "Oportunidades",

@@ -19,6 +19,41 @@ export type OfferStatus = 'draft' | 'in_review' | 'not_approved' | 'live' | 'pau
 export type OfferRole = 'player' | 'coach' | 'club' | 'umpire'
 export type OfferAction = 'pause' | 'resume' | 'end' | 'delete'
 
+/**
+ * What the brand wants members to do (founder 2026-11-21, proposal
+ * docs/product/proposals/brand-promotion.md). It sets the member's button,
+ * the fields the editor asks for and the number that counts.
+ */
+export type OfferObjective = 'ask' | 'product' | 'offer' | 'ambassador'
+export const OFFER_OBJECTIVES: { value: OfferObjective; readonly label: string; readonly hint: string }[] = [
+  withLazyText({ value: 'ask' as OfferObjective }, { label: () => tBrands('offers.objectives.ask.label'), hint: () => tBrands('offers.objectives.ask.hint') }),
+  withLazyText({ value: 'product' as OfferObjective }, { label: () => tBrands('offers.objectives.product.label'), hint: () => tBrands('offers.objectives.product.hint') }),
+  withLazyText({ value: 'offer' as OfferObjective }, { label: () => tBrands('offers.objectives.offer.label'), hint: () => tBrands('offers.objectives.offer.hint') }),
+  withLazyText({ value: 'ambassador' as OfferObjective }, { label: () => tBrands('offers.objectives.ambassador.label'), hint: () => tBrands('offers.objectives.ambassador.hint') }),
+]
+/** A campaign that asks members to write or to apply needs no store link. */
+export const linkOptional = (o: OfferObjective | null | undefined) => o === 'ask' || o === 'ambassador'
+
+/** A campaign runs 7 to 15 days and stops by itself (founder 2026-11-21). */
+export const CAMPAIGN_MIN_DAYS = 7
+export const CAMPAIGN_MAX_DAYS = 15
+export const CAMPAIGN_DEFAULT_DAYS = 14
+const DAY_MS = 86_400_000
+const dayStart = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+/** The day a campaign's window is counted from: its start date, else when it went live, else today. */
+export function campaignStart(f: Pick<OfferFields, 'starts_at'>, liveAt?: string | null, now: Date = new Date()): Date {
+  return new Date(f.starts_at ?? liveAt ?? now)
+}
+/** The end of the day `days` after the start, as the date field stores it. */
+export function campaignEnd(start: Date, days: number = CAMPAIGN_DEFAULT_DAYS): string {
+  return `${new Date(dayStart(start) + days * DAY_MS).toISOString().slice(0, 10)}T23:59:59Z`
+}
+/** Whole days from the start day to the end day, or null with no end. */
+export function campaignDays(f: Pick<OfferFields, 'starts_at' | 'ends_at'>, liveAt?: string | null, now: Date = new Date()): number | null {
+  if (!f.ends_at) return null
+  return Math.round((dayStart(new Date(f.ends_at)) - dayStart(campaignStart(f, liveAt, now))) / DAY_MS)
+}
+
 export const OFFER_LIVE_LIMIT = 5
 export const OFFER_TITLE_MAX = 60
 export const OFFER_BODY_MAX = 140
@@ -54,6 +89,8 @@ export interface OfferFields {
   perk?: string | null
   /** A code members copy on the offer page, so the brand counts sales (2026-11-07). */
   promo_code?: string | null
+  /** What the brand wants members to do; absent from servers before 2026-11-21 (then an offer). */
+  objective?: OfferObjective | null
 }
 
 export const OFFER_PERK_MAX = 24
@@ -170,6 +207,17 @@ function countPart(key: 'shown' | 'opened' | 'storeVisits' | 'codeCopies' | 'con
   return tBrands(`offers.counts.${key}`, { count: n, n: brandCount(n) })
 }
 
+/** "3 days left" on a live campaign with an end date; "Ends today" on its last day. */
+export function daysLeftLine(o: Pick<BrandOffer, 'ends_at'>, now: Date = new Date()): string | null {
+  if (!o.ends_at) return null
+  // In the reader's own calendar days: counted in UTC, a brand west of UTC
+  // would read "Ends today" a day early.
+  const localDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const left = Math.round((localDay(new Date(o.ends_at)) - localDay(now)) / DAY_MS)
+  if (left < 0) return null
+  return left === 0 ? tBrands('offers.daysLeft.today') : tBrands('offers.daysLeft.days', { count: left })
+}
+
 /** "today" / "yesterday" / "3 days ago" (B1 status lines). */
 export function daysAgoWord(iso: string | null, now: Date = new Date()): string {
   if (!iso) return tBrands('offers.daysAgo.recently')
@@ -194,7 +242,7 @@ export function offerStatusLine(o: BrandOffer, now: Date = new Date()): string {
   // Taken down by an admin: the reason word for word, and the way back.
   if (o.status === 'not_approved') return note ? tBrands('offers.status.takenDownNote', { note }) : tBrands('offers.status.takenDown')
   switch (o.status) {
-    case 'live': return offerCountsLine(o)
+    case 'live': return [offerCountsLine(o), daysLeftLine(o, now)].filter(Boolean).join('. ')
     case 'in_review':
     case 'draft': return tBrands('offers.status.notPublished')
     case 'paused': return tBrands('offers.status.paused', { when: daysAgoWord(o.updated_at, now) })
@@ -215,11 +263,14 @@ function pickFields(o: OfferFields): OfferFields {
     title: o.title, body: o.body, image_url: o.image_url, link_url: o.link_url,
     country_ids: o.country_ids ?? [], area: o.area, roles: o.roles ?? [], starts_at: o.starts_at, ends_at: o.ends_at,
     everywhere: o.everywhere ?? false, regions: o.regions ?? [], perk: o.perk ?? null, promo_code: o.promo_code ?? null,
+    objective: o.objective ?? 'offer',
   }
 }
 
 export const EMPTY_OFFER: OfferFields = {
   title: '', body: '', image_url: null, link_url: '', country_ids: [], area: '', roles: [], starts_at: null, ends_at: null, everywhere: false, regions: [], perk: '', promo_code: '',
+  // A new campaign starts with no objective: the editor asks first.
+  objective: null,
 }
 
 // ── Content rules (B2) ──────────────────────────────────────────────────────
@@ -247,7 +298,8 @@ export function unprovableClaim(text: string | null | undefined): string | null 
 }
 
 /** What still blocks "Publish", in the editor's order, or null. */
-export function offerMissing(f: OfferFields): string | null {
+export function offerMissing(f: OfferFields, liveAt?: string | null): string | null {
+  if (!f.objective) return tBrands('offers.missing.objective')
   // A real photo makes offers look trustworthy; required to publish (2026-11-07, client-side so old apps keep working).
   if (!f.image_url) return tBrands('offers.missing.photo')
   if (!f.title?.trim()) return tBrands('offers.missing.title')
@@ -256,10 +308,15 @@ export function offerMissing(f: OfferFields): string | null {
   if (f.body.trim().length > OFFER_BODY_MAX) return tBrands('offers.missing.bodyTooLong', { max: OFFER_BODY_MAX })
   if ((f.perk ?? '').trim().length > OFFER_PERK_MAX) return tBrands('offers.missing.perkTooLong', { max: OFFER_PERK_MAX })
   if ((f.promo_code ?? '').trim() && !PROMO_CODE_RE.test((f.promo_code ?? '').trim())) return tBrands('offers.missing.promoCode')
-  if (!normalizeOfferLink(f.link_url)) return tBrands('offers.missing.link')
+  if ((f.link_url ?? '').trim() || !linkOptional(f.objective)) {
+    if (!normalizeOfferLink(f.link_url)) return tBrands('offers.missing.link')
+  }
   if (!f.everywhere && f.country_ids.length === 0 && (f.regions ?? []).length === 0) return tBrands('offers.missing.where')
   if (f.roles.length === 0) return tBrands('offers.missing.who')
-  if (f.ends_at && new Date(f.ends_at).getTime() <= Date.now()) return tBrands('offers.missing.endDate')
+  if (!f.ends_at) return tBrands('offers.missing.endRequired')
+  if (new Date(f.ends_at).getTime() <= Date.now()) return tBrands('offers.missing.endDate')
+  const days = campaignDays(f, liveAt)
+  if (days != null && (days < CAMPAIGN_MIN_DAYS || days > CAMPAIGN_MAX_DAYS)) return tBrands('offers.missing.window', { min: CAMPAIGN_MIN_DAYS, max: CAMPAIGN_MAX_DAYS })
   return null
 }
 
@@ -337,7 +394,7 @@ export async function fetchMyOffers(): Promise<BrandOffer[]> {
 }
 
 export async function saveOffer(offerId: string | null, f: OfferFields, submit: boolean): Promise<string> {
-  const { data, error } = await supabase.rpc('save_brand_offer', {
+  const args = {
     p_offer_id: offerId as string,
     p_title: (f.title ?? '').trim(),
     p_body: (f.body ?? '').trim(),
@@ -351,9 +408,15 @@ export async function saveOffer(offerId: string | null, f: OfferFields, submit: 
     p_submit: submit,
     p_everywhere: f.everywhere ?? false,
     p_regions: f.regions ?? [],
-    p_perk: (f.perk ?? '').trim(),
-    p_promo_code: (f.promo_code ?? '').trim(),
-  })
+    // Perk and code belong to an offer; another objective clears them.
+    p_perk: f.objective && f.objective !== 'offer' ? '' : (f.perk ?? '').trim(),
+    p_promo_code: f.objective && f.objective !== 'offer' ? '' : (f.promo_code ?? '').trim(),
+  }
+  const first = await supabase.rpc('save_brand_offer', { ...args, p_objective: f.objective ?? undefined })
+  // A server that has not learned objectives yet (PGRST202: no such signature)
+  // still saves an offer or a product, which it treats the same way.
+  const serverIsOlder = first.error?.code === 'PGRST202' && !linkOptional(f.objective)
+  const { data, error } = serverIsOlder ? await supabase.rpc('save_brand_offer', args) : first
   if (error) throw error
   return data as string
 }
@@ -387,6 +450,8 @@ export async function takeDownOffer(offerId: string, reason: string): Promise<st
 export function offerErrorMessage(err: unknown): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''
   if (msg.startsWith('live_limit')) return tBrands('offers.errors.liveLimit', { limit: OFFER_LIVE_LIMIT })
+  if (msg.startsWith('campaign_window')) return tBrands('offers.missing.window', { min: CAMPAIGN_MIN_DAYS, max: CAMPAIGN_MAX_DAYS })
+  if (msg.startsWith('invalid_offer: open_to_partners')) return tBrands('offers.errors.openToPartners')
   if (msg.startsWith('invalid_offer')) return tBrands('offers.errors.invalid')
   if (msg.startsWith('offer_expired')) return tBrands('offers.errors.expired')
   if (msg.startsWith('too_many_offers')) return tBrands('offers.errors.tooMany')
