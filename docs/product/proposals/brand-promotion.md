@@ -239,6 +239,7 @@ Phase 1 is the smallest build that fixes the founder's first problem (a brand ca
 - **The object is called "Campaigns"** in the app. An offer is one kind of campaign.
 - **The HOCKIA brand account answers "Ask Hockia"**, not a separate support identity. The help line is turned on per environment by naming that profile in `app_settings` (`hockia_help_profile_id`).
 - **The founder answers that inbox by hand.** No automatic replies. This settles who answers, so the help line can be turned on in production once phase 2 is released.
+- **Asking Hockia for help does not use the member's daily allowance of new conversations.** A new member with five a day can still ask.
 
 ## Still open
 
