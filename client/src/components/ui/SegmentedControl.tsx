@@ -38,11 +38,17 @@ export function SegmentedControl<T extends string>({
   className,
 }: SegmentedControlProps<T>) {
   const t = useCommonT()
+  // Two segments share the width equally; in a container that hugs its
+  // content (desktop headers) the grid sizes both to the longer label, so
+  // neither is cut. Three or more take the room their label needs, with
+  // tighter padding on narrow phones: equal thirds cut the longer Spanish
+  // labels ("Oportunidades", "Postulaciones") while a short one had room to spare.
+  const many = options.length >= 3
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={cn('flex gap-1 rounded-full bg-surface-muted p-1', className)}
+      className={cn('gap-1 rounded-full bg-surface-muted p-1', many ? 'flex' : 'grid auto-cols-[minmax(0,1fr)] grid-flow-col', className)}
     >
       {options.map((option) => {
         const active = option.value === value
@@ -58,7 +64,8 @@ export function SegmentedControl<T extends string>({
             aria-label={option.dot ? t('segmented.newLabel', { label }) : option.shortLabel ? label : undefined}
             onClick={() => onChange(option.value)}
             className={cn(
-              'flex h-10 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-[14px] font-medium leading-[18px] transition-colors',
+              'flex h-10 min-w-0 items-center justify-center whitespace-nowrap rounded-full font-medium leading-[18px] transition-colors',
+              many ? 'flex-auto px-2 text-[13px] min-[430px]:px-3.5 min-[430px]:text-[14px]' : 'px-3.5 text-[14px]',
               active
                 ? 'bg-white text-ink-1 shadow-[0_1px_2px_rgba(30,10,60,0.04),0_8px_24px_rgba(30,10,60,0.08)]'
                 : 'text-ink-2 active:text-ink-1',

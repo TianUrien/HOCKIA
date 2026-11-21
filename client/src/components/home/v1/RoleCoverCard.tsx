@@ -69,7 +69,8 @@ export function RoleCoverCard({ clubId, clubName, crestUrl, title, subtitle, siz
         {crestUrl ? (
           <LogoTile src={crestUrl} name={clubName} className={cn('shrink-0', feed ? 'h-11 w-11' : 'h-8 w-8')} />
         ) : null}
-        <span className="min-w-0 flex-1">
+        {/* In the rail the column is `items-start`: without the full width the text takes its own length and the card cuts it with no ellipsis. */}
+        <span className={cn('min-w-0 flex-1', !feed && 'w-full')}>
           <span className="block truncate text-[16px] font-semibold leading-[21px] text-white">{title}</span>
           <span className={cn('block truncate text-white/80', feed ? 'text-secondary' : 'text-caption')}>{subtitle}</span>
         </span>
