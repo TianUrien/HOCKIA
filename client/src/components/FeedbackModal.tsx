@@ -10,6 +10,7 @@
  * (matches the SettingsSheet pattern). Tap-outside + Escape close.
  */
 
+import { HockiaHelpLine } from '@/components/HockiaHelpLine'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Bug, HelpCircle, Sparkles, Heart, MessageSquare, AlertTriangle, CheckCircle2 } from 'lucide-react'
@@ -134,6 +135,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
             <p className="text-xs text-gray-500 mt-0.5">
               {t('feedbackModal.subtitle')}
             </p>
+            <HockiaHelpLine moment="feedback_form" className="mt-1 text-xs" />
           </div>
           <button
             type="button"

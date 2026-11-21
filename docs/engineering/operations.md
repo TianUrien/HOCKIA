@@ -320,3 +320,13 @@ as applied is not proof that its SQL ran.
   Webhook triggers are created in the Supabase dashboard (they carry the
   project's own secret header), not by a migration.
 
+## Hockia help account (added 2026-11-21, source: migration 20261121130000)
+
+"Ask Hockia" (the help line on error screens, empty search, Settings and the feedback form) opens a chat with the profile named in `app_settings` key `hockia_help_profile_id`. No row means the line is not shown anywhere. Set it per environment, by someone allowed to write there:
+
+```sql
+INSERT INTO public.app_settings (key, value) VALUES ('hockia_help_profile_id', '<profile uuid>')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+```
+
+Delete the row to turn the line off. A hidden or missing profile also turns it off. Before turning it on in production, make sure someone reads that account's inbox: a member who asks and hears nothing is worse than no line.

@@ -9806,6 +9806,7 @@ export type Database = {
         Returns: string
       }
       facebook_login_enabled: { Args: never; Returns: boolean }
+      hockia_help_profile_id: { Args: never; Returns: string }
       feed_item_engageable: { Args: { p_item_type: string }; Returns: boolean }
       fetch_club_opportunities_with_counts: {
         Args: {

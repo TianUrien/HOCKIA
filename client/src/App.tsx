@@ -9,6 +9,7 @@ import * as Sentry from '@sentry/react'
 // (EditProfileModal, JourneyTab, CommentsTab... and their catalogs).
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { HockiaHelpLine } from '@/components/HockiaHelpLine'
 import Layout from '@/components/Layout'
 import SentryTestButton from '@/components/SentryTestButton'
 import RecruiterOnlyRoute from '@/components/RecruiterOnlyRoute'
@@ -190,6 +191,7 @@ const RouteErrorFallback = () => (
           Go to Home
         </button>
       </div>
+      <HockiaHelpLine moment="route_error" className="mt-4" />
     </div>
   </div>
 )

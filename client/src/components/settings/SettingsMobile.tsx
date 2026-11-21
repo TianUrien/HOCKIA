@@ -1,4 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { HockiaHelpLine } from '@/components/HockiaHelpLine'
 import { useNavigate } from 'react-router-dom'
 import { Bell, Check, ChevronRight, FileText, HelpCircle, Lock, MessageSquare } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -222,6 +223,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
         <SettingsRow title={t('support.help')} icon={<HelpCircle className="h-4 w-4" strokeWidth={2} />} onClick={() => { window.location.href = 'mailto:team@inhockia.com' }} />
         <SettingsRow title={t('support.feedback')} icon={<MessageSquare className="h-4 w-4" strokeWidth={2} />} onClick={() => setFeedback(true)} />
         <SettingsRow title={t('support.legal')} icon={<FileText className="h-4 w-4" strokeWidth={2} />} onClick={() => setLegal(true)} />
+        <HockiaHelpLine moment="settings_help" onNavigate={(route) => navigate(route)} className="px-4" />
       </SettingsGroup>
 
       <SettingsGroup>
