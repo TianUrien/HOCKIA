@@ -27,11 +27,15 @@ export function MascotAvatar({ state = 'calm', size = 36, ring = false, classNam
 
 /**
  * A mascot clip with alpha: HEVC first (iOS / WKWebView), then WebM VP9
- * (Chrome / Android), the poster as fallback. Reduce Motion → poster only.
+ * (Chrome / Android). Reduce Motion → poster only. A clip that cannot be
+ * decoded or loaded (seen in the iOS simulator: the WebView accepts the HEVC
+ * source and then fails to decode it) shows the poster too, never a gap.
  * One-shots call onEnded so the caller can cross to `idle`.
  */
 export function MascotClip({ clip, loop = false, onEnded, height, className }: { clip: MascotClipName; loop?: boolean; onEnded?: () => void; height: number; className?: string }) {
-  const [still] = useState(prefersReducedMotion)
+  const [reduced] = useState(prefersReducedMotion)
+  const [failed, setFailed] = useState(false)
+  const still = reduced || failed
   const ref = useRef<HTMLVideoElement>(null)
   useEffect(() => {
     const v = ref.current
@@ -40,7 +44,7 @@ export function MascotClip({ clip, loop = false, onEnded, height, className }: {
     void v.play().catch(() => undefined)
   }, [clip, still])
   const poster = `${BASE}/${clip}_poster.webp`
-  if (still) return <img src={poster} alt="" style={{ height }} className={cn('block w-auto', className)} aria-hidden="true" />
+  if (still) return <img src={poster} alt="" style={{ height }} className={cn('block w-auto', className)} aria-hidden="true" data-testid={`mascot-still-${clip}`} />
   return (
     <video
       ref={ref}
@@ -50,6 +54,7 @@ export function MascotClip({ clip, loop = false, onEnded, height, className }: {
       autoPlay
       loop={loop}
       onEnded={onEnded}
+      onError={() => setFailed(true)}
       poster={poster}
       style={{ height }}
       className={cn('block w-auto bg-transparent', className)}
@@ -57,7 +62,8 @@ export function MascotClip({ clip, loop = false, onEnded, height, className }: {
       data-testid={`mascot-clip-${clip}`}
     >
       <source src={`${BASE}/${clip}_hevc-alpha.mp4`} type='video/mp4; codecs="hvc1"' />
-      <source src={`${BASE}/${clip}.webm`} type="video/webm" />
+      {/* The last source failing means none could be loaded. */}
+      <source src={`${BASE}/${clip}.webm`} type="video/webm" onError={() => setFailed(true)} />
     </video>
   )
 }
