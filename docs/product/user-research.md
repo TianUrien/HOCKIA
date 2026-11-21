@@ -32,11 +32,21 @@ Source: read-only aggregate queries (roles, applications, status history, offers
 - **Almost no satisfaction data from recruiters**: 7 app ratings from clubs and coaches (22 dismissed the prompt), and no problem reports from any role (the form is only in Settings).
 - A requirement set on a role can hide it from most of its audience: one role that required an EU passport was opened by more players than similar roles and received a fraction of their applications.
 
+### Brand promotion, production analytics and code read, 2026-11-21
+Source: read-only aggregate queries (brands, offers, products, conversations, events, Hockia AI questions, feedback); test accounts and hidden profiles excluded. Proposal: `proposals/brand-promotion.md`.
+- **No brand has used the promotion tool**: 9 brands, 0 offers ever created, 3 products from 2 brands, 0 updates, 0 ambassadors.
+- **Members rarely go where brands are**: Community › Brands was opened by 21 members in 30 days (Home 152, Opportunities 146); 39 Marketplace views by 18 members in 90 days.
+- **Almost no contact with brands**: 8 conversations with a brand in total, none started in the last 90 days.
+- **Location targeting misses most members**: 185 of 438 members have a base country; an "Everywhere" offer is eligible for 381 (57 players and coaches have no birth date).
+- **Hockia AI is a small surface today**: 12 questions from 4 members in 30 days, 8 with no result.
+- **Problems are not recorded**: no feedback entries and no error rows tied to a moment in the app.
+
 ## Hypotheses (to test)
 - H1. Members open Home to learn **what changed for them** (replies, views, roles that fit, applicants waiting), not to browse social content. Test: interviews per role + card impressions/CTR once tracked.
 - H2. **Signings and market moves** (who signed where, new roles, who is available) are the community content members value; photos and highlights belong on profiles as a portfolio. Test: interviews; compare engagement of signing/role items vs media items.
 - H3. Clubs want Home to be a **to-do** (who to answer, who is available); players want **chances** (roles that fit, who looked at them). Test: interviews by role.
 - R1–R4 (recruiters): see `proposals/recruiter-satisfaction.md` › Hypotheses. Test: outcome question on role close, relevance question after reviewing applicants, recruiter interviews.
+- B1–B4 (brands): see `proposals/brand-promotion.md` › Hypotheses. Test: a first campaign with a fixed window, and asking the active brands what they want members to do.
 - H4. A Hockia AI briefing ("what changed and what I'd do next", with options) is clearer than a feed. Test: prototype test with members of each role.
 
 ## Gaps (measure before a redesign)
@@ -59,3 +69,4 @@ Instrumentation for gaps 1–8 shipped to staging on 2026-10-19 (PR #383); produ
 | 2026-10-19 | Production check | Congrats / comments pipeline | Works; zero supply (gap 9 closed) |
 | 2026-10-19 | Instrumentation | Home gaps 1–8 (PR #383) | On staging; first read ≈ 2 Nov 2026 |
 | 2026-11-21 | Analytics (aggregate) | Recruiter outcomes, answers and satisfaction signals | Evidence above; proposal `proposals/recruiter-satisfaction.md` |
+| 2026-11-21 | Analytics (aggregate) and code read | Brand promotion: supply, surfaces, contact, moments | Evidence above; proposal `proposals/brand-promotion.md` |
