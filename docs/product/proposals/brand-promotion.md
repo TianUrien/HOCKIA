@@ -1,6 +1,6 @@
 # Brand promotion: campaigns with an objective, shown at the right moment
 
-Proposal for the founder, 2026-11-21. Not approved for build. Evidence is from the code on `staging` and from read-only aggregate queries on production the same day (test accounts and hidden profiles excluded). Targets are marked **[TARGET]** and are placeholders until data exists. Aggregates only: no names, ids or quotes (ADR 0006). Builds on `brand-reach.md` (offers with a target) and `brand-results.md` (what a brand sees); where this file differs, it says so.
+Proposal for the founder, 2026-11-21. Phases 1 and 2 approved for build the same day (see Founder rulings); phases 3 and 4 are not. Evidence is from the code on `staging` and from read-only aggregate queries on production the same day (test accounts and hidden profiles excluded). Targets are marked **[TARGET]** and are placeholders until data exists. Aggregates only: no names, ids or quotes (ADR 0006). Builds on `brand-reach.md` (offers with a target) and `brand-results.md` (what a brand sees); where this file differs, it says so.
 
 ## Why
 
@@ -159,7 +159,7 @@ Later, when Hockia AI is more agentic, the member's side can go one step further
 
 ### Campaign window and frequency
 
-- **A start and an end, always.** Default 14 days, shortest 7, longest 15 **[placeholder: founder decides]**. A campaign stops by itself (the hourly job already ends expired offers).
+- **A start and an end, always.** Default 14 days, shortest 7, longest 15 (founder, 2026-11-21). A campaign stops by itself (the hourly job already ends expired offers).
 - **After the end:** the brand receives a closing summary and can run the campaign again with one tap, changed or not. Nothing renews by itself.
 - **One live campaign per objective per brand**, up to the existing limit of 5 live.
 - **Per member, per campaign:** shown on at most 3 visits **[TARGET]**; after that it rests for that member. "Not useful" ends it for that member at once.
@@ -224,19 +224,19 @@ Numbers will be small. Every report states the count behind each figure.
 | Phase | What ships | Size |
 |---|---|---|
 | 0. No code, this week | The founder publishes HOCKIA's first offer with today's tool (title, photo, "Everywhere", all roles, a link to the FAQ, end date in 14 days) to see the path end to end. Ask the other active brands what they want members to do. Baseline of the numbers above | None |
-| 1. Objectives and a real window | "What do you want members to do?" at the start of the editor; the button and required fields follow the objective (no link for Ask a question); start and end required with the 14-day default; conversation origin recorded on the server; closing summary; the dashboard entry explains promotion in two lines. The screen is named after what it does (see decision 4) | 1 PR, 1 migration |
+| 1. Objectives and a real window | "What do you want members to do?" at the start of the editor; the button and required fields follow the objective (no link for Ask a question); start and end required with the 14-day default; conversation origin recorded on the server; closing summary; the dashboard entry explains promotion in two lines. The screen and the object are named "Campaigns" | 1 PR, 1 migration |
 | 2. Help moments for HOCKIA | "Not working? Ask Hockia" in failure messages, empty search and Hockia AI results, Help, FAQ and the feedback form; opens a chat with the HOCKIA account with the screen attached; events for each help moment | 1 to 2 PRs |
 | 3. Moments and caps | The moment list on the server, one function that returns at most one card for a true moment, server-side caps, the AI topic classifier (English and Spanish) with the new topic, new moments (Just signed, Set a goal, Club is recruiting), the left-empty share, admin screen | 3 PRs, 1 to 2 migrations |
 | 4. Hockia AI as the desk | Drafts a campaign from the objective, reads results in words, proposes the next campaign from real openings; on the member side, offers to ask the brand for them | 2 PRs, after phase 3 has data |
 
 Phase 1 is the smallest build that fixes the founder's first problem (a brand can state an objective other than a discount and see what happened in a fixed window). Phase 2 is the smallest build that delivers the founder's own objective.
 
-## Decisions for the founder
+## Founder rulings (2026-11-21)
 
-1. Which phase to build first.
-2. Whether the failure and help moments are for HOCKIA only or open to service brands.
-3. The campaign window: fixed range, or the brand's choice.
-4. The name: keep "Offers" or call them "Campaigns".
+- **Build phases 1 and 2 together first**: campaign objectives with a real window, and HOCKIA's help line at failure and help moments. Phases 3 and 4 are not approved.
+- **Failure and help moments are for HOCKIA only**, labelled as Hockia help. No other brand appears there.
+- **A campaign runs 7 to 15 days, 14 by default.** The end date is required; the campaign stops by itself and can be run again with one tap.
+- **The object is called "Campaigns"** in the app. An offer is one kind of campaign.
 
 ## Still open
 
