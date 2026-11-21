@@ -275,7 +275,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-hockia-primary"><UserPlus className="h-5 w-5" strokeWidth={1.8} /></span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
+                  <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">
                     {pending.length > 0 ? t('profile.invites.waiting', { count: pending.length, n: count(pending.length) }) : t('profile.invites.empty')}
                   </span>
                   <span className="block truncate text-secondary text-ink-2">

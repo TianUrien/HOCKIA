@@ -215,9 +215,10 @@ export default function DevelopersPage() {
           </section>
 
           {/* Filters & Response - Two columns on desktop */}
+          {/* min-w-0: a grid item is as wide as its widest code line otherwise, and the whole page grows past a phone screen. */}
           <div className="grid md:grid-cols-2 gap-8">
             {/* Filters */}
-            <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <section className="min-w-0 bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Filters & Pagination</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -262,7 +263,7 @@ export default function DevelopersPage() {
             </section>
 
             {/* Response Format */}
-            <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <section className="min-w-0 bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Response Format</h2>
               <p className="text-gray-700 text-sm mb-4">
                 Responses are JSON. Each opportunity includes an <code className="bg-gray-100 px-1.5 py-0.5 rounded text-purple-600">apply_url</code> that 
