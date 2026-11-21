@@ -14,6 +14,7 @@ import { ApplicantsAiSummary } from './ApplicantsAiSummary'
 import { useBulkDecisions } from '@/hooks/useBulkDecisions'
 import { firstWord } from '@/lib/declineNotes'
 import { RoleActions } from './RoleActions'
+import { ReportProblemLink } from '@/components/ReportProblemLink'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { useRoleApplicants, type Applicant } from '@/hooks/useRoleApplicants'
@@ -258,6 +259,8 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           </div>
         </div>
       )}
+
+      {!selecting && !data.loading && <ReportProblemLink surface="applicants" className="mx-auto mt-2" />}
 
       {selecting && (
         // Figma CS4 204:6272: "N selected" · Maybe · Decline N, over the tab bar while selecting.

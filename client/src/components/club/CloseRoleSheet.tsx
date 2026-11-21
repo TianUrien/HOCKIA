@@ -9,6 +9,7 @@ import { closeRolePatch, closeRoleToast, closeRoleToldToast, type RoleCloseOutco
 import { countWaitingApplicants, fetchTellableApplicants, tellWaitingApplicants, type WaitingApplicant } from '@/lib/roleWaiting'
 import { DECLINE_BODY_MAX, declineGreeting, declineNoteBody, personalDeclineNote } from '@/lib/declineNotes'
 import { roleTitle } from '@/lib/opportunityCopy'
+import { closeOutcome, fetchOutcomeApplicants, saveRoleOutcome, trackRoleOutcomeAsked, type OutcomeApplicant } from '@/lib/roleOutcome'
 import { cn } from '@/lib/utils'
 import { useClubT } from '@/i18n/ns/club'
 
@@ -16,6 +17,8 @@ import { useClubT } from '@/i18n/ns/club'
  * Close a role (Figma 05 Club speed · CS6 204:1269): Filled or Not filled,
  * and — on by default — tell everyone still waiting with one note (fixed
  * template, founder ruling 2026-10-17), each with their own first name.
+ * A close as Filled also asks with whom (someone from Hockia or someone else,
+ * founder ruling 2026-11-21): a private answer for measurement, never published.
  * Shared by the phone role menu (RoleActions) and the dashboard's
  * Opportunities tab, so a close works the same everywhere.
  */
@@ -46,11 +49,16 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
   const [tell, setTell] = useState(true)
   const [body, setBody] = useState('')
   const [edited, setEdited] = useState(false)
+  const [filledWith, setFilledWith] = useState<'hockia' | 'elsewhere' | null>(null)
+  const [applicants, setApplicants] = useState<OutcomeApplicant[]>([])
+  const [hiredId, setHiredId] = useState('')
 
   useEffect(() => {
-    if (!open) { setOutcome(null); setTell(true); setBody(''); setEdited(false); return }
+    if (!open) { setOutcome(null); setTell(true); setBody(''); setEdited(false); setFilledWith(null); setHiredId(''); return }
     let cancelled = false
     void fetchTellableApplicants(role.id).then((rows) => { if (!cancelled) setWaiting(rows) })
+    void fetchOutcomeApplicants(role.id).then((rows) => { if (!cancelled) setApplicants(rows) })
+    trackRoleOutcomeAsked(role.id, 'close')
     return () => { cancelled = true }
   }, [open, role.id])
 
@@ -74,6 +82,8 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
       if (error) throw error
       // A closed role never stays the active "Ranked for" context.
       void useRecruitingContextStore.getState().roleStatusChanged(role.id, 'closed')
+      // Private measurement answer; never blocks the close.
+      void saveRoleOutcome({ roleId: role.id, recruiterId: role.club_id, outcome: closeOutcome(chosen, filledWith), via: 'close', hiredApplicationId: hiredId || null })
       addToast(told && (told.told || told.failed) ? closeRoleToldToast(told.told, told.failed) : closeRoleToast(chosen, left), 'success')
       onClosed(chosen)
     } catch (err) {
@@ -110,6 +120,36 @@ export function CloseRoleSheet({ open, role, onCancel, onClosed }: Props) {
               </button>
             ))}
           </div>
+          {outcome === 'filled' && (
+            <div className="flex flex-col gap-2.5" data-testid="close-role-filled-with">
+              <p className="text-[16px] font-semibold leading-[21px] text-ink-1" id="close-role-filled-with-title">{t('closeRole.filledWithTitle')}</p>
+              <div className="flex gap-2.5" role="radiogroup" aria-labelledby="close-role-filled-with-title">
+                {([['hockia', t('closeRole.filledHockia')], ['elsewhere', t('closeRole.filledElsewhere')]] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={filledWith === value}
+                    onClick={() => { setFilledWith(value); if (value !== 'hockia') setHiredId('') }}
+                    className={cn('flex min-h-[44px] flex-1 items-center justify-center rounded-full px-4 text-[16px] font-semibold', filledWith === value ? 'bg-brand-soft text-brand-primary' : 'bg-surface-subtle text-ink-1')}
+                    data-testid={`close-role-filled-${value}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {filledWith === 'hockia' && applicants.length > 0 && (
+                <label className="flex flex-col gap-1.5 text-secondary text-ink-2">
+                  {t('closeRole.whoLabel')}
+                  <select value={hiredId} onChange={(e) => setHiredId(e.target.value)} className="h-12 w-full rounded-[12px] border border-line bg-white px-3 text-body text-ink-1" data-testid="close-role-who">
+                    <option value="">{t('closeRole.whoNone')}</option>
+                    {applicants.map((a) => <option key={a.applicationId} value={a.applicationId}>{a.name}</option>)}
+                  </select>
+                </label>
+              )}
+              <p className="text-caption text-ink-3">{t('closeRole.privateNote')}</p>
+            </div>
+          )}
           {waiting.length > 0 && (
             <SwitchCardRow
               title={t('closeRole.tellTitle', { count: waiting.length })}

@@ -22,6 +22,8 @@ import { useYourReplies } from '@/hooks/useYourReplies'
 import { yourRepliesCopy } from '@/lib/yourReplies'
 import { ClubRoleCardSkeleton } from '@/components/ScreenSkeletons'
 import { tClub, useClubT } from '@/i18n/ns/club'
+import { RoleOutcomePrompt } from './RoleOutcomePrompt'
+import { ReportProblemLink } from '@/components/ReportProblemLink'
 
 
 /**
@@ -293,6 +295,9 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
         </div>
       )}
 
+      {/* Roles that closed on their own: did the recruiter fill the place? One per visit, private. */}
+      <RoleOutcomePrompt recruiterId={owner?.id} closed={data.closed} className={desktop ? 'mb-5' : 'mx-4 mb-3.5'} />
+
       {segment === 'open' && replies && (
         <div className={desktop ? 'pb-5' : 'px-4 pb-3.5'}>
           {/* Figma 05 CS8 205:5742: neutral surface, the club's own last 30 days, from 5 applicants. */}
@@ -343,6 +348,7 @@ export function RecruiterRoles({ data, onPostRole, onEditRole, onPostAgainRole, 
             </button>
           </div>
         )}
+        <ReportProblemLink surface="recruiter_roles" className="self-center" />
       </div>
     </>
   )
