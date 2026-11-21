@@ -43,7 +43,8 @@
       "contacted_other": "{{n}} contacted",
       "notUseful_one": "{{n}} not useful",
       "notUseful_other": "{{n}} not useful",
-      "fewer": "Fewer than {{n}} members have seen it"
+      "fewer": "Fewer than {{n}} members have seen it",
+      "fewerN": "fewer than {{n}}"
     },
     "daysAgo": {
       "recently": "recently",
@@ -1151,7 +1152,7 @@
       "applied": "Applied",
       "notUseful": "Marked not useful"
     },
-    "rowsNote": "Each number counts different members, for the whole campaign. You never see who, except the people who write to you.",
+    "rowsNote": "Each number counts different members, for the whole campaign. A count from 1 to 4 reads “Fewer than 5”, and you never see who.",
     "closingEyebrow": "How it went",
     "closingHeadline": {
       "asked_one": "{{n}} wrote to you.",
@@ -1175,6 +1176,11 @@
     "closingShown_one": "It was shown to {{n}} member",
     "closingShown_other": "It was shown to {{n}} members",
     "closingOpened_one": "and {{n}} opened it.",
-    "closingOpened_other": "and {{n}} opened it."
+    "closingOpened_other": "and {{n}} opened it.",
+    "closingHeadlineFewer": {
+      "asked": "Fewer than {{n}} wrote to you.",
+      "applied": "Fewer than {{n}} applied.",
+      "store": "Fewer than {{n}} went to your store."
+    }
   }
 }

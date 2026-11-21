@@ -207,7 +207,8 @@ export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contac
 }
 
 function countPart(key: 'shown' | 'opened' | 'storeVisits' | 'codeCopies' | 'contacted' | 'notUseful', n: number): string {
-  return tBrands(`offers.counts.${key}`, { count: n, n: brandCount(n) })
+  // "fewer than 5 opened": the masked form takes the plural.
+  return tBrands(`offers.counts.${key}`, { count: isFewer(n) ? SMALL_AUDIENCE : n, n: countInLine(n) })
 }
 
 /** "3 days left" on a live campaign with an end date; "Ends today" on its last day. */
@@ -233,6 +234,19 @@ export const SMALL_AUDIENCE = 5
 export function isSmallAudience(o: Pick<BrandOffer, 'shown'>): boolean {
   return o.shown > 0 && o.shown < SMALL_AUDIENCE
 }
+/** A per-campaign total the brand may not read exactly: one to four members. */
+export const isFewer = (n: number) => n > 0 && n < SMALL_AUDIENCE
+/**
+ * A per-campaign total as the brand reads it (founder 2026-11-21): one to four
+ * reads "Fewer than 5", like the breakdowns; zero and five or more are
+ * numbers. A zero is only printed beside an audience of five or more (see
+ * isSmallAudience), where it cannot be traced to a person.
+ */
+export function campaignCount(n: number): string {
+  return isFewer(n) ? tBrands('campaignReport.fewer', { n: SMALL_AUDIENCE }) : brandCount(n)
+}
+/** The same inside a sentence: "fewer than 5". */
+const countInLine = (n: number) => (isFewer(n) ? tBrands('offers.counts.fewerN', { n: SMALL_AUDIENCE }) : brandCount(n))
 
 export type CampaignHeadline = 'asked' | 'applied' | 'store'
 /**
@@ -266,8 +280,10 @@ export function closingLine(offer: Pick<BrandOffer, 'shown' | 'opened'>, ranDays
   return [
     ran,
     tBrands('campaignReport.closingShown', { count: offer.shown, n: brandCount(offer.shown) }),
-    tBrands('campaignReport.closingOpened', { count: offer.opened, n: brandCount(offer.opened) }),
-    tBrands(`campaignReport.closingHeadline.${headline.key}`, { count: headline.n, n: brandCount(headline.n) }),
+    tBrands('campaignReport.closingOpened', { count: isFewer(offer.opened) ? SMALL_AUDIENCE : offer.opened, n: countInLine(offer.opened) }),
+    isFewer(headline.n)
+      ? tBrands(`campaignReport.closingHeadlineFewer.${headline.key}`, { n: SMALL_AUDIENCE })
+      : tBrands(`campaignReport.closingHeadline.${headline.key}`, { count: headline.n, n: brandCount(headline.n) }),
   ].filter(Boolean).join(' ')
 }
 

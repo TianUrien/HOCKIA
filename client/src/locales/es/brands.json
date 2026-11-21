@@ -49,7 +49,8 @@
       "notUseful_one": "{{n}} no útil",
       "notUseful_other": "{{n}} no útiles",
       "notUseful_many": "{{n}} no útiles",
-      "fewer": "La vieron menos de {{n}} integrantes"
+      "fewer": "La vieron menos de {{n}} integrantes",
+      "fewerN": "menos de {{n}}"
     },
     "daysAgo": {
       "recently": "hace poco",
@@ -1188,7 +1189,7 @@
       "applied": "Se postularon",
       "notUseful": "La marcaron como no útil"
     },
-    "rowsNote": "Cada número cuenta integrantes distintos, en toda la campaña. Nunca ves quiénes, salvo las personas que te escriben.",
+    "rowsNote": "Cada número cuenta integrantes distintos, en toda la campaña. Un total de 1 a 4 dice “Menos de 5”, y nunca ves quiénes.",
     "closingEyebrow": "Cómo le fue",
     "closingHeadline": {
       "asked_one": "{{n}} te escribió.",
@@ -1219,6 +1220,11 @@
     "closingShown_many": "Se mostró a {{n}} integrantes",
     "closingOpened_one": "y {{n}} la abrió.",
     "closingOpened_other": "y {{n}} la abrieron.",
-    "closingOpened_many": "y {{n}} la abrieron."
+    "closingOpened_many": "y {{n}} la abrieron.",
+    "closingHeadlineFewer": {
+      "asked": "Menos de {{n}} te escribieron.",
+      "applied": "Menos de {{n}} se postularon.",
+      "store": "Menos de {{n}} fueron a tu tienda."
+    }
   }
 }

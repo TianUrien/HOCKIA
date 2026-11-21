@@ -18,7 +18,9 @@ import {
   audienceLine,
   isSmallAudience,
   brandCount,
+  campaignCount,
   campaignHeadline,
+  isFewer,
   campaignRanDays,
   closingLine,
   daysLeftLine,
@@ -181,8 +183,8 @@ export function Report({ offer, countryNames, waiting, onMessages, onResults, on
             ) : (
               <>
                 <p className="mt-1 flex items-baseline gap-2">
-                  <span className="font-display text-[44px] font-bold leading-none tracking-[-0.03em] text-ink-1" data-testid="campaign-report-number">{brandCount(headline.n)}</span>
-                  <span className="text-body text-ink-2">{t(`campaignReport.headline.${headline.key}`, { count: headline.n })}</span>
+                  <span className={cn('font-display font-bold leading-none tracking-[-0.03em] text-ink-1', isFewer(headline.n) ? 'text-[28px]' : 'text-[44px]')} data-testid="campaign-report-number">{campaignCount(headline.n)}</span>
+                  <span className="text-body text-ink-2">{t(`campaignReport.headline.${headline.key}`, { count: isFewer(headline.n) ? SMALL_AUDIENCE : headline.n })}</span>
                 </p>
                 {nobody ? <p className="mt-2 text-row text-ink-2" data-testid="campaign-report-nobody">{t('campaignReport.nobody')}</p> : null}
               </>
@@ -196,7 +198,7 @@ export function Report({ offer, countryNames, waiting, onMessages, onResults, on
               {rows.map((r) => (
                 <li key={r.key} className="flex items-center justify-between gap-3 py-2.5" data-row={r.key}>
                   <span className="text-row text-ink-2">{r.label}</span>
-                  <span className="text-body font-semibold text-ink-1">{brandCount(r.n)}</span>
+                  <span className="text-body font-semibold text-ink-1">{campaignCount(r.n)}</span>
                 </li>
               ))}
             </ul>
