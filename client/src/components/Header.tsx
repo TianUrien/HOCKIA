@@ -7,6 +7,7 @@ import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
 import { inboxTabDot } from '@/lib/inboxSegmentDots'
 import { HockiaAiButton } from '@/components/hockiaAi/HockiaAiButton'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
+import { useHockiaAiSuggestion } from '@/components/hockiaAi/hockiaAiSuggestionStore'
 import { useCommonT } from '@/i18n/ns/common'
 
 /** Unread indicator — a red dot, never a number (founder rule: no counts), the
@@ -74,6 +75,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
   // Web: the Ask Hockia AI pill reads as on while the side panel is open and closes it.
   const hockiaAiOpen = useHockiaAiSheet((s) => s.open)
   const closeHockiaAi = useHockiaAiSheet((s) => s.close)
+  const hockiaAiHasNews = useHockiaAiSuggestion((s) => s.fresh !== null)
   const authLoading = useAuthStore((s) => s.loading)
   const headerRef = useRef<HTMLElement>(null)
 
@@ -272,10 +274,11 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                   onClick={hockiaAiOpen ? closeHockiaAi : openHockiaAi}
                   aria-pressed={hockiaAiOpen}
                   className={`relative ml-2 flex h-10 w-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border text-[14px] font-semibold text-ai-text transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:border-ai-accent min-[1440px]:w-auto min-[1440px]:justify-start min-[1440px]:pl-1 min-[1440px]:pr-3.5 ${hockiaAiOpen ? 'border-ai-accent bg-ai-accent/20 ring-2 ring-ai-accent/30' : 'border-ai-accent/60 bg-ai-bg'}`}
-                  aria-label={t('nav.askHockiaAi')}
+                  aria-label={hockiaAiHasNews ? t('nav.askHockiaAiNew') : t('nav.askHockiaAi')}
                   title={t('nav.askHockiaAi')}
                   data-testid="header-hockia-ai-desktop"
                 >
+                  {hockiaAiHasNews && <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-brand-primary" aria-hidden="true" data-testid="hockia-ai-dot" />}
                   <img src="/hockia-ai/button_calm_96.webp" srcSet="/hockia-ai/button_calm_96.webp 1x, /hockia-ai/button_calm_192.webp 2x" alt="" width={32} height={32} className="h-8 w-8 rounded-full" draggable={false} />
                   <span className="hidden min-[1440px]:inline" aria-hidden="true">{t('nav.askHockiaAi')}</span>
                 </button>

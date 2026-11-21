@@ -92,6 +92,21 @@
     "officiatedCount_many": "{{count}} partidos dirigidos",
     "officiatedCount_other": "{{count}} partidos dirigidos"
   },
+  "suggestion": {
+    "eyebrow": "Nuevo para ti",
+    "applicants_one": "{{count}} postulante espera tu respuesta",
+    "applicants_many": "{{count}} postulantes esperan tu respuesta",
+    "applicants_other": "{{count}} postulantes esperan tu respuesta",
+    "applicantsCta": "Revisarlos",
+    "photo": "Tu perfil todavía no tiene foto",
+    "photoCta": "Agregarla conmigo",
+    "bio": "Tu perfil todavía no tiene bio",
+    "bioCta": "Escribirla conmigo",
+    "opportunities_one": "{{count}} oportunidad nueva desde la última vez",
+    "opportunities_many": "{{count}} oportunidades nuevas desde la última vez",
+    "opportunities_other": "{{count}} oportunidades nuevas desde la última vez",
+    "opportunitiesCta": "Verlas"
+  },
   "sheet": {
     "placeholder": "Pregúntale a Hockia AI…",
     "composerLabel": "Preguntarle a Hockia AI",
