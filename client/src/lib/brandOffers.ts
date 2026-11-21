@@ -192,11 +192,12 @@ export function liveLimitLine(offers: Pick<BrandOffer, 'status'>[]): string {
 }
 
 /** "158 shown · 31 opened · 12 went to your store · 5 contacted" (+ "· 2 not useful" when any). */
-export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful' | 'code_copies'>>): string {
+export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful' | 'code_copies' | 'objective'>>): string {
   return [
     countPart('shown', o.shown),
     countPart('opened', o.opened),
-    countPart('storeVisits', o.store_visits ?? 0),
+    // A campaign that asks members to write or to apply has no store to go to.
+    linkOptional(o.objective) && !(o.store_visits ?? 0) ? null : countPart('storeVisits', o.store_visits ?? 0),
     (o.code_copies ?? 0) > 0 ? countPart('codeCopies', o.code_copies ?? 0) : null,
     countPart('contacted', o.contacted),
     (o.not_useful ?? 0) > 0 ? countPart('notUseful', o.not_useful ?? 0) : null,
@@ -216,6 +217,31 @@ export function daysLeftLine(o: Pick<BrandOffer, 'ends_at'>, now: Date = new Dat
   const left = Math.round((localDay(new Date(o.ends_at)) - localDay(now)) / DAY_MS)
   if (left < 0) return null
   return left === 0 ? tBrands('offers.daysLeft.today') : tBrands('offers.daysLeft.days', { count: left })
+}
+
+// ── The campaign report (2026-11-21) ────────────────────────────────────────
+
+/** Under this many members, a count says little: the report says so in words. */
+export const SMALL_AUDIENCE = 5
+
+export type CampaignHeadline = 'asked' | 'applied' | 'store'
+/**
+ * The one number a campaign is judged by, from its objective: members who
+ * wrote (a question), players who applied (ambassadors), or members who went
+ * to the store (a product or an offer).
+ */
+export function campaignHeadline(o: Pick<BrandOffer, 'contacted' | 'store_visits'> & { objective?: OfferObjective | null }): { key: CampaignHeadline; n: number } {
+  if (o.objective === 'ask') return { key: 'asked', n: o.contacted }
+  if (o.objective === 'ambassador') return { key: 'applied', n: o.contacted }
+  return { key: 'store', n: o.store_visits ?? 0 }
+}
+
+/** Whole days the campaign has run or ran, from the day it went live. */
+export function campaignRanDays(o: Pick<BrandOffer, 'live_at' | 'starts_at' | 'ended_at' | 'ends_at' | 'status'>, now: Date = new Date()): number | null {
+  const from = o.starts_at ?? o.live_at
+  if (!from) return null
+  const to = o.status === 'ended' ? o.ended_at ?? o.ends_at ?? now.toISOString() : now.toISOString()
+  return Math.max(0, Math.round((new Date(to).getTime() - new Date(from).getTime()) / DAY_MS))
 }
 
 /** "today" / "yesterday" / "3 days ago" (B1 status lines). */

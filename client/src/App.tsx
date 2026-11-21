@@ -113,6 +113,7 @@ const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingP
 const NeedPage = lazyWithRetry(() => import('@/pages/NeedPage'))
 const BrandOffersPage = lazyWithRetry(() => import('@/pages/BrandOffersPage'))
 const BrandResultsPage = lazyWithRetry(() => import('@/pages/BrandResultsPage'))
+const CampaignReportPage = lazyWithRetry(() => import('@/pages/CampaignReportPage'))
 const BrandAmbassadorsPage = lazyWithRetry(() => import('@/pages/BrandAmbassadorsPage'))
 const BrandPartnershipsPage = lazyWithRetry(() => import('@/pages/BrandPartnershipsPage'))
 const OfferDetailPage = lazyWithRetry(() => import('@/pages/OfferDetailPage'))
@@ -484,6 +485,7 @@ function App() {
                 <Route path="/dashboard/results" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandResultsPage /></ErrorBoundary>} />
                 <Route path="/dashboard/ambassadors" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandAmbassadorsPage /></ErrorBoundary>} />
                 <Route path="/dashboard/offers/new" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="new" /></ErrorBoundary>} />
+                <Route path="/dashboard/offers/:offerId/report" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CampaignReportPage /></ErrorBoundary>} />
                 <Route path="/dashboard/offers/:offerId/edit" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="edit" /></ErrorBoundary>} />
 
                 {/* Public Investor Dashboard (shareable link) */}

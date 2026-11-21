@@ -428,7 +428,9 @@
       "deleteDraftHint": "Se elimina. Nadie lo vio.",
       "aria": "Acciones para {{title}}",
       "runAgain": "Volver a lanzar",
-      "runAgainHint": "Crea un borrador nuevo a partir de esta campaña, con fechas nuevas"
+      "runAgainHint": "Crea un borrador nuevo a partir de esta campaña, con fechas nuevas",
+      "report": "Ver informe",
+      "reportHint": "Qué hizo la comunidad con esta campaña"
     },
     "confirm": {
       "pauseTitle": "¿Pausar esta campaña?",
@@ -878,7 +880,8 @@
     "linkHintOptional": "Una página con más detalle, si la tienes. La comunidad te escribe desde la campaña.",
     "endsHint": "Una campaña dura de {{min}} a {{max}} días y se detiene sola. Cuando termina puedes volver a lanzarla.",
     "ambassadorPlayersOnly": "Jugadores/as. Solo jugadores/as pueden ser embajadores/as.",
-    "ambassadorNeedsOpen": "Primero activa \"Abierta a alianzas\" en tu perfil, para que puedan postularse."
+    "ambassadorNeedsOpen": "Primero activa \"Abierta a alianzas\" en tu perfil, para que puedan postularse.",
+    "bodyHintAsk": "Di sobre qué te pueden preguntar y quién responde. Sin afirmaciones que no puedas respaldar."
   },
   "offerDetail": {
     "missingTitle": "Esto ya no está disponible",
@@ -1140,5 +1143,68 @@
     "aiMoving": "¿Qué tengo que resolver antes de mudarme a {{where}} para jugar?",
     "aiNeed": "¿Qué necesito de {{need}} en {{where}}?",
     "askAi": "Preguntar a Hockia AI qué resolver para {{where}}"
+  },
+  "campaignPreview": {
+    "placesAria": "Dónde la ve la comunidad",
+    "home": "Inicio",
+    "ai": "Hockia AI",
+    "page": "Página",
+    "aiAnswer": "Acá Hockia AI responde la pregunta de la persona. Tu campaña nunca cambia la respuesta.",
+    "homeNote": "En Inicio, después de la primera publicación, para quienes va dirigida.",
+    "aiNote": "Debajo de una respuesta de Hockia AI, solo cuando alguien pregunta por este tema.",
+    "pageNote": "La página que abre cada integrante. El botón principal sigue lo que quieres que haga."
+  },
+  "campaignReport": {
+    "title": "Informe de la campaña",
+    "objective": "Objetivo",
+    "dates": "Fechas",
+    "time": "Tiempo restante",
+    "notStarted": "Esta campaña todavía no se publicó, así que no hay nada que informar.",
+    "edit": "Editar campaña",
+    "seeAsMembers": "Verla como la comunidad",
+    "waiting_one": "{{n}} persona espera tu respuesta",
+    "waiting_other": "{{n}} personas esperan tu respuesta",
+    "waiting_many": "{{n}} personas esperan tu respuesta",
+    "reply": "Responder",
+    "headlineEyebrow": "Para qué es esta campaña",
+    "headline": {
+      "asked_one": "integrante te escribió",
+      "asked_other": "integrantes te escribieron",
+      "asked_many": "integrantes te escribieron",
+      "applied_one": "jugador/a se postuló",
+      "applied_other": "jugadores/as se postularon",
+      "applied_many": "jugadores/as se postularon",
+      "store_one": "integrante fue a tu tienda",
+      "store_other": "integrantes fueron a tu tienda",
+      "store_many": "integrantes fueron a tu tienda"
+    },
+    "small": "Todavía la vieron menos de {{n}} integrantes. Los números dicen poco hasta que la vean más.",
+    "didEyebrow": "Qué hizo la comunidad",
+    "rows": {
+      "shown": "Mostrada a",
+      "opened": "La abrieron",
+      "store": "Fueron a tu tienda",
+      "codes": "Copiaron el código",
+      "contacted": "Te escribieron",
+      "applied": "Se postularon",
+      "notUseful": "La marcaron como no útil"
+    },
+    "rowsNote": "Cada número cuenta integrantes distintos, en toda la campaña. Nunca ves quiénes, salvo las personas que te escriben.",
+    "contactsEyebrow": "Quiénes te escribieron",
+    "member": "Integrante",
+    "message": "Mensaje",
+    "closingEyebrow": "Cómo le fue",
+    "closing": "Duró {{days}} días. Se mostró a {{shown}} integrantes y {{opened}} la abrieron.",
+    "closingHeadline": {
+      "asked_one": "{{n}} te escribió.",
+      "asked_other": "{{n}} te escribieron.",
+      "asked_many": "{{n}} te escribieron.",
+      "applied_one": "{{n}} se postuló.",
+      "applied_other": "{{n}} se postularon.",
+      "applied_many": "{{n}} se postularon.",
+      "store_one": "{{n}} fue a tu tienda.",
+      "store_other": "{{n}} fueron a tu tienda.",
+      "store_many": "{{n}} fueron a tu tienda."
+    }
   }
 }
