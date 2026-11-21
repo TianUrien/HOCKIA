@@ -14,7 +14,7 @@
 
 DO $probe$
 DECLARE
-  v_help uuid; v_me uuid; v_got uuid; v_out text := '';
+  v_help uuid; v_me uuid; v_third uuid; v_got uuid; v_err text; v_out text := '';
 BEGIN
   PERFORM set_config('request.jwt.claims', '', true);
   SELECT b.profile_id INTO v_help FROM public.brands b JOIN public.profiles p ON p.id = b.profile_id
@@ -72,14 +72,38 @@ BEGIN
   INSERT INTO public.new_conversation_log (user_id, other_user_id, created_at)
   SELECT v_me, p.id, now() - interval '1 hour' FROM public.profiles p WHERE p.id NOT IN (v_me, v_help) LIMIT 15;
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_me, 'role', 'authenticated')::text, true);
-  v_out := v_out || CASE WHEN public.hockia_help_profile_id() IS NULL THEN 'PASS' ELSE 'FAIL' END || E' E1 daily allowance used up, no conversation yet -> NULL\n';
-  PERFORM set_config('request.jwt.claims', '', true);
-  INSERT INTO public.conversations (participant_one_id, participant_two_id) VALUES (v_me, v_help);
-  PERFORM set_config('request.jwt.claims', json_build_object('sub', v_me, 'role', 'authenticated')::text, true);
-  v_out := v_out || CASE WHEN public.hockia_help_profile_id() = v_help THEN 'PASS' ELSE 'FAIL' END || E' E2 allowance used up but the conversation exists -> the help account\n';
+  v_out := v_out || CASE WHEN public.hockia_help_profile_id() = v_help THEN 'PASS' ELSE 'FAIL' END || E' E1 daily allowance used up -> still the help account\n';
+
+  -- E2 as the signed-in member, the conversation with the help account is accepted and not logged
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    INSERT INTO public.conversations (participant_one_id, participant_two_id) VALUES (v_me, v_help);
+    v_err := 'accepted';
+  EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS v_err = MESSAGE_TEXT;
+  END;
+  RESET ROLE;
+  v_out := v_out || CASE WHEN v_err = 'accepted' AND NOT EXISTS (SELECT 1 FROM public.new_conversation_log WHERE user_id = v_me AND other_user_id = v_help) THEN 'PASS' ELSE 'FAIL' END
+    || ' E2 help chat at the limit -> ' || v_err || E', not logged\n';
+
+  -- E3 the limit still holds for anyone else
+  SELECT p.id INTO v_third FROM public.profiles p
+   WHERE p.id NOT IN (v_me, v_help) AND coalesce(p.onboarding_completed, false)
+     AND NOT public.profile_is_uncontactable(p.is_blocked, p.frozen_minor_at, p.role, p.date_of_birth, p.dob_required_since)
+     AND p.id NOT IN (SELECT other_user_id FROM public.new_conversation_log WHERE user_id = v_me)
+     AND NOT EXISTS (SELECT 1 FROM public.conversations c WHERE (c.participant_one_id = v_me AND c.participant_two_id = p.id) OR (c.participant_one_id = p.id AND c.participant_two_id = v_me))
+   LIMIT 1;
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    INSERT INTO public.conversations (participant_one_id, participant_two_id) VALUES (v_me, v_third);
+    v_err := 'accepted';
+  EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS v_err = MESSAGE_TEXT;
+  END;
+  RESET ROLE;
+  v_out := v_out || CASE WHEN v_err LIKE 'You''ve started a lot of new conversations today%' THEN 'PASS' ELSE 'FAIL' END || ' E3 another member at the limit -> ' || left(v_err, 60) || E'\n';
 
   v_out := v_out || CASE WHEN NOT has_function_privilege('anon', 'public.hockia_help_profile_id()', 'EXECUTE')
-                          AND has_function_privilege('authenticated', 'public.hockia_help_profile_id()', 'EXECUTE') THEN 'PASS' ELSE 'FAIL' END || E' F1 anon cannot execute, authenticated can\n';
+                          AND has_function_privilege('authenticated', 'public.hockia_help_profile_id()', 'EXECUTE')
+                          AND NOT has_function_privilege('authenticated', 'public._hockia_help_account()', 'EXECUTE') THEN 'PASS' ELSE 'FAIL' END || E' F1 anon cannot execute; authenticated can, but not the internal helper\n';
 
   RAISE EXCEPTION E'PROBE RESULTS\n%', v_out;
 END

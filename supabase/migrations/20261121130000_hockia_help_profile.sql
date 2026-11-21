@@ -22,15 +22,35 @@
 --   - the caller is signed in, is not that account, has finished onboarding
 --     and is not hidden or uncontactable (the same rule the message triggers
 --     apply: enforce_conversation_not_blocked);
---   - neither side has blocked the other;
---   - the caller already has a conversation with the account, or still has
---     room in the daily allowance of new conversations
---     (20261004300000_new_conversation_limits). A help chat counts toward
---     that allowance like any other conversation; nothing in the limit
---     changes here.
+--   - neither side has blocked the other.
 -- It returns one public profile id and nothing about why it is NULL.
+--
+-- The daily allowance of new conversations (20261004300000) does not apply
+-- to this chat (founder 2026-11-21): a member who has used the day's
+-- allowance, and a new member with 5 a day, can still ask for help.
+-- _enforce_new_conversation_limit() is rewritten from its latest body with
+-- one early return: a conversation the member starts with the help account
+-- is neither refused nor logged. Everything else in the limit is unchanged,
+-- including a conversation the help account itself starts.
 -- Rollback: supabase/rollbacks/20261121130000_hockia_help_profile.down.sql
 -- Probe: supabase/tests/security/hockia_help_profile.probe.sql (staging, rolled back)
+
+-- The account named in the setting, whoever asks. Internal: used by the
+-- function below and by the conversation limit trigger.
+CREATE OR REPLACE FUNCTION public._hockia_help_account()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+  SELECT s.value::uuid FROM public.app_settings s
+   WHERE s.key = 'hockia_help_profile_id'
+     AND s.value ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+$function$;
+
+REVOKE ALL ON FUNCTION public._hockia_help_account() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public._hockia_help_account() TO service_role;
 
 CREATE OR REPLACE FUNCTION public.hockia_help_profile_id()
 RETURNS uuid
@@ -41,18 +61,9 @@ SET search_path TO 'public'
 AS $function$
 DECLARE
   v_me uuid := (SELECT auth.uid());
-  v_value text;
-  v_help uuid;
-  v_limit integer;
-  v_used integer;
-  v_known boolean;
+  v_help uuid := public._hockia_help_account();
 BEGIN
-  IF v_me IS NULL THEN RETURN NULL; END IF;
-
-  SELECT s.value INTO v_value FROM public.app_settings s WHERE s.key = 'hockia_help_profile_id';
-  IF v_value IS NULL OR v_value !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN RETURN NULL; END IF;
-  v_help := v_value::uuid;
-  IF v_help = v_me THEN RETURN NULL; END IF;
+  IF v_me IS NULL OR v_help IS NULL OR v_help = v_me THEN RETURN NULL; END IF;
 
   -- Both sides can take part in a conversation.
   IF (SELECT count(*) FROM public.profiles p
@@ -63,23 +74,6 @@ BEGIN
   END IF;
   IF public.is_blocked_pair(v_me, v_help) THEN RETURN NULL; END IF;
 
-  -- An existing conversation can always be reopened.
-  IF EXISTS (SELECT 1 FROM public.conversations c
-              WHERE (c.participant_one_id = v_me AND c.participant_two_id = v_help)
-                 OR (c.participant_one_id = v_help AND c.participant_two_id = v_me)) THEN
-    RETURN v_help;
-  END IF;
-
-  -- A new one needs room in today's allowance (admins and test accounts have no limit).
-  IF public.is_platform_admin() THEN RETURN v_help; END IF;
-  v_limit := public._new_conversation_daily_limit(v_me);
-  IF v_limit IS NULL THEN RETURN v_help; END IF;
-  SELECT count(DISTINCT l.other_user_id), coalesce(bool_or(l.other_user_id = v_help), false)
-    INTO v_used, v_known
-    FROM public.new_conversation_log l
-   WHERE l.user_id = v_me AND l.created_at > now() - interval '24 hours';
-  IF NOT v_known AND v_used >= v_limit THEN RETURN NULL; END IF;
-
   RETURN v_help;
 END;
 $function$;
@@ -89,5 +83,75 @@ GRANT EXECUTE ON FUNCTION public.hockia_help_profile_id() TO authenticated, serv
 
 COMMENT ON FUNCTION public.hockia_help_profile_id IS
   'The profile that answers "Ask Hockia" (app_settings key hockia_help_profile_id), or NULL when there is none or the caller could not open a chat with it right now. Callers show the help line only on a non-null answer.';
+
+-- The limit trigger, from its latest body (20261004300000) plus the early return.
+CREATE OR REPLACE FUNCTION public._enforce_new_conversation_limit()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_uid   uuid := auth.uid();
+  v_other uuid;
+  v_limit integer;
+  v_used  integer;
+  v_known boolean;
+  v_now   timestamptz := now();
+BEGIN
+  IF v_uid IS NULL
+     OR v_uid NOT IN (NEW.participant_one_id, NEW.participant_two_id)
+     OR NEW.participant_one_id = NEW.participant_two_id THEN
+    RETURN NULL;
+  END IF;
+  IF public.is_platform_admin() THEN
+    RETURN NULL;
+  END IF;
+
+  v_limit := public._new_conversation_daily_limit(v_uid);
+  IF v_limit IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  v_other := CASE WHEN NEW.participant_one_id = v_uid THEN NEW.participant_two_id ELSE NEW.participant_one_id END;
+
+  -- Asking Hockia for help is not one of the day's new conversations (founder
+  -- 2026-11-21): it is neither refused at the limit nor counted toward it.
+  -- Only a chat the member opens with the help account; a chat that account
+  -- opens with a member is counted like any other.
+  IF v_other = public._hockia_help_account() THEN
+    RETURN NULL;
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext('new_conversation:' || v_uid::text));
+
+  SELECT count(DISTINCT l.other_user_id), coalesce(bool_or(l.other_user_id = v_other), false)
+    INTO v_used, v_known
+    FROM public.new_conversation_log l
+   WHERE l.user_id = v_uid
+     AND l.created_at > v_now - interval '24 hours';
+
+  IF NOT v_known AND v_used >= v_limit THEN
+    RAISE EXCEPTION 'You''ve started a lot of new conversations today. You can start more tomorrow.'
+      USING DETAIL = 'new_conversation_limit', ERRCODE = 'P0001';
+  END IF;
+
+  INSERT INTO public.new_conversation_log (user_id, other_user_id, conversation_id, created_at)
+  VALUES (v_uid, v_other, NEW.id, v_now);
+
+  IF NOT v_known AND v_used + 1 >= v_limit THEN
+    INSERT INTO public.spam_signals AS s (user_id, kind, signal_key, people_count, first_seen_at, last_seen_at)
+    VALUES (v_uid, 'daily_limit', to_char(v_now AT TIME ZONE 'utc', 'YYYY-MM-DD'), v_used + 1, v_now, v_now)
+    ON CONFLICT ON CONSTRAINT spam_signals_user_kind_key_unique DO UPDATE
+      SET people_count = greatest(s.people_count, excluded.people_count),
+          last_seen_at = excluded.last_seen_at;
+  END IF;
+
+  RETURN NULL;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public._enforce_new_conversation_limit() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public._enforce_new_conversation_limit() TO service_role;
 
 NOTIFY pgrst, 'reload schema';
