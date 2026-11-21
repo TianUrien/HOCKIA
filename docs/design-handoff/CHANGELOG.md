@@ -3,6 +3,19 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-11-21 (recruiter outcome question), engineering session
+
+Figma, "New Hockia 2 · Draft", page "05 · Opportunities — explorations", section "RS · Recruiter outcome question and Report a problem (2026-11-21)" (303:1131). Drawn with the build (PR #617); same tokens and text styles as O5 and CS6, which the frames were cloned from.
+- First version: a large card with the four answers inside the roles screen. **Replaced the same day (founder ruling):** it pushed the roles down. A pop-up that opens by itself was considered and discarded (it interrupts recruiters who came to answer applicants).
+- RS1 303:1132: club Opportunities with a neutral banner with the role name on one truncated line and "Closed. Did you fill it?" under it (Tonal Small "Answer", X with a 44 pt target) under the waiting notice, and "Report a problem" under the scouting rows.
+- RS2 306:1279: "Answer" opens the question in a bottom sheet: four answers and the private note.
+- RS3 306:1458: after "Yes, with someone from Hockia": optional "Who?" select and Primary "Save answer".
+- RS4 304:1333: the close-role sheet with Filled selected and the step "Who did you fill it with?" (two choices, optional "Who?", private note).
+- The X closes the banner; it comes back once, 14 days later, then never for that role.
+- Device check (iPhone 17 Pro Max simulator and Android small-phone emulator, lab build on staging): a long role title wrapped the first banner to three lines, so the role name got its own truncated line.
+- Copy: at 393 wide the choice "Someone from Hockia" did not fit its pill; the label is "A Hockia member" in the app and in Figma.
+- The copied frames use the app's current separators (commas, counts in brackets) instead of the middle dots of O5 and CS6.
+
 ## 2026-10-09 · design agent
 
 - Hockia-UI-UX, Landing v3 (section `122:1885`), built in PR #226 and live:
