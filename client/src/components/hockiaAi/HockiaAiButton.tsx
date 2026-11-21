@@ -1,16 +1,20 @@
 import { usePressSpring } from '@/hooks/usePressSpring'
 import { cn } from '@/lib/utils'
 import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
+import { useHockiaAiSuggestion } from './hockiaAiSuggestionStore'
 
 /**
  * Hockia AI · header button (Figma 178:25): 44 pt hit, the mascot head in a
  * soft ring. `hasSuggestion` = the active head + a brand dot — only when
- * Hockia AI has something real and new for this user, never a fake nudge
- * (nothing sets it yet).
+ * Hockia AI has something real and new for this user, never a fake nudge.
+ * Lit by hockiaAiSuggestionStore (applicants waiting, a profile step, new
+ * opportunities); `hasSuggestion` overrides it.
  */
-export function HockiaAiButton({ onClick, hasSuggestion = false, className, testId = 'hockia-ai-button' }: { onClick: () => void; hasSuggestion?: boolean; className?: string; testId?: string }) {
+export function HockiaAiButton({ onClick, hasSuggestion: forced, className, testId = 'hockia-ai-button' }: { onClick: () => void; hasSuggestion?: boolean; className?: string; testId?: string }) {
   const t = useHockiaAiT()
   const press = usePressSpring<HTMLButtonElement>()
+  const fresh = useHockiaAiSuggestion((s) => s.fresh !== null)
+  const hasSuggestion = forced ?? fresh
   const state = hasSuggestion ? 'active' : 'calm'
   return (
     <button
@@ -32,7 +36,7 @@ export function HockiaAiButton({ onClick, hasSuggestion = false, className, test
         className="relative h-9 w-9 rounded-full"
         draggable={false}
       />
-      {hasSuggestion && <span className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-primary" aria-hidden="true" />}
+      {hasSuggestion && <span className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full border-2 border-white bg-brand-primary" aria-hidden="true" data-testid="hockia-ai-dot" />}
     </button>
   )
 }

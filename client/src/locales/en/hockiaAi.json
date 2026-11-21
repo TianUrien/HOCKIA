@@ -88,6 +88,19 @@
     "officiatedCount_one": "{{count}} match officiated",
     "officiatedCount_other": "{{count}} matches officiated"
   },
+  "suggestion": {
+    "eyebrow": "New for you",
+    "applicants_one": "{{count}} applicant is waiting for your reply",
+    "applicants_other": "{{count}} applicants are waiting for your reply",
+    "applicantsCta": "Review them",
+    "photo": "Your profile has no photo yet",
+    "photoCta": "Add one with me",
+    "bio": "Your profile has no bio yet",
+    "bioCta": "Write it with me",
+    "opportunities_one": "{{count}} new opportunity since you last looked",
+    "opportunities_other": "{{count}} new opportunities since you last looked",
+    "opportunitiesCta": "See them"
+  },
   "sheet": {
     "placeholder": "Ask Hockia AI…",
     "composerLabel": "Ask Hockia AI",

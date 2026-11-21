@@ -287,3 +287,17 @@ Source: `docs/product/proposals/recruiter-satisfaction.md`, phase 2 (founder rul
 | `report_problem_open` | none | `surface: recruiter_roles \| applicants` | "Report a problem" is tapped on a recruiting screen |
 
 The answer itself lives in `role_outcome_answers` (one row per role; recruiter and admins only). The event never carries who was signed, only whether a person was named. Answer rate = `role_outcome_answered` with an outcome other than `skipped`, over `role_outcome_asked`, per `via`.
+
+## Hockia AI opens and suggestions (added 2026-11-21)
+
+Founder ruling 2026-11-21: count the members who reach Hockia AI at all, and let Hockia AI start the conversation only when it has something real and new. Supabase `events` through `trackDbEvent`. Baseline before this (production, 30 days): about 7 of 210 active members used any Hockia AI action, and opening the sheet was not recorded.
+
+| Event | Properties | Fired when |
+|---|---|---|
+| `hockia_ai_open` | `entry` (header, home, opportunities, profile, role, search, link), `mode` (chat, builder, apply, history, steps), `suggestion` (the kind that lit the dot, or null) | The sheet opens, from any entry point (one place: `GlobalHockiaAiSheet`) |
+| `hockia_ai_suggestion_shown` | `kind: applicants_waiting \| profile_step \| new_opportunities` | The dot lights for a suggestion, once per member, kind and fact per app load |
+| `hockia_ai_suggestion_click` | `kind` | The member taps the "New for you" row inside the sheet |
+
+Reads: unique openers = distinct `user_id` on `hockia_ai_open`; by entry point = the same split by `entry`; dot effect = opens with a non-null `suggestion` over `hockia_ai_suggestion_shown`; follow-through = `hockia_ai_suggestion_click` over those opens.
+
+The dot's rules live in `client/src/lib/hockiaAiSuggestion.ts`: recruiters, pending applications on their open roles (a new applicant is news; an answered one is not); players and coaches, a profile without a photo or a bio, then opportunities for their role published since they last looked (seven days for a first look). Opening Hockia AI marks the fact seen on that device, so the same fact never lights the dot twice. No timer, no invented reason.
