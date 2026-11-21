@@ -329,4 +329,4 @@ INSERT INTO public.app_settings (key, value) VALUES ('hockia_help_profile_id', '
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 ```
 
-Delete the row to turn the line off. A hidden or missing profile also turns it off. Before turning it on in production, make sure someone reads that account's inbox: a member who asks and hears nothing is worse than no line.
+Delete the row to turn the line off. The value is a profile uuid in either case. The function behind it (`hockia_help_profile_id()`) answers per member: it returns nothing, and the line is hidden, when the account is missing, hidden or not onboarded; when the member is not onboarded or cannot be contacted; when either side has blocked the other; or when the member has no conversation with the account yet and has used the daily allowance of new conversations. A help chat counts toward that allowance like any other conversation. Before turning it on in production, make sure someone reads that account's inbox: a member who asks and hears nothing is worse than no line.

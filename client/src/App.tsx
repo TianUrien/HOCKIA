@@ -191,7 +191,7 @@ const RouteErrorFallback = () => (
           Go to Home
         </button>
       </div>
-      <HockiaHelpLine moment="route_error" className="mt-4" />
+      <HockiaHelpLine moment="route_error" hard className="mt-4" />
     </div>
   </div>
 )

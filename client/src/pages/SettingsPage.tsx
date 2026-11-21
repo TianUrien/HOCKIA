@@ -1047,7 +1047,7 @@ export default function SettingsPage() {
                   label={t('links.contactSupport')} 
                   external 
                 />
-                <HockiaHelpLine moment="settings_help" onNavigate={(route) => navigate(route)} className="mt-2" />
+                <HockiaHelpLine moment="settings_help" className="mt-2" />
               </div>
             )}
           </div>

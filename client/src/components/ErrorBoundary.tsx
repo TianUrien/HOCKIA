@@ -140,7 +140,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </button>
           </div>
           {/* Hockia's own help, and nobody else's, next to a failure (founder 2026-11-21). */}
-          <HockiaHelpLine moment="error_screen" className="mt-4" />
+          <HockiaHelpLine moment="error_screen" hard className="mt-4" />
         </div>
       </div>
     );

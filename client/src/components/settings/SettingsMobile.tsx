@@ -223,7 +223,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
         <SettingsRow title={t('support.help')} icon={<HelpCircle className="h-4 w-4" strokeWidth={2} />} onClick={() => { window.location.href = 'mailto:team@inhockia.com' }} />
         <SettingsRow title={t('support.feedback')} icon={<MessageSquare className="h-4 w-4" strokeWidth={2} />} onClick={() => setFeedback(true)} />
         <SettingsRow title={t('support.legal')} icon={<FileText className="h-4 w-4" strokeWidth={2} />} onClick={() => setLegal(true)} />
-        <HockiaHelpLine moment="settings_help" onNavigate={(route) => navigate(route)} className="px-4" />
+        <HockiaHelpLine moment="settings_help" className="px-4" />
       </SettingsGroup>
 
       <SettingsGroup>

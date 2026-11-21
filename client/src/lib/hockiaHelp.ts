@@ -15,28 +15,57 @@ import { loadMessageDraft, saveMessageDraft } from '@/lib/messageDrafts'
 /** Where the line appears; recorded with every event. */
 export type HelpMoment = 'error_screen' | 'route_error' | 'search_empty' | 'ai_no_result' | 'settings_help' | 'feedback_form'
 
-let remote: Promise<string | null> | null = null
+const answers = new Map<string, Promise<string | null>>()
 
-/** The profile that answers, read once per page load and shared. */
-export function readHelpProfileId(): Promise<string | null> {
-  remote ??= import('@/lib/supabase')
+/**
+ * The profile that answers, or null when this member could not open that chat
+ * right now (the server decides: no account set, a block, the daily allowance
+ * of new conversations). Read once per member per page load. A failed read is
+ * not remembered, so the next screen asks again.
+ */
+export function readHelpProfileId(viewerId: string): Promise<string | null> {
+  const cached = answers.get(viewerId)
+  if (cached) return cached
+  const p = import('@/lib/supabase')
     .then(({ supabase }) => supabase.rpc('hockia_help_profile_id'))
-    .then(({ data, error }) => (!error && typeof data === 'string' && data ? data : null))
-    .catch(() => null)
-  return remote
+    .then(({ data, error }) => {
+      if (error) { answers.delete(viewerId); return null }
+      return typeof data === 'string' && data ? data : null
+    })
+    .catch(() => { answers.delete(viewerId); return null })
+  answers.set(viewerId, p)
+  return p
 }
 
-/** Test seam: forget the cached answer. */
+/** Test seam: forget the cached answers. */
 export function resetHelpProfile(): void {
-  remote = null
+  answers.clear()
 }
 
-/** The screen the member is on, without ids, so it can travel in an event or a draft. */
+// The fixed words of the route table (App.tsx). Any other path segment is a
+// value: an id, a username, a slug, or a secret token (/invite/club/:token,
+// /investors/:token).
+const ROUTE_WORDS = new Set((
+  'about admin ai-opinions ambassadors app-ratings applicants applications ask attribution audit-log auth brand ' +
+  'brand-partnerships brands callback churn club clubs coaches community complete-profile countries dashboard ' +
+  'data-issues developers devices directory discover discovery ecosystem edit email email-action engagement faq ' +
+  'feature-usage feed feedback find-players forgot-password funnels home id in inbox investors invite ' +
+  'juniors-waitlist marketplace member-blocks members messages messaging-health monthly-report need networking new ' +
+  'notifications offers offline onboarding opportunities outreach overview player-analytics players post posted ' +
+  'preferences privacy privacy-policy product-health profile pulse questions reports requests activity reset-password ' +
+  'results saved search search-quality settings shortlist shortlists sign-in-traffic signin signing signup ' +
+  'spam-signals suggested template terms umpires users verify-email world'
+).split(' '))
+
+/**
+ * The screen the member is on as a route pattern: only the fixed words of the
+ * route table are kept, every other segment becomes ":id". Nothing a path
+ * carries (ids, usernames, slugs, invitation or investor tokens) can reach an
+ * event or a message draft.
+ */
 export function helpScreen(pathname: string): string {
-  return pathname
-    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':id')
-    .replace(/\/\d+(?=\/|$)/g, '/:id')
-    .slice(0, 120)
+  const parts = pathname.split('/').filter(Boolean).slice(0, 6).map((seg) => (ROUTE_WORDS.has(seg) ? seg : ':id'))
+  return `/${parts.join('/')}`
 }
 
 const shown = new Set<string>()

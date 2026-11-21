@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { HockiaHelpLine } from '@/components/HockiaHelpLine'
 import { chipTone } from '@/components/ui/chipClasses'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Loader2, SearchX } from 'lucide-react'
 import { Header } from '@/components'
 import { SearchBar } from '@/components/search/SearchBar'
@@ -36,7 +36,6 @@ export default function SearchPage() {
 function DesktopSearchPage() {
   const t = useWorldT()
   const [searchParams, setSearchParams] = useSearchParams()
-  const navigate = useNavigate()
   const initialQuery = searchParams.get('q') || ''
   const initialType = (searchParams.get('type') as TabType) || 'all'
 
@@ -174,7 +173,7 @@ function DesktopSearchPage() {
             <SearchX className="w-12 h-12 mx-auto mb-3 text-gray-500" />
             <p className="text-sm font-medium">{t('searchPage.noResults')}</p>
             <p className="text-xs mt-1">{t('searchPage.noResultsHint')}</p>
-            <HockiaHelpLine moment="search_empty" onNavigate={(route) => navigate(route)} className="mt-4" />
+            <HockiaHelpLine moment="search_empty" className="mt-4" />
           </div>
         ) : (
           <div className="space-y-3">

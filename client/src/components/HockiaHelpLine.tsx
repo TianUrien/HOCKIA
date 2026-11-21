@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useInRouterContext, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import { useCommonT } from '@/i18n/ns/common'
@@ -6,18 +7,34 @@ import { helpScreen, hockiaHelpRoute, readHelpProfileId, trackHelpShown, type He
 
 interface HockiaHelpLineProps {
   moment: HelpMoment
-  /** Inside the router: pass navigate. Without it (an error screen) the page loads the chat itself. */
-  onNavigate?: (route: string) => void
+  /**
+   * Load the chat as a fresh page instead of navigating inside the app. For
+   * the "Something went wrong" screens only: what is on screen has already
+   * failed, so a clean start is the point. Everywhere else the line navigates
+   * with the router and keeps what the member has open or typed.
+   */
+  hard?: boolean
   className?: string
 }
 
 /**
  * One line, "Not working? Ask Hockia", that opens a chat with the Hockia
- * account (founder 2026-11-21). Shown only to a signed-in member, only when a
- * help account is set, and never to that account itself. Neutral tone: it is
- * an offer of help, not something the member must do, so no amber.
+ * account (founder 2026-11-21). Shown only to a signed-in member who can open
+ * that chat right now (the server decides), and never to the account itself.
+ * Neutral tone: it is an offer of help, not something the member must do, so
+ * no amber.
  */
-export function HockiaHelpLine({ moment, onNavigate, className }: HockiaHelpLineProps) {
+export function HockiaHelpLine({ moment, hard = false, className }: HockiaHelpLineProps) {
+  const inRouter = useInRouterContext()
+  return inRouter && !hard ? <RoutedLine moment={moment} className={className} /> : <Line moment={moment} className={className} go={(route) => window.location.assign(route)} />
+}
+
+function RoutedLine({ moment, className }: { moment: HelpMoment; className?: string }) {
+  const navigate = useNavigate()
+  return <Line moment={moment} className={className} go={(route) => navigate(route)} />
+}
+
+function Line({ moment, className, go }: { moment: HelpMoment; className?: string; go: (route: string) => void }) {
   const t = useCommonT()
   const userId = useAuthStore((s) => s.user?.id ?? null)
   const [helpId, setHelpId] = useState<string | null>(null)
@@ -25,9 +42,10 @@ export function HockiaHelpLine({ moment, onNavigate, className }: HockiaHelpLine
   const screen = typeof window === 'undefined' ? '' : helpScreen(window.location.pathname)
 
   useEffect(() => {
+    setHelpId(null)
     if (!userId) return
     let live = true
-    void readHelpProfileId().then((id) => { if (live) setHelpId(id) })
+    void readHelpProfileId(userId).then((id) => { if (live) setHelpId(id) })
     return () => { live = false }
   }, [userId])
 
@@ -39,14 +57,10 @@ export function HockiaHelpLine({ moment, onNavigate, className }: HockiaHelpLine
   const open = async () => {
     setBusy(true)
     try {
-      const route = await hockiaHelpRoute(userId, helpId, moment, screen, `${t('hockiaHelp.draft', { screen })}\n`)
-      if (onNavigate) onNavigate(route)
-      else window.location.assign(route)
+      go(await hockiaHelpRoute(userId, helpId, moment, screen, `${t('hockiaHelp.draft', { screen })}\n`))
     } catch {
       // The chat could not be prepared: open the composer for the account anyway.
-      const route = `/messages?new=${helpId}`
-      if (onNavigate) onNavigate(route)
-      else window.location.assign(route)
+      go(`/messages?new=${helpId}`)
     } finally {
       setBusy(false)
     }
