@@ -23,10 +23,20 @@ Source: the code agent reproduced the RPC path on staging (rolled-back transacti
 - The features **work end to end**. The zero rows are **zero supply**: no "New signing" post has ever been created; the member posts of the last 90 days are plain text, which offer likes but not comments; most recent references are still pending, so no reference card was generated.
 - Read: the social layer isn't broken, it's unused, a product signal, not an engineering one.
 
+### Recruiter outcomes and satisfaction signals, production analytics, 2026-11-21
+Source: read-only aggregate queries (roles, applications, status history, offers, events, app ratings, feedback); test accounts excluded. Proposal: `proposals/recruiter-satisfaction.md`.
+- **Candidates arrive**: 40 published roles received 333 applications; only 2 roles received none. 17 of 42 clubs and 4 coaches have published a role.
+- **Most applications are never answered through statuses**: 73 have a recruiter decision, 195 expired without one. Decided applications take a median of 7.6 days, with a long tail.
+- **Recruiters talk more than they triage**: in 30 days, 104 messages sent and 44 conversations started against 25 applicant status changes.
+- **Outcomes are unrecorded**: 14 of 16 closed roles closed by automatic expiry; the "filled via HOCKIA" field is empty on 15 of 16; 1 offer sent in the app, no signing recorded.
+- **Almost no satisfaction data from recruiters**: 7 app ratings from clubs and coaches (22 dismissed the prompt), and no problem reports from any role (the form is only in Settings).
+- A requirement set on a role can hide it from most of its audience: one role that required an EU passport was opened by more players than similar roles and received a fraction of their applications.
+
 ## Hypotheses (to test)
 - H1. Members open Home to learn **what changed for them** (replies, views, roles that fit, applicants waiting), not to browse social content. Test: interviews per role + card impressions/CTR once tracked.
 - H2. **Signings and market moves** (who signed where, new roles, who is available) are the community content members value; photos and highlights belong on profiles as a portfolio. Test: interviews; compare engagement of signing/role items vs media items.
 - H3. Clubs want Home to be a **to-do** (who to answer, who is available); players want **chances** (roles that fit, who looked at them). Test: interviews by role.
+- R1–R4 (recruiters): see `proposals/recruiter-satisfaction.md` › Hypotheses. Test: outcome question on role close, relevance question after reviewing applicants, recruiter interviews.
 - H4. A Hockia AI briefing ("what changed and what I'd do next", with options) is clearer than a feed. Test: prototype test with members of each role.
 
 ## Gaps (measure before a redesign)
@@ -48,3 +58,4 @@ Instrumentation for gaps 1–8 shipped to staging on 2026-10-19 (PR #383); produ
 | 2026-10-19 | Analytics (aggregate) | Home usage by role, 30/90 days | Evidence above; gaps 1–10 |
 | 2026-10-19 | Production check | Congrats / comments pipeline | Works; zero supply (gap 9 closed) |
 | 2026-10-19 | Instrumentation | Home gaps 1–8 (PR #383) | On staging; first read ≈ 2 Nov 2026 |
+| 2026-11-21 | Analytics (aggregate) | Recruiter outcomes, answers and satisfaction signals | Evidence above; proposal `proposals/recruiter-satisfaction.md` |
