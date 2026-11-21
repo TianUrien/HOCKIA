@@ -46,6 +46,8 @@ const player = { id: 'player-1', role: 'player', avatar_url: 'photo.jpg', bio: '
 beforeEach(() => {
   h.applications = { rows: [], count: 0 }; h.opportunities = []; h.since = null; h.fail = false; h.events = []
   window.localStorage.clear()
+  // Not staging, whatever the local env file points at.
+  vi.stubEnv('VITE_SUPABASE_URL', 'https://example.supabase.co')
   useHockiaAiSuggestion.setState({ userId: null, fresh: null, shown: null, loadedAt: 0 })
 })
 
@@ -74,6 +76,12 @@ describe('what Hockia AI can suggest', () => {
       { published_at: day(30), club: { is_test_account: false } },
     ]
     expect(await loadSuggestions(player, {}, NOW)).toEqual([{ kind: 'new_opportunities', count: 2, signature: day(1) }])
+  })
+
+  it('on staging, test clubs count, like in the opportunities list', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://ivjkdaylalhsteyyclvl.supabase.co')
+    h.opportunities = [{ published_at: day(1), club: { is_test_account: true } }]
+    expect(await loadSuggestions(player, {}, NOW)).toEqual([{ kind: 'new_opportunities', count: 1, signature: day(1) }])
   })
 
   it('only opportunities newer than the ones already seen count as new', async () => {

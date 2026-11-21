@@ -422,7 +422,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
                 optionRows ? (
                   <>
                     {planCard}
-                    {optionRows.slice(0, 3).map(optionRow)}
+                    {/* The medium sheet has room for three rows under one card; with the news row and the plan card, one. */}
+                    {optionRows.slice(0, newsCard && planCard ? 1 : 3).map(optionRow)}
                   </>
                 ) : (
                   <>

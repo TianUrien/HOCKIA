@@ -80,6 +80,10 @@ async function applicantsWaiting(viewer: SuggestionViewer): Promise<AiSuggestion
   return newest ? { kind: 'applicants_waiting', count, signature: newest } : null
 }
 
+function showsTestClubs(): boolean {
+  return Boolean((import.meta.env.VITE_SUPABASE_URL as string | undefined)?.includes('ivjkdaylalhsteyyclvl'))
+}
+
 /** Open opportunities for the member's role published since they last looked (or in the last week). */
 async function newOpportunities(viewer: SuggestionViewer, seen: SeenSignatures, now: Date): Promise<AiSuggestion | null> {
   if (viewer.role !== 'player' && viewer.role !== 'coach') return null
@@ -97,7 +101,8 @@ async function newOpportunities(viewer: SuggestionViewer, seen: SeenSignatures, 
     .limit(NEW_OPPORTUNITIES_MAX)
   if (error || !data) return null
   const rows = (data as unknown as { published_at: string | null; club: { is_test_account: boolean | null } | null }[])
-    .filter((r) => r.published_at && (viewer.is_test_account || !r.club?.is_test_account))
+    // The same rule as the opportunities list (hooks/useOpportunitiesForYou): test clubs only for test viewers, and on staging.
+    .filter((r) => r.published_at && (showsTestClubs() || viewer.is_test_account || !r.club?.is_test_account))
   if (rows.length === 0) return null
   return { kind: 'new_opportunities', count: rows.length, signature: rows[0].published_at as string }
 }
