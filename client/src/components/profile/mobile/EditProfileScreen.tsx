@@ -27,7 +27,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { validateImage } from '@/lib/imageOptimization'
 import { profilePhotoFields } from '@/lib/profilePhoto'
-import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
+import { pickImageNative, usesNativePicker } from '@/lib/nativeImagePicker'
 import { deleteStorageObject } from '@/lib/storage'
 import { invalidateProfile } from '@/lib/profile'
 import { getImageUrl } from '@/lib/imageUrl'
@@ -288,7 +288,7 @@ export default function EditProfileScreen({ field = null, onDone, onOpenPassport
     }
   }
   const pickPhoto = async () => {
-    if (isNativePlatform()) {
+    if (usesNativePicker(imageKindForRole(profile.role))) {
       try { const result = await pickImageNative('prompt', { crop: false }); if (result) await uploadPhoto(result.file) } catch (err) { logger.error('[EditProfileScreen] native picker failed', err); addToast(t('mobileEdit.errors.pickerFailed'), 'error') }
       return
     }

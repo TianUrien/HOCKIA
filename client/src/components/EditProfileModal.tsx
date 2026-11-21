@@ -21,7 +21,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { invalidateProfile } from '@/lib/profile'
 import { useToastStore } from '@/lib/toast'
 import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
-import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
+import { pickImageNative, usesNativePicker } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { clearProfileDraft, loadProfileDraft, saveProfileDraft } from '@/lib/profileDrafts'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -667,8 +667,8 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
   }
 
   const handleImageClick = async () => {
-    // On native platforms, use Capacitor Camera plugin (handles permissions + camera properly)
-    if (isNativePlatform()) {
+    // A person's photo on a phone: the Capacitor Camera plugin (permissions + camera). Crests and logos: the file input.
+    if (usesNativePicker(imageKindForRole(profile.role))) {
       try {
         const result = await pickImageNative('prompt', { crop: false })
         if (result) {

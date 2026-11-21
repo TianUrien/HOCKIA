@@ -21,9 +21,30 @@ export interface LoadedImage {
  * `<img>`, so `naturalWidth` / `naturalHeight` and every later draw are
  * already upright (the native picker corrects it before we get the file).
  */
-export function loadImageFile(file: File): Promise<LoadedImage> {
+export async function loadImageFile(file: File): Promise<LoadedImage> {
+  try {
+    return await decodeImage(file)
+  } catch {
+    // A file handed over by a phone's picker can fail to decode through its
+    // object URL (seen once on Android, device lab 2026-11-20, not reproduced).
+    // Read the bytes into memory and try once more before giving up.
+    return decodeImage(new Blob([await readBytes(file)], { type: file.type }))
+  }
+}
+
+/** FileReader, not `file.arrayBuffer()`: it exists in every WebView the app runs in. */
+function readBytes(file: File): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as ArrayBuffer)
+    reader.onerror = () => reject(new Error('Failed to load image'))
+    reader.readAsArrayBuffer(file)
+  })
+}
+
+function decodeImage(source: Blob): Promise<LoadedImage> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(source)
     const element = new Image()
     element.style.imageOrientation = 'from-image'
     element.onload = () => {

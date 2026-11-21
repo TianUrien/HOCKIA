@@ -18,7 +18,7 @@ import { validateImage } from '@/lib/imageOptimization'
 import { getImageUrl } from '@/lib/imageUrl'
 import { invalidateProfile } from '@/lib/profile'
 import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
-import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
+import { pickImageNative, usesNativePicker } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { trackOnboardingComplete, trackOnboardingStart, trackRoleSelected } from '@/lib/analytics'
 import { trackDbEvent, consumeWallIntent } from '@/lib/trackDbEvent'
@@ -688,7 +688,7 @@ export default function CompleteProfile() {
   // A crest or logo previews as the organisation rounded square, a photo as a circle.
   const orgPreview = Boolean(avatarUrl) && (userRole === 'club' || userRole === 'brand')
   const handleAvatarClick = async () => {
-    if (isNativePlatform()) {
+    if (usesNativePicker(imageKindForRole(userRole))) {
       try {
         const result = await pickImageNative('prompt', { crop: false })
         if (result) {
