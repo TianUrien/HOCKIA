@@ -55,6 +55,15 @@ export function isTopFocusTrap(container: HTMLElement | null): boolean {
   return container !== null && trapStack[trapStack.length - 1].container === container
 }
 
+/**
+ * How many overlays (focus traps) are open. The Android back handler
+ * (lib/nativeBack.ts) reads it: with one open, Back closes it instead of
+ * leaving the screen.
+ */
+export function activeFocusTrapCount(): number {
+  return trapStack.length
+}
+
 function focusWithin(container: HTMLElement) {
   const fallback = getFocusableElements(container)[0] ?? container
   refocusing = true

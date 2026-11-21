@@ -62,6 +62,10 @@ The lab build always points the app at **staging** (`client/.env`), never at pro
 
 Measured: DOM state after real gestures (scroll positions, pinned body, overflow), navigation, element presence, screenshots. Not measured: smoothness, frame drops, audio, haptics, push notifications, real-device sensors, App Store review behaviour. Those still need a human on a device.
 
+## Android system Back (added 2026-11-21)
+
+`client/src/lib/nativeBack.ts` owns the Android Back button: it closes the topmost open sheet or modal (an Escape press to the top focus trap), otherwise navigates back, and at the first screen sends the app to the background. A new overlay gets this for free if it uses `useFocusTrap` and closes on Escape when it is the top trap. Check by hand on an emulator after touching overlays: `adb shell input keyevent 4` with a sheet open must leave the screen behind it in place.
+
 ## Known traps
 
 - **Xcode 27**: there is no `Simulator.app` any more (the window app is `DeviceHub.app`), so Appium cannot open the simulator UI; iOS sessions run with `appium:isHeadless: true` (gestures and screenshots unaffected). WebDriverAgent as shipped by the driver declares `IPHONEOS_DEPLOYMENT_TARGET 12.0`, which Xcode 27 refuses (`xcodebuild` exit 65); `build.mjs` builds it once with `IPHONEOS_DEPLOYMENT_TARGET=16.0` into `.build/wda` and sessions use `appium:usePrebuiltWDA` + `appium:derivedDataPath`. Rebuild with `npm run build -- --wda` after a driver upgrade.

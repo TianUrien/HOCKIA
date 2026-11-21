@@ -20,6 +20,7 @@ import { showUpdatePrompt } from './lib/updatePromptRoot'
 import { Capacitor } from '@capacitor/core'
 import { hasAnalyticsConsent, enableGA4 } from './lib/cookieConsent'
 import { initPostHog } from './lib/posthog'
+import { initNativeBack } from './lib/nativeBack'
 import { applyResolvedLanguage, startupNeedsCatalogs } from './i18n'
 import { LanguageBoundary } from './i18n/LanguageBoundary'
 
@@ -95,6 +96,8 @@ if (typeof window !== 'undefined') {
 // Set up in-app browser context for all Sentry events
 // This helps track issues specific to Instagram, WhatsApp, etc. WebViews
 initSentryInAppBrowserContext()
+// Android system Back closes the open sheet or modal before it navigates.
+initNativeBack()
 
 const RootErrorFallback = () => (
   <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50 text-center">
