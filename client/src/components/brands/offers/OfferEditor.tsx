@@ -33,7 +33,8 @@ import {
   type OfferObjective,
   type OfferRole,
 } from '@/lib/brandOffers'
-import { OfferPreviewCard, OfferThumb, OfferPill } from './OfferParts'
+import { OfferThumb, OfferPill } from './OfferParts'
+import { CampaignPreview } from './CampaignPreview'
 import { useCountryNames } from '@/hooks/useCountryNames'
 import { NeedPicker } from '@/components/marketplace/NeedPicker'
 import type { Need } from '@/lib/marketplace'
@@ -107,9 +108,7 @@ export function OfferEditor({ offer, initial, brandName, openToPartners = false,
     onSave(f, true)
   }
 
-  const preview = (
-    <OfferPreviewCard fields={f} brandName={brandName} reasonCountry={countryNames[0] ?? null} reasonRole={f.roles[0] ?? null} />
-  )
+  const preview = <CampaignPreview fields={f} brandName={brandName} countryNames={countryNames} />
 
   const actions = (
     <div className="space-y-2">
@@ -189,7 +188,7 @@ export function OfferEditor({ offer, initial, brandName, openToPartners = false,
         <p className={cn('mt-1.5 text-caption', claim ? 'text-status-warning' : 'text-ink-3')}>
           {claim
             ? t('offerEditor.claimWarning', { claim })
-            : t('offerEditor.bodyHint')}
+            : objective === 'ask' ? t('offerEditor.bodyHintAsk') : t('offerEditor.bodyHint')}
         </p>
       </div>
 
@@ -310,7 +309,7 @@ export function OfferEditor({ offer, initial, brandName, openToPartners = false,
             <button type="button" onClick={onCancel} className="flex h-11 items-center px-1 text-[14px] font-semibold text-ink-2 hover:text-ink-1">{t('offerEditor.close')}</button>
           </div>
         </div>
-        <div className="grid grid-cols-[minmax(0,1fr)_260px] items-start gap-6">
+        <div className="grid grid-cols-[minmax(0,1fr)_300px] items-start gap-6">
           {form}
           <div className="sticky top-24 space-y-2.5">
             <p className="text-[14px] font-medium leading-[1.3] text-ink-1">{t('offerEditor.previewTitle')}</p>

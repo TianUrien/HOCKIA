@@ -192,11 +192,14 @@ export function liveLimitLine(offers: Pick<BrandOffer, 'status'>[]): string {
 }
 
 /** "158 shown · 31 opened · 12 went to your store · 5 contacted" (+ "· 2 not useful" when any). */
-export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful' | 'code_copies'>>): string {
+export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful' | 'code_copies' | 'objective'>>): string {
+  // Under five members, exact counts would say what one person did (founder 2026-11-21).
+  if (isSmallAudience(o)) return tBrands('offers.counts.fewer', { n: SMALL_AUDIENCE })
   return [
     countPart('shown', o.shown),
     countPart('opened', o.opened),
-    countPart('storeVisits', o.store_visits ?? 0),
+    // A campaign that asks members to write or to apply has no store to go to.
+    linkOptional(o.objective) && !(o.store_visits ?? 0) ? null : countPart('storeVisits', o.store_visits ?? 0),
     (o.code_copies ?? 0) > 0 ? countPart('codeCopies', o.code_copies ?? 0) : null,
     countPart('contacted', o.contacted),
     (o.not_useful ?? 0) > 0 ? countPart('notUseful', o.not_useful ?? 0) : null,
@@ -204,7 +207,8 @@ export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contac
 }
 
 function countPart(key: 'shown' | 'opened' | 'storeVisits' | 'codeCopies' | 'contacted' | 'notUseful', n: number): string {
-  return tBrands(`offers.counts.${key}`, { count: n, n: brandCount(n) })
+  // "fewer than 5 opened": the masked form takes the plural.
+  return tBrands(`offers.counts.${key}`, { count: isFewer(n) ? SMALL_AUDIENCE : n, n: countInLine(n) })
 }
 
 /** "3 days left" on a live campaign with an end date; "Ends today" on its last day. */
@@ -216,6 +220,71 @@ export function daysLeftLine(o: Pick<BrandOffer, 'ends_at'>, now: Date = new Dat
   const left = Math.round((localDay(new Date(o.ends_at)) - localDay(now)) / DAY_MS)
   if (left < 0) return null
   return left === 0 ? tBrands('offers.daysLeft.today') : tBrands('offers.daysLeft.days', { count: left })
+}
+
+// ── The campaign report (2026-11-21) ────────────────────────────────────────
+
+/**
+ * Under this many members a campaign's counts are not shown: with one or two
+ * people, an exact "opened 1, not useful 1" says what a person did. The same
+ * threshold as the breakdowns (founder 2026-10-23), applied to every
+ * per-campaign total (founder 2026-11-21). Nobody at all is a plain zero.
+ */
+export const SMALL_AUDIENCE = 5
+export function isSmallAudience(o: Pick<BrandOffer, 'shown'>): boolean {
+  return o.shown > 0 && o.shown < SMALL_AUDIENCE
+}
+/** A per-campaign total the brand may not read exactly: one to four members. */
+export const isFewer = (n: number) => n > 0 && n < SMALL_AUDIENCE
+/**
+ * A per-campaign total as the brand reads it (founder 2026-11-21): one to four
+ * reads "Fewer than 5", like the breakdowns; zero and five or more are
+ * numbers. A zero is only printed beside an audience of five or more (see
+ * isSmallAudience), where it cannot be traced to a person.
+ */
+export function campaignCount(n: number): string {
+  return isFewer(n) ? tBrands('campaignReport.fewer', { n: SMALL_AUDIENCE }) : brandCount(n)
+}
+/** The same inside a sentence: "fewer than 5". */
+const countInLine = (n: number) => (isFewer(n) ? tBrands('offers.counts.fewerN', { n: SMALL_AUDIENCE }) : brandCount(n))
+
+export type CampaignHeadline = 'asked' | 'applied' | 'store'
+/**
+ * The one number a campaign is judged by, from its objective: members who
+ * wrote (a question), players who applied (ambassadors), or members who went
+ * to the store (a product or an offer).
+ */
+export function campaignHeadline(o: Pick<BrandOffer, 'contacted' | 'store_visits'> & { objective?: OfferObjective | null }): { key: CampaignHeadline; n: number } {
+  if (o.objective === 'ask') return { key: 'asked', n: o.contacted }
+  if (o.objective === 'ambassador') return { key: 'applied', n: o.contacted }
+  return { key: 'store', n: o.store_visits ?? 0 }
+}
+
+/** Whole days the campaign has run or ran, from the day it went live. 0 means less than a day. */
+export function campaignRanDays(o: Pick<BrandOffer, 'live_at' | 'starts_at' | 'ended_at' | 'ends_at' | 'status'>, now: Date = new Date()): number | null {
+  const from = o.starts_at ?? o.live_at
+  if (!from) return null
+  const to = o.status === 'ended' ? o.ended_at ?? o.ends_at ?? now.toISOString() : now.toISOString()
+  return Math.max(0, Math.round((new Date(to).getTime() - new Date(from).getTime()) / DAY_MS))
+}
+
+/**
+ * "It ran 14 days. It was shown to 84 members and 19 opened it. 6 wrote to
+ * you." Every part has its own singular; under a day it says so; under five
+ * members it gives no counts.
+ */
+export function closingLine(offer: Pick<BrandOffer, 'shown' | 'opened'>, ranDays: number | null, headline: { key: CampaignHeadline; n: number }): string {
+  const ran = ranDays === null ? null : ranDays < 1 ? tBrands('campaignReport.closingRanUnderDay') : tBrands('campaignReport.closingRan', { count: ranDays })
+  if (offer.shown === 0) return [ran, tBrands('campaignReport.nobody')].filter(Boolean).join(' ')
+  if (isSmallAudience(offer)) return [ran, tBrands('campaignReport.small', { n: SMALL_AUDIENCE })].filter(Boolean).join(' ')
+  return [
+    ran,
+    tBrands('campaignReport.closingShown', { count: offer.shown, n: brandCount(offer.shown) }),
+    tBrands('campaignReport.closingOpened', { count: isFewer(offer.opened) ? SMALL_AUDIENCE : offer.opened, n: countInLine(offer.opened) }),
+    isFewer(headline.n)
+      ? tBrands(`campaignReport.closingHeadlineFewer.${headline.key}`, { n: SMALL_AUDIENCE })
+      : tBrands(`campaignReport.closingHeadline.${headline.key}`, { count: headline.n, n: brandCount(headline.n) }),
+  ].filter(Boolean).join(' ')
 }
 
 /** "today" / "yesterday" / "3 days ago" (B1 status lines). */
@@ -248,7 +317,9 @@ export function offerStatusLine(o: BrandOffer, now: Date = new Date()): string {
     case 'paused': return tBrands('offers.status.paused', { when: daysAgoWord(o.updated_at, now) })
     default: return tBrands('offers.status.ended', {
       date: shortDate(o.ended_at ?? o.updated_at),
-      counts: [countPart('shown', o.shown), countPart('storeVisits', o.store_visits ?? 0), countPart('contacted', o.contacted)].join(', '),
+      counts: isSmallAudience(o)
+        ? tBrands('offers.counts.fewer', { n: SMALL_AUDIENCE })
+        : [countPart('shown', o.shown), linkOptional(o.objective) && !(o.store_visits ?? 0) ? null : countPart('storeVisits', o.store_visits ?? 0), countPart('contacted', o.contacted)].filter(Boolean).join(', '),
     })
   }
 }

@@ -68,6 +68,13 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
   const [needDraft, setNeedDraft] = useState<Need | null>(null)
   // Desktop keeps the editor beside the list; null = nothing open.
   const [deskOpen, setDeskOpen] = useState<string | 'new' | null>(null)
+  // Desktop keeps the editor in page state, so a link to /dashboard/offers/new or
+  // /:id/edit (the report's Edit and Run again, a notification) opens it here too.
+  useEffect(() => {
+    if (isPhone) return
+    if (mode === 'new') setDeskOpen('new')
+    else if (mode === 'edit' && offerId) setDeskOpen(offerId)
+  }, [isPhone, mode, offerId])
   // A different offer (or a new one) starts from its own saved need.
   useEffect(() => { setNeedDraft(null) }, [offerId, mode, deskOpen])
 
@@ -90,7 +97,14 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
 
   const openNew = () => (isPhone ? navigate('/dashboard/offers/new') : setDeskOpen('new'))
   const openEdit = (o: BrandOffer) => (isPhone ? navigate(`/dashboard/offers/${o.id}/edit`) : setDeskOpen(o.id))
-  const closeEditor = () => (isPhone ? navigate('/dashboard/offers', { replace: true }) : setDeskOpen(null))
+  const openReport = (o: BrandOffer) => navigate(`/dashboard/offers/${o.id}/report`)
+  // An ended campaign cannot be edited: its row opens what it did.
+  const openRow = (o: BrandOffer) => (o.status === 'ended' ? openReport(o) : openEdit(o))
+  const closeEditor = () => {
+    if (!isPhone) setDeskOpen(null)
+    // Leave the edit or new address, on desktop too, so closing does not reopen it.
+    if (isPhone || mode !== 'list') navigate('/dashboard/offers', { replace: true })
+  }
 
   const doSave = async (id: string | null, current: BrandOffer | null, fields: OfferFields, submit: boolean) => {
     // A new go-live would pass the limit: say so before sending (B1-limit).
@@ -206,7 +220,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
             <h2 className="mb-2 px-1 text-caption font-semibold uppercase tracking-[0.06em] text-ink-2 lg:px-0 lg:font-display lg:text-[12px] lg:font-bold lg:tracking-[0.12em]">{OFFER_GROUP_LABELS[g]}</h2>
             <div className="space-y-3 lg:space-y-2.5">
               {rows.map((o) => (
-                <OfferRow key={o.id} offer={o} onOpen={() => openEdit(o)} onMenu={() => setMenuFor(o)} selected={!isPhone && deskOpen === o.id} />
+                <OfferRow key={o.id} offer={o} onOpen={() => openRow(o)} onMenu={() => setMenuFor(o)} selected={!isPhone && deskOpen === o.id} />
               ))}
             </div>
           </section>
@@ -309,6 +323,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
         countries={menuFor ? names(offerShownFields(menuFor).country_ids).join(', ') : ''}
         onClose={() => setMenuFor(null)}
         onEdit={(o) => { setMenuFor(null); openEdit(o) }}
+        onReport={(o) => { setMenuFor(null); openReport(o) }}
         onDuplicate={(o) => { setMenuFor(null); void runDuplicate(o) }}
         onResume={(o) => { setMenuFor(null); void runState(o, 'resume').catch(() => undefined) }}
         onConfirm={(o, action) => { setMenuFor(null); setConfirm({ offer: o, action }) }}
@@ -340,13 +355,14 @@ interface ActionsSheetProps {
   countries: string
   onClose: () => void
   onEdit: (o: BrandOffer) => void
+  onReport: (o: BrandOffer) => void
   onDuplicate: (o: BrandOffer) => void
   onResume: (o: BrandOffer) => void
   onConfirm: (o: BrandOffer, action: 'pause' | 'end' | 'delete') => void
 }
 
 /** B3 / B3-paused: what the brand can do with one offer. */
-function ActionsSheet({ offer, countries, onClose, onEdit, onDuplicate, onResume, onConfirm }: ActionsSheetProps) {
+function ActionsSheet({ offer, countries, onClose, onEdit, onReport, onDuplicate, onResume, onConfirm }: ActionsSheetProps) {
   const t = useBrandsT()
   if (!offer) return null
   const title = offerShownFields(offer).title || t('offersPage.actions.untitled')
@@ -360,7 +376,8 @@ function ActionsSheet({ offer, countries, onClose, onEdit, onDuplicate, onResume
   }
   const dup: Item = { key: 'dup', label: t('offersPage.actions.duplicate'), hint: t('offersPage.actions.duplicateHint'), run: () => onDuplicate(offer) }
   const end: Item = { key: 'end', label: t('offersPage.actions.end'), hint: t('offersPage.actions.endHint'), run: () => onConfirm(offer, 'end'), danger: true }
-  const items: Item[] =
+  const report: Item = { key: 'report', label: t('offersPage.actions.report'), hint: t('offersPage.actions.reportHint'), run: () => onReport(offer) }
+  const base: Item[] =
     offer.status === 'live'
       ? [edit, { key: 'pause', label: t('offersPage.actions.pause'), hint: t('offersPage.actions.pauseHint'), run: () => onConfirm(offer, 'pause') }, dup, end]
       : offer.status === 'paused'
@@ -371,6 +388,8 @@ function ActionsSheet({ offer, countries, onClose, onEdit, onDuplicate, onResume
           : offer.status === 'draft'
             ? [edit, dup, { key: 'delete', label: t('offersPage.actions.deleteDraft'), hint: t('offersPage.actions.deleteDraftHint'), run: () => onConfirm(offer, 'delete'), danger: true }]
             : [edit, dup, end]
+  // Anything that has gone live has something to report.
+  const items = offer.live_at ? [report, ...base] : base
 
   return (
     <BottomSheet open onClose={onClose} ariaLabel={t('offersPage.actions.aria', { title })}>

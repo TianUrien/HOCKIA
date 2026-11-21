@@ -48,7 +48,9 @@
       "contacted_many": "{{n}} contactos",
       "notUseful_one": "{{n}} no útil",
       "notUseful_other": "{{n}} no útiles",
-      "notUseful_many": "{{n}} no útiles"
+      "notUseful_many": "{{n}} no útiles",
+      "fewer": "La vieron menos de {{n}} integrantes",
+      "fewerN": "menos de {{n}}"
     },
     "daysAgo": {
       "recently": "hace poco",
@@ -428,7 +430,9 @@
       "deleteDraftHint": "Se elimina. Nadie lo vio.",
       "aria": "Acciones para {{title}}",
       "runAgain": "Volver a lanzar",
-      "runAgainHint": "Crea un borrador nuevo a partir de esta campaña, con fechas nuevas"
+      "runAgainHint": "Crea un borrador nuevo a partir de esta campaña, con fechas nuevas",
+      "report": "Ver informe",
+      "reportHint": "Qué hizo la comunidad con esta campaña"
     },
     "confirm": {
       "pauseTitle": "¿Pausar esta campaña?",
@@ -878,7 +882,8 @@
     "linkHintOptional": "Una página con más detalle, si la tienes. La comunidad te escribe desde la campaña.",
     "endsHint": "Una campaña dura de {{min}} a {{max}} días y se detiene sola. Cuando termina puedes volver a lanzarla.",
     "ambassadorPlayersOnly": "Jugadores/as. Solo jugadores/as pueden ser embajadores/as.",
-    "ambassadorNeedsOpen": "Primero activa \"Abierta a alianzas\" en tu perfil, para que puedan postularse."
+    "ambassadorNeedsOpen": "Primero activa \"Abierta a alianzas\" en tu perfil, para que puedan postularse.",
+    "bodyHintAsk": "Di sobre qué te pueden preguntar y quién responde. Sin afirmaciones que no puedas respaldar."
   },
   "offerDetail": {
     "missingTitle": "Esto ya no está disponible",
@@ -1140,5 +1145,86 @@
     "aiMoving": "¿Qué tengo que resolver antes de mudarme a {{where}} para jugar?",
     "aiNeed": "¿Qué necesito de {{need}} en {{where}}?",
     "askAi": "Preguntar a Hockia AI qué resolver para {{where}}"
+  },
+  "campaignPreview": {
+    "placesAria": "Dónde la ve la comunidad",
+    "home": "Inicio",
+    "ai": "Hockia AI",
+    "page": "Página",
+    "aiAnswer": "Acá Hockia AI responde la pregunta de la persona. Tu campaña nunca cambia la respuesta.",
+    "homeNote": "En Inicio, después de la primera publicación, para quienes va dirigida.",
+    "aiNote": "Debajo de una respuesta de Hockia AI, cuando alguien pregunta por equipamiento, indumentaria, entrenamiento, campus, fisio o mudarse al exterior y tu campaña es para esa persona. La línea nombra lo que preguntó.",
+    "pageNote": "La página que abre cada integrante. El botón principal sigue lo que quieres que haga.",
+    "aiReason": "Se muestra por lo que preguntó la persona. No cambió la respuesta."
+  },
+  "campaignReport": {
+    "title": "Informe de la campaña",
+    "objective": "Objetivo",
+    "dates": "Fechas",
+    "time": "Tiempo restante",
+    "notStarted": "Esta campaña todavía no se publicó, así que no hay nada que informar.",
+    "edit": "Editar campaña",
+    "seeAsMembers": "Verla como la comunidad",
+    "reply": "Responder",
+    "headlineEyebrow": "Para qué es esta campaña",
+    "headline": {
+      "asked_one": "integrante te escribió",
+      "asked_other": "integrantes te escribieron",
+      "asked_many": "integrantes te escribieron",
+      "applied_one": "jugador/a se postuló",
+      "applied_other": "jugadores/as se postularon",
+      "applied_many": "jugadores/as se postularon",
+      "store_one": "integrante fue a tu tienda",
+      "store_other": "integrantes fueron a tu tienda",
+      "store_many": "integrantes fueron a tu tienda"
+    },
+    "small": "Todavía la vieron menos de {{n}} integrantes. Los números aparecen cuando lleguen a {{n}}, para que no se pueda distinguir qué hizo cada persona.",
+    "didEyebrow": "Qué hizo la comunidad",
+    "rows": {
+      "shown": "Mostrada a",
+      "opened": "La abrieron",
+      "store": "Fueron a tu tienda",
+      "codes": "Copiaron el código",
+      "contacted": "Te escribieron",
+      "applied": "Se postularon",
+      "notUseful": "La marcaron como no útil"
+    },
+    "rowsNote": "Cada número cuenta integrantes distintos, en toda la campaña. Un total de 1 a 4 dice “Menos de 5”, y nunca ves quiénes.",
+    "closingEyebrow": "Cómo le fue",
+    "closingHeadline": {
+      "asked_one": "{{n}} te escribió.",
+      "asked_other": "{{n}} te escribieron.",
+      "asked_many": "{{n}} te escribieron.",
+      "applied_one": "{{n}} se postuló.",
+      "applied_other": "{{n}} se postularon.",
+      "applied_many": "{{n}} se postularon.",
+      "store_one": "{{n}} fue a tu tienda.",
+      "store_other": "{{n}} fueron a tu tienda.",
+      "store_many": "{{n}} fueron a tu tienda."
+    },
+    "fewer": "Menos de {{n}}",
+    "nobody": "Todavía no la vio nadie.",
+    "neverLive": "Esta campaña finalizó sin publicarse, así que no hay nada que informar.",
+    "error": "No se pudo cargar el informe. Revisa tu conexión e intenta de nuevo.",
+    "retry": "Reintentar",
+    "inbox_one": "En tu bandeja: {{n}} persona espera respuesta",
+    "inbox_other": "En tu bandeja: {{n}} personas esperan respuesta",
+    "inbox_many": "En tu bandeja: {{n}} personas esperan respuesta",
+    "whoWrote": "Ver quiénes te escribieron en Resultados",
+    "closingRan_one": "Duró {{count}} día.",
+    "closingRan_other": "Duró {{count}} días.",
+    "closingRan_many": "Duró {{count}} días.",
+    "closingRanUnderDay": "Duró menos de un día.",
+    "closingShown_one": "Se mostró a {{n}} integrante",
+    "closingShown_other": "Se mostró a {{n}} integrantes",
+    "closingShown_many": "Se mostró a {{n}} integrantes",
+    "closingOpened_one": "y {{n}} la abrió.",
+    "closingOpened_other": "y {{n}} la abrieron.",
+    "closingOpened_many": "y {{n}} la abrieron.",
+    "closingHeadlineFewer": {
+      "asked": "Menos de {{n}} te escribieron.",
+      "applied": "Menos de {{n}} se postularon.",
+      "store": "Menos de {{n}} fueron a tu tienda."
+    }
   }
 }

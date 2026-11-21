@@ -61,8 +61,8 @@ describe('brand offers: list groups and words (Figma B1-all)', () => {
 
   it('writes the status line for each state', () => {
     expect(offerStatusLine(offer(), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 5 contacted')
-    expect(offerStatusLine(offer({ not_useful: 2 }), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 5 contacted, 2 not useful')
-    expect(offerStatusLine(offer({ code_copies: 3 }), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 3 copied the code, 5 contacted')
+    expect(offerStatusLine(offer({ not_useful: 2 }), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 5 contacted, fewer than 5 not useful')
+    expect(offerStatusLine(offer({ code_copies: 3 }), NOW)).toBe('158 shown, 31 opened, 12 went to your store, fewer than 5 copied the code, 5 contacted')
     expect(offerStatusLine(offer({ status: 'in_review' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'draft' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'paused', updated_at: '2026-10-20T10:00:00Z' }), NOW)).toBe("Paused 3 days ago. Members don't see it.")

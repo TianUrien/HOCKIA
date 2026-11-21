@@ -42,7 +42,9 @@
       "contacted_one": "{{n}} contacted",
       "contacted_other": "{{n}} contacted",
       "notUseful_one": "{{n}} not useful",
-      "notUseful_other": "{{n}} not useful"
+      "notUseful_other": "{{n}} not useful",
+      "fewer": "Fewer than {{n}} members have seen it",
+      "fewerN": "fewer than {{n}}"
     },
     "daysAgo": {
       "recently": "recently",
@@ -405,7 +407,9 @@
       "deleteDraftHint": "It is removed. Nobody has seen it.",
       "aria": "Actions for {{title}}",
       "runAgain": "Run again",
-      "runAgainHint": "Starts a new draft from this campaign, with new dates"
+      "runAgainHint": "Starts a new draft from this campaign, with new dates",
+      "report": "See report",
+      "reportHint": "What members did with this campaign"
     },
     "confirm": {
       "pauseTitle": "Pause this campaign?",
@@ -852,7 +856,8 @@
     "linkHintOptional": "A page with more detail, if you have one. Members write to you from the campaign.",
     "endsHint": "A campaign runs {{min}} to {{max}} days and stops by itself. You can run it again after it ends.",
     "ambassadorPlayersOnly": "Players. Only players can be ambassadors.",
-    "ambassadorNeedsOpen": "Turn on \"Open to partners\" in your profile first, so players can apply."
+    "ambassadorNeedsOpen": "Turn on \"Open to partners\" in your profile first, so players can apply.",
+    "bodyHintAsk": "Say what members can ask you about, and who answers. No claims you can’t back up."
   },
   "offerDetail": {
     "missingTitle": "This isn’t available",
@@ -1106,5 +1111,76 @@
     "aiMoving": "What should I sort out before moving to {{where}} to play?",
     "aiNeed": "What {{need}} do I need in {{where}}?",
     "askAi": "Ask Hockia AI what to sort out for {{where}}"
+  },
+  "campaignPreview": {
+    "placesAria": "Where members see it",
+    "home": "Home",
+    "ai": "Hockia AI",
+    "page": "Page",
+    "aiAnswer": "Hockia AI answers the member’s question here. Your campaign never changes the answer.",
+    "homeNote": "On Home, after the first post, for members it is for.",
+    "aiNote": "Under a Hockia AI answer, when a member asks about gear, kit, training, camps, physio or moving abroad and your campaign is for them. The line names what they asked.",
+    "pageNote": "The page a member opens. The main button follows what you want them to do.",
+    "aiReason": "Shown because of what the member asked. It did not change the answer."
+  },
+  "campaignReport": {
+    "title": "Campaign report",
+    "objective": "Objective",
+    "dates": "Dates",
+    "time": "Time left",
+    "notStarted": "This campaign has not been published yet, so there is nothing to report.",
+    "edit": "Edit campaign",
+    "seeAsMembers": "See it as members do",
+    "reply": "Reply",
+    "headlineEyebrow": "What this campaign is for",
+    "headline": {
+      "asked_one": "member wrote to you",
+      "asked_other": "members wrote to you",
+      "applied_one": "player applied",
+      "applied_other": "players applied",
+      "store_one": "member went to your store",
+      "store_other": "members went to your store"
+    },
+    "small": "Fewer than {{n}} members have seen it so far. Counts appear once {{n}} have, so nobody’s actions can be told apart.",
+    "didEyebrow": "What members did",
+    "rows": {
+      "shown": "Shown to",
+      "opened": "Opened",
+      "store": "Went to your store",
+      "codes": "Copied the code",
+      "contacted": "Wrote to you",
+      "applied": "Applied",
+      "notUseful": "Marked not useful"
+    },
+    "rowsNote": "Each number counts different members, for the whole campaign. A count from 1 to 4 reads “Fewer than 5”, and you never see who.",
+    "closingEyebrow": "How it went",
+    "closingHeadline": {
+      "asked_one": "{{n}} wrote to you.",
+      "asked_other": "{{n}} wrote to you.",
+      "applied_one": "{{n}} applied.",
+      "applied_other": "{{n}} applied.",
+      "store_one": "{{n}} went to your store.",
+      "store_other": "{{n}} went to your store."
+    },
+    "fewer": "Fewer than {{n}}",
+    "nobody": "Nobody has seen it yet.",
+    "neverLive": "This campaign ended without being published, so there is nothing to report.",
+    "error": "The report could not be loaded. Check your connection and try again.",
+    "retry": "Try again",
+    "inbox_one": "In your inbox: {{n}} person is waiting for a reply",
+    "inbox_other": "In your inbox: {{n}} people are waiting for a reply",
+    "whoWrote": "See who wrote to you in Results",
+    "closingRan_one": "It ran {{count}} day.",
+    "closingRan_other": "It ran {{count}} days.",
+    "closingRanUnderDay": "It ran less than a day.",
+    "closingShown_one": "It was shown to {{n}} member",
+    "closingShown_other": "It was shown to {{n}} members",
+    "closingOpened_one": "and {{n}} opened it.",
+    "closingOpened_other": "and {{n}} opened it.",
+    "closingHeadlineFewer": {
+      "asked": "Fewer than {{n}} wrote to you.",
+      "applied": "Fewer than {{n}} applied.",
+      "store": "Fewer than {{n}} went to your store."
+    }
   }
 }
