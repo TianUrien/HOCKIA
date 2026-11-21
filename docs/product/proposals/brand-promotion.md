@@ -238,9 +238,10 @@ Phase 1 is the smallest build that fixes the founder's first problem (a brand ca
 - **A campaign runs 7 to 15 days, 14 by default.** The end date is required; the campaign stops by itself and can be run again with one tap.
 - **The object is called "Campaigns"** in the app. An offer is one kind of campaign.
 - **The HOCKIA brand account answers "Ask Hockia"**, not a separate support identity. The help line is turned on per environment by naming that profile in `app_settings` (`hockia_help_profile_id`).
+- **The founder answers that inbox by hand.** No automatic replies. This settles who answers, so the help line can be turned on in production once phase 2 is released.
 
 ## Still open
 
-- Who reads the HOCKIA brand inbox day to day, and in which languages. The help line stays off in production until this is settled.
+- How long a member may wait for an answer from the HOCKIA inbox before it counts as a problem (the proposal's reply duty), now that one person answers by hand.
 - The values of every **[TARGET]** above, to set after the first two campaigns.
 - Whether brand updates and products should keep reaching every member's Home feed with no targeting once campaigns exist.
