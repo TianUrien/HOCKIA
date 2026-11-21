@@ -135,7 +135,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     close()
     navigate('/opportunities')
   }
-  const newsCard = news && !roleContext ? (
+  // A missing photo or bio is already the recommended row of the plan card under it: no second row for the same thing.
+  const newsCard = news && !roleContext && !(news.kind === 'profile_step' && plan) ? (
     <button type="button" onClick={actOnNews} className="flex min-h-[56px] w-full items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left" data-testid="hockia-ai-news" data-kind={news.kind}>
       <span className="min-w-0 flex-1">
         <span className="block text-caption font-semibold tracking-[0.04em] text-brand-primary">{t('suggestion.eyebrow')}</span>
