@@ -99,7 +99,7 @@ describe('the question after a role closed on its own', () => {
 
   it('is a one-line banner, never an open pop-up: the question opens only on "Answer"', async () => {
     render(<RoleOutcomePrompt recruiterId="club-1" closed={closed} />)
-    expect(await screen.findByTestId('role-outcome-banner')).toHaveTextContent('Did you fill Role new?')
+    expect(await screen.findByTestId('role-outcome-banner')).toHaveTextContent('Role new closed. Did you fill it?')
     expect(screen.queryByTestId('role-outcome-sheet')).not.toBeInTheDocument()
     expect(h.events.filter((e) => e.name === 'role_outcome_asked')).toEqual([{ name: 'role_outcome_asked', id: 'new', props: { via: 'expiry' } }])
     fireEvent.click(screen.getByTestId('role-outcome-answer'))

@@ -873,7 +873,7 @@
     "signInButton": "Sign in"
   },
   "roleOutcome": {
-    "banner": "Did you fill {{title}}?",
+    "banner": "{{title}} closed. Did you fill it?",
     "answer": "Answer",
     "dismiss": "Not now",
     "question": "Did you fill this place?",

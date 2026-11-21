@@ -895,7 +895,7 @@
     "signInButton": "Iniciar sesión"
   },
   "roleOutcome": {
-    "banner": "¿Cubriste el puesto de {{title}}?",
+    "banner": "{{title}} se cerró. ¿Cubriste el puesto?",
     "answer": "Responder",
     "dismiss": "Ahora no",
     "question": "¿Cubriste este puesto?",

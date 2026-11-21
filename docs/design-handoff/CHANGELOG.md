@@ -7,7 +7,7 @@ Every edit to the Figma file "New-Hockia", newest first. Format:
 
 Figma, "New Hockia 2 · Draft", page "05 · Opportunities — explorations", section "RS · Recruiter outcome question and Report a problem (2026-11-21)" (303:1131). Drawn with the build (PR #617); same tokens and text styles as O5 and CS6, which the frames were cloned from.
 - First version: a large card with the four answers inside the roles screen. **Replaced the same day (founder ruling):** it pushed the roles down. A pop-up that opens by itself was considered and discarded (it interrupts recruiters who came to answer applicants).
-- RS1 303:1132: club Opportunities with a one-line neutral banner "Did you fill …?" (Tonal Small "Answer", X with a 44 pt target) under the waiting notice, and "Report a problem" under the scouting rows.
+- RS1 303:1132: club Opportunities with a one-line neutral banner "… closed. Did you fill it?" (Tonal Small "Answer", X with a 44 pt target) under the waiting notice, and "Report a problem" under the scouting rows.
 - RS2 306:1279: "Answer" opens the question in a bottom sheet: four answers and the private note.
 - RS3 306:1458: after "Yes, with someone from Hockia": optional "Who?" select and Primary "Save answer".
 - RS4 304:1333: the close-role sheet with Filled selected and the step "Who did you fill it with?" (two choices, optional "Who?", private note).
