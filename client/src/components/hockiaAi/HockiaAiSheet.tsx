@@ -23,6 +23,7 @@ import { useWordReveal } from './useWordReveal'
 import { ProfileBuilder } from './ProfileBuilder'
 import { ApplyFlow } from './ApplyFlow'
 import { CampaignDesk } from './CampaignDesk'
+import { CampaignComposer } from './CampaignComposer'
 import { ChatHistory } from './ChatHistory'
 import { NextStepPlan, NextSteps } from './NextSteps'
 import { useNextSteps } from './useNextSteps'
@@ -129,7 +130,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   const stepping = mode === 'steps' && canBuild && step !== null
   const plan = canBuild && !roleContext && nextSteps && nextSteps.length > 0 ? nextSteps : null
   const campaigning = mode === 'campaigns' && signedIn && profile?.role === 'brand'
-  const special = builder || applying || history || stepping || campaigning
+  const composing = mode === 'campaignDraft' && signedIn && profile?.role === 'brand'
+  const special = builder || applying || history || stepping || campaigning || composing
   // What lit the dot (founder 2026-11-21): shown first, with the one action that deals with it.
   const news = useHockiaAiSuggestion((s) => s.shown)
   const actOnNews = () => {
@@ -288,6 +290,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     if (o.action.type === 'ask') send(o.action.query, o.action.shown)
     else if (o.action.type === 'builder') startBuilder()
     else if (o.action.type === 'campaigns') { void hapticSelection(); setDeskFocus(null); setMode('campaigns') }
+    else if (o.action.type === 'campaignDraft') { void hapticSelection(); setMode('campaignDraft') }
     else { close(); navigate(o.action.to) }
   }
   const optionRows = roleOptions?.map((o) => ({ eyebrow: o.eyebrow, label: o.label, run: () => runOption(o) })) ?? null
@@ -406,6 +409,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
           />
         ) : campaigning ? (
           <CampaignDesk focusId={deskFocus} onGo={(to) => { close(); navigate(to) }} />
+        ) : composing ? (
+          <CampaignComposer onGo={(to) => { close(); navigate(to) }} />
         ) : builder ? <ProfileBuilder onClose={close} /> : (<>
         <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', panel ? 'px-6' : 'px-4')}>
           {(!large || (panel && !hasMessages)) && (

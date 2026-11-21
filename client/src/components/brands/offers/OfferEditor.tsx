@@ -23,6 +23,7 @@ import {
   OFFER_TITLE_MAX,
   campaignEnd,
   campaignStart,
+  freshWindow,
   fetchOfferReach,
   linkOptional,
   offerMissing,
@@ -72,7 +73,7 @@ interface OfferEditorProps {
  */
 export function OfferEditor({ offer, initial, brandName, openToPartners = false, userId, saving, onSave, onCancel, layout, need, onNeedChange }: OfferEditorProps) {
   const t = useBrandsT()
-  const [f, setF] = useState<OfferFields>(initial)
+  const [f, setF] = useState<OfferFields>(() => freshWindow(initial, offer?.status === 'live' || offer?.status === 'paused'))
   const [tried, setTried] = useState(false)
   const topBar = useRef<HTMLDivElement>(null)
   const bottomBar = useRef<HTMLDivElement>(null)
