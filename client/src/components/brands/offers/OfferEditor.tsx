@@ -82,15 +82,19 @@ export function OfferEditor({ offer, initial, brandName, openToPartners = false,
   const isChange = offer?.status === 'live' || offer?.status === 'paused'
   const objective = f.objective ?? null
   const needsOpen = objective === 'ambassador' && !openToPartners
-  const missing = needsOpen ? t('offerEditor.ambassadorNeedsOpen') : offerMissing(f, offer?.live_at)
-  const start = campaignStart(f, offer?.live_at)
+  // Same rule as the server: only a running campaign that already has an end
+  // date keeps its window; anything going live starts a new one today.
+  const anchor = isChange && offer?.ends_at ? offer.starts_at ?? offer.live_at : null
+  const starts = anchor ? f.starts_at ?? anchor : f.starts_at && new Date(f.starts_at).getTime() > Date.now() ? f.starts_at : null
+  const missing = needsOpen ? t('offerEditor.ambassadorNeedsOpen') : offerMissing({ ...f, starts_at: starts }, anchor)
+  const start = campaignStart({ starts_at: starts }, anchor)
   const pickObjective = (o: OfferObjective) => setF((prev) => ({
     ...prev,
     objective: o,
     // Only players can be ambassadors.
     roles: o === 'ambassador' ? ['player'] : prev.roles,
     // The window starts at 14 days; the brand can change it within 7 to 15.
-    ends_at: prev.ends_at ?? campaignEnd(campaignStart(prev, offer?.live_at)),
+    ends_at: prev.ends_at ?? campaignEnd(start),
   }))
   const objKey = objective ?? 'offer'
   const claim = unprovableClaim(`${f.title ?? ''} ${f.body ?? ''}`)

@@ -210,7 +210,10 @@ function countPart(key: 'shown' | 'opened' | 'storeVisits' | 'codeCopies' | 'con
 /** "3 days left" on a live campaign with an end date; "Ends today" on its last day. */
 export function daysLeftLine(o: Pick<BrandOffer, 'ends_at'>, now: Date = new Date()): string | null {
   if (!o.ends_at) return null
-  const left = Math.round((dayStart(new Date(o.ends_at)) - dayStart(now)) / DAY_MS)
+  // In the reader's own calendar days: counted in UTC, a brand west of UTC
+  // would read "Ends today" a day early.
+  const localDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const left = Math.round((localDay(new Date(o.ends_at)) - localDay(now)) / DAY_MS)
   if (left < 0) return null
   return left === 0 ? tBrands('offers.daysLeft.today') : tBrands('offers.daysLeft.days', { count: left })
 }

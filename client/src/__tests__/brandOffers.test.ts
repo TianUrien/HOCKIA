@@ -148,10 +148,13 @@ describe('brand offers: content rules (Figma B2)', () => {
   })
 
   it('a live campaign says how long it has left', () => {
-    const now = new Date('2026-12-01T10:00:00Z')
-    expect(daysLeftLine({ ends_at: '2026-12-04T23:59:59Z' }, now)).toBe('3 days left')
-    expect(daysLeftLine({ ends_at: '2026-12-02T23:59:59Z' }, now)).toBe('1 day left')
-    expect(daysLeftLine({ ends_at: '2026-12-01T23:59:59Z' }, now)).toBe('Ends today')
+    // Counted in the reader's own calendar days, whatever their time zone.
+    const now = new Date(2026, 11, 1, 20, 0, 0)
+    const endOf = (day: number) => new Date(2026, 11, day, 18, 0, 0).toISOString()
+    expect(daysLeftLine({ ends_at: endOf(4) }, now)).toBe('3 days left')
+    expect(daysLeftLine({ ends_at: endOf(2) }, now)).toBe('1 day left')
+    expect(daysLeftLine({ ends_at: new Date(2026, 11, 1, 23, 0, 0).toISOString() }, now)).toBe('Ends today')
+    expect(daysLeftLine({ ends_at: new Date(2026, 10, 30, 23, 0, 0).toISOString() }, now)).toBeNull()
     expect(daysLeftLine({ ends_at: null }, now)).toBeNull()
   })
 

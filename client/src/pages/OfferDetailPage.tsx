@@ -105,7 +105,7 @@ export default function OfferDetailPage() {
       const key = params.get('conversation') ?? `pending-${offer.brand_profile_id}`
       // Never overwrite something the member already started typing.
       if (!loadMessageDraft(user.id, key).trim()) saveMessageDraft(user.id, key, draft)
-      rememberOfferContact(offer.brand_profile_id, offer.id, surface)
+      rememberOfferContact(user.id, offer.brand_profile_id, offer.id, surface)
       navigate(route, { state: { returnTo: location.pathname, messageOrigin: 'Profile' } })
     } catch (err) {
       logger.error('[OfferDetail] open conversation failed', err)

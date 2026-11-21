@@ -4,6 +4,7 @@ import { OFFER_ROLES, countryInSentence, offerRegionLabel, type OfferObjective, 
 import { withLazyText } from '@/lib/opportunityLazyText'
 import { formatList, isEnglish } from '@/i18n/format'
 import { tBrands } from '@/i18n/ns/brands'
+import { takeOfferContact, writeOfferContact } from '@/lib/offerContactMarker'
 
 /**
  * Brand offers, Phase 2: what members see (Figma "08 · Brands", P2; founder
@@ -119,26 +120,17 @@ export function trackImpressionOnce(visitId: string, offerId: string, surface: O
 
 // "Contacted" = the first message sent to the brand from a campaign. Message
 // on the campaign remembers which one it came from; useChat reports it when
-// that message is actually sent. Kept on the device for 7 days (2026-11-21;
-// it was one hour of the same tab), so a member who opens the chat and writes
-// the next day still counts.
-const CONTACT_KEY = 'hockia-offer-contact'
-const CONTACT_WINDOW_MS = 7 * 86_400_000
-export function rememberOfferContact(brandProfileId: string, offerId: string, surface: OfferSurface): void {
-  try { localStorage.setItem(CONTACT_KEY, JSON.stringify({ brandProfileId, offerId, surface, at: Date.now() })) } catch { /* private mode */ }
+// that message is actually sent. The marker belongs to one member and one
+// brand, lasts 24 hours (2026-11-21; it was one hour of the same tab, which
+// lost a member who reopened the app to write), is used once, and is removed
+// on sign-out (lib/offerContactMarker.ts).
+export function rememberOfferContact(memberId: string, brandProfileId: string, offerId: string, surface: OfferSurface): void {
+  writeOfferContact(memberId, brandProfileId, { offerId, surface, at: Date.now() })
 }
-export function reportOfferContactIfPending(recipientId: string | null | undefined): void {
-  if (!recipientId) return
-  try {
-    const raw = localStorage.getItem(CONTACT_KEY)
-    if (!raw) return
-    const v = JSON.parse(raw) as { brandProfileId: string; offerId: string; surface: OfferSurface; at: number }
-    if (Date.now() - v.at > CONTACT_WINDOW_MS) { localStorage.removeItem(CONTACT_KEY); return }
-    // Only the brand whose campaign the member came from.
-    if (v.brandProfileId !== recipientId) return
-    localStorage.removeItem(CONTACT_KEY)
-    trackOffer('brand_offer_contact', v.offerId, v.surface)
-  } catch { /* ignore */ }
+export function reportOfferContactIfPending(memberId: string | null | undefined, recipientId: string | null | undefined): void {
+  if (!memberId || !recipientId) return
+  const v = takeOfferContact(memberId, recipientId)
+  if (v) trackOffer('brand_offer_contact', v.offerId, v.surface as OfferSurface)
 }
 
 // ── Copy ────────────────────────────────────────────────────────────────────

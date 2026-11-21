@@ -5,16 +5,28 @@
 --      (use an offer; every existing row) or 'ambassador' (apply; players).
 --   2. A campaign that asks members to write or to apply needs no store link.
 --   3. A campaign runs 7 to 15 days and stops by itself (the hourly job
---      end_expired_brand_offers_hourly already ends it). save_brand_offer gives
---      a publish with no end date 14 days from its start, so app builds that
---      send none keep publishing; a longer or shorter window is refused with
---      campaign_window.
+--      end_expired_brand_offers_hourly already ends it). The window is counted
+--      from the moment the campaign goes live (or its start date, if later):
+--      a first publish, a draft, and a campaign taken down and published again
+--      all start a new window now. Only an edit of a live or paused campaign
+--      that already has an end date keeps its own window (its start date, else
+--      the day it went live). A live row with no end date (published before
+--      this rule) starts its window at the edit, so it is never given an end
+--      in the past or tomorrow. The start of the window is written to
+--      starts_at on every publish, so later edits count from the same day.
+--      No end date means 14 days. An end date outside the window is refused
+--      with campaign_window for a client that sends p_objective. A client that
+--      sends none is an installed app build, whose editor has a free end date
+--      and no words for that refusal: its end date is moved into the window
+--      instead (7 days at least, 15 at most), so it keeps publishing.
 --   4. save_brand_offer gains p_objective (NULL keeps the value);
 --      duplicate_brand_offer copies objective and need, so "Run again" starts
 --      from the same campaign; get_my_brand_offers returns objective.
--- Additive for installed app builds: they send no objective, read no new
--- column, and already render a campaign without a link (the store button is
--- shown only when there is one).
+-- Installed app builds: they send no objective, read no new column, and
+-- already render a campaign without a link (the store button is shown only
+-- when there is one). One behaviour changes for them: a campaign they publish
+-- or edit now always has an end date inside the window (see 3).
+-- Probe: supabase/tests/security/brand_campaigns.probe.sql (staging, rolled back)
 -- Rollback: supabase/rollbacks/20261121120000_brand_campaigns.down.sql
 
 ALTER TABLE public.brand_offers
@@ -101,7 +113,12 @@ DECLARE
   v_objective text;
   v_roles text[] := coalesce(p_roles, '{}');
   v_live_at timestamptz;
+  v_status text;
+  v_old_starts timestamptz;
+  v_old_ends timestamptz;
+  v_knows_window boolean := nullif(btrim(p_objective), '') IS NOT NULL;
   v_start timestamptz;
+  v_starts timestamptz := p_starts_at;
   v_ends timestamptz := p_ends_at;
   v_now timestamptz := timezone('utc', now());
   v_fields jsonb := jsonb_build_object(
@@ -114,7 +131,8 @@ BEGIN
   -- Reach (2026-11-07): NULL keeps what the offer has, so a client that doesn't
   -- know about Everywhere/regions never resets them on edit.
   IF p_offer_id IS NOT NULL THEN
-    SELECT o.everywhere, o.regions, o.perk, o.promo_code, o.objective, o.live_at INTO v_everywhere, v_regions, v_perk, v_code, v_objective, v_live_at FROM public.brand_offers o
+    SELECT o.everywhere, o.regions, o.perk, o.promo_code, o.objective, o.live_at, o.status, o.starts_at, o.ends_at
+      INTO v_everywhere, v_regions, v_perk, v_code, v_objective, v_live_at, v_status, v_old_starts, v_old_ends FROM public.brand_offers o
      WHERE o.id = p_offer_id AND o.brand_id = v_brand;
   END IF;
   v_everywhere := coalesce(p_everywhere, v_everywhere, false);
@@ -128,21 +146,34 @@ BEGIN
   -- Only players can be ambassadors.
   IF v_objective = 'ambassador' THEN v_roles := ARRAY['player']; END IF;
   -- The window (founder 2026-11-21): a campaign runs 7 to 15 days and stops by
-  -- itself. No end date means 14 days from the start, so a client that sends
-  -- none still publishes. One day of slack either side covers time zones and
-  -- an end at the close of the day.
+  -- itself. One day of slack either side covers time zones and an end at the
+  -- close of the day.
   IF p_submit THEN
-    v_start := coalesce(p_starts_at, v_live_at, v_now);
+    IF v_status IN ('live', 'paused') AND v_old_ends IS NOT NULL THEN
+      -- An edit of a running campaign keeps the window it already has.
+      v_start := coalesce(p_starts_at, v_old_starts, v_live_at, v_now);
+    ELSE
+      -- Going live now (new, a draft, published again after a take-down), or a
+      -- live row from before the window existed: the window starts now.
+      v_start := greatest(coalesce(p_starts_at, v_now), v_now);
+    END IF;
     v_ends := coalesce(p_ends_at, v_start + interval '14 days');
     IF v_ends - v_start < interval '6 days' OR v_ends - v_start > interval '16 days' THEN
-      RAISE EXCEPTION 'campaign_window: 7 to 15 days' USING ERRCODE = 'check_violation';
+      IF v_knows_window THEN
+        RAISE EXCEPTION 'campaign_window: 7 to 15 days' USING ERRCODE = 'check_violation';
+      END IF;
+      -- An installed app build: move its end date into the window.
+      v_ends := least(greatest(v_ends, v_start + interval '7 days'), v_start + interval '15 days');
     END IF;
+    -- The start of the window is stored, so every later edit counts from the
+    -- same day whatever the client sends back.
+    v_starts := v_start;
     IF v_objective = 'ambassador' AND NOT coalesce((SELECT b.open_to_partners FROM public.brands b WHERE b.id = v_brand), false) THEN
       RAISE EXCEPTION 'invalid_offer: open_to_partners' USING ERRCODE = 'check_violation';
     END IF;
   END IF;
   v_fields := v_fields || jsonb_build_object('everywhere', v_everywhere, 'regions', to_jsonb(v_regions), 'perk', v_perk, 'promo_code', v_code,
-    'objective', v_objective, 'roles', to_jsonb(v_roles), 'ends_at', v_ends);
+    'objective', v_objective, 'roles', to_jsonb(v_roles), 'starts_at', v_starts, 'ends_at', v_ends);
   IF p_submit THEN
     v_problem := public.brand_offer_problem(v_fields);
     IF v_problem IS NOT NULL THEN RAISE EXCEPTION 'invalid_offer: %', v_problem USING ERRCODE = 'check_violation'; END IF;
@@ -156,7 +187,7 @@ BEGIN
     INSERT INTO public.brand_offers (brand_id, status, title, body, image_url, link_url, country_ids, area, roles, starts_at, ends_at, submitted_at, live_at, everywhere, regions, perk, promo_code, objective)
     VALUES (v_brand, CASE WHEN p_submit THEN 'live' ELSE 'draft' END,
             v_fields->>'title', v_fields->>'body', v_fields->>'image_url', v_fields->>'link_url',
-            coalesce(p_country_ids, '{}'), v_fields->>'area', v_roles, p_starts_at, v_ends,
+            coalesce(p_country_ids, '{}'), v_fields->>'area', v_roles, v_starts, v_ends,
             CASE WHEN p_submit THEN v_now END, CASE WHEN p_submit THEN v_now END, v_everywhere, v_regions, v_perk, v_code, v_objective)
     RETURNING * INTO v_offer; -- the trigger holds the 5-live limit
     RETURN v_offer.id;
@@ -169,7 +200,7 @@ BEGIN
     UPDATE public.brand_offers SET
       title = v_fields->>'title', body = v_fields->>'body', image_url = v_fields->>'image_url',
       link_url = v_fields->>'link_url', country_ids = coalesce(p_country_ids, '{}'), area = v_fields->>'area',
-      roles = v_roles, starts_at = p_starts_at, ends_at = v_ends,
+      roles = v_roles, starts_at = v_starts, ends_at = v_ends,
       everywhere = v_everywhere, regions = v_regions, perk = v_perk, promo_code = v_code, objective = v_objective,
       status = CASE WHEN p_submit THEN 'live' ELSE 'draft' END,
       submitted_at = CASE WHEN p_submit THEN v_now ELSE submitted_at END,
@@ -182,7 +213,7 @@ BEGIN
     UPDATE public.brand_offers SET
       title = v_fields->>'title', body = v_fields->>'body', image_url = v_fields->>'image_url',
       link_url = v_fields->>'link_url', country_ids = coalesce(p_country_ids, '{}'), area = v_fields->>'area',
-      roles = v_roles, starts_at = p_starts_at, ends_at = v_ends,
+      roles = v_roles, starts_at = v_starts, ends_at = v_ends,
       everywhere = v_everywhere, regions = v_regions, perk = v_perk, promo_code = v_code, objective = v_objective,
       pending = NULL, pending_status = NULL, review_note = NULL, submitted_at = v_now
     WHERE id = v_offer.id;

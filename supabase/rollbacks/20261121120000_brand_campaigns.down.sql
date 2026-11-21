@@ -1,17 +1,22 @@
 -- Rollback for 20261121120000_brand_campaigns.sql: restores the bodies from
 -- 20261107150000_brand_offer_perk_code.sql, the previous "complete offer"
--- constraint, and drops brand_offers.objective. Campaigns published without a
--- link (objective ask / ambassador) go back to draft first, because the old
--- constraint needs a link on anything past a draft.
+-- constraint, and drops brand_offers.objective. A campaign that members can
+-- see or that is waiting (live, in review, taken down) and has no link
+-- (objective ask / ambassador) goes back to draft, because the old code needs
+-- a link on anything past a draft. Paused and ended campaigns without a link
+-- keep their status and their results: the constraint comes back NOT VALID, so
+-- it is not checked against rows that already exist. Resuming such a paused
+-- campaign is refused until it gets a link.
 
 DROP FUNCTION IF EXISTS public.save_brand_offer(uuid, text, text, text, text, integer[], text, text[], timestamptz, timestamptz, boolean, boolean, text[], text, text, text);
 DROP FUNCTION IF EXISTS public.get_my_brand_offers();
 
-UPDATE public.brand_offers SET status = 'draft' WHERE status <> 'draft' AND link_url IS NULL;
+UPDATE public.brand_offers SET status = 'draft', pending = NULL, pending_status = NULL
+ WHERE status IN ('live', 'in_review', 'not_approved') AND link_url IS NULL;
 ALTER TABLE public.brand_offers DROP CONSTRAINT IF EXISTS brand_offers_complete;
 ALTER TABLE public.brand_offers ADD CONSTRAINT brand_offers_complete CHECK (
   status = 'draft' OR (title IS NOT NULL AND body IS NOT NULL AND link_url IS NOT NULL
-    AND (everywhere OR cardinality(country_ids) + cardinality(regions) >= 1) AND cardinality(roles) >= 1));
+    AND (everywhere OR cardinality(country_ids) + cardinality(regions) >= 1) AND cardinality(roles) >= 1)) NOT VALID;
 
 CREATE OR REPLACE FUNCTION public.brand_offer_problem(p jsonb)
 RETURNS text

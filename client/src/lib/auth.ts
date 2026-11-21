@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { clearOfferContacts } from '@/lib/offerContactMarker'
 import * as Sentry from '@sentry/react'
 import type { User, PostgrestError, Session, AuthError } from '@supabase/supabase-js'
 import { AuthApiError } from '@supabase/supabase-js'
@@ -311,6 +312,8 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
   }
 
   requestCache.clear()
+  // A campaign visit belongs to the member who made it, not to the next account on this device.
+  clearOfferContacts()
 
   // Service-worker Cache Storage keys on URL alone — the Authorization header
   // is not part of the key — so any cached /rest/v1/ response would otherwise

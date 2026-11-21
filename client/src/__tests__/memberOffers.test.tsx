@@ -18,6 +18,7 @@ import {
   storeLabel,
   type MemberOffer,
 } from '@/lib/memberOffers'
+import { OFFER_CONTACT_WINDOW_MS, clearOfferContacts, takeOfferContact, writeOfferContact } from '@/lib/offerContactMarker'
 import { offerReasonLine } from '@/lib/brandOffers'
 import { MemberOfferCard } from '@/components/offers/MemberOfferCard'
 
@@ -28,7 +29,7 @@ const OFFER: MemberOffer = {
   brand_profile_id: 'p-brand', brand_open_to_partners: true, member_country_id: 46,
 }
 
-beforeEach(() => { rpc.mockReset(); track.mockReset(); sessionStorage.clear() })
+beforeEach(() => { rpc.mockReset(); track.mockReset(); sessionStorage.clear(); localStorage.clear() })
 
 describe('Hockia AI: which questions may carry an offer (founder default topics)', () => {
   it('matches gear, kit, training, camps, physio and moving abroad', () => {
@@ -66,13 +67,32 @@ describe('offer detail wording (OD1)', () => {
 
 describe('"contacted" counts only a real first message to that brand', () => {
   it('reports once, for the same brand, and never for another member', () => {
-    rememberOfferContact('p-brand', 'o1', 'home')
-    reportOfferContactIfPending('someone-else')
+    rememberOfferContact('me', 'p-brand', 'o1', 'home')
+    reportOfferContactIfPending('me', 'someone-else')
     expect(track).not.toHaveBeenCalled()
-    reportOfferContactIfPending('p-brand')
+    reportOfferContactIfPending('me', 'p-brand')
     expect(track).toHaveBeenCalledWith('brand_offer_contact', 'brand_offer', 'o1', { offer_id: 'o1', surface: 'home' })
-    reportOfferContactIfPending('p-brand')
+    reportOfferContactIfPending('me', 'p-brand')
     expect(track).toHaveBeenCalledTimes(1)
+  })
+
+  it('belongs to the member who opened the campaign: a second account on the device is not credited', () => {
+    rememberOfferContact('me', 'p-brand', 'o1', 'home')
+    reportOfferContactIfPending('another-member', 'p-brand')
+    expect(track).not.toHaveBeenCalled()
+  })
+
+  it('is forgotten on sign-out and after 24 hours', () => {
+    rememberOfferContact('me', 'p-brand', 'o1', 'home')
+    clearOfferContacts()
+    reportOfferContactIfPending('me', 'p-brand')
+    expect(track).not.toHaveBeenCalled()
+
+    writeOfferContact('me', 'p-brand', { offerId: 'o1', surface: 'home', at: Date.now() - OFFER_CONTACT_WINDOW_MS - 1000 })
+    reportOfferContactIfPending('me', 'p-brand')
+    expect(track).not.toHaveBeenCalled()
+    // A stale marker is removed, not kept for later.
+    expect(takeOfferContact('me', 'p-brand')).toBeNull()
   })
 })
 
