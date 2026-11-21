@@ -27,6 +27,7 @@ BEGIN
   DELETE FROM public.user_blocks WHERE (blocker_id = v_me AND blocked_id = v_help) OR (blocker_id = v_help AND blocked_id = v_me);
   DELETE FROM public.conversations c WHERE (c.participant_one_id = v_me AND c.participant_two_id = v_help) OR (c.participant_one_id = v_help AND c.participant_two_id = v_me);
   DELETE FROM public.new_conversation_log WHERE user_id = v_me;
+  DELETE FROM public.spam_signals WHERE user_id = v_me AND kind = 'daily_limit';
   DELETE FROM public.app_settings WHERE key = 'hockia_help_profile_id';
   PERFORM set_config('request.jwt.claims', json_build_object('sub', v_me, 'role', 'authenticated')::text, true);
 
@@ -82,8 +83,10 @@ BEGIN
   EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS v_err = MESSAGE_TEXT;
   END;
   RESET ROLE;
-  v_out := v_out || CASE WHEN v_err = 'accepted' AND NOT EXISTS (SELECT 1 FROM public.new_conversation_log WHERE user_id = v_me AND other_user_id = v_help) THEN 'PASS' ELSE 'FAIL' END
-    || ' E2 help chat at the limit -> ' || v_err || E', not logged\n';
+  v_out := v_out || CASE WHEN v_err = 'accepted'
+                          AND NOT EXISTS (SELECT 1 FROM public.new_conversation_log WHERE user_id = v_me AND other_user_id = v_help)
+                          AND NOT EXISTS (SELECT 1 FROM public.spam_signals WHERE user_id = v_me AND kind = 'daily_limit' AND last_seen_at >= now() - interval '1 minute') THEN 'PASS' ELSE 'FAIL' END
+    || ' E2 help chat at the limit -> ' || v_err || E', not logged, no daily_limit signal\n';
 
   -- E3 the limit still holds for anyone else
   SELECT p.id INTO v_third FROM public.profiles p
