@@ -75,7 +75,8 @@ describe('A · SQL source of truth is the release under audit', () => {
     }
     // 2026-11-06: a new signing closes the open stint at the same club (refusals unchanged).
     expect(newestFunction('confirm_signing').file).toBe('20261106230000_signing_closes_open_stint.sql')
-    expect(newestFunction('_enforce_new_conversation_limit').file).toBe('20261004300000_new_conversation_limits.sql')
+    // Rewritten on 2026-11-21 with one early return (a chat with the Hockia help account is outside the limit); the refusal text is unchanged.
+    expect(newestFunction('_enforce_new_conversation_limit').file).toBe('20261121130000_hockia_help_profile.sql')
   })
 })
 
