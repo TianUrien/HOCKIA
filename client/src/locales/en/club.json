@@ -482,7 +482,13 @@
     "confirmAndTell_one": "Close opportunity and tell {{count}} player",
     "confirmAndTell_other": "Close opportunity and tell {{count}} players",
     "confirm": "Close opportunity",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "filledWithTitle": "Who did you fill it with?",
+    "filledHockia": "Someone from Hockia",
+    "filledElsewhere": "Someone else",
+    "whoLabel": "Who? (optional)",
+    "whoNone": "Prefer not to say",
+    "privateNote": "Only you and Hockia see this answer. Nothing is published."
   },
   "postRoleStart": {
     "title": "Post an opportunity",
@@ -865,5 +871,21 @@
     "signInConnections": "Sign in to see {{clubName}}'s connections.",
     "signInConnectionsNoName": "Sign in to see this club's connections.",
     "signInButton": "Sign in"
+  },
+  "roleOutcome": {
+    "question": "Did you fill this place?",
+    "context": "{{title}} closed on its deadline on {{date}}.",
+    "contextNoDate": "{{title}} closed on its deadline.",
+    "options": {
+      "filled_hockia": "Yes, with someone from Hockia",
+      "filled_elsewhere": "Yes, with someone else",
+      "still_looking": "No, we are still looking",
+      "stopped_looking": "No, we stopped looking"
+    },
+    "save": "Save answer",
+    "notNow": "Not now"
+  },
+  "reportProblem": {
+    "link": "Report a problem"
   }
 }

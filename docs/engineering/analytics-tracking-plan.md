@@ -275,3 +275,15 @@ Source: production on 2026-11-18 (read-only, hidden and test profiles excluded).
 there yet; staging has it on. 77 public highlights are ready (33 members), 17 of them added
 since 2026-11-10, and 74 of the 77 are 3 minutes or shorter (length only; file size was not
 measured). 43 more highlights are limited to clubs and coaches and are never offered.
+
+## Recruiter outcome and problem reports (added 2026-11-21)
+
+Source: `docs/product/proposals/recruiter-satisfaction.md`, phase 2 (founder ruling 2026-11-21). Supabase `events` through `trackDbEvent`.
+
+| Event | Entity | Properties | Fired when |
+|---|---|---|---|
+| `role_outcome_asked` | opportunity | `via: close \| expiry` | The close sheet opens, or the "Did you fill this place?" card is shown for a role that closed on its own |
+| `role_outcome_answered` | opportunity | `via`, `outcome: filled_hockia \| filled_elsewhere \| still_looking \| stopped_looking \| skipped`, `named_person: boolean` | The answer is saved |
+| `report_problem_open` | none | `surface: recruiter_roles \| applicants` | "Report a problem" is tapped on a recruiting screen |
+
+The answer itself lives in `role_outcome_answers` (one row per role; recruiter and admins only). The event never carries who was signed, only whether a person was named. Answer rate = `role_outcome_answered` with an outcome other than `skipped`, over `role_outcome_asked`, per `via`.

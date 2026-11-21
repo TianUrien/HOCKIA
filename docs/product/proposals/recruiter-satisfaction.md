@@ -1,6 +1,6 @@
 # Recruiter satisfaction: measuring whether clubs and recruiting coaches get what they came for
 
-Proposal for the founder, 2026-11-21. Not approved for build. Evidence is from read-only aggregate queries on production the same day (test accounts excluded). Targets are marked **[TARGET]** and are placeholders until four weeks of data exist. Aggregates only: no names, ids or quotes (ADR 0006).
+Proposal for the founder, 2026-11-21. Phase 2 approved for build the same day (see Founder rulings); phase 3 is not. Evidence is from read-only aggregate queries on production the same day (test accounts excluded). Targets are marked **[TARGET]** and are placeholders until four weeks of data exist. Aggregates only: no names, ids or quotes (ADR 0006).
 
 ## Why
 
@@ -122,8 +122,12 @@ Rough size: phase 2 is one PR with one migration; phase 3 is two PRs.
 - **Self-reported outcomes.** "Filled with someone from HOCKIA" is the recruiter's word. It is still far better than an empty field.
 - **Asking without acting.** Each instrument has a decision attached above; an instrument with no decision should not ship.
 
-## Open decisions for the founder
+## Founder rulings (2026-11-21)
 
-1. Whether to ask the outcome question also for roles that expired months ago, or only from now on.
-2. Whether the "who did you sign?" answer may create a public "New signing" item, or stays private.
-3. Who runs the interviews and in which language.
+- **Start with phase 2 now**: the outcome question on role close and after expiry, and "Report a problem" on the recruiting screens. Phase 3 waits for two weeks of data.
+- **The signing answer stays private.** "Who did you sign?" is stored for measurement only. Nothing is published from it; a public signing still goes through the existing signing flow, with both sides confirming.
+- **Ask about every role that already expired**, not only recent ones, once per role.
+
+## Still open
+
+- Who runs the interviews and in which language.
