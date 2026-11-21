@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { roleTitle } from '@/lib/opportunityCopy'
 import { shortDayOf } from '@/lib/signing'
 import { cn } from '@/lib/utils'
@@ -44,6 +44,8 @@ export function RoleOutcomePrompt({ recruiterId, closed, className }: Props) {
   const [applicants, setApplicants] = useState<OutcomeApplicant[]>([])
   const [hiredId, setHiredId] = useState('')
   const [busy, setBusy] = useState(false)
+  // The applicants of the role being asked about; awaited before offering to name one.
+  const loading = useRef<Promise<OutcomeApplicant[]>>(Promise.resolve([]))
 
   useEffect(() => {
     if (!recruiterId) return
@@ -59,7 +61,8 @@ export function RoleOutcomePrompt({ recruiterId, closed, className }: Props) {
     if (!roleId) return
     trackRoleOutcomeAsked(roleId, 'expiry')
     let cancelled = false
-    void fetchOutcomeApplicants(roleId).then((rows) => { if (!cancelled) setApplicants(rows) })
+    loading.current = fetchOutcomeApplicants(roleId)
+    void loading.current.then((rows) => { if (!cancelled) setApplicants(rows) })
     return () => { cancelled = true }
   }, [roleId])
 
@@ -74,9 +77,10 @@ export function RoleOutcomePrompt({ recruiterId, closed, className }: Props) {
     setDoneThisVisit(true)
     setBusy(false)
   }
-  const pick = (outcome: RoleOutcome) => {
+  const pick = async (outcome: RoleOutcome) => {
     // "Someone from Hockia" can name the person first; the other answers save at once.
-    if (outcome === 'filled_hockia' && applicants.length > 0) { setPicked(outcome); return }
+    // A fast tap waits for the applicants instead of skipping that step.
+    if (outcome === 'filled_hockia' && (await loading.current).length > 0) { setPicked(outcome); return }
     void save(outcome)
   }
   const closedOn = role.closed_at ? shortDayOf(role.closed_at) : null
@@ -102,7 +106,7 @@ export function RoleOutcomePrompt({ recruiterId, closed, className }: Props) {
       ) : (
         <div className="flex flex-col gap-2" role="group" aria-labelledby="role-outcome-title">
           {EXPIRY_OUTCOMES.map((outcome) => (
-            <button key={outcome} type="button" disabled={busy} onClick={() => pick(outcome)} className="flex min-h-[44px] items-center rounded-[12px] bg-white px-3.5 py-2.5 text-left text-[16px] leading-[21px] text-ink-1 disabled:opacity-50" data-testid={`role-outcome-${outcome}`}>
+            <button key={outcome} type="button" disabled={busy} onClick={() => void pick(outcome)} className="flex min-h-[44px] items-center rounded-[12px] bg-white px-3.5 py-2.5 text-left text-[16px] leading-[21px] text-ink-1 disabled:opacity-50" data-testid={`role-outcome-${outcome}`}>
               {t(`roleOutcome.options.${outcome}`)}
             </button>
           ))}

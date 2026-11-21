@@ -97,7 +97,8 @@ describe('the question after a role closed on its own', () => {
     h.applicants = [{ id: 'app-2', applicant: { full_name: 'Zoe Example' } }, { id: 'app-1', applicant: { full_name: 'Ana Example' } }, { id: 'app-3', applicant: null }]
     render(<RoleOutcomePrompt recruiterId="club-1" closed={closed} />)
     await screen.findByTestId('role-outcome-prompt')
-    await waitFor(() => fireEvent.click(screen.getByTestId('role-outcome-filled_hockia')))
+    // Tapped at once, before the applicants have loaded: the step still appears.
+    fireEvent.click(screen.getByTestId('role-outcome-filled_hockia'))
     const who = await screen.findByTestId('role-outcome-who')
     // Hidden applicants (no profile row) are not offered; names are sorted.
     expect(Array.from(who.querySelectorAll('option')).map((o) => o.textContent)).toEqual(['Prefer not to say', 'Ana Example', 'Zoe Example'])
