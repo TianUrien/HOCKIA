@@ -23,6 +23,16 @@ export interface NativeImageResult {
 export const isNativePlatform = (): boolean => Capacitor.isNativePlatform()
 
 /**
+ * Which picker a kind of image opens inside the native app. A person's photo
+ * uses the phone's own picker (camera and gallery). A club crest or a brand
+ * logo uses the file input instead: the native picker re-encodes every image
+ * as JPEG, so a transparent logo arrived on a black background on Android
+ * (seen in the device lab, 2026-11-20). The file input hands over the picked
+ * file as it is, and a logo is never taken with the camera.
+ */
+export const usesNativePicker = (kind: 'person' | 'crest' | 'logo'): boolean => isNativePlatform() && kind === 'person'
+
+/**
  * Open the native image picker (camera + gallery).
  * Returns a File object on success, or null if the user cancelled.
  * Throws on unexpected errors.
