@@ -89,7 +89,7 @@ describe('Home card (H1-no-image) and Not useful (H2)', () => {
     rpc.mockResolvedValue({ data: null, error: null })
     renderCard()
     fireEvent.click(screen.getByTestId('member-offer-not-useful'))
-    expect(screen.getByText('Got it. You’ll see fewer offers like this.')).toBeInTheDocument()
+    expect(screen.getByText('Got it. You’ll see fewer like this.')).toBeInTheDocument()
     await waitFor(() => expect(rpc).toHaveBeenCalledWith('dismiss_brand_offer', { p_offer_id: 'o1', p_reason: null }))
     fireEvent.click(screen.getByRole('button', { name: 'Hide this brand' }))
     await waitFor(() => expect(rpc).toHaveBeenCalledWith('dismiss_brand_offer', { p_offer_id: 'o1', p_reason: 'hide_brand' }))

@@ -144,20 +144,20 @@
       "description": "They now appear on your brand profile."
     },
     "brandOfferApproved": {
-      "badge": "Offer live",
-      "title": "Your offer is live",
+      "badge": "Campaign live",
+      "title": "Your campaign is live",
       "titleChange": "Your changes are live",
       "description": "\"{{title}}\" is now shown to members.",
       "descriptionNoTitle": "It is now shown to members."
     },
     "brandOfferNotApproved": {
-      "badge": "Offer taken down",
-      "title": "Your offer needs a change",
-      "titleTakedown": "Your offer was taken down",
+      "badge": "Campaign taken down",
+      "title": "Your campaign needs a change",
+      "titleTakedown": "Your campaign was taken down",
       "takedownHead": "\"{{title}}\" was taken down.",
-      "takedownHeadNoTitle": "Your offer was taken down.",
+      "takedownHeadNoTitle": "Your campaign was taken down.",
       "rejectedHead": "\"{{title}}\" wasn’t approved.",
-      "rejectedHeadNoTitle": "Your offer wasn’t approved.",
+      "rejectedHeadNoTitle": "Your campaign wasn’t approved.",
       "withReason": "{{head}} Reason: {{reason}}. Edit and publish again."
     },
     "clubInvitationReceived": {

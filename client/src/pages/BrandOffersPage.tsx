@@ -172,6 +172,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
           offer={editing}
           initial={editing ? offerShownFields(editing) : EMPTY_OFFER}
           brandName={brandName}
+          openToPartners={Boolean(brand?.open_to_partners)}
           userId={user.id}
           saving={saving}
           onSave={(fields, submit) => void doSave(editing?.id ?? null, editing, fields, submit)}
@@ -280,6 +281,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
                   offer={deskOffer}
                   initial={deskOffer ? offerShownFields(deskOffer) : EMPTY_OFFER}
                   brandName={brandName}
+                  openToPartners={Boolean(brand?.open_to_partners)}
                   userId={user.id}
                   saving={saving}
                   onSave={(fields, submit) => void doSave(deskOffer?.id ?? null, deskOffer, fields, submit)}
@@ -364,7 +366,8 @@ function ActionsSheet({ offer, countries, onClose, onEdit, onDuplicate, onResume
       : offer.status === 'paused'
         ? [{ key: 'resume', label: t('offersPage.actions.resume'), hint: t('offersPage.actions.resumeHint'), run: () => onResume(offer) }, edit, dup, end]
         : offer.status === 'ended'
-          ? [dup]
+          // A campaign stops by itself; running it again starts a new draft with new dates.
+          ? [{ ...dup, label: t('offersPage.actions.runAgain'), hint: t('offersPage.actions.runAgainHint') }]
           : offer.status === 'draft'
             ? [edit, dup, { key: 'delete', label: t('offersPage.actions.deleteDraft'), hint: t('offersPage.actions.deleteDraftHint'), run: () => onConfirm(offer, 'delete'), danger: true }]
             : [edit, dup, end]

@@ -76,7 +76,10 @@
       "link": "Agregar un enlace que empiece con https",
       "where": "Elegir dónde vive tu público",
       "who": "Elegir para quién es",
-      "endDate": "Elegir una fecha de fin futura"
+      "endDate": "Elegir una fecha de fin futura",
+      "objective": "Elige qué quieres que haga la comunidad",
+      "endRequired": "Elige una fecha de fin",
+      "window": "Una campaña dura de {{min}} a {{max}} días. Cambia la fecha de fin."
     },
     "reasonEverywhere": {
       "player": "Lo ves porque juegas. Es para integrantes de todo el mundo.",
@@ -120,13 +123,38 @@
       "umpire_many": "{{n}} árbitros/as"
     },
     "errors": {
-      "liveLimit": "Ya tienes {{limit}} ofertas publicadas. Primero pausa una.",
-      "invalid": "Faltan datos o hay datos que no son válidos. Revisa la oferta e intenta de nuevo.",
-      "expired": "Esta oferta ya pasó su fecha de fin. Primero cambia las fechas.",
-      "tooMany": "Tienes muchas ofertas. Finaliza las que ya no necesites.",
+      "liveLimit": "Ya tienes {{limit}} campañas publicadas. Primero pausa una.",
+      "invalid": "Faltan datos o hay datos que no son válidos. Revisa la campaña e intenta de nuevo.",
+      "expired": "Esta campaña ya pasó su fecha de fin. Primero cambia las fechas.",
+      "tooMany": "Tienes muchas campañas. Finaliza las que ya no necesites.",
       "reasonRequired": "Escribe el motivo que verá la marca.",
-      "notLive": "Esta oferta ya no está publicada.",
-      "generic": "Algo salió mal. Intenta de nuevo."
+      "notLive": "Esta campaña ya no está publicada.",
+      "generic": "Algo salió mal. Intenta de nuevo.",
+      "openToPartners": "Activa \"Abierta a alianzas\" en tu perfil para recibir postulaciones de embajadores/as."
+    },
+    "objectives": {
+      "ask": {
+        "label": "Que te hagan una pregunta",
+        "hint": "La comunidad te escribe. No hace falta enlace ni descuento."
+      },
+      "product": {
+        "label": "Que vean un producto o servicio",
+        "hint": "La comunidad abre tu página para verlo."
+      },
+      "offer": {
+        "label": "Que usen una oferta",
+        "hint": "Un beneficio o un código para la comunidad, con un enlace a tu tienda."
+      },
+      "ambassador": {
+        "label": "Que se sumen como embajadores/as",
+        "hint": "Jugadores/as se postulan para representar a tu marca."
+      }
+    },
+    "daysLeft": {
+      "today": "Termina hoy",
+      "days_one": "Queda {{count}} día",
+      "days_other": "Quedan {{count}} días",
+      "days_many": "Quedan {{count}} días"
     }
   },
   "results": {
@@ -166,16 +194,16 @@
       "umpire": "Árbitro/a"
     },
     "next": {
-      "noLive": "No tienes ofertas publicadas. La comunidad solo ve marcas con una oferta para su perfil.",
-      "noLiveAction": "Crear una oferta",
-      "missed_one": "{{n}} integrante vive en {{country}} y ninguna de tus ofertas llega a esa persona.",
-      "missed_other": "{{n}} integrantes viven en {{country}} y ninguna de tus ofertas les llega.",
-      "missed_many": "{{n}} integrantes viven en {{country}} y ninguna de tus ofertas les llega.",
-      "missedAction": "Sumarlo a una oferta",
+      "noLive": "No tienes campañas publicadas. La comunidad solo ve marcas con una campaña para su perfil.",
+      "noLiveAction": "Crear una campaña",
+      "missed_one": "{{n}} integrante vive en {{country}} y ninguna de tus campañas llega a esa persona.",
+      "missed_other": "{{n}} integrantes viven en {{country}} y ninguna de tus campañas les llega.",
+      "missed_many": "{{n}} integrantes viven en {{country}} y ninguna de tus campañas les llega.",
+      "missedAction": "Sumarlo a una campaña",
       "unopened_one": "“{{title}}” se mostró a {{n}} integrante y nadie la abrió. Una foto y un beneficio suelen ayudar.",
       "unopened_other": "“{{title}}” se mostró a {{n}} integrantes y nadie la abrió. Una foto y un beneficio suelen ayudar.",
       "unopened_many": "“{{title}}” se mostró a {{n}} integrantes y nadie la abrió. Una foto y un beneficio suelen ayudar.",
-      "unopenedAction": "Editar oferta",
+      "unopenedAction": "Editar campaña",
       "notUseful": "“{{title}}” se marca como “no útil” más veces de las que se abre. Revisa para quién es.",
       "notUsefulAction": "Editar público"
     },
@@ -193,9 +221,9 @@
     },
     "contacted": {
       "label": "Integrantes que te contactaron",
-      "period_one": "Desde tus ofertas, último día",
-      "period_other": "Desde tus ofertas, últimos {{count}} días",
-      "period_many": "Desde tus ofertas, últimos {{count}} días"
+      "period_one": "Desde tus campañas, último día",
+      "period_other": "Desde tus campañas, últimos {{count}} días",
+      "period_many": "Desde tus campañas, últimos {{count}} días"
     },
     "funnel": {
       "shown": "Se mostró a",
@@ -205,7 +233,7 @@
     },
     "nextStep": "Siguiente paso",
     "offers": {
-      "eyebrow": "¿Qué oferta funciona?",
+      "eyebrow": "¿Qué campaña funciona?",
       "paused": "Pausada",
       "ended": "Finalizada",
       "shown": "Vistas",
@@ -214,19 +242,19 @@
       "code": "Código",
       "contacted": "Contactos",
       "notUseful": "No útil",
-      "empty": "Todavía no hay ofertas. Los resultados empiezan cuando la comunidad ve tu primera oferta.",
-      "create": "Crear una oferta"
+      "empty": "Todavía no hay campañas. Los resultados empiezan cuando la comunidad ve tu primera campaña.",
+      "create": "Crear una campaña"
     },
     "contacts": {
       "eyebrow": "¿Quién quiere hablar contigo?",
       "title": "Personas que te contactaron",
       "member": "Integrante",
       "fromOffer": "Desde {{title}}",
-      "fromAnOffer": "Desde una oferta",
+      "fromAnOffer": "Desde una campaña",
       "message": "Mensaje",
-      "empty_one": "Nadie escribió desde una oferta en el último día.",
-      "empty_other": "Nadie escribió desde una oferta en los últimos {{count}} días.",
-      "empty_many": "Nadie escribió desde una oferta en los últimos {{count}} días."
+      "empty_one": "Nadie escribió desde una campaña en el último día.",
+      "empty_other": "Nadie escribió desde una campaña en los últimos {{count}} días.",
+      "empty_many": "Nadie escribió desde una campaña en los últimos {{count}} días."
     },
     "market": {
       "eyebrow": "¿Qué tan grande es tu mercado?",
@@ -234,20 +262,20 @@
       "totalLabel_one": "integrante vive donde vendes",
       "totalLabel_other": "integrantes viven donde vendes",
       "totalLabel_many": "integrantes viven donde vendes",
-      "covered": "Tus ofertas aparecen acá",
-      "add": "Sumar a una oferta",
+      "covered": "Tus campañas aparecen acá",
+      "add": "Sumar a una campaña",
       "note": "Integrantes que viven ahí hoy, contados solo en grupos de 5 o más. No se identifica a nadie."
     },
     "fewerThan5": "Menos de 5",
     "country": "País",
     "seen": {
       "eyebrow": "¿Dónde te conviene mostrarlas?",
-      "title": "Quién vio tus ofertas",
+      "title": "Quién vio tus campañas",
       "country": "País",
       "role": "Rol",
       "where": "Dónde",
       "breakdownAria": "Desglose",
-      "empty": "Nadie vio tus ofertas en este período todavía.",
+      "empty": "Nadie vio tus campañas en este período todavía.",
       "others": "Otros",
       "everyone": "Todo el público",
       "fewerEach": "Menos de 5 en cada caso"
@@ -359,38 +387,38 @@
   },
   "offersPage": {
     "toasts": {
-      "live": "Tu oferta ya está publicada.",
+      "live": "Tu campaña ya está publicada.",
       "draftSaved": "Borrador guardado",
-      "paused": "Oferta pausada",
-      "resumed": "La oferta está publicada otra vez",
-      "ended": "Oferta finalizada",
+      "paused": "Campaña pausada",
+      "resumed": "La campaña está publicada otra vez",
+      "ended": "Campaña finalizada",
       "draftDeleted": "Borrador eliminado",
       "duplicated": "Copiada como nuevo borrador"
     },
     "brandFallback": "Tu marca",
-    "howItWorks": "Las ofertas se activan en cuanto las publicas. Llegan a la comunidad según dónde vive cada integrante, nunca por nacionalidad.",
+    "howItWorks": "Las campañas se activan en cuanto las publicas y duran de 7 a 15 días. Llegan a la comunidad según dónde vive cada integrante, nunca por nacionalidad.",
     "empty": {
       "title": "Algo útil para la comunidad",
-      "body": "Una oferta es un producto o servicio para la comunidad del hockey, según dónde vive cada integrante: un descuento, una prueba de equipamiento, un lugar en un campus. Es gratis y se activa en cuanto la publicas.",
-      "createFirst": "Crear tu primera oferta",
+      "body": "Una campaña lleva tu marca a las personas para las que es. Tú dices qué quieres que hagan: hacerte una pregunta, ver un producto, usar una oferta o postularse como embajadores/as. Es gratis y se publica al instante.",
+      "createFirst": "Crear tu primera campaña",
       "tipsTitle": "Lo que funciona con la comunidad",
       "tipWhat": "Di exactamente qué recibe cada integrante.",
       "tipWhere": "Elige los países donde vive tu clientela.",
       "tipPhoto": "Usa una foto real del producto o servicio."
     },
-    "title": "Ofertas",
-    "newOffer": "Nueva oferta",
-    "deskPrompt": "Elige una oferta para editar o crea una nueva.",
-    "loading": "Cargando ofertas",
+    "title": "Campañas",
+    "newOffer": "Nueva campaña",
+    "deskPrompt": "Elige una campaña para editar o crea una nueva.",
+    "loading": "Cargando campañas",
     "actions": {
-      "untitled": "Oferta sin título",
+      "untitled": "Campaña sin título",
       "edit": "Editar",
       "editHintLive": "La comunidad ve tus cambios al instante.",
       "editHintTakenDown": "Corrige lo señalado y vuelve a publicarla.",
       "editHint": "Cambia la foto, el texto o el público.",
       "duplicate": "Duplicar",
       "duplicateHint": "Un nuevo borrador con la misma foto, el mismo texto y el mismo público.",
-      "end": "Finalizar oferta",
+      "end": "Finalizar campaña",
       "endHint": "Se detiene para siempre y pasa a Finalizadas.",
       "pause": "Pausar",
       "pauseHint": "La comunidad deja de verla. Tus resultados se conservan.",
@@ -398,29 +426,31 @@
       "resumeHint": "La comunidad vuelve a verla al instante.",
       "deleteDraft": "Eliminar borrador",
       "deleteDraftHint": "Se elimina. Nadie lo vio.",
-      "aria": "Acciones para {{title}}"
+      "aria": "Acciones para {{title}}",
+      "runAgain": "Volver a lanzar",
+      "runAgainHint": "Crea un borrador nuevo a partir de esta campaña, con fechas nuevas"
     },
     "confirm": {
-      "pauseTitle": "¿Pausar esta oferta?",
+      "pauseTitle": "¿Pausar esta campaña?",
       "pauseBody": "La comunidad deja de ver \"{{title}}\". Tus resultados se conservan y puedes reanudarla en cualquier momento.",
-      "pauseBodyNoTitle": "La comunidad deja de ver \"esta oferta\". Tus resultados se conservan y puedes reanudarla en cualquier momento.",
-      "pauseYes": "Pausar oferta",
+      "pauseBodyNoTitle": "La comunidad deja de ver \"esta campaña\". Tus resultados se conservan y puedes reanudarla en cualquier momento.",
+      "pauseYes": "Pausar campaña",
       "pauseNo": "Cancelar",
-      "endTitle": "¿Finalizar esta oferta?",
+      "endTitle": "¿Finalizar esta campaña?",
       "endBody": "\"{{title}}\" se detiene para siempre y pasa a Finalizadas. Tus resultados se conservan. Para volver a usarla, duplícala.",
-      "endBodyNoTitle": "\"Esta oferta\" se detiene para siempre y pasa a Finalizadas. Tus resultados se conservan. Para volver a usarla, duplícala.",
-      "endYes": "Finalizar oferta",
+      "endBodyNoTitle": "\"Esta campaña\" se detiene para siempre y pasa a Finalizadas. Tus resultados se conservan. Para volver a usarla, duplícala.",
+      "endYes": "Finalizar campaña",
       "endNo": "Mantenerla publicada",
       "deleteTitle": "¿Eliminar este borrador?",
       "deleteBody": "\"{{title}}\" se elimina. Nadie lo vio.",
-      "deleteBodyNoTitle": "\"Esta oferta\" se elimina. Nadie la vio.",
+      "deleteBodyNoTitle": "\"Esta campaña\" se elimina. Nadie la vio.",
       "deleteYes": "Eliminar borrador",
       "deleteNo": "Conservarlo"
     },
     "limit": {
-      "title": "Tienes {{limit}} ofertas publicadas",
-      "body": "Mientras Hockia sea gratis, cada marca puede tener hasta {{limit}} ofertas publicadas. Para hacer lugar, pausa o finaliza una. Los borradores no cuentan.",
-      "choose": "Elegir una oferta para pausar",
+      "title": "Tienes {{limit}} campañas publicadas",
+      "body": "Mientras Hockia sea gratis, cada marca puede tener hasta {{limit}} campañas publicadas. Para hacer lugar, pausa o finaliza una. Los borradores no cuentan.",
+      "choose": "Elegir una campaña para pausar",
       "saveDraft": "Guardar como borrador"
     }
   },
@@ -474,8 +504,8 @@
     "country": "País",
     "empty": {
       "title": "Todavía no hay candidatos/as",
-      "body": "Aparecen acá jugadores/as que activan las alianzas con marcas y viven donde vendes. Con ofertas en más lugares pueden sumarse más candidatos/as.",
-      "openOffers": "Abrir tus ofertas ›"
+      "body": "Aparecen acá jugadores/as que activan las alianzas con marcas y viven donde vendes. Con campañas en más lugares pueden sumarse más candidatos/as.",
+      "openOffers": "Abrir tus campañas ›"
     },
     "invited": "Invitación enviada",
     "sending": "Enviando…",
@@ -690,7 +720,7 @@
       "notForMe": "No es para mí",
       "alreadyHave": "Ya lo tengo",
       "wrongCountry": "País equivocado",
-      "tooMany": "Demasiadas ofertas",
+      "tooMany": "Demasiadas como esta",
       "hideBrand": "Ocultar esta marca"
     },
     "role": {
@@ -720,15 +750,15 @@
     "aiReason": "Lo ves porque preguntaste sobre {{about}}. No cambió la respuesta."
   },
   "memberOfferCard": {
-    "hideFailed": "No se pudo ocultar esta oferta. Intenta de nuevo.",
-    "dismissed": "Entendido. Vas a ver menos ofertas como esta.",
+    "hideFailed": "No se pudo ocultar. Intenta de nuevo.",
+    "dismissed": "Entendido. Vas a ver menos como esto.",
     "undo": "Deshacer",
     "whyPrompt": "Cuéntanos por qué (opcional, la marca solo ve totales)",
-    "seeOffer": "Ver oferta",
+    "seeOffer": "Ver detalles",
     "notUseful": "No es útil",
     "fromBrandsBy": "De marcas: {{brand}}",
     "fromBrands": "De marcas",
-    "openOffer": "Abrir oferta: {{title}}"
+    "openOffer": "Abrir: {{title}}"
   },
   "aiOffer": {
     "fromBrands": "De marcas"
@@ -753,9 +783,9 @@
     "loading": "Cargando marca"
   },
   "offersCard": {
-    "title": "Ofertas",
-    "emptyBody": "Ofrece algo útil a integrantes según dónde viven. Es gratis y se activa en cuanto lo publicas.",
-    "createFirst": "Crear tu primera oferta",
+    "title": "Campañas",
+    "emptyBody": "Llega a las personas para las que es tu marca. Di qué quieres que hagan y mira qué pasó. Gratis, y se publica al instante.",
+    "createFirst": "Crear tu primera campaña",
     "liveOf": "{{live}} de {{limit}} publicadas",
     "drafts_one": "{{count}} borrador",
     "drafts_other": "{{count}} borradores",
@@ -764,37 +794,35 @@
     "tileOpened": "Abiertas",
     "tileStore": "A tu tienda",
     "tileContacted": "Contactos",
-    "openOffers": "Abrir ofertas ›",
-    "tilesLabel": "Resultados de ofertas, últimos 30 días",
+    "openOffers": "Abrir campañas ›",
+    "tilesLabel": "Resultados de campañas, últimos 30 días",
     "last30": "Últimos 30 días",
     "seeResults": "Ver resultados",
     "drafts_many": "{{count}} borradores"
   },
   "offerParts": {
-    "untitled": "Oferta sin título",
+    "untitled": "Campaña sin título",
     "noAudience": "Sin público todavía",
     "actionsFor": "Acciones para {{title}}",
-    "actionsForUntitled": "Acciones para la oferta",
+    "actionsForUntitled": "Acciones para la campaña",
     "fromBrands": "De marcas",
     "yourTitle": "Tu título",
     "whatMembersGet": "Lo que recibe cada integrante",
-    "seeOffer": "Ver oferta",
+    "seeOffer": "Ver detalles",
     "notUseful": "No es útil"
   },
   "offerEditor": {
-    "titleEdit": "Editar oferta",
-    "titleNew": "Nueva oferta",
+    "titleEdit": "Editar campaña",
+    "titleNew": "Nueva campaña",
     "publishChanges": "Publicar cambios",
     "publish": "Publicar",
     "saveDraft": "Guardar borrador",
     "saving": "Guardando…",
     "noteChangesPhone": "La comunidad ve los cambios al instante.",
-    "noteNew": "La comunidad la ve al instante. Hockia retira las ofertas que no cumplen las reglas.",
-    "noteChangesDesktop": "Los cambios se publican al instante. Hockia retira las ofertas que no cumplen las reglas.",
+    "noteNew": "La comunidad la ve al instante. Hockia retira las campañas que no cumplen las reglas.",
+    "noteChangesDesktop": "Los cambios se publican al instante. Hockia retira las campañas que no cumplen las reglas.",
     "titleLabel": "Título",
-    "titlePlaceholder": "Indumentaria para tu primera temporada en el exterior",
     "bodyLabel": "Lo que recibe cada integrante",
-    "bodyPlaceholder": "15% de descuento en tu primera indumentaria completa al sumarte a un club en otro país.",
     "claimWarning": "\"{{claim}}\" es una afirmación que nadie puede comprobar. Mejor di exactamente qué recibe cada integrante.",
     "bodyHint": "Di exactamente qué recibe cada integrante. Sin afirmaciones que no puedas respaldar, como \"el mejor\" o \"el más barato\".",
     "perkLabel": "Beneficio",
@@ -802,10 +830,10 @@
     "perkPlaceholder": "15% de descuento",
     "perkHint": "Aparece en la tarjeta, para que la comunidad vea el beneficio de un vistazo.",
     "codeLabel": "Código",
-    "codeHint": "La comunidad lo copia desde la página de la oferta. Usa un código exclusivo para Hockia para contar las ventas en tu tienda.",
+    "codeHint": "La comunidad lo copia desde la página de la campaña. Usa un código exclusivo para Hockia para contar las ventas en tu tienda.",
     "linkLabel": "Enlace",
     "linkPlaceholder": "tumarca.com/hockia",
-    "linkHint": "La comunidad abre esta página desde la oferta.",
+    "linkHint": "La comunidad abre esta página desde la campaña.",
     "areaLabel": "Región o ciudad (opcional)",
     "areaPlaceholder": "Opcional: región o ciudad",
     "whoFor": "Para quién es",
@@ -827,22 +855,41 @@
     "addRegion": "Agregar región",
     "addCountry": "Agregar país",
     "placeHintEverywhere": "Todo el público al que va dirigida, viva donde viva, incluso quienes todavía no cargaron su país.",
-    "placeHint": "Las ofertas llegan según dónde vive cada integrante, nunca según su nacionalidad. Una oferta para el Reino Unido también llega a Inglaterra, Escocia, Gales e Irlanda del Norte, y una oferta para uno de ellos llega a quienes solo indican Reino Unido.",
+    "placeHint": "Las campañas llegan según dónde vive cada integrante, nunca según su nacionalidad. Una campaña para el Reino Unido también llega a Inglaterra, Escocia, Gales e Irlanda del Norte, y una campaña para uno de ellos llega a quienes solo indican Reino Unido.",
     "searchCountries": "Buscar países",
     "searchCountriesLabel": "Buscar países",
     "counting": "Contando integrantes…",
-    "reachUnavailable": "El alcance no está disponible en este momento."
+    "reachUnavailable": "El alcance no está disponible en este momento.",
+    "objectiveLabel": "¿Qué quieres que haga la comunidad?",
+    "objectiveHint": "Elige una opción. Define el botón que ve la comunidad y el número que vas a seguir.",
+    "titlePlaceholders": {
+      "ask": "¿Dudas para elegir un palo?",
+      "product": "Palos para tu primera temporada en el exterior",
+      "offer": "Equipamiento para tu primera temporada en el exterior",
+      "ambassador": "Representa a la marca en tu club"
+    },
+    "bodyLabelAsk": "En qué puedes ayudar",
+    "bodyPlaceholders": {
+      "ask": "Escríbenos sobre talles, materiales o qué conviene para tu posición. Responde una persona.",
+      "product": "Palos de compuesto para césped y pista, con envío a donde juegas.",
+      "offer": "15% de descuento en tu primer equipamiento completo cuando te sumas a un club en otro país.",
+      "ambassador": "Buscamos jugadores/as que usen nuestro equipamiento y quieran mostrarlo en su club."
+    },
+    "linkHintOptional": "Una página con más detalle, si la tienes. La comunidad te escribe desde la campaña.",
+    "endsHint": "Una campaña dura de {{min}} a {{max}} días y se detiene sola. Cuando termina puedes volver a lanzarla.",
+    "ambassadorPlayersOnly": "Jugadores/as. Solo jugadores/as pueden ser embajadores/as.",
+    "ambassadorNeedsOpen": "Primero activa \"Abierta a alianzas\" en tu perfil, para que puedan postularse."
   },
   "offerDetail": {
-    "missingTitle": "Esta oferta no está disponible",
+    "missingTitle": "Esto ya no está disponible",
     "missingBody": "Puede que haya terminado o que la marca la haya pausado.",
     "backHome": "Volver a Inicio",
     "openFailed": "No se pudo abrir la conversación. Intenta de nuevo.",
-    "brandHidden": "Ya no vas a ver ofertas de {{brand}}.",
+    "brandHidden": "Ya no vas a ver a {{brand}} acá.",
     "hideFailed": "No se pudo ocultar esta marca. Intenta de nuevo.",
-    "actionsLabel": "Acciones de la oferta",
+    "actionsLabel": "Acciones",
     "hideBrand": "Ocultar esta marca",
-    "report": "Reportar oferta",
+    "report": "Reportar",
     "following": "Siguiendo",
     "follow": "Seguir",
     "forLabel": "Para",
@@ -858,7 +905,9 @@
     "messageBrand": "Enviar mensaje a {{brand}}",
     "yourCode": "Tu código",
     "copied": "Copiado",
-    "copy": "Copiar"
+    "copy": "Copiar",
+    "askBrand": "Preguntar a {{brand}}",
+    "openLink": "Abrir enlace"
   },
   "profile": {
     "anchor": {

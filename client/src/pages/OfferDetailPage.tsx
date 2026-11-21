@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Check, Copy, EyeOff, Info, MessageCircle, X } from 'lucide-react'
+import { Check, Copy, ExternalLink, EyeOff, Info, MessageCircle, X } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import Header from '@/components/Header'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -13,6 +14,7 @@ import { resolveConversationRoute } from '@/lib/startConversation'
 import { loadMessageDraft, saveMessageDraft } from '@/lib/messageDrafts'
 import {
   detailReasonLine,
+  fetchOfferObjective,
   hideBrandOffers,
   offerForLine,
   rememberOfferContact,
@@ -56,6 +58,8 @@ export default function OfferDetailPage() {
   const follow = useFollowBrand(offer?.brand_id)
   const report = useReportAction({ targetId: offer?.brand_profile_id, subject: 'offer', contentId: offer?.id })
   const opened = useRef(false)
+  // What the brand asks for: "ask" puts the conversation first, not the store.
+  const { data: objective = 'offer' } = useQuery({ queryKey: ['brand-offer-objective', offerId], queryFn: () => fetchOfferObjective(offerId as string), enabled: Boolean(offerId), staleTime: 300_000 })
 
   // A direct visit (shared link, notification) counts as an open from the detail itself.
   useEffect(() => {
@@ -83,6 +87,9 @@ export default function OfferDetailPage() {
   const brandCountry = names(offer.brand_country_id != null ? [offer.brand_country_id] : [])[0] ?? null
   const reasonLine = detailReasonLine(offer.eligible ? memberCountry : null, offer.everywhere ?? false)
   const showAmbassador = offer.brand_open_to_partners && profile?.role === 'player'
+  // The conversation is the main action when the brand asked for questions,
+  // and whenever the campaign has no link to open.
+  const askFirst = objective === 'ask' || !link
 
   const goToStore = async () => {
     if (!link) return
@@ -210,8 +217,17 @@ export default function OfferDetailPage() {
             <div className="p-8">
               {body}
               <div className="mt-6 flex gap-3">
-                {link ? <Button className="rounded-full" onClick={() => void goToStore()} data-testid="offer-detail-store">{t('offerDetail.goToStore')}</Button> : null}
-                <Button variant="tonal" className="rounded-full" onClick={() => void message(`${t('offerDetail.aboutDraft', { title: offer.title })}\n`)} data-testid="offer-detail-message">{t('offerDetail.messageBrand', { brand: offer.brand_name })}</Button>
+                {askFirst ? (
+                  <>
+                    <Button className="rounded-full" onClick={() => void message(`${t('offerDetail.aboutDraft', { title: offer.title })}\n`)} data-testid="offer-detail-message">{t('offerDetail.askBrand', { brand: offer.brand_name })}</Button>
+                    {link ? <Button variant="tonal" className="rounded-full" onClick={() => void goToStore()} data-testid="offer-detail-store">{t('offerDetail.openLink')}</Button> : null}
+                  </>
+                ) : (
+                  <>
+                    {link ? <Button className="rounded-full" onClick={() => void goToStore()} data-testid="offer-detail-store">{t('offerDetail.goToStore')}</Button> : null}
+                    <Button variant="tonal" className="rounded-full" onClick={() => void message(`${t('offerDetail.aboutDraft', { title: offer.title })}\n`)} data-testid="offer-detail-message">{t('offerDetail.messageBrand', { brand: offer.brand_name })}</Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -233,6 +249,19 @@ export default function OfferDetailPage() {
       </div>
       <div className="px-4 pt-5">{body}</div>
       <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-line bg-white/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur">
+        {askFirst ? (
+          <>
+            {link ? (
+              <button type="button" onClick={() => void goToStore()} aria-label={t('offerDetail.openLink')} className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-primary" data-testid="offer-detail-store">
+                <ExternalLink className="h-6 w-6" strokeWidth={1.8} />
+              </button>
+            ) : null}
+            <button type="button" onClick={() => void message(`${t('offerDetail.aboutDraft', { title: offer.title })}\n`)} className="flex h-[52px] min-w-0 flex-1 items-center justify-center rounded-full bg-brand-primary px-4 text-body font-semibold text-white" data-testid="offer-detail-message">
+              <span className="truncate">{t('offerDetail.askBrand', { brand: offer.brand_name })}</span>
+            </button>
+          </>
+        ) : (
+          <>
         <button
           type="button"
           onClick={() => void message(`${t('offerDetail.aboutDraft', { title: offer.title })}\n`)}
@@ -247,6 +276,8 @@ export default function OfferDetailPage() {
             {t('offerDetail.goToStore')}
           </button>
         ) : null}
+          </>
+        )}
       </div>
       {report.sheet}
     </div>

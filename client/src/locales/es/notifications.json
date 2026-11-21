@@ -147,20 +147,20 @@
       "description": "Ya aparece en el perfil de tu marca."
     },
     "brandOfferApproved": {
-      "badge": "Oferta publicada",
-      "title": "Tu oferta está publicada",
+      "badge": "Campaña publicada",
+      "title": "Tu campaña está publicada",
       "titleChange": "Tus cambios están publicados",
       "description": "\"{{title}}\" ya se muestra a la comunidad.",
       "descriptionNoTitle": "Ya se muestra a la comunidad."
     },
     "brandOfferNotApproved": {
-      "badge": "Oferta retirada",
-      "title": "Tu oferta necesita un cambio",
-      "titleTakedown": "Tu oferta fue retirada",
+      "badge": "Campaña retirada",
+      "title": "Tu campaña necesita un cambio",
+      "titleTakedown": "Tu campaña fue retirada",
       "takedownHead": "\"{{title}}\" fue retirada.",
-      "takedownHeadNoTitle": "Tu oferta fue retirada.",
+      "takedownHeadNoTitle": "Tu campaña fue retirada.",
       "rejectedHead": "\"{{title}}\" no fue aprobada.",
-      "rejectedHeadNoTitle": "Tu oferta no fue aprobada.",
+      "rejectedHeadNoTitle": "Tu campaña no fue aprobada.",
       "withReason": "{{head}} Motivo: {{reason}}. Edítala y vuelve a publicarla."
     },
     "clubInvitationReceived": {

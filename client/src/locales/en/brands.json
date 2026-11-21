@@ -69,7 +69,10 @@
       "link": "Add a link that starts with https",
       "where": "Choose where members live",
       "who": "Choose who it is for",
-      "endDate": "Choose an end date in the future"
+      "endDate": "Choose an end date in the future",
+      "objective": "Choose what you want members to do",
+      "endRequired": "Choose an end date",
+      "window": "A campaign runs {{min}} to {{max}} days. Change the end date."
     },
     "reasonEverywhere": {
       "player": "You see this because you play. It is for members everywhere.",
@@ -107,13 +110,37 @@
       "umpire_other": "{{n}} umpires"
     },
     "errors": {
-      "liveLimit": "You already have {{limit}} live offers. Pause one first.",
-      "invalid": "Some details are missing or not valid. Check the offer and try again.",
-      "expired": "This offer has passed its end date. Change the dates first.",
-      "tooMany": "You have a lot of offers. End some you no longer need.",
+      "liveLimit": "You already have {{limit}} live campaigns. Pause one first.",
+      "invalid": "Some details are missing or not valid. Check the campaign and try again.",
+      "expired": "This campaign has passed its end date. Change the dates first.",
+      "tooMany": "You have a lot of campaigns. End some you no longer need.",
       "reasonRequired": "Write the reason the brand will see.",
-      "notLive": "This offer is no longer live.",
-      "generic": "Something went wrong. Please try again."
+      "notLive": "This campaign is no longer live.",
+      "generic": "Something went wrong. Please try again.",
+      "openToPartners": "Turn on \"Open to partners\" in your profile to take ambassador applications."
+    },
+    "objectives": {
+      "ask": {
+        "label": "Ask you a question",
+        "hint": "Members write to you. No link and no discount needed."
+      },
+      "product": {
+        "label": "See a product or service",
+        "hint": "Members open your page to look at it."
+      },
+      "offer": {
+        "label": "Use an offer",
+        "hint": "A perk or a code for members, with a link to your store."
+      },
+      "ambassador": {
+        "label": "Become an ambassador",
+        "hint": "Players apply to represent your brand."
+      }
+    },
+    "daysLeft": {
+      "today": "Ends today",
+      "days_one": "{{count}} day left",
+      "days_other": "{{count}} days left"
     }
   },
   "results": {
@@ -150,14 +177,14 @@
       "umpire": "Umpire"
     },
     "next": {
-      "noLive": "You have no live offers. Members only see brands with an offer for them.",
-      "noLiveAction": "Create an offer",
-      "missed_one": "{{n}} member lives in {{country}} and none of your offers reach them.",
-      "missed_other": "{{n}} members live in {{country}} and none of your offers reach them.",
-      "missedAction": "Add it to an offer",
+      "noLive": "You have no live campaigns. Members only see brands with a campaign for them.",
+      "noLiveAction": "Create a campaign",
+      "missed_one": "{{n}} member lives in {{country}} and none of your campaigns reach them.",
+      "missed_other": "{{n}} members live in {{country}} and none of your campaigns reach them.",
+      "missedAction": "Add it to a campaign",
       "unopened_one": "“{{title}}” was shown to {{n}} member and nobody opened it. A photo and a perk usually help.",
       "unopened_other": "“{{title}}” was shown to {{n}} members and nobody opened it. A photo and a perk usually help.",
-      "unopenedAction": "Edit offer",
+      "unopenedAction": "Edit campaign",
       "notUseful": "“{{title}}” is marked “not useful” more than it is opened. Check who it is for.",
       "notUsefulAction": "Edit audience"
     },
@@ -174,8 +201,8 @@
     },
     "contacted": {
       "label": "Members who contacted you",
-      "period_one": "From your offers, last {{count}} day",
-      "period_other": "From your offers, last {{count}} days"
+      "period_one": "From your campaigns, last {{count}} day",
+      "period_other": "From your campaigns, last {{count}} days"
     },
     "funnel": {
       "shown": "Shown to",
@@ -185,7 +212,7 @@
     },
     "nextStep": "Next step",
     "offers": {
-      "eyebrow": "Which offer works?",
+      "eyebrow": "Which campaign works?",
       "paused": "Paused",
       "ended": "Ended",
       "shown": "Shown",
@@ -194,38 +221,38 @@
       "code": "Code",
       "contacted": "Contacted",
       "notUseful": "Not useful",
-      "empty": "No offers yet. Results start when members see your first offer.",
-      "create": "Create an offer"
+      "empty": "No campaigns yet. Results start when members see your first campaign.",
+      "create": "Create a campaign"
     },
     "contacts": {
       "eyebrow": "Who wants to talk to you?",
       "title": "People who contacted you",
       "member": "Member",
       "fromOffer": "From {{title}}",
-      "fromAnOffer": "From an offer",
+      "fromAnOffer": "From a campaign",
       "message": "Message",
-      "empty_one": "Nobody has written from an offer in the last {{count}} day.",
-      "empty_other": "Nobody has written from an offer in the last {{count}} days."
+      "empty_one": "Nobody has written from a campaign in the last {{count}} day.",
+      "empty_other": "Nobody has written from a campaign in the last {{count}} days."
     },
     "market": {
       "eyebrow": "How big is your market?",
       "title": "Who you could reach",
       "totalLabel_one": "member lives where you sell",
       "totalLabel_other": "members live where you sell",
-      "covered": "Your offers show here",
-      "add": "Add to an offer",
+      "covered": "Your campaigns show here",
+      "add": "Add to a campaign",
       "note": "Members who live there today, counted only in groups of 5 or more. Nobody is identified."
     },
     "fewerThan5": "Fewer than 5",
     "country": "Country",
     "seen": {
       "eyebrow": "Where should you show it?",
-      "title": "Who saw your offers",
+      "title": "Who saw your campaigns",
       "country": "Country",
       "role": "Role",
       "where": "Where",
       "breakdownAria": "Breakdown",
-      "empty": "Nobody has seen your offers in this period yet.",
+      "empty": "Nobody has seen your campaigns in this period yet.",
       "others": "Others",
       "everyone": "Everyone",
       "fewerEach": "Fewer than 5 each"
@@ -337,38 +364,38 @@
   },
   "offersPage": {
     "toasts": {
-      "live": "Your offer is live.",
+      "live": "Your campaign is live.",
       "draftSaved": "Draft saved",
-      "paused": "Offer paused",
-      "resumed": "Offer is live again",
-      "ended": "Offer ended",
+      "paused": "Campaign paused",
+      "resumed": "Campaign is live again",
+      "ended": "Campaign ended",
       "draftDeleted": "Draft deleted",
       "duplicated": "Copied as a new draft"
     },
     "brandFallback": "Your brand",
-    "howItWorks": "Offers go live as soon as you publish. They reach members by where they live, never by nationality.",
+    "howItWorks": "Campaigns go live as soon as you publish and run 7 to 15 days. They reach members by where they live, never by nationality.",
     "empty": {
       "title": "Bring something useful to members",
-      "body": "An offer is a product or service for hockey members where they live: a discount, a fitting, a camp place. It’s free and goes live as soon as you publish.",
-      "createFirst": "Create your first offer",
+      "body": "A campaign brings your brand to the members it is for. You say what you want them to do: ask you a question, see a product, use an offer or apply as an ambassador. It’s free and goes live as soon as you publish.",
+      "createFirst": "Create your first campaign",
       "tipsTitle": "What works with members",
       "tipWhat": "Say exactly what a member gets.",
       "tipWhere": "Pick the countries where your customers live.",
       "tipPhoto": "Use a real photo of the product or service."
     },
-    "title": "Offers",
-    "newOffer": "New offer",
-    "deskPrompt": "Choose an offer to edit, or create a new one.",
-    "loading": "Loading offers",
+    "title": "Campaigns",
+    "newOffer": "New campaign",
+    "deskPrompt": "Choose a campaign to edit, or create a new one.",
+    "loading": "Loading campaigns",
     "actions": {
-      "untitled": "Untitled offer",
+      "untitled": "Untitled campaign",
       "edit": "Edit",
       "editHintLive": "Members see your changes right away.",
       "editHintTakenDown": "Fix what was flagged, then publish again.",
       "editHint": "Change the photo, text or audience.",
       "duplicate": "Duplicate",
       "duplicateHint": "A new draft with the same photo, text and audience.",
-      "end": "End offer",
+      "end": "End campaign",
       "endHint": "It stops for good and moves to Ended.",
       "pause": "Pause",
       "pauseHint": "Members stop seeing it. Your results are kept.",
@@ -376,29 +403,31 @@
       "resumeHint": "Members see it again right away.",
       "deleteDraft": "Delete draft",
       "deleteDraftHint": "It is removed. Nobody has seen it.",
-      "aria": "Actions for {{title}}"
+      "aria": "Actions for {{title}}",
+      "runAgain": "Run again",
+      "runAgainHint": "Starts a new draft from this campaign, with new dates"
     },
     "confirm": {
-      "pauseTitle": "Pause this offer?",
+      "pauseTitle": "Pause this campaign?",
       "pauseBody": "Members stop seeing \"{{title}}\". Your results are kept, and you can resume it any time.",
-      "pauseBodyNoTitle": "Members stop seeing \"this offer\". Your results are kept, and you can resume it any time.",
-      "pauseYes": "Pause offer",
+      "pauseBodyNoTitle": "Members stop seeing \"this campaign\". Your results are kept, and you can resume it any time.",
+      "pauseYes": "Pause campaign",
       "pauseNo": "Cancel",
-      "endTitle": "End this offer?",
+      "endTitle": "End this campaign?",
       "endBody": "\"{{title}}\" stops for good and moves to Ended. Your results are kept. To run it again, duplicate it.",
-      "endBodyNoTitle": "\"this offer\" stops for good and moves to Ended. Your results are kept. To run it again, duplicate it.",
-      "endYes": "End offer",
+      "endBodyNoTitle": "\"this campaign\" stops for good and moves to Ended. Your results are kept. To run it again, duplicate it.",
+      "endYes": "End campaign",
       "endNo": "Keep it live",
       "deleteTitle": "Delete this draft?",
       "deleteBody": "\"{{title}}\" is removed. Nobody has seen it.",
-      "deleteBodyNoTitle": "\"this offer\" is removed. Nobody has seen it.",
+      "deleteBodyNoTitle": "\"this campaign\" is removed. Nobody has seen it.",
       "deleteYes": "Delete draft",
       "deleteNo": "Keep it"
     },
     "limit": {
-      "title": "You have {{limit}} live offers",
-      "body": "While Hockia is free, each brand can have up to {{limit}} live offers. Pause or end one to make room. Drafts don’t count.",
-      "choose": "Choose an offer to pause",
+      "title": "You have {{limit}} live campaigns",
+      "body": "While Hockia is free, each brand can have up to {{limit}} live campaigns. Pause or end one to make room. Drafts don’t count.",
+      "choose": "Choose a campaign to pause",
       "saveDraft": "Save as a draft instead"
     }
   },
@@ -451,8 +480,8 @@
     "country": "Country",
     "empty": {
       "title": "No candidates yet",
-      "body": "Players appear here when they turn on brand partnerships and live where you sell. Offers in more places bring more candidates.",
-      "openOffers": "Open your offers ›"
+      "body": "Players appear here when they turn on brand partnerships and live where you sell. Campaigns in more places bring more candidates.",
+      "openOffers": "Open your campaigns ›"
     },
     "invited": "Invited",
     "sending": "Sending…",
@@ -666,7 +695,7 @@
       "notForMe": "Not for me",
       "alreadyHave": "Already have it",
       "wrongCountry": "Wrong country",
-      "tooMany": "Too many offers",
+      "tooMany": "Too many of these",
       "hideBrand": "Hide this brand"
     },
     "role": {
@@ -696,15 +725,15 @@
     "aiReason": "Shown because you asked about {{about}}. It did not change the answer."
   },
   "memberOfferCard": {
-    "hideFailed": "Could not hide this offer. Please try again.",
-    "dismissed": "Got it. You’ll see fewer offers like this.",
+    "hideFailed": "Could not hide this. Please try again.",
+    "dismissed": "Got it. You’ll see fewer like this.",
     "undo": "Undo",
     "whyPrompt": "Tell us why (optional, the brand only sees totals)",
-    "seeOffer": "See offer",
+    "seeOffer": "See details",
     "notUseful": "Not useful",
     "fromBrandsBy": "From brands: {{brand}}",
     "fromBrands": "From brands",
-    "openOffer": "Open offer: {{title}}"
+    "openOffer": "Open: {{title}}"
   },
   "aiOffer": {
     "fromBrands": "From brands"
@@ -729,9 +758,9 @@
     "loading": "Loading brand"
   },
   "offersCard": {
-    "title": "Offers",
-    "emptyBody": "Bring something useful to members where they live. Free, and live as soon as you publish.",
-    "createFirst": "Create your first offer",
+    "title": "Campaigns",
+    "emptyBody": "Reach the members your brand is for. Say what you want them to do, and see what happened. Free, and live as soon as you publish.",
+    "createFirst": "Create your first campaign",
     "liveOf": "{{live}} of {{limit}} live",
     "drafts_one": "{{count}} draft",
     "drafts_other": "{{count}} drafts",
@@ -740,36 +769,34 @@
     "tileOpened": "Opened",
     "tileStore": "To your store",
     "tileContacted": "Contacted",
-    "openOffers": "Open offers ›",
-    "tilesLabel": "Offer results, last 30 days",
+    "openOffers": "Open campaigns ›",
+    "tilesLabel": "Campaign results, last 30 days",
     "last30": "Last 30 days",
     "seeResults": "See results"
   },
   "offerParts": {
-    "untitled": "Untitled offer",
+    "untitled": "Untitled campaign",
     "noAudience": "No audience yet",
     "actionsFor": "Actions for {{title}}",
-    "actionsForUntitled": "Actions for offer",
+    "actionsForUntitled": "Actions for campaign",
     "fromBrands": "From brands",
     "yourTitle": "Your title",
     "whatMembersGet": "What members get",
-    "seeOffer": "See offer",
+    "seeOffer": "See details",
     "notUseful": "Not useful"
   },
   "offerEditor": {
-    "titleEdit": "Edit offer",
-    "titleNew": "New offer",
+    "titleEdit": "Edit campaign",
+    "titleNew": "New campaign",
     "publishChanges": "Publish changes",
     "publish": "Publish",
     "saveDraft": "Save draft",
     "saving": "Saving…",
     "noteChangesPhone": "Members see the changes right away.",
-    "noteNew": "Members see it right away. Hockia takes down offers that break the rules.",
-    "noteChangesDesktop": "Changes go live right away. Hockia takes down offers that break the rules.",
+    "noteNew": "Members see it right away. Hockia takes down campaigns that break the rules.",
+    "noteChangesDesktop": "Changes go live right away. Hockia takes down campaigns that break the rules.",
     "titleLabel": "Title",
-    "titlePlaceholder": "Kit for your first season abroad",
     "bodyLabel": "What members get",
-    "bodyPlaceholder": "15% off your first full kit when you join a club in a new country.",
     "claimWarning": "\"{{claim}}\" is a claim members can't check. Say exactly what a member gets instead.",
     "bodyHint": "Say exactly what a member gets. No claims you can’t back up, like \"best\" or \"cheapest\".",
     "perkLabel": "Perk",
@@ -777,10 +804,10 @@
     "perkPlaceholder": "15% off",
     "perkHint": "Shown on the card, so members see the deal at a glance.",
     "codeLabel": "Code",
-    "codeHint": "Members copy it on the offer page. Use a code only for Hockia to count sales in your store.",
+    "codeHint": "Members copy it on the campaign page. Use a code only for Hockia to count sales in your store.",
     "linkLabel": "Link",
     "linkPlaceholder": "yourbrand.com/hockia",
-    "linkHint": "Members open this page from the offer.",
+    "linkHint": "Members open this page from the campaign.",
     "areaLabel": "Region or city (optional)",
     "areaPlaceholder": "Optional: region or city",
     "whoFor": "Who it’s for",
@@ -802,22 +829,41 @@
     "addRegion": "Add region",
     "addCountry": "Add country",
     "placeHintEverywhere": "Every member it is for, wherever they live, including members who have not added their country yet.",
-    "placeHint": "Offers reach members by where they live, never by nationality. An offer for the United Kingdom also reaches England, Scotland, Wales and Northern Ireland, and an offer for one of them reaches members who just say United Kingdom.",
+    "placeHint": "Campaigns reach members by where they live, never by nationality. A campaign for the United Kingdom also reaches England, Scotland, Wales and Northern Ireland, and a campaign for one of them reaches members who just say United Kingdom.",
     "searchCountries": "Search countries",
     "searchCountriesLabel": "Search countries",
     "counting": "Counting members…",
-    "reachUnavailable": "Reach is not available right now."
+    "reachUnavailable": "Reach is not available right now.",
+    "objectiveLabel": "What do you want members to do?",
+    "objectiveHint": "Choose one. It sets the button members see and the number you follow.",
+    "titlePlaceholders": {
+      "ask": "Questions about choosing a stick?",
+      "product": "Sticks for your first season abroad",
+      "offer": "Kit for your first season abroad",
+      "ambassador": "Represent us at your club"
+    },
+    "bodyLabelAsk": "What you can help with",
+    "bodyPlaceholders": {
+      "ask": "Write to us about sizes, materials or what suits your position. A person answers.",
+      "product": "Composite sticks for outdoor and indoor, with delivery where you play.",
+      "offer": "15% off your first full kit when you join a club in a new country.",
+      "ambassador": "We are looking for players who use our gear and want to show it at their club."
+    },
+    "linkHintOptional": "A page with more detail, if you have one. Members write to you from the campaign.",
+    "endsHint": "A campaign runs {{min}} to {{max}} days and stops by itself. You can run it again after it ends.",
+    "ambassadorPlayersOnly": "Players. Only players can be ambassadors.",
+    "ambassadorNeedsOpen": "Turn on \"Open to partners\" in your profile first, so players can apply."
   },
   "offerDetail": {
-    "missingTitle": "This offer isn’t available",
+    "missingTitle": "This isn’t available",
     "missingBody": "It may have ended, or the brand paused it.",
     "backHome": "Back to Home",
     "openFailed": "Could not open the conversation. Please try again.",
-    "brandHidden": "You won't see offers from {{brand}}.",
+    "brandHidden": "You won’t see {{brand}} here again.",
     "hideFailed": "Could not hide this brand. Please try again.",
-    "actionsLabel": "Offer actions",
+    "actionsLabel": "Actions",
     "hideBrand": "Hide this brand",
-    "report": "Report offer",
+    "report": "Report this",
     "following": "Following",
     "follow": "Follow",
     "forLabel": "For",
@@ -833,7 +879,9 @@
     "messageBrand": "Message {{brand}}",
     "yourCode": "Your code",
     "copied": "Copied",
-    "copy": "Copy"
+    "copy": "Copy",
+    "askBrand": "Ask {{brand}}",
+    "openLink": "Open link"
   },
   "profile": {
     "anchor": {
