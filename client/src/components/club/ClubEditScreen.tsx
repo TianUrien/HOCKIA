@@ -19,7 +19,6 @@ import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { useCountries } from '@/hooks/useCountries'
 import { validateImage } from '@/lib/imageOptimization'
-import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { invalidateProfile } from '@/lib/profile'
 import { getImageUrl } from '@/lib/imageUrl'
 import { humanizeToken } from '@/lib/identity'
@@ -225,13 +224,8 @@ export default function ClubEditScreen() {
       setUploading(false)
     }
   }
-  const pickCrest = async () => {
-    if (isNativePlatform()) {
-      try { const result = await pickImageNative('prompt', { crop: false }); if (result) await uploadCrest(result.file) } catch (err) { logger.error('[ClubEditScreen] native picker failed', err); addToast(t('clubEdit.crest.pickerFailed'), 'error') }
-      return
-    }
-    fileRef.current?.click()
-  }
+  // A crest keeps its transparency only through the file input (lib/nativeImagePicker.ts).
+  const pickCrest = () => { fileRef.current?.click() }
 
   const country = typeof profile.nationality_country_id === 'number' ? getCountryById(profile.nationality_country_id) : undefined
   const countryValue = country ? [country.flag_emoji, countryLabel(country.common_name || country.name)].filter(Boolean).join(' ') : null

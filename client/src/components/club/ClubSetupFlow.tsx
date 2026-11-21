@@ -14,7 +14,6 @@ import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { useCountries } from '@/hooks/useCountries'
 import { validateImage } from '@/lib/imageOptimization'
-import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { getImageUrl } from '@/lib/imageUrl'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { cn } from '@/lib/utils'
@@ -107,13 +106,8 @@ export default function ClubSetupFlow({ onFinished }: ClubSetupFlowProps) {
       setUploading(false)
     }
   }
-  const pickCrest = async () => {
-    if (isNativePlatform()) {
-      try { const result = await pickImageNative('prompt', { crop: false }); if (result) await uploadCrest(result.file) } catch (err) { logger.error('[ClubSetup] native picker failed', err); addToast(t('clubSetup.crest.pickerFailed'), 'error') }
-      return
-    }
-    fileRef.current?.click()
-  }
+  // A crest keeps its transparency only through the file input (lib/nativeImagePicker.ts).
+  const pickCrest = () => { fileRef.current?.click() }
 
   // Step 1 → save the club's basics, then the 18+ attestation, then Link.
   const saveAbout = async () => {

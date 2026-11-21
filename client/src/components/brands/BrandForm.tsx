@@ -15,7 +15,6 @@ import CountrySelect from '@/components/CountrySelect'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { optimizeImage, validateImage } from '@/lib/imageOptimization'
-import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { logger } from '@/lib/logger'
 import type { BrandCategory } from '@/hooks/useBrands'
 import { BRAND_CATEGORY_OPTIONS as CATEGORY_OPTIONS, normalizeInstagram, validateBrandUrl } from '@/lib/brandEdit'
@@ -288,21 +287,8 @@ export function BrandForm({
     }
   }
 
-  const handleLogoClick = useCallback(async () => {
-    if (isNativePlatform()) {
-      try {
-        const result = await pickImageNative('prompt', { crop: false })
-        if (result) {
-          await handleLogoUpload(result.file)
-        }
-      } catch (err) {
-        logger.error('[BrandForm] Native image picker error:', err)
-        setError(t('brandForm.pickerFailed'))
-      }
-      return
-    }
-    fileInputRef.current?.click()
-  }, [handleLogoUpload, t])
+  // A logo keeps its transparency only through the file input (lib/nativeImagePicker.ts).
+  const handleLogoClick = useCallback(() => { fileInputRef.current?.click() }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

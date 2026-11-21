@@ -85,11 +85,25 @@ describe('wiring', () => {
   })
 
   it("phone pickers skip the phone's own crop: the app's crop step does it for every kind", () => {
-    for (const f of ['components/EditProfileModal.tsx', 'components/profile/mobile/EditProfileScreen.tsx', 'components/onboarding/PlayerSetupFlow.tsx', 'components/onboarding/CoachSetupFlow.tsx', 'components/hockiaAi/NextSteps.tsx', 'components/club/ClubEditScreen.tsx', 'components/club/ClubSetupFlow.tsx', 'components/brands/BrandForm.tsx', 'pages/CompleteProfile.tsx']) {
+    for (const f of ['components/EditProfileModal.tsx', 'components/profile/mobile/EditProfileScreen.tsx', 'components/onboarding/PlayerSetupFlow.tsx', 'components/onboarding/CoachSetupFlow.tsx', 'components/hockiaAi/NextSteps.tsx', 'pages/CompleteProfile.tsx']) {
       expect(read(f), f).toContain("pickImageNative('prompt', { crop: false })")
       expect(read(f), f).not.toContain("pickImageNative('prompt')")
     }
     expect(read('lib/nativeImagePicker.ts')).toContain('allowEditing: crop,')
+  })
+
+  it('crests and logos never go through the native picker: it re-encodes as JPEG and a transparent logo came back on black (Android, 2026-11-20)', () => {
+    // Screens that only ever pick a crest or a logo use the file input alone.
+    for (const f of ['components/club/ClubEditScreen.tsx', 'components/club/ClubSetupFlow.tsx', 'components/brands/BrandForm.tsx', 'components/brands/BrandEditScreen.tsx']) {
+      expect(read(f), f).not.toContain('pickImageNative')
+      expect(read(f), f).toMatch(/type="file"/)
+    }
+    // Screens shared by every role ask which picker the role's image uses.
+    for (const f of ['components/EditProfileModal.tsx', 'components/profile/mobile/EditProfileScreen.tsx', 'pages/CompleteProfile.tsx']) {
+      expect(read(f), f).toMatch(/if \(usesNativePicker\(imageKindForRole\(/)
+      expect(read(f), f).not.toContain('if (isNativePlatform())')
+    }
+    expect(read('lib/nativeImagePicker.ts')).toContain("isNativePlatform() && kind === 'person'")
   })
 
   it('the deck shows the full photo when there is one, the square otherwise', () => {
