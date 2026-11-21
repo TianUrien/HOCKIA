@@ -8,8 +8,6 @@ import { LogoTile } from './LogoTile'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, MessageSquare, Play, Star, UserPlus, Users, X } from 'lucide-react'
-import { Capacitor } from '@capacitor/core'
-import { App as CapacitorApp } from '@capacitor/app'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { animateSpring, springValue, stopSpring, type SpringValue } from '@/lib/spring'
 import { EuBadge } from '@/components/ui/NationalityBadges'
@@ -1851,7 +1849,7 @@ function VerticalMemberDeck(props: MemberFullPreviewProps & { deck: MemberPrevie
     animateSpring(spring.current, 0, { ...VDECK_SPRING, onDone: () => setDragging(false) })
   }, [])
 
-  // Keyboard and Android back
+  // Keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!isTopFocusTrap(containerRef.current) || detailsOpen) return
@@ -1862,11 +1860,7 @@ function VerticalMemberDeck(props: MemberFullPreviewProps & { deck: MemberPrevie
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [go, onClose, detailsOpen])
-  useEffect(() => {
-    if (Capacitor.getPlatform() !== 'android') return
-    const sub = CapacitorApp.addListener('backButton', () => onClose())
-    return () => { void sub.then((h) => h.remove()) }
-  }, [onClose])
+  // Android back closes it through the same Escape path (lib/nativeBack.ts).
 
   // ── Gestures
   const touch = useRef<{ x: number; y: number; t: number; axis: 'x' | 'y' | null } | null>(null)

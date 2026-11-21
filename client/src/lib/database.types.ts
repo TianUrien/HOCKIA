@@ -5596,6 +5596,58 @@ export type Database = {
           },
         ]
       }
+      role_outcome_answers: {
+        Row: {
+          answered_at: string
+          asked_via: string
+          dismiss_count: number
+          hired_application_id: string | null
+          opportunity_id: string
+          outcome: string
+          recruiter_id: string
+        }
+        Insert: {
+          answered_at?: string
+          asked_via: string
+          dismiss_count?: number
+          hired_application_id?: string | null
+          opportunity_id: string
+          outcome: string
+          recruiter_id: string
+        }
+        Update: {
+          answered_at?: string
+          asked_via?: string
+          dismiss_count?: number
+          hired_application_id?: string | null
+          opportunity_id?: string
+          outcome?: string
+          recruiter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_outcome_answers_hired_application_id_fkey"
+            columns: ["hired_application_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_outcome_answers_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: true
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_outcome_answers_recruiter_id_fkey"
+            columns: ["recruiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_profiles: {
         Row: {
           created_at: string

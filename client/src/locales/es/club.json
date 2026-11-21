@@ -493,7 +493,13 @@
     "confirmAndTell_other": "Cerrar oportunidad y avisar a {{count}} personas",
     "confirmAndTell_many": "Cerrar oportunidad y avisar a {{count}} personas",
     "confirm": "Cerrar oportunidad",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "filledWithTitle": "¿Con quién la cubriste?",
+    "filledHockia": "Alguien de Hockia",
+    "filledElsewhere": "Otra persona",
+    "whoLabel": "¿Quién? (opcional)",
+    "whoNone": "Prefiero no decirlo",
+    "privateNote": "Solo tú y Hockia ven esta respuesta. No se publica nada."
   },
   "postRoleStart": {
     "title": "Publicar una oportunidad",
@@ -887,5 +893,23 @@
     "signInConnections": "Inicia sesión para ver las conexiones de {{clubName}}.",
     "signInConnectionsNoName": "Inicia sesión para ver las conexiones de este club.",
     "signInButton": "Iniciar sesión"
+  },
+  "roleOutcome": {
+    "banner": "Se cerró. ¿Cubriste el puesto?",
+    "answer": "Responder",
+    "dismiss": "Ahora no",
+    "question": "¿Cubriste este puesto?",
+    "context": "{{title}} se cerró por vencimiento el {{date}}.",
+    "contextNoDate": "{{title}} se cerró por vencimiento.",
+    "options": {
+      "filled_hockia": "Sí, con alguien de Hockia",
+      "filled_elsewhere": "Sí, con otra persona",
+      "still_looking": "No, seguimos buscando",
+      "stopped_looking": "No, dejamos de buscar"
+    },
+    "save": "Guardar respuesta"
+  },
+  "reportProblem": {
+    "link": "Reportar un problema"
   }
 }
