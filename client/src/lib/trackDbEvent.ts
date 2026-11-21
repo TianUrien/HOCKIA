@@ -29,15 +29,21 @@ export function trackDbEvent(
       merged = properties ?? {}
     }
   }
-  void Promise.resolve(
-    supabase
-      .rpc('track_event', {
-        p_event_name: eventName,
-        p_entity_type: (entityType ?? null) as string | undefined,
-        p_entity_id: (entityId ?? null) as string | undefined,
-        p_properties: merged as unknown as undefined,
-      })
-  ).then(() => {}).catch(() => {})
+  // "Never throws" includes the call itself: building the request can fail
+  // synchronously (no client yet), and tracking must not break the screen.
+  try {
+    void Promise.resolve(
+      supabase
+        .rpc('track_event', {
+          p_event_name: eventName,
+          p_entity_type: (entityType ?? null) as string | undefined,
+          p_entity_id: (entityId ?? null) as string | undefined,
+          p_properties: merged as unknown as undefined,
+        })
+    ).then(() => {}).catch(() => {})
+  } catch {
+    /* tracking is best effort */
+  }
 
   // Mirror to PostHog (consent-gated inside; no-ops when unavailable) so the
   // funnel builder and experiments see the SAME taxonomy as the database.

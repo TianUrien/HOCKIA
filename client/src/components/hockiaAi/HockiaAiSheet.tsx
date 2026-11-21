@@ -25,6 +25,8 @@ import { ApplyFlow } from './ApplyFlow'
 import { ChatHistory } from './ChatHistory'
 import { NextStepPlan, NextSteps } from './NextSteps'
 import { useNextSteps } from './useNextSteps'
+import { useHockiaAiSuggestion } from './hockiaAiSuggestionStore'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 import { useAiContextChip } from './useAiContextChip'
 import { aiContextChipLabel, goalIntro } from '@/lib/hockiaAiContext'
 import { RoleApplyActionContext } from '@/components/discover/roleApplyAction'
@@ -123,6 +125,30 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   const stepping = mode === 'steps' && canBuild && step !== null
   const plan = canBuild && !roleContext && nextSteps && nextSteps.length > 0 ? nextSteps : null
   const special = builder || applying || history || stepping
+  // What lit the dot (founder 2026-11-21): shown first, with the one action that deals with it.
+  const news = useHockiaAiSuggestion((s) => s.shown)
+  const actOnNews = () => {
+    if (!news) return
+    void hapticSelection()
+    trackDbEvent('hockia_ai_suggestion_click', undefined, undefined, { kind: news.kind })
+    if (news.kind === 'profile_step') { startStep(news.step); return }
+    close()
+    navigate('/opportunities')
+  }
+  // A missing photo or bio is already the recommended row of the plan card under it: no second row for the same thing.
+  const newsCard = news && !roleContext && !(news.kind === 'profile_step' && plan) ? (
+    <button type="button" onClick={actOnNews} className="flex min-h-[56px] w-full items-center gap-3 rounded-[16px] bg-brand-soft px-4 py-3 text-left" data-testid="hockia-ai-news" data-kind={news.kind}>
+      <span className="min-w-0 flex-1">
+        <span className="block text-caption font-semibold tracking-[0.04em] text-brand-primary">{t('suggestion.eyebrow')}</span>
+        <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">
+          {news.kind === 'applicants_waiting' ? t('suggestion.applicants', { count: news.count }) : news.kind === 'new_opportunities' ? t('suggestion.opportunities', { count: news.count }) : t(`suggestion.${news.step}`)}
+        </span>
+      </span>
+      <span className="shrink-0 text-[15px] font-semibold text-brand-primary">
+        {news.kind === 'applicants_waiting' ? t('suggestion.applicantsCta') : news.kind === 'new_opportunities' ? t('suggestion.opportunitiesCta') : t(`suggestion.${news.step}Cta`)}
+      </span>
+    </button>
+  ) : null
   const startBuilder = () => { void hapticSelection(); setMode('builder') }
   const hasMessages = messages.length > 0
   // Context chip (rebrand page 17): what Hockia AI is looking at; ✕ = this chat only.
@@ -386,6 +412,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
                 </div>
               )}
               {chip}
+              {newsCard}
               {roleContext ? (
                 <>
                   {roleChip}
@@ -395,7 +422,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
                 optionRows ? (
                   <>
                     {planCard}
-                    {optionRows.slice(0, 3).map(optionRow)}
+                    {/* The medium sheet has room for three rows under one card; with the news row and the plan card, one. */}
+                    {optionRows.slice(0, newsCard && planCard ? 1 : 3).map(optionRow)}
                   </>
                 ) : (
                   <>
@@ -413,6 +441,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
               <h2 className="mt-3 text-[26px] font-bold leading-8 tracking-[-0.01em] text-ink-1">{firstName ? t('sheet.greetingNamed', { name: firstName }) : t('sheet.greeting')}</h2>
               <p className="mt-2 max-w-[340px] text-[16px] leading-[22px] text-ink-2">{t('sheet.tagline')}</p>
               {chip && <div className="mt-4 flex justify-center">{chip}</div>}
+              {newsCard && <div className="mt-5 w-full">{newsCard}</div>}
               {roleContext && <div className="mt-5 flex w-full flex-col gap-2.5">{roleChip}{roleSuggestions.map(roleSuggestion)}</div>}
               {!roleContext && (planCard ?? (optionRows ? null : buildChip)) && <div className="mt-5 w-full text-left">{planCard ?? buildChip}</div>}
               {!roleContext && optionRows && <div className={cn('flex w-full flex-col gap-2.5 text-left', planCard ? 'mt-2.5' : 'mt-5')} data-testid="hockia-ai-options">{optionRows.map(optionRow)}</div>}
