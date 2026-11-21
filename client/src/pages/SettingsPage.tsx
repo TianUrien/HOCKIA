@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { HockiaHelpLine } from '@/components/HockiaHelpLine'
 import {
   Mail,
   Lock,
@@ -1046,6 +1047,7 @@ export default function SettingsPage() {
                   label={t('links.contactSupport')} 
                   external 
                 />
+                <HockiaHelpLine moment="settings_help" className="mt-2" />
               </div>
             )}
           </div>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { HockiaHelpLine } from '@/components/HockiaHelpLine'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import { ChevronRight, Clock, Search, X } from 'lucide-react'
@@ -228,9 +229,12 @@ export function SearchV2Screen() {
           ))}
         </ul>
       ) : rows.length === 0 ? (
-        <p className="px-4 py-10 text-center text-row text-ink-2" data-testid="search-v2-empty">
-          {noMembersLabel(settled)}
-        </p>
+        <div className="px-4 py-10 text-center">
+          <p className="text-row text-ink-2" data-testid="search-v2-empty">
+            {noMembersLabel(settled)}
+          </p>
+          <HockiaHelpLine moment="search_empty" className="mt-3" />
+        </div>
       ) : (
         <>
           {/* Inset dividers start at the text (16 + 48 + 12 = 76px). */}

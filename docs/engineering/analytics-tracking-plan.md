@@ -285,6 +285,8 @@ Source: `docs/product/proposals/recruiter-satisfaction.md`, phase 2 (founder rul
 | `role_outcome_asked` | opportunity | `via: close \| expiry` | The close sheet opens, or the "Closed. Did you fill it?" banner is shown for a role that closed on its own |
 | `role_outcome_answered` | opportunity | `via`, `outcome: filled_hockia \| filled_elsewhere \| still_looking \| stopped_looking \| skipped`, `named_person: boolean`, `dismiss_count: 0 \| 1 \| 2` | The answer is saved, or the banner is closed with the X (`outcome: skipped`, `dismiss_count` 1 or 2) |
 | `report_problem_open` | none | `surface: recruiter_roles \| applicants` | "Report a problem" is tapped on a recruiting screen |
+| `help_moment_shown` | none | `moment: error_screen \| route_error \| search_empty \| ai_no_result \| settings_help \| feedback_form`, `screen` (the route pattern: only the fixed words of the route table, every other segment as `:id`, so no id, username, slug or token) | The "Ask Hockia" line is on screen; once per moment and screen per page load. Only fires when the member can open that chat (added 2026-11-21) |
+| `help_moment_open` | none | `moment`, `screen` | "Ask Hockia" is tapped and the chat with the Hockia account opens |
 
 The answer itself lives in `role_outcome_answers` (one row per role; recruiter and admins only). The event never carries who was signed, only whether a person was named. Answer rate = `role_outcome_answered` with an outcome other than `skipped`, over `role_outcome_asked`, per `via`.
 
