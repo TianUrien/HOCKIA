@@ -592,9 +592,9 @@
   "campaigns": {
     "none": "Todavía no tienes campañas. Una campaña lleva tu marca a las personas para las que es.",
     "error": "No pude leer tus campañas en este momento. Intenta de nuevo en un rato.",
-    "leadLive_one": "Tienes {{count}} campaña publicada. Así va.",
-    "leadLive_other": "Tienes {{count}} campañas publicadas. Así van.",
-    "leadLive_many": "Tienes {{count}} campañas publicadas. Así van.",
+    "leadLive_one": "Tienes {{count}} campaña publicada.",
+    "leadLive_other": "Tienes {{count}} campañas publicadas.",
+    "leadLive_many": "Tienes {{count}} campañas publicadas.",
     "leadEnded": "Ahora no hay nada publicado. Así les fue a tus últimas campañas.",
     "endedOn": "Terminó el {{date}}",
     "notUseful": "No útil",
@@ -604,6 +604,12 @@
     "source": "Estos números salen de tus resultados, no de una estimación. Cada uno cuenta integrantes distintos.",
     "reading_one": "Hasta ahora se mostró a {{shown}} integrante; {{opened}} la abrieron.",
     "reading_other": "Hasta ahora se mostró a {{shown}} integrantes; {{opened}} la abrieron.",
-    "reading_many": "Hasta ahora se mostró a {{shown}} integrantes; {{opened}} la abrieron."
+    "reading_many": "Hasta ahora se mostró a {{shown}} integrantes; {{opened}} la abrieron.",
+    "leadPaused_one": "Ahora no hay nada publicado. Tienes {{count}} campaña pausada.",
+    "leadPaused_other": "Ahora no hay nada publicado. Tienes {{count}} campañas pausadas.",
+    "leadPaused_many": "Ahora no hay nada publicado. Tienes {{count}} campañas pausadas.",
+    "leadSome_one": "Acá va {{count}} de tus {{total}} campañas.",
+    "leadSome_other": "Acá van {{count}} de tus {{total}} campañas.",
+    "leadSome_many": "Acá van {{count}} de tus {{total}} campañas."
   }
 }

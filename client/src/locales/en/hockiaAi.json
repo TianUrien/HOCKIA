@@ -571,8 +571,8 @@
   "campaigns": {
     "none": "You have no campaigns yet. A campaign brings your brand to the members it is for.",
     "error": "I could not read your campaigns right now. Try again in a moment.",
-    "leadLive_one": "You have {{count}} live campaign. Here is where it stands.",
-    "leadLive_other": "You have {{count}} live campaigns. Here is where they stand.",
+    "leadLive_one": "You have {{count}} live campaign.",
+    "leadLive_other": "You have {{count}} live campaigns.",
     "leadEnded": "Nothing is live right now. Here is how your last campaigns went.",
     "endedOn": "Ended {{date}}",
     "notUseful": "Not useful",
@@ -581,6 +581,10 @@
     "all": "All campaigns",
     "source": "These numbers come from your results, not from a guess. Each one counts different members.",
     "reading_one": "Shown to {{shown}} member so far; {{opened}} opened it.",
-    "reading_other": "Shown to {{shown}} members so far; {{opened}} opened it."
+    "reading_other": "Shown to {{shown}} members so far; {{opened}} opened it.",
+    "leadPaused_one": "Nothing is live right now. You have {{count}} paused campaign.",
+    "leadPaused_other": "Nothing is live right now. You have {{count}} paused campaigns.",
+    "leadSome_one": "Here is {{count}} of your {{total}} campaigns.",
+    "leadSome_other": "Here are {{count}} of your {{total}} campaigns."
   }
 }

@@ -21,6 +21,8 @@ import {
   campaignCount,
   campaignHeadline,
   isFewer,
+  isLinkOnly,
+  campaignAudience,
   campaignRanDays,
   closingLine,
   daysLeftLine,
@@ -133,7 +135,8 @@ export function Report({ offer, countryNames, waiting, onMessages, onResults, on
   const started = offer.live_at !== null
   const ran = campaignRanDays(offer)
   const small = started && isSmallAudience(offer)
-  const nobody = started && offer.shown === 0
+  const nobody = started && campaignAudience(offer) === 0
+  const linkOnly = started && !small && isLinkOnly(offer)
   const talks = objective === 'ask' || objective === 'ambassador'
   const period = started
     ? [shortDate(offer.starts_at ?? offer.live_at ?? offer.created_at), offer.ended_at ?? offer.ends_at ? shortDate(offer.ended_at ?? (offer.ends_at as string)) : null].filter(Boolean).join(' – ')
@@ -178,7 +181,7 @@ export function Report({ offer, countryNames, waiting, onMessages, onResults, on
             {small ? (
               <>
                 <p className="mt-1 font-display text-[28px] font-bold leading-tight tracking-[-0.02em] text-ink-1" data-testid="campaign-report-number">{t('campaignReport.fewer', { n: SMALL_AUDIENCE })}</p>
-                <p className="mt-2 text-row text-ink-2" data-testid="campaign-report-small">{t('campaignReport.small', { n: SMALL_AUDIENCE })}</p>
+                <p className="mt-2 text-row text-ink-2" data-testid="campaign-report-small">{ended ? t('campaignReport.smallEnded', { n: SMALL_AUDIENCE }) : t('campaignReport.small', { n: SMALL_AUDIENCE })}</p>
               </>
             ) : (
               <>
@@ -186,7 +189,8 @@ export function Report({ offer, countryNames, waiting, onMessages, onResults, on
                   <span className={cn('font-display font-bold leading-none tracking-[-0.03em] text-ink-1', isFewer(headline.n) ? 'text-[28px]' : 'text-[44px]')} data-testid="campaign-report-number">{campaignCount(headline.n)}</span>
                   <span className="text-body text-ink-2">{t(`campaignReport.headline.${headline.key}`, { count: isFewer(headline.n) ? SMALL_AUDIENCE : headline.n })}</span>
                 </p>
-                {nobody ? <p className="mt-2 text-row text-ink-2" data-testid="campaign-report-nobody">{t('campaignReport.nobody')}</p> : null}
+                {nobody ? <p className="mt-2 text-row text-ink-2" data-testid="campaign-report-nobody">{ended ? t('campaignReport.nobodyEnded') : t('campaignReport.nobody')}</p> : null}
+                {linkOnly ? <p className="mt-2 text-row text-ink-2" data-testid="campaign-report-link-only">{t('campaignReport.linkOnly')}</p> : null}
               </>
             )}
           </section>

@@ -349,7 +349,7 @@ describe('Hockia AI sheet — three choices per role (rebrand page 17)', () => {
     expect(screen.getByTestId('campaign-desk-stub')).toBeInTheDocument()
     expect(sendMessage).not.toHaveBeenCalled()
     // It stays in the sheet: the route did not change.
-    expect(screen.getByTestId('where')).not.toHaveTextContent('/dashboard/results')
+    expect(screen.getByTestId('where')).toHaveTextContent('/home')
   })
 
   it('an umpire starts with "Add my latest match", which opens the Add editor', () => {

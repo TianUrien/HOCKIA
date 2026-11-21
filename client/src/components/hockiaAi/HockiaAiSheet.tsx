@@ -86,6 +86,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     if (topic) setAiOffer({ answerId: answer.id, topic })
   }, [revealId, isPending, messages, aiOffer])
   const [moreOpen, setMoreOpen] = useState(false)
+  // The campaign the dot announced: it must be among the cards when the brand taps through.
+  const [deskFocus, setDeskFocus] = useState<string | null>(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [drag, setDrag] = useState(0)
   const dragStart = useRef<number | null>(null)
@@ -134,7 +136,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     void hapticSelection()
     trackDbEvent('hockia_ai_suggestion_click', undefined, undefined, { kind: news.kind })
     if (news.kind === 'profile_step') { startStep(news.step); return }
-    if (news.kind === 'campaign_ended') { setMode('campaigns'); return }
+    if (news.kind === 'campaign_ended') { setDeskFocus(news.id); setMode('campaigns'); return }
     close()
     navigate('/opportunities')
   }
@@ -282,7 +284,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   const runOption = (o: RoleOption) => {
     if (o.action.type === 'ask') send(o.action.query, o.action.shown)
     else if (o.action.type === 'builder') startBuilder()
-    else if (o.action.type === 'campaigns') { void hapticSelection(); setMode('campaigns') }
+    else if (o.action.type === 'campaigns') { void hapticSelection(); setDeskFocus(null); setMode('campaigns') }
     else { close(); navigate(o.action.to) }
   }
   const optionRows = roleOptions?.map((o) => ({ eyebrow: o.eyebrow, label: o.label, run: () => runOption(o) })) ?? null
@@ -400,7 +402,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
             onFindSimilar={(q, shown) => { setMode('chat'); setTimeout(() => send(q, shown), 0) }}
           />
         ) : campaigning ? (
-          <CampaignDesk onGo={(to) => { close(); navigate(to) }} />
+          <CampaignDesk focusId={deskFocus} onGo={(to) => { close(); navigate(to) }} />
         ) : builder ? <ProfileBuilder onClose={close} /> : (<>
         <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', panel ? 'px-6' : 'px-4')}>
           {(!large || (panel && !hasMessages)) && (

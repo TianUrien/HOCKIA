@@ -1214,6 +1214,7 @@
     "closingRan_one": "Duró {{count}} día.",
     "closingRan_other": "Duró {{count}} días.",
     "closingRan_many": "Duró {{count}} días.",
+    "closingTakenDown": "Hockia retiró esta campaña antes de su fecha de fin.",
     "closingRanUnderDay": "Duró menos de un día.",
     "closingShown_one": "Se mostró a {{n}} integrante",
     "closingShown_other": "Se mostró a {{n}} integrantes",
@@ -1225,6 +1226,12 @@
       "asked": "Menos de {{n}} te escribieron.",
       "applied": "Menos de {{n}} se postularon.",
       "store": "Menos de {{n}} fueron a tu tienda."
-    }
+    },
+    "smallEnded": "La vieron menos de {{n}} integrantes, así que no se muestran sus números.",
+    "nobodyEnded": "No la vio nadie.",
+    "linkOnly": "Todavía no se mostró dentro de Hockia. Las personas que aparecen acá la abrieron desde un enlace.",
+    "closingLinkOnly_one": "No se mostró dentro de Hockia; {{n}} integrante la abrió desde un enlace.",
+    "closingLinkOnly_other": "No se mostró dentro de Hockia; {{n}} integrantes la abrieron desde un enlace.",
+    "closingLinkOnly_many": "No se mostró dentro de Hockia; {{n}} integrantes la abrieron desde un enlace."
   }
 }

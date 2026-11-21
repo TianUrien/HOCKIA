@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -16,7 +16,9 @@ import {
   closingLine,
   isSmallAudience,
   daysLeftLine,
+  deskCampaignTotal,
   deskCampaigns,
+  isLinkOnly,
   offerShownFields,
   shortDate,
   type BrandOffer,
@@ -40,6 +42,8 @@ function Turn({ children }: { children: React.ReactNode }) {
 interface CampaignDeskProps {
   /** Leaves the sheet for a screen. */
   onGo: (to: string) => void
+  /** The campaign the member came to see (the one the dot announced): always the first card. */
+  focusId?: string | null
 }
 
 /**
@@ -50,24 +54,36 @@ interface CampaignDeskProps {
  * brand's own results and every sentence is a template, so it cannot invent a
  * number and it does not use one of the day's questions.
  */
-export function CampaignDesk({ onGo }: CampaignDeskProps) {
+export function CampaignDesk({ onGo, focusId = null }: CampaignDeskProps) {
   const t = useHockiaAiT()
   const tb = useBrandsT()
   const { offers, isLoading, isError } = useMyBrandOffers(true)
   const results = useQuery({ queryKey: ['brand-results', 90], queryFn: () => fetchBrandResults(90), staleTime: 60_000 })
-  const cards = deskCampaigns(offers)
+  const cards = deskCampaigns(offers, focusId)
   const waiting = results.data?.waiting.count ?? 0
+  const total = deskCampaignTotal(offers)
   const liveCount = offers.filter((o) => o.status === 'live').length
+  const pausedCount = offers.filter((o) => o.status === 'paused').length
+  // A failed refresh with campaigns already in hand still shows them; the error line is for having nothing to show.
+  const failed = isError && cards.length === 0
 
-  useEffect(() => { trackDbEvent('hockia_ai_campaigns_view') }, [])
+  // "The cards were shown": once, when there are cards on screen.
+  const reported = useRef(false)
+  useEffect(() => {
+    if (reported.current || isLoading || cards.length === 0) return
+    reported.current = true
+    trackDbEvent('hockia_ai_campaigns_view', undefined, undefined, { cards: cards.length })
+  }, [isLoading, cards.length])
 
-  const lead = isError
+  const lead = failed
     ? t('campaigns.error')
     : cards.length === 0
       ? t('campaigns.none')
-      : liveCount > 0
-        ? t('campaigns.leadLive', { count: liveCount })
-        : t('campaigns.leadEnded')
+      : [
+          liveCount > 0 ? t('campaigns.leadLive', { count: liveCount }) : pausedCount > 0 ? t('campaigns.leadPaused', { count: pausedCount }) : t('campaigns.leadEnded'),
+          // Never "5 live campaigns" above three cards without saying so.
+          total > cards.length ? t('campaigns.leadSome', { count: cards.length, total }) : null,
+        ].filter(Boolean).join(' ')
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 lg:px-6" data-testid="hockia-ai-campaigns">
@@ -91,7 +107,7 @@ export function CampaignDesk({ onGo }: CampaignDeskProps) {
                 <button type="button" onClick={() => onGo('/dashboard/offers/new')} className="inline-flex h-11 items-center rounded-full bg-brand-soft px-5 text-body font-semibold text-brand-primary" data-testid="hockia-ai-campaigns-new">{t('campaigns.new')}</button>
                 {cards.length > 0 ? <button type="button" onClick={() => onGo('/dashboard/offers')} className="inline-flex h-11 items-center px-2 text-body font-semibold text-ink-2">{t('campaigns.all')}</button> : null}
               </div>
-              <p className="mt-3 text-caption text-ink-3">{t('campaigns.source')}</p>
+              {cards.length > 0 ? <p className="mt-3 text-caption text-ink-3" data-testid="hockia-ai-campaigns-source">{t('campaigns.source')}</p> : null}
             </>
           )}
         </Turn>
@@ -153,14 +169,16 @@ export function CampaignChatCard({ offer, onGo }: { offer: BrandOffer; onGo: (to
           ? closingLine(offer, campaignRanDays(offer), headline)
           : small
             ? tb('campaignReport.small', { n: SMALL_AUDIENCE })
-            : offer.shown === 0
-              ? tb('campaignReport.nobody')
-              : t('campaigns.reading', { count: offer.shown, shown: brandCount(offer.shown), opened: isFewer(offer.opened) ? tb('offers.counts.fewerN', { n: SMALL_AUDIENCE }) : brandCount(offer.opened) })}
+            : isLinkOnly(offer)
+              ? tb('campaignReport.linkOnly')
+              : offer.shown === 0
+                ? tb('campaignReport.nobody')
+                : t('campaigns.reading', { count: offer.shown, shown: brandCount(offer.shown), opened: isFewer(offer.opened) ? tb('offers.counts.fewerN', { n: SMALL_AUDIENCE }) : brandCount(offer.opened) })}
       </p>
 
       <div className="mt-3 flex items-center gap-2">
-        <button type="button" onClick={() => onGo(`/dashboard/offers/${offer.id}/report`)} className="inline-flex h-10 items-center rounded-full bg-brand-soft px-4 text-row font-semibold text-brand-primary" data-testid="hockia-ai-campaign-report">{t('campaigns.report')}</button>
-        {ended ? null : <button type="button" onClick={() => onGo(`/dashboard/offers/${offer.id}/edit`)} className="inline-flex h-10 items-center px-2 text-row font-semibold text-ink-2">{tb('campaignReport.edit')}</button>}
+        <button type="button" onClick={() => onGo(`/dashboard/offers/${offer.id}/report`)} className="inline-flex h-11 items-center rounded-full bg-brand-soft px-4 text-row font-semibold text-brand-primary" data-testid="hockia-ai-campaign-report">{t('campaigns.report')}</button>
+        {ended ? null : <button type="button" onClick={() => onGo(`/dashboard/offers/${offer.id}/edit`)} className="inline-flex h-11 items-center px-2 text-row font-semibold text-ink-2">{tb('campaignReport.edit')}</button>}
       </div>
     </div>
   )
