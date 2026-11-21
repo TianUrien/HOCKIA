@@ -108,7 +108,7 @@ export function OfferEditor({ offer, initial, brandName, openToPartners = false,
     onSave(f, true)
   }
 
-  const preview = <CampaignPreview fields={f} brandName={brandName} need={need} countryNames={countryNames} />
+  const preview = <CampaignPreview fields={f} brandName={brandName} countryNames={countryNames} />
 
   const actions = (
     <div className="space-y-2">

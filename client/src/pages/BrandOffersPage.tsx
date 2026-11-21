@@ -68,6 +68,13 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
   const [needDraft, setNeedDraft] = useState<Need | null>(null)
   // Desktop keeps the editor beside the list; null = nothing open.
   const [deskOpen, setDeskOpen] = useState<string | 'new' | null>(null)
+  // Desktop keeps the editor in page state, so a link to /dashboard/offers/new or
+  // /:id/edit (the report's Edit and Run again, a notification) opens it here too.
+  useEffect(() => {
+    if (isPhone) return
+    if (mode === 'new') setDeskOpen('new')
+    else if (mode === 'edit' && offerId) setDeskOpen(offerId)
+  }, [isPhone, mode, offerId])
   // A different offer (or a new one) starts from its own saved need.
   useEffect(() => { setNeedDraft(null) }, [offerId, mode, deskOpen])
 
@@ -93,7 +100,11 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
   const openReport = (o: BrandOffer) => navigate(`/dashboard/offers/${o.id}/report`)
   // An ended campaign cannot be edited: its row opens what it did.
   const openRow = (o: BrandOffer) => (o.status === 'ended' ? openReport(o) : openEdit(o))
-  const closeEditor = () => (isPhone ? navigate('/dashboard/offers', { replace: true }) : setDeskOpen(null))
+  const closeEditor = () => {
+    if (!isPhone) setDeskOpen(null)
+    // Leave the edit or new address, on desktop too, so closing does not reopen it.
+    if (isPhone || mode !== 'list') navigate('/dashboard/offers', { replace: true })
+  }
 
   const doSave = async (id: string | null, current: BrandOffer | null, fields: OfferFields, submit: boolean) => {
     // A new go-live would pass the limit: say so before sending (B1-limit).

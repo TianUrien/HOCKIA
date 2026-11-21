@@ -42,7 +42,8 @@
       "contacted_one": "{{n}} contacted",
       "contacted_other": "{{n}} contacted",
       "notUseful_one": "{{n}} not useful",
-      "notUseful_other": "{{n}} not useful"
+      "notUseful_other": "{{n}} not useful",
+      "fewer": "Fewer than {{n}} members have seen it"
     },
     "daysAgo": {
       "recently": "recently",
@@ -1117,8 +1118,9 @@
     "page": "Page",
     "aiAnswer": "Hockia AI answers the member’s question here. Your campaign never changes the answer.",
     "homeNote": "On Home, after the first post, for members it is for.",
-    "aiNote": "Under a Hockia AI answer, only when a member asks about this topic.",
-    "pageNote": "The page a member opens. The main button follows what you want them to do."
+    "aiNote": "Under a Hockia AI answer, when a member asks about gear, kit, training, camps, physio or moving abroad and your campaign is for them. The line names what they asked.",
+    "pageNote": "The page a member opens. The main button follows what you want them to do.",
+    "aiReason": "Shown because of what the member asked. It did not change the answer."
   },
   "campaignReport": {
     "title": "Campaign report",
@@ -1128,8 +1130,6 @@
     "notStarted": "This campaign has not been published yet, so there is nothing to report.",
     "edit": "Edit campaign",
     "seeAsMembers": "See it as members do",
-    "waiting_one": "{{n}} person is waiting for your reply",
-    "waiting_other": "{{n}} people are waiting for your reply",
     "reply": "Reply",
     "headlineEyebrow": "What this campaign is for",
     "headline": {
@@ -1140,7 +1140,7 @@
       "store_one": "member went to your store",
       "store_other": "members went to your store"
     },
-    "small": "Fewer than {{n}} members have seen it so far. The numbers say little until more do.",
+    "small": "Fewer than {{n}} members have seen it so far. Counts appear once {{n}} have, so nobody’s actions can be told apart.",
     "didEyebrow": "What members did",
     "rows": {
       "shown": "Shown to",
@@ -1152,11 +1152,7 @@
       "notUseful": "Marked not useful"
     },
     "rowsNote": "Each number counts different members, for the whole campaign. You never see who, except the people who write to you.",
-    "contactsEyebrow": "Who wrote to you",
-    "member": "Member",
-    "message": "Message",
     "closingEyebrow": "How it went",
-    "closing": "It ran {{days}} days. It was shown to {{shown}} members and {{opened}} opened it.",
     "closingHeadline": {
       "asked_one": "{{n}} wrote to you.",
       "asked_other": "{{n}} wrote to you.",
@@ -1164,6 +1160,21 @@
       "applied_other": "{{n}} applied.",
       "store_one": "{{n}} went to your store.",
       "store_other": "{{n}} went to your store."
-    }
+    },
+    "fewer": "Fewer than {{n}}",
+    "nobody": "Nobody has seen it yet.",
+    "neverLive": "This campaign ended without being published, so there is nothing to report.",
+    "error": "The report could not be loaded. Check your connection and try again.",
+    "retry": "Try again",
+    "inbox_one": "In your inbox: {{n}} person is waiting for a reply",
+    "inbox_other": "In your inbox: {{n}} people are waiting for a reply",
+    "whoWrote": "See who wrote to you in Results",
+    "closingRan_one": "It ran {{count}} day.",
+    "closingRan_other": "It ran {{count}} days.",
+    "closingRanUnderDay": "It ran less than a day.",
+    "closingShown_one": "It was shown to {{n}} member",
+    "closingShown_other": "It was shown to {{n}} members",
+    "closingOpened_one": "and {{n}} opened it.",
+    "closingOpened_other": "and {{n}} opened it."
   }
 }

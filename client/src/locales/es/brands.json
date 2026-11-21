@@ -48,7 +48,8 @@
       "contacted_many": "{{n}} contactos",
       "notUseful_one": "{{n}} no útil",
       "notUseful_other": "{{n}} no útiles",
-      "notUseful_many": "{{n}} no útiles"
+      "notUseful_many": "{{n}} no útiles",
+      "fewer": "La vieron menos de {{n}} integrantes"
     },
     "daysAgo": {
       "recently": "hace poco",
@@ -1151,8 +1152,9 @@
     "page": "Página",
     "aiAnswer": "Acá Hockia AI responde la pregunta de la persona. Tu campaña nunca cambia la respuesta.",
     "homeNote": "En Inicio, después de la primera publicación, para quienes va dirigida.",
-    "aiNote": "Debajo de una respuesta de Hockia AI, solo cuando alguien pregunta por este tema.",
-    "pageNote": "La página que abre cada integrante. El botón principal sigue lo que quieres que haga."
+    "aiNote": "Debajo de una respuesta de Hockia AI, cuando alguien pregunta por equipamiento, indumentaria, entrenamiento, campus, fisio o mudarse al exterior y tu campaña es para esa persona. La línea nombra lo que preguntó.",
+    "pageNote": "La página que abre cada integrante. El botón principal sigue lo que quieres que haga.",
+    "aiReason": "Se muestra por lo que preguntó la persona. No cambió la respuesta."
   },
   "campaignReport": {
     "title": "Informe de la campaña",
@@ -1162,9 +1164,6 @@
     "notStarted": "Esta campaña todavía no se publicó, así que no hay nada que informar.",
     "edit": "Editar campaña",
     "seeAsMembers": "Verla como la comunidad",
-    "waiting_one": "{{n}} persona espera tu respuesta",
-    "waiting_other": "{{n}} personas esperan tu respuesta",
-    "waiting_many": "{{n}} personas esperan tu respuesta",
     "reply": "Responder",
     "headlineEyebrow": "Para qué es esta campaña",
     "headline": {
@@ -1178,7 +1177,7 @@
       "store_other": "integrantes fueron a tu tienda",
       "store_many": "integrantes fueron a tu tienda"
     },
-    "small": "Todavía la vieron menos de {{n}} integrantes. Los números dicen poco hasta que la vean más.",
+    "small": "Todavía la vieron menos de {{n}} integrantes. Los números aparecen cuando lleguen a {{n}}, para que no se pueda distinguir qué hizo cada persona.",
     "didEyebrow": "Qué hizo la comunidad",
     "rows": {
       "shown": "Mostrada a",
@@ -1190,11 +1189,7 @@
       "notUseful": "La marcaron como no útil"
     },
     "rowsNote": "Cada número cuenta integrantes distintos, en toda la campaña. Nunca ves quiénes, salvo las personas que te escriben.",
-    "contactsEyebrow": "Quiénes te escribieron",
-    "member": "Integrante",
-    "message": "Mensaje",
     "closingEyebrow": "Cómo le fue",
-    "closing": "Duró {{days}} días. Se mostró a {{shown}} integrantes y {{opened}} la abrieron.",
     "closingHeadline": {
       "asked_one": "{{n}} te escribió.",
       "asked_other": "{{n}} te escribieron.",
@@ -1205,6 +1200,25 @@
       "store_one": "{{n}} fue a tu tienda.",
       "store_other": "{{n}} fueron a tu tienda.",
       "store_many": "{{n}} fueron a tu tienda."
-    }
+    },
+    "fewer": "Menos de {{n}}",
+    "nobody": "Todavía no la vio nadie.",
+    "neverLive": "Esta campaña finalizó sin publicarse, así que no hay nada que informar.",
+    "error": "No se pudo cargar el informe. Revisa tu conexión e intenta de nuevo.",
+    "retry": "Reintentar",
+    "inbox_one": "En tu bandeja: {{n}} persona espera respuesta",
+    "inbox_other": "En tu bandeja: {{n}} personas esperan respuesta",
+    "inbox_many": "En tu bandeja: {{n}} personas esperan respuesta",
+    "whoWrote": "Ver quiénes te escribieron en Resultados",
+    "closingRan_one": "Duró {{count}} día.",
+    "closingRan_other": "Duró {{count}} días.",
+    "closingRan_many": "Duró {{count}} días.",
+    "closingRanUnderDay": "Duró menos de un día.",
+    "closingShown_one": "Se mostró a {{n}} integrante",
+    "closingShown_other": "Se mostró a {{n}} integrantes",
+    "closingShown_many": "Se mostró a {{n}} integrantes",
+    "closingOpened_one": "y {{n}} la abrió.",
+    "closingOpened_other": "y {{n}} la abrieron.",
+    "closingOpened_many": "y {{n}} la abrieron."
   }
 }

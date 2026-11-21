@@ -3,25 +3,15 @@ import { Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { shortDate, type OfferFields, type OfferRole } from '@/lib/brandOffers'
-import { hockiaAiReasonLine, offerForLine } from '@/lib/memberOffers'
-import type { Need } from '@/lib/marketplace'
+import { offerForLine } from '@/lib/memberOffers'
 import { useBrandsT } from '@/i18n/ns/brands'
 import { OfferPreviewCard, OfferThumb } from './OfferParts'
 
 type Place = 'home' | 'ai' | 'page'
 
-/** The Hockia AI topic a campaign's need answers to (the topics a card can follow). */
-const NEED_TOPIC: Record<Need, string> = {
-  gear: 'gear',
-  moving_abroad: 'moving abroad',
-  training_recovery: 'training',
-  for_clubs: 'kit',
-}
-
 interface CampaignPreviewProps {
   fields: OfferFields
   brandName: string
-  need?: Need | null
   /** Names of the campaign's countries, for the "For" line and the reason. */
   countryNames?: string[]
   className?: string
@@ -33,7 +23,7 @@ interface CampaignPreviewProps {
  * with the button its objective gives. A phone frame, because that is where
  * members see it. Everything here is inert: it is a preview.
  */
-export function CampaignPreview({ fields, brandName, need, countryNames = [], className }: CampaignPreviewProps) {
+export function CampaignPreview({ fields, brandName, countryNames = [], className }: CampaignPreviewProps) {
   const t = useBrandsT()
   const [place, setPlace] = useState<Place>('home')
   const title = fields.title?.trim() || t('offerParts.yourTitle')
@@ -77,7 +67,7 @@ export function CampaignPreview({ fields, brandName, need, countryNames = [], cl
               </div>
               <p className="mt-3 flex gap-2 rounded-[14px] bg-surface-subtle p-3 text-secondary text-ink-2">
                 <Info className="mt-px h-4 w-4 shrink-0 text-brand-primary" aria-hidden="true" />
-                {hockiaAiReasonLine(NEED_TOPIC[need ?? 'gear'], null)}
+                {t('campaignPreview.aiReason')}
               </p>
               <div className="mt-3 flex items-center justify-between">
                 <span className="inline-flex h-9 items-center rounded-full bg-brand-soft px-4 text-row font-semibold text-brand-primary">{t('offerParts.seeOffer')}</span>
@@ -134,8 +124,9 @@ export function CampaignPreview({ fields, brandName, need, countryNames = [], cl
 
 function PreviewButton({ primary = false, children }: { primary?: boolean; children: React.ReactNode }) {
   return (
-    <span className={cn('flex h-11 items-center justify-center rounded-full px-4 text-body font-semibold', primary ? 'bg-brand-primary text-white' : 'bg-brand-soft text-brand-primary')}>
-      <span className="truncate">{children}</span>
+    // Labels are long in some languages ("Postularse como embajador/a"): they wrap, never cut.
+    <span className={cn('flex min-h-[44px] items-center justify-center rounded-[22px] px-4 py-2 text-center text-body font-semibold leading-5', primary ? 'bg-brand-primary text-white' : 'bg-brand-soft text-brand-primary')}>
+      {children}
     </span>
   )
 }

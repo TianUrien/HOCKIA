@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import Header from '@/components/Header'
-import Avatar from '@/components/Avatar'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
@@ -12,15 +11,16 @@ import { useMyBrandOffers } from '@/hooks/useBrandOffers'
 import { useCountryNames } from '@/hooks/useCountryNames'
 import { useToastStore } from '@/lib/toast'
 import { cn } from '@/lib/utils'
-import { fetchBrandResults, roleLabelOne } from '@/lib/brandResults'
-import { fetchMyItemNeeds } from '@/lib/marketplace'
+import { fetchBrandResults } from '@/lib/brandResults'
 import {
   OFFER_OBJECTIVES,
   SMALL_AUDIENCE,
   audienceLine,
+  isSmallAudience,
   brandCount,
   campaignHeadline,
   campaignRanDays,
+  closingLine,
   daysLeftLine,
   offerErrorMessage,
   offerShownFields,
@@ -49,17 +49,17 @@ export default function CampaignReportPage() {
   const { offerId } = useParams()
   const role = useAuthStore((s) => s.profile?.role)
   const { brand } = useMyBrand()
-  const { offers, isLoading, duplicate } = useMyBrandOffers(role === 'brand')
+  const { offers, isLoading, isError, refetch, duplicate } = useMyBrandOffers(role === 'brand')
   const names = useCountryNames()
   const addToast = useToastStore((s) => s.addToast)
   const [preview, setPreview] = useState(false)
-  // Who wrote and who is waiting come from the brand's results (90 days covers any campaign window).
+  // The brand's inbox: conversations waiting for a reply, from any campaign or none.
   const results = useQuery({ queryKey: ['brand-results', 90], queryFn: () => fetchBrandResults(90), enabled: role === 'brand', staleTime: 60_000 })
-  const needs = useQuery({ queryKey: ['my-brand-item-needs'], queryFn: fetchMyItemNeeds, enabled: role === 'brand', staleTime: 60_000 })
 
   if (role && role !== 'brand') return <Navigate to="/dashboard/profile" replace />
   const offer = offers.find((o) => o.id === offerId) ?? null
-  if (!isLoading && !offer) return <Navigate to="/dashboard/offers" replace />
+  // An id that is not one of this brand's campaigns goes back to the list; a failed read says so instead.
+  if (!isLoading && !isError && !offer) return <Navigate to="/dashboard/offers" replace />
 
   const runAgain = async (o: BrandOffer) => {
     try {
@@ -76,14 +76,18 @@ export default function CampaignReportPage() {
       <DetailNavBar parent={t('offersPage.title')} title={t('campaignReport.title')} fallbackPath="/dashboard/offers" />
       <main className="mx-auto max-w-[720px] space-y-3 px-4 pb-28 pt-3 lg:pt-under-header-lg">
         <h1 className="hidden font-display text-[40px] font-bold leading-[1.1] tracking-[-0.035em] text-ink-1 lg:block">{t('campaignReport.title')}</h1>
-        {!offer ? <div className={cn(card, 'h-40 animate-pulse')} aria-busy="true" /> : (
+        {isError && !offer ? (
+          <div className={card} data-testid="campaign-report-error">
+            <p className="text-row text-ink-2">{t('campaignReport.error')}</p>
+            <Button variant="tonal" className="mt-3 rounded-full" onClick={() => void refetch()}>{t('campaignReport.retry')}</Button>
+          </div>
+        ) : !offer ? <div className={cn(card, 'h-40 animate-pulse')} aria-busy="true" /> : (
           <Report
             offer={offer}
             countryNames={names(offerShownFields(offer).country_ids)}
             waiting={results.data?.waiting.count ?? 0}
-            contacts={(results.data?.contacts ?? []).filter((c) => c.offer_title && c.offer_title === offer.title)}
             onMessages={() => navigate('/messages')}
-            onOpenContact={(conversationId, profileId) => navigate(conversationId ? `/messages?conversation=${conversationId}` : `/messages?new=${profileId}`)}
+            onResults={() => navigate('/dashboard/results')}
             onEdit={() => navigate(`/dashboard/offers/${offer.id}/edit`)}
             onPreview={() => setPreview(true)}
             onRunAgain={() => void runAgain(offer)}
@@ -96,7 +100,7 @@ export default function CampaignReportPage() {
         {offer ? (
           <div className="px-5 pb-4">
             <h2 className="mb-3 text-title text-ink-1">{t('campaignReport.seeAsMembers')}</h2>
-            <CampaignPreview fields={offerShownFields(offer)} brandName={brand?.name ?? t('offersPage.brandFallback')} need={needs.data?.get(offer.id) ?? null} countryNames={names(offerShownFields(offer).country_ids)} />
+            <CampaignPreview fields={offerShownFields(offer)} brandName={brand?.name ?? t('offersPage.brandFallback')} countryNames={names(offerShownFields(offer).country_ids)} />
           </div>
         ) : null}
       </BottomSheet>
@@ -107,18 +111,18 @@ export default function CampaignReportPage() {
 interface ReportProps {
   offer: BrandOffer
   countryNames: string[]
-  /** Conversations waiting for the brand's reply, across its campaigns. */
+  /** Conversations waiting for the brand's reply in its inbox: from any campaign or none, not this campaign's own number. */
   waiting: number
-  contacts: { profile_id: string; full_name: string | null; avatar_url: string | null; role: string; conversation_id: string | null }[]
   onMessages: () => void
-  onOpenContact: (conversationId: string | null, profileId: string) => void
+  /** Who wrote is read per brand (Results), not per campaign. */
+  onResults: () => void
   onEdit: () => void
   onPreview: () => void
   onRunAgain: () => void
   runningAgain: boolean
 }
 
-export function Report({ offer, countryNames, waiting, contacts, onMessages, onOpenContact, onEdit, onPreview, onRunAgain, runningAgain }: ReportProps) {
+export function Report({ offer, countryNames, waiting, onMessages, onResults, onEdit, onPreview, onRunAgain, runningAgain }: ReportProps) {
   const t = useBrandsT()
   const shown = offerShownFields(offer)
   const objective = shown.objective ?? 'offer'
@@ -126,7 +130,8 @@ export function Report({ offer, countryNames, waiting, contacts, onMessages, onO
   const ended = offer.status === 'ended'
   const started = offer.live_at !== null
   const ran = campaignRanDays(offer)
-  const small = started && offer.shown < SMALL_AUDIENCE
+  const small = started && isSmallAudience(offer)
+  const nobody = started && offer.shown === 0
   const talks = objective === 'ask' || objective === 'ambassador'
   const period = started
     ? [shortDate(offer.starts_at ?? offer.live_at ?? offer.created_at), offer.ended_at ?? offer.ends_at ? shortDate(offer.ended_at ?? (offer.ends_at as string)) : null].filter(Boolean).join(' – ')
@@ -161,27 +166,30 @@ export function Report({ offer, countryNames, waiting, contacts, onMessages, onO
 
       {!started ? (
         <section className={card} data-testid="campaign-report-not-started">
-          <p className="text-row text-ink-2">{t('campaignReport.notStarted')}</p>
-          <Button className="mt-3 rounded-full" onClick={onEdit}>{t('campaignReport.edit')}</Button>
+          <p className="text-row text-ink-2">{ended ? t('campaignReport.neverLive') : t('campaignReport.notStarted')}</p>
+          {ended ? null : <Button className="mt-3 rounded-full" onClick={onEdit}>{t('campaignReport.edit')}</Button>}
         </section>
       ) : (
         <>
-          {talks && waiting > 0 ? (
-            <button type="button" onClick={onMessages} className="flex w-full items-center justify-between gap-3 rounded-[20px] bg-status-warning-soft p-4 text-left" data-testid="campaign-report-waiting">
-              <span className="text-body font-semibold text-status-warning">{t('campaignReport.waiting', { count: waiting, n: brandCount(waiting) })}</span>
-              <span className="shrink-0 text-row font-semibold text-status-warning">{t('campaignReport.reply')}</span>
-            </button>
-          ) : null}
-
           <section className={card} data-testid="campaign-report-headline">
             <p className={eyebrow}>{t('campaignReport.headlineEyebrow')}</p>
-            <p className="mt-1 flex items-baseline gap-2">
-              <span className="font-display text-[44px] font-bold leading-none tracking-[-0.03em] text-ink-1" data-testid="campaign-report-number">{brandCount(headline.n)}</span>
-              <span className="text-body text-ink-2">{t(`campaignReport.headline.${headline.key}`, { count: headline.n })}</span>
-            </p>
-            {small ? <p className="mt-3 rounded-[14px] bg-surface-subtle p-3 text-row text-ink-2" data-testid="campaign-report-small">{t('campaignReport.small', { n: SMALL_AUDIENCE })}</p> : null}
+            {small ? (
+              <>
+                <p className="mt-1 font-display text-[28px] font-bold leading-tight tracking-[-0.02em] text-ink-1" data-testid="campaign-report-number">{t('campaignReport.fewer', { n: SMALL_AUDIENCE })}</p>
+                <p className="mt-2 text-row text-ink-2" data-testid="campaign-report-small">{t('campaignReport.small', { n: SMALL_AUDIENCE })}</p>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 flex items-baseline gap-2">
+                  <span className="font-display text-[44px] font-bold leading-none tracking-[-0.03em] text-ink-1" data-testid="campaign-report-number">{brandCount(headline.n)}</span>
+                  <span className="text-body text-ink-2">{t(`campaignReport.headline.${headline.key}`, { count: headline.n })}</span>
+                </p>
+                {nobody ? <p className="mt-2 text-row text-ink-2" data-testid="campaign-report-nobody">{t('campaignReport.nobody')}</p> : null}
+              </>
+            )}
           </section>
 
+          {small ? null : (
           <section className={card} data-testid="campaign-report-rows">
             <p className={eyebrow}>{t('campaignReport.didEyebrow')}</p>
             <ul className="mt-2 divide-y divide-line">
@@ -193,38 +201,26 @@ export function Report({ offer, countryNames, waiting, contacts, onMessages, onO
               ))}
             </ul>
             <p className="mt-2 text-caption text-ink-3">{t('campaignReport.rowsNote')}</p>
+            {talks ? <button type="button" onClick={onResults} className="mt-1 flex min-h-[44px] items-center text-row font-semibold text-brand-primary" data-testid="campaign-report-who">{t('campaignReport.whoWrote')}</button> : null}
           </section>
-
-          {contacts.length > 0 ? (
-            <section className={card} data-testid="campaign-report-contacts">
-              <p className={eyebrow}>{t('campaignReport.contactsEyebrow')}</p>
-              <ul className="mt-2 divide-y divide-line">
-                {contacts.map((c) => (
-                  <li key={c.profile_id} className="flex items-center gap-3 py-2.5">
-                    <Avatar src={c.avatar_url} alt={c.full_name ?? ''} role={c.role} size="md" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-body font-semibold text-ink-1">{c.full_name ?? t('campaignReport.member')}</span>
-                      <span className="block text-row text-ink-2">{roleLabelOne(c.role)}</span>
-                    </span>
-                    <button type="button" onClick={() => onOpenContact(c.conversation_id, c.profile_id)} className="flex h-11 shrink-0 items-center px-1 text-row font-semibold text-brand-primary">{t('campaignReport.message')}</button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
+          )}
 
           {ended ? (
             <section className={card} data-testid="campaign-report-closing">
               <p className={eyebrow}>{t('campaignReport.closingEyebrow')}</p>
-              <p className="mt-1 text-body text-ink-1">
-                {t('campaignReport.closing', { days: ran ?? 0, shown: brandCount(offer.shown), opened: brandCount(offer.opened) })}{' '}
-                {t(`campaignReport.closingHeadline.${headline.key}`, { count: headline.n, n: brandCount(headline.n) })}
-              </p>
+              <p className="mt-1 text-body text-ink-1">{closingLine(offer, ran, headline)}</p>
               <Button className="mt-3 rounded-full" onClick={onRunAgain} loading={runningAgain} data-testid="campaign-report-run-again">{t('offersPage.actions.runAgain')}</Button>
             </section>
           ) : null}
         </>
       )}
+
+      {waiting > 0 ? (
+        <button type="button" onClick={onMessages} className="flex w-full items-center justify-between gap-3 rounded-[20px] bg-status-warning-soft p-4 text-left" data-testid="campaign-report-inbox">
+          <span className="text-body font-semibold text-status-warning">{t('campaignReport.inbox', { count: waiting, n: brandCount(waiting) })}</span>
+          <span className="shrink-0 text-row font-semibold text-status-warning">{t('campaignReport.reply')}</span>
+        </button>
+      ) : null}
 
       <div className="flex flex-wrap gap-2 pt-1">
         <Button variant="tonal" className="rounded-full" onClick={onPreview} data-testid="campaign-report-preview">{t('campaignReport.seeAsMembers')}</Button>

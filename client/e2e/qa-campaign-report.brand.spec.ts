@@ -68,4 +68,36 @@ test.describe('campaign preview and report QA', () => {
     if (QA_PROBE) await page.waitForTimeout(600)
     await shot(page, 'report-preview-sheet.png')
   })
+
+  test('desktop: a link to /dashboard/offers/new opens the editor beside the list', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.goto('/dashboard/offers/new')
+    await expect(page.getByTestId('brand-offers')).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByTestId('offer-editor')).toBeVisible()
+    await expect(page.getByTestId('offer-objective')).toBeVisible()
+  })
+
+  test('phone: the page preview shows whole button labels, in the interface language', async ({ page }) => {
+    await page.setViewportSize(PHONE)
+    await page.goto('/dashboard/offers/new')
+    await expect(page.getByTestId('offer-editor')).toBeVisible({ timeout: 20_000 })
+    const preview = page.getByTestId('campaign-preview')
+    const actions = preview.getByTestId('campaign-preview-actions')
+    // No label is cut: each one is as wide as its text needs, on as many lines as it takes.
+    const whole = async () => expect(await actions.locator('span.flex').evaluateAll((els) => els.every((el) => el.scrollWidth <= el.clientWidth + 1))).toBe(true)
+
+    await page.getByTestId('offer-objective-ambassador').click()
+    await preview.getByRole('tab').nth(2).click()
+    await expect(actions.locator('span.flex')).toHaveCount(1)
+    await whole()
+    await preview.scrollIntoViewIfNeeded()
+    if (QA_PROBE) await preview.screenshot({ path: `${OUT}/preview-page-ambassador-phone.png` })
+
+    await page.getByTestId('offer-objective-offer').click()
+    await page.locator('#offer-link').fill('shop.example.com/hockia')
+    await expect(actions.locator('span.flex')).toHaveCount(2)
+    await whole()
+    await preview.scrollIntoViewIfNeeded()
+    if (QA_PROBE) await preview.screenshot({ path: `${OUT}/preview-page-offer-phone.png` })
+  })
 })

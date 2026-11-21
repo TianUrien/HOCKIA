@@ -193,6 +193,8 @@ export function liveLimitLine(offers: Pick<BrandOffer, 'status'>[]): string {
 
 /** "158 shown · 31 opened · 12 went to your store · 5 contacted" (+ "· 2 not useful" when any). */
 export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful' | 'code_copies' | 'objective'>>): string {
+  // Under five members, exact counts would say what one person did (founder 2026-11-21).
+  if (isSmallAudience(o)) return tBrands('offers.counts.fewer', { n: SMALL_AUDIENCE })
   return [
     countPart('shown', o.shown),
     countPart('opened', o.opened),
@@ -221,8 +223,16 @@ export function daysLeftLine(o: Pick<BrandOffer, 'ends_at'>, now: Date = new Dat
 
 // ── The campaign report (2026-11-21) ────────────────────────────────────────
 
-/** Under this many members, a count says little: the report says so in words. */
+/**
+ * Under this many members a campaign's counts are not shown: with one or two
+ * people, an exact "opened 1, not useful 1" says what a person did. The same
+ * threshold as the breakdowns (founder 2026-10-23), applied to every
+ * per-campaign total (founder 2026-11-21). Nobody at all is a plain zero.
+ */
 export const SMALL_AUDIENCE = 5
+export function isSmallAudience(o: Pick<BrandOffer, 'shown'>): boolean {
+  return o.shown > 0 && o.shown < SMALL_AUDIENCE
+}
 
 export type CampaignHeadline = 'asked' | 'applied' | 'store'
 /**
@@ -236,12 +246,29 @@ export function campaignHeadline(o: Pick<BrandOffer, 'contacted' | 'store_visits
   return { key: 'store', n: o.store_visits ?? 0 }
 }
 
-/** Whole days the campaign has run or ran, from the day it went live. */
+/** Whole days the campaign has run or ran, from the day it went live. 0 means less than a day. */
 export function campaignRanDays(o: Pick<BrandOffer, 'live_at' | 'starts_at' | 'ended_at' | 'ends_at' | 'status'>, now: Date = new Date()): number | null {
   const from = o.starts_at ?? o.live_at
   if (!from) return null
   const to = o.status === 'ended' ? o.ended_at ?? o.ends_at ?? now.toISOString() : now.toISOString()
   return Math.max(0, Math.round((new Date(to).getTime() - new Date(from).getTime()) / DAY_MS))
+}
+
+/**
+ * "It ran 14 days. It was shown to 84 members and 19 opened it. 6 wrote to
+ * you." Every part has its own singular; under a day it says so; under five
+ * members it gives no counts.
+ */
+export function closingLine(offer: Pick<BrandOffer, 'shown' | 'opened'>, ranDays: number | null, headline: { key: CampaignHeadline; n: number }): string {
+  const ran = ranDays === null ? null : ranDays < 1 ? tBrands('campaignReport.closingRanUnderDay') : tBrands('campaignReport.closingRan', { count: ranDays })
+  if (offer.shown === 0) return [ran, tBrands('campaignReport.nobody')].filter(Boolean).join(' ')
+  if (isSmallAudience(offer)) return [ran, tBrands('campaignReport.small', { n: SMALL_AUDIENCE })].filter(Boolean).join(' ')
+  return [
+    ran,
+    tBrands('campaignReport.closingShown', { count: offer.shown, n: brandCount(offer.shown) }),
+    tBrands('campaignReport.closingOpened', { count: offer.opened, n: brandCount(offer.opened) }),
+    tBrands(`campaignReport.closingHeadline.${headline.key}`, { count: headline.n, n: brandCount(headline.n) }),
+  ].filter(Boolean).join(' ')
 }
 
 /** "today" / "yesterday" / "3 days ago" (B1 status lines). */
@@ -274,7 +301,9 @@ export function offerStatusLine(o: BrandOffer, now: Date = new Date()): string {
     case 'paused': return tBrands('offers.status.paused', { when: daysAgoWord(o.updated_at, now) })
     default: return tBrands('offers.status.ended', {
       date: shortDate(o.ended_at ?? o.updated_at),
-      counts: [countPart('shown', o.shown), countPart('storeVisits', o.store_visits ?? 0), countPart('contacted', o.contacted)].join(', '),
+      counts: isSmallAudience(o)
+        ? tBrands('offers.counts.fewer', { n: SMALL_AUDIENCE })
+        : [countPart('shown', o.shown), linkOptional(o.objective) && !(o.store_visits ?? 0) ? null : countPart('storeVisits', o.store_visits ?? 0), countPart('contacted', o.contacted)].filter(Boolean).join(', '),
     })
   }
 }

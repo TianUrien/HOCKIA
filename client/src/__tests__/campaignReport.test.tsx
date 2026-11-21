@@ -8,7 +8,7 @@ vi.mock('@/hooks/useBrandOffers', () => ({ useMyBrandOffers: () => ({ offers: []
 
 import { Report } from '@/pages/CampaignReportPage'
 import { CampaignPreview } from '@/components/brands/offers/CampaignPreview'
-import { EMPTY_OFFER, campaignHeadline, campaignRanDays, offerCountsLine, type BrandOffer } from '@/lib/brandOffers'
+import { EMPTY_OFFER, campaignHeadline, campaignRanDays, closingLine, offerCountsLine, offerStatusLine, type BrandOffer } from '@/lib/brandOffers'
 
 /**
  * The per-campaign report and the three-place preview (founder 2026-11-21):
@@ -26,7 +26,7 @@ function campaign(over: Partial<BrandOffer> = {}): BrandOffer {
 }
 const noop = () => undefined
 function renderReport(offer: BrandOffer, over: Partial<Parameters<typeof Report>[0]> = {}) {
-  return render(<Report offer={offer} countryNames={[]} waiting={0} contacts={[]} onMessages={noop} onOpenContact={noop} onEdit={noop} onPreview={noop} onRunAgain={noop} runningAgain={false} {...over} />)
+  return render(<Report offer={offer} countryNames={[]} waiting={0} onMessages={noop} onResults={noop} onEdit={noop} onPreview={noop} onRunAgain={noop} runningAgain={false} {...over} />)
 }
 
 describe('the one number follows the objective', () => {
@@ -66,28 +66,43 @@ describe('campaign report', () => {
     expect(screen.queryByTestId('campaign-report-closing')).toBeNull()
   })
 
-  it('says so in words when fewer than five members have seen it', () => {
-    renderReport(campaign({ shown: 3, opened: 1, contacted: 0, not_useful: 0 }))
-    expect(screen.getByTestId('campaign-report-small').textContent).toBe('Fewer than 5 members have seen it so far. The numbers say little until more do.')
+  it('under five members it gives no counts at all, so nobody\'s actions can be told apart', () => {
+    renderReport(campaign({ shown: 3, opened: 1, contacted: 1, not_useful: 1 }))
+    expect(screen.getByTestId('campaign-report-number').textContent).toBe('Fewer than 5')
+    expect(screen.getByTestId('campaign-report-small').textContent).toBe('Fewer than 5 members have seen it so far. Counts appear once 5 have, so nobody’s actions can be told apart.')
+    expect(screen.queryByTestId('campaign-report-rows')).toBeNull()
+    // The list row and the ended line follow the same rule.
+    expect(offerCountsLine({ shown: 3, opened: 1, contacted: 1, not_useful: 1 })).toBe('Fewer than 5 members have seen it')
+    expect(offerStatusLine(campaign({ status: 'ended', shown: 1, opened: 1, ended_at: '2026-11-15T00:00:00Z' }))).toContain('Fewer than 5 members have seen it')
+    expect(offerCountsLine({ shown: 5, opened: 1, contacted: 1, objective: 'ask' })).toBe('5 shown, 1 opened, 1 contacted')
   })
 
-  it('amber only when the brand must act: people waiting for a reply on a campaign that asks members to write', () => {
+  it('nobody at all is a plain zero, said in words', () => {
+    renderReport(campaign({ shown: 0, opened: 0, contacted: 0, not_useful: 0 }))
+    expect(screen.getByTestId('campaign-report-number').textContent).toBe('0')
+    expect(screen.getByTestId('campaign-report-nobody').textContent).toBe('Nobody has seen it yet.')
+    expect(screen.getByTestId('campaign-report-rows')).toBeTruthy()
+  })
+
+  it('replies owed are the brand\'s inbox, not this campaign\'s number: worded so, below the report, on any campaign', () => {
     const onMessages = vi.fn()
-    renderReport(campaign(), { waiting: 2, onMessages })
-    const waiting = screen.getByTestId('campaign-report-waiting')
-    expect(waiting.textContent).toBe('2 people are waiting for your replyReply')
-    fireEvent.click(waiting)
+    renderReport(campaign({ shown: 40, contacted: 0 }), { waiting: 3, onMessages })
+    expect(screen.getByTestId('campaign-report-number').textContent).toBe('0')
+    const inbox = screen.getByTestId('campaign-report-inbox')
+    expect(inbox.textContent).toBe('In your inbox: 3 people are waiting for a replyReply')
+    // It comes after the campaign's own numbers.
+    expect(screen.getByTestId('campaign-report-rows').compareDocumentPosition(inbox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    fireEvent.click(inbox)
     expect(onMessages).toHaveBeenCalled()
   })
 
-  it('an offer shows the store and the code, and never the waiting row', () => {
+  it('an offer shows the store and the code', () => {
     renderReport(campaign({ objective: 'offer', link_url: 'https://shop.example.com', promo_code: 'HOCKIA15', store_visits: 12, code_copies: 4 }), { waiting: 2 })
     expect(screen.getByTestId('campaign-report-number').textContent).toBe('12')
     expect(screen.getByTestId('campaign-report-headline').textContent).toContain('members went to your store')
     const rows = screen.getByTestId('campaign-report-rows')
     expect(rows.querySelector('[data-row="store"]')?.textContent).toBe('Went to your store12')
     expect(rows.querySelector('[data-row="codes"]')?.textContent).toBe('Copied the code4')
-    expect(screen.queryByTestId('campaign-report-waiting')).toBeNull()
   })
 
   it('an ended campaign closes with what happened and offers to run it again', () => {
@@ -99,13 +114,27 @@ describe('campaign report', () => {
     expect(onRunAgain).toHaveBeenCalled()
   })
 
-  it('names only the people who wrote to the brand', () => {
-    const onOpenContact = vi.fn()
-    renderReport(campaign(), { contacts: [{ profile_id: 'p1', full_name: 'Ana Example', avatar_url: null, role: 'player', conversation_id: 'c1' }], onOpenContact })
-    const list = screen.getByTestId('campaign-report-contacts')
-    expect(within(list).getByText('Ana Example')).toBeTruthy()
-    fireEvent.click(within(list).getByRole('button', { name: 'Message' }))
-    expect(onOpenContact).toHaveBeenCalledWith('c1', 'p1')
+  it('names nobody: who wrote is read per brand, so the report links to Results instead of guessing by campaign', () => {
+    const onResults = vi.fn()
+    renderReport(campaign(), { onResults })
+    expect(screen.queryByTestId('campaign-report-contacts')).toBeNull()
+    fireEvent.click(screen.getByTestId('campaign-report-who'))
+    expect(onResults).toHaveBeenCalled()
+  })
+
+  it('the closing sentence has a singular for every part and never says "0 days"', () => {
+    const asked = (n: number) => ({ key: 'asked' as const, n })
+    expect(closingLine({ shown: 84, opened: 19 }, 14, asked(6))).toBe('It ran 14 days. It was shown to 84 members and 19 opened it. 6 wrote to you.')
+    expect(closingLine({ shown: 5, opened: 1 }, 1, asked(1))).toBe('It ran 1 day. It was shown to 5 members and 1 opened it. 1 wrote to you.')
+    expect(closingLine({ shown: 6, opened: 0 }, 0, asked(0))).toBe('It ran less than a day. It was shown to 6 members and 0 opened it. 0 wrote to you.')
+    expect(closingLine({ shown: 1, opened: 1 }, 7, asked(1))).toBe('It ran 7 days. Fewer than 5 members have seen it so far. Counts appear once 5 have, so nobody’s actions can be told apart.')
+    expect(closingLine({ shown: 0, opened: 0 }, 7, asked(0))).toBe('It ran 7 days. Nobody has seen it yet.')
+  })
+
+  it('a campaign that ended without ever going live cannot be edited', () => {
+    renderReport(campaign({ status: 'ended', live_at: null, starts_at: null, shown: 0, opened: 0, contacted: 0, not_useful: 0 }))
+    expect(screen.getByTestId('campaign-report-not-started').textContent).toBe('This campaign ended without being published, so there is nothing to report.')
+    expect(screen.queryByRole('button', { name: 'Edit campaign' })).toBeNull()
   })
 
   it('a draft has nothing to report', () => {
@@ -135,12 +164,13 @@ describe('campaign preview in the three places a member meets it', () => {
   })
 
   it('under Hockia AI it says the answer never changes and when the card appears', () => {
-    render(<CampaignPreview fields={{ ...fields, objective: 'product', link_url: 'shop.example.com' }} brandName="Northline" need="moving_abroad" />)
+    render(<CampaignPreview fields={{ ...fields, objective: 'product', link_url: 'shop.example.com' }} brandName="Northline" />)
     fireEvent.click(screen.getByRole('tab', { name: 'Hockia AI' }))
     const ai = screen.getByTestId('campaign-preview-ai')
     expect(ai.textContent).toContain('Your campaign never changes the answer.')
-    expect(ai.textContent).toContain('It did not change the answer.')
-    expect(screen.getByTestId('campaign-preview-note').textContent).toBe('Under a Hockia AI answer, only when a member asks about this topic.')
+    // The real reason line names what the member asked; the preview does not pretend to know it.
+    expect(ai.textContent).toContain('Shown because of what the member asked. It did not change the answer.')
+    expect(screen.getByTestId('campaign-preview-note').textContent).toBe('Under a Hockia AI answer, when a member asks about gear, kit, training, camps, physio or moving abroad and your campaign is for them. The line names what they asked.')
   })
 
   it('opens on the Home card', () => {
