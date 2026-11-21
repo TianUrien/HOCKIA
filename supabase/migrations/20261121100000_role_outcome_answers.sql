@@ -11,6 +11,10 @@
 --   stopped_looking   not filled, no longer looking
 --   skipped           the recruiter was asked and did not answer
 --
+-- dismiss_count: how many times the recruiter closed the question for a role
+-- that expired. The app asks once more 14 days after the first close and then
+-- never again (founder ruling 2026-11-21), so it is 0, 1 or 2.
+--
 -- The answer is PRIVATE measurement data (founder ruling, same day): only the
 -- recruiter who gave it and platform admins can read it. It publishes nothing,
 -- notifies nobody, and does not touch opportunities.filled_via_hockia, which
@@ -28,6 +32,7 @@ CREATE TABLE IF NOT EXISTS public.role_outcome_answers (
   hired_application_id uuid REFERENCES public.opportunity_applications(id) ON DELETE SET NULL,
   asked_via text NOT NULL CHECK (asked_via IN ('close', 'expiry')),
   answered_at timestamptz NOT NULL DEFAULT now(),
+  dismiss_count smallint NOT NULL DEFAULT 0 CHECK (dismiss_count BETWEEN 0 AND 2),
   CONSTRAINT role_outcome_hired_only_when_hockia CHECK (hired_application_id IS NULL OR outcome = 'filled_hockia')
 );
 CREATE INDEX IF NOT EXISTS role_outcome_answers_recruiter_idx ON public.role_outcome_answers (recruiter_id);

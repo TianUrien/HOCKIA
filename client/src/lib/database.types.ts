@@ -5600,6 +5600,7 @@ export type Database = {
         Row: {
           answered_at: string
           asked_via: string
+          dismiss_count: number
           hired_application_id: string | null
           opportunity_id: string
           outcome: string
@@ -5608,6 +5609,7 @@ export type Database = {
         Insert: {
           answered_at?: string
           asked_via: string
+          dismiss_count?: number
           hired_application_id?: string | null
           opportunity_id: string
           outcome: string
@@ -5616,6 +5618,7 @@ export type Database = {
         Update: {
           answered_at?: string
           asked_via?: string
+          dismiss_count?: number
           hired_application_id?: string | null
           opportunity_id?: string
           outcome?: string

@@ -48,6 +48,8 @@ When a recruiter closes a role, and once when a role expires on its own (the nex
 - "Did you fill this place?" Yes, with someone from HOCKIA / Yes, with someone else / No, still looking / No, we stopped looking.
 - If "someone from HOCKIA": optional "Who?" picked from that role's applicants, so the signing is recorded.
 
+For a role that expired this is a one-line banner on the recruiter's roles screen, one role per app session; the question itself opens in a bottom sheet only when the recruiter taps "Answer".
+
 Stored in the existing `closed_reason` and `filled_via_hockia` plus one new answer value for "still looking". Two taps; can be skipped, and a skip is recorded as such.
 
 ### 2. One question after reviewing applicants
@@ -126,7 +128,9 @@ Rough size: phase 2 is one PR with one migration; phase 3 is two PRs.
 
 - **Start with phase 2 now**: the outcome question on role close and after expiry, and "Report a problem" on the recruiting screens. Phase 3 waits for two weeks of data.
 - **The signing answer stays private.** "Who did you sign?" is stored for measurement only. Nothing is published from it; a public signing still goes through the existing signing flow, with both sides confirming.
-- **Ask about every role that already expired**, not only recent ones, once per role.
+- **Ask about every role that already expired**, not only recent ones.
+- **A banner, not a card or a pop-up.** The question for an expired role is a one-line banner above the roles ("Did you fill …?", Answer, X). "Answer" opens the question in a bottom sheet. A pop-up that opens by itself was discarded: recruiters arrive to answer applicants, and two thirds already close the app-rating pop-up without answering.
+- **The X asks once more.** A closed banner comes back once, 14 days later; a second close ends it for that role.
 
 ## Still open
 

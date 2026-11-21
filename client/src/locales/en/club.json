@@ -873,6 +873,9 @@
     "signInButton": "Sign in"
   },
   "roleOutcome": {
+    "banner": "Did you fill {{title}}?",
+    "answer": "Answer",
+    "dismiss": "Not now",
     "question": "Did you fill this place?",
     "context": "{{title}} closed on its deadline on {{date}}.",
     "contextNoDate": "{{title}} closed on its deadline.",
@@ -882,8 +885,7 @@
       "still_looking": "No, we are still looking",
       "stopped_looking": "No, we stopped looking"
     },
-    "save": "Save answer",
-    "notNow": "Not now"
+    "save": "Save answer"
   },
   "reportProblem": {
     "link": "Report a problem"

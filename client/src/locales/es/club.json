@@ -895,6 +895,9 @@
     "signInButton": "Iniciar sesión"
   },
   "roleOutcome": {
+    "banner": "¿Cubriste el puesto de {{title}}?",
+    "answer": "Responder",
+    "dismiss": "Ahora no",
     "question": "¿Cubriste este puesto?",
     "context": "{{title}} se cerró por vencimiento el {{date}}.",
     "contextNoDate": "{{title}} se cerró por vencimiento.",
@@ -904,8 +907,7 @@
       "still_looking": "No, seguimos buscando",
       "stopped_looking": "No, dejamos de buscar"
     },
-    "save": "Guardar respuesta",
-    "notNow": "Ahora no"
+    "save": "Guardar respuesta"
   },
   "reportProblem": {
     "link": "Reportar un problema"

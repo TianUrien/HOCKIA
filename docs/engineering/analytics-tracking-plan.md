@@ -282,8 +282,8 @@ Source: `docs/product/proposals/recruiter-satisfaction.md`, phase 2 (founder rul
 
 | Event | Entity | Properties | Fired when |
 |---|---|---|---|
-| `role_outcome_asked` | opportunity | `via: close \| expiry` | The close sheet opens, or the "Did you fill this place?" card is shown for a role that closed on its own |
-| `role_outcome_answered` | opportunity | `via`, `outcome: filled_hockia \| filled_elsewhere \| still_looking \| stopped_looking \| skipped`, `named_person: boolean` | The answer is saved |
+| `role_outcome_asked` | opportunity | `via: close \| expiry` | The close sheet opens, or the "Did you fill …?" banner is shown for a role that closed on its own |
+| `role_outcome_answered` | opportunity | `via`, `outcome: filled_hockia \| filled_elsewhere \| still_looking \| stopped_looking \| skipped`, `named_person: boolean`, `dismiss_count: 0 \| 1 \| 2` | The answer is saved, or the banner is closed with the X (`outcome: skipped`, `dismiss_count` 1 or 2) |
 | `report_problem_open` | none | `surface: recruiter_roles \| applicants` | "Report a problem" is tapped on a recruiting screen |
 
 The answer itself lives in `role_outcome_answers` (one row per role; recruiter and admins only). The event never carries who was signed, only whether a person was named. Answer rate = `role_outcome_answered` with an outcome other than `skipped`, over `role_outcome_asked`, per `via`.

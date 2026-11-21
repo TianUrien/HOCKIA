@@ -5,11 +5,14 @@ Every edit to the Figma file "New-Hockia", newest first. Format:
 
 ## 2026-11-21 (recruiter outcome question), engineering session
 
-Figma, "New Hockia 2 · Draft", page "05 · Opportunities — explorations", new section "RS · Recruiter outcome question and Report a problem (2026-11-21)" (303:1131). Drawn after the build (PR #617), to show the founder how it looks; same tokens and text styles as O5 and CS6, which the three frames were cloned from.
-- RS1 303:1132: club Opportunities with the neutral card "Did you fill this place?" for a role that closed on its deadline (four answers, "Not now", private note), and "Report a problem" under the scouting rows.
-- RS2 304:1178: the card after "Yes, with someone from Hockia": optional "Who?" select and a Tonal "Save answer".
-- RS3 304:1333: the close-role sheet with Filled selected and the new step "Who did you fill it with?" (two choices, optional "Who?", private note).
-- Copy change found while drawing: at 393 wide the choice "Someone from Hockia" did not fit its pill; the label is now "A Hockia member" in the app and in Figma.
+Figma, "New Hockia 2 · Draft", page "05 · Opportunities — explorations", section "RS · Recruiter outcome question and Report a problem (2026-11-21)" (303:1131). Drawn with the build (PR #617); same tokens and text styles as O5 and CS6, which the frames were cloned from.
+- First version: a large card with the four answers inside the roles screen. **Replaced the same day (founder ruling):** it pushed the roles down. A pop-up that opens by itself was considered and discarded (it interrupts recruiters who came to answer applicants).
+- RS1 303:1132: club Opportunities with a one-line neutral banner "Did you fill …?" (Tonal Small "Answer", X with a 44 pt target) under the waiting notice, and "Report a problem" under the scouting rows.
+- RS2 306:1279: "Answer" opens the question in a bottom sheet: four answers and the private note.
+- RS3 306:1458: after "Yes, with someone from Hockia": optional "Who?" select and Primary "Save answer".
+- RS4 304:1333: the close-role sheet with Filled selected and the step "Who did you fill it with?" (two choices, optional "Who?", private note).
+- The X closes the banner; it comes back once, 14 days later, then never for that role.
+- Copy: at 393 wide the choice "Someone from Hockia" did not fit its pill; the label is "A Hockia member" in the app and in Figma.
 - The copied frames use the app's current separators (commas, counts in brackets) instead of the middle dots of O5 and CS6.
 
 ## 2026-10-09 · design agent

@@ -2,10 +2,12 @@
  * Role outcome: what the recruiter says happened to a role (founder ruling
  * 2026-11-21, docs/product/proposals/recruiter-satisfaction.md, phase 2).
  *
- * Asked once per role, when the recruiter closes it or after it closed on its
- * own. The answer is private measurement data (table role_outcome_answers,
- * recruiter and admins only): it publishes nothing and notifies nobody. A
- * public signing still goes through the signing flow.
+ * Asked when the recruiter closes a role, and for a role that closed on its
+ * own through a one-line banner they can answer or close. Closing it asks
+ * once more 14 days later and then never again. The answer is private
+ * measurement data (table role_outcome_answers, recruiter and admins only):
+ * it publishes nothing and notifies nobody. A public signing still goes
+ * through the signing flow.
  */
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -16,6 +18,11 @@ export type RoleOutcomeVia = 'close' | 'expiry'
 
 /** The four answers a recruiter can give after a role closed on its own, in the order shown. */
 export const EXPIRY_OUTCOMES = ['filled_hockia', 'filled_elsewhere', 'still_looking', 'stopped_looking'] as const
+
+/** A closed question comes back once, this many days later. */
+export const REASK_AFTER_DAYS = 14
+/** After this many closes the role is never asked about again. */
+export const MAX_DISMISSALS = 2
 
 export interface OutcomeApplicant {
   applicationId: string
@@ -28,12 +35,28 @@ export interface RoleToAsk {
   closed_at?: string | null
 }
 
+/** What is on record for a role: an answer, or how often the question was closed. */
+export interface RoleOutcomeState {
+  outcome: RoleOutcome
+  dismissCount: number
+  answeredAt: string
+}
+
+/** May this role be asked about now? Never answered, or closed once at least 14 days ago. */
+export function canAskAbout(state: RoleOutcomeState | undefined, now = new Date()): boolean {
+  if (!state) return true
+  if (state.outcome !== 'skipped' || state.dismissCount >= MAX_DISMISSALS) return false
+  // Closing the manual close sheet without saying with whom is not a banner dismissal: ask once.
+  if (state.dismissCount === 0) return true
+  return now.getTime() - new Date(state.answeredAt).getTime() >= REASK_AFTER_DAYS * 86_400_000
+}
+
 /**
  * The role to ask about: the most recently closed one that closed on its own
- * ('expired') and has no answer yet. One at a time; null when there is none.
+ * ('expired') and can be asked about now. One at a time; null when there is none.
  */
-export function nextRoleToAsk<T extends RoleToAsk>(closed: T[], answered: ReadonlySet<string>): T | null {
-  const waiting = closed.filter((r) => r.closed_reason === 'expired' && !answered.has(r.id))
+export function nextRoleToAsk<T extends RoleToAsk>(closed: T[], states: ReadonlyMap<string, RoleOutcomeState>, now = new Date()): T | null {
+  const waiting = closed.filter((r) => r.closed_reason === 'expired' && canAskAbout(states.get(r.id), now))
   if (waiting.length === 0) return null
   return [...waiting].sort((a, b) => (b.closed_at ?? '').localeCompare(a.closed_at ?? ''))[0]
 }
@@ -46,15 +69,15 @@ export function closeOutcome(closed: 'filled' | 'withdrawn', filledWith: 'hockia
   return 'skipped'
 }
 
-/** Role ids this recruiter has already answered (or skipped). null = could not tell, so nothing is asked. */
-export async function fetchAnsweredRoleIds(recruiterId: string): Promise<Set<string> | null> {
+/** What this recruiter has on record per role. null = could not tell, so nothing is asked. */
+export async function fetchRoleOutcomeStates(recruiterId: string): Promise<Map<string, RoleOutcomeState> | null> {
   try {
-    const { data, error } = await supabase.from('role_outcome_answers').select('opportunity_id').eq('recruiter_id', recruiterId)
+    const { data, error } = await supabase.from('role_outcome_answers').select('opportunity_id, outcome, dismiss_count, answered_at').eq('recruiter_id', recruiterId)
     if (error || !data) {
       if (error) logger.debug('[roleOutcome] answers failed', error)
       return null
     }
-    return new Set(data.map((r) => r.opportunity_id))
+    return new Map(data.map((r) => [r.opportunity_id, { outcome: r.outcome as RoleOutcome, dismissCount: r.dismiss_count ?? 0, answeredAt: r.answered_at }]))
   } catch {
     return null
   }
@@ -82,12 +105,14 @@ export async function fetchOutcomeApplicants(roleId: string): Promise<OutcomeApp
 /**
  * Record the answer (one row per role; answering again replaces it). Best
  * effort: a failure never blocks closing a role. Returns whether it was saved.
+ * `dismissCount`: how many times the banner has now been closed (0 for a real answer).
  */
-export async function saveRoleOutcome(input: { roleId: string; recruiterId: string; outcome: RoleOutcome; via: RoleOutcomeVia; hiredApplicationId?: string | null }): Promise<boolean> {
+export async function saveRoleOutcome(input: { roleId: string; recruiterId: string; outcome: RoleOutcome; via: RoleOutcomeVia; hiredApplicationId?: string | null; dismissCount?: number }): Promise<boolean> {
   const hired = input.outcome === 'filled_hockia' ? input.hiredApplicationId ?? null : null
+  const dismissCount = input.outcome === 'skipped' ? Math.min(MAX_DISMISSALS, Math.max(0, input.dismissCount ?? 0)) : 0
   try {
     const { error } = await supabase.from('role_outcome_answers').upsert(
-      { opportunity_id: input.roleId, recruiter_id: input.recruiterId, outcome: input.outcome, asked_via: input.via, hired_application_id: hired, answered_at: new Date().toISOString() },
+      { opportunity_id: input.roleId, recruiter_id: input.recruiterId, outcome: input.outcome, asked_via: input.via, hired_application_id: hired, dismiss_count: dismissCount, answered_at: new Date().toISOString() },
       { onConflict: 'opportunity_id' },
     )
     if (error) throw error
@@ -96,7 +121,7 @@ export async function saveRoleOutcome(input: { roleId: string; recruiterId: stri
     return false
   }
   // The person is never in the event: only whether one was named.
-  trackDbEvent('role_outcome_answered', 'opportunity', input.roleId, { via: input.via, outcome: input.outcome, named_person: hired !== null })
+  trackDbEvent('role_outcome_answered', 'opportunity', input.roleId, { via: input.via, outcome: input.outcome, named_person: hired !== null, dismiss_count: dismissCount })
   return true
 }
 
