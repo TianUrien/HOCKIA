@@ -96,8 +96,12 @@ export function RoleOutcomePrompt({ recruiterId, closed, className }: Props) {
 
   return (
     <>
-      <div className={cn('flex min-h-[52px] items-center gap-2 rounded-[16px] bg-surface-subtle py-1 pl-4 pr-1', className)} data-testid="role-outcome-banner">
-        <p className="min-w-0 flex-1 py-2 text-[15px] leading-[20px] text-ink-1">{t('roleOutcome.banner', { title })}</p>
+      <div className={cn('flex min-h-[56px] items-center gap-2 rounded-[16px] bg-surface-subtle py-1 pl-4 pr-1', className)} data-testid="role-outcome-banner">
+        {/* The role on its own line, cut with an ellipsis when long, so the question is always whole. */}
+        <div className="min-w-0 flex-1 py-1.5">
+          <p className="truncate text-[15px] font-semibold leading-[20px] text-ink-1">{title}</p>
+          <p className="text-secondary text-ink-2">{t('roleOutcome.banner')}</p>
+        </div>
         <button type="button" onClick={() => { setPicked(null); setSheetOpen(true) }} className="flex h-9 shrink-0 items-center rounded-full bg-brand-soft px-4 text-[15px] font-semibold text-brand-primary" data-testid="role-outcome-answer">{t('roleOutcome.answer')}</button>
         <button type="button" disabled={busy} onClick={() => void save('skipped')} aria-label={t('roleOutcome.dismiss')} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-3 disabled:opacity-50" data-testid="role-outcome-dismiss">
           <X className="h-5 w-5" strokeWidth={2} aria-hidden="true" />

@@ -129,7 +129,7 @@ Rough size: phase 2 is one PR with one migration; phase 3 is two PRs.
 - **Start with phase 2 now**: the outcome question on role close and after expiry, and "Report a problem" on the recruiting screens. Phase 3 waits for two weeks of data.
 - **The signing answer stays private.** "Who did you sign?" is stored for measurement only. Nothing is published from it; a public signing still goes through the existing signing flow, with both sides confirming.
 - **Ask about every role that already expired**, not only recent ones.
-- **A banner, not a card or a pop-up.** The question for an expired role is a one-line banner above the roles ("… closed. Did you fill it?", Answer, X). "Answer" opens the question in a bottom sheet. A pop-up that opens by itself was discarded: recruiters arrive to answer applicants, and two thirds already close the app-rating pop-up without answering.
+- **A banner, not a card or a pop-up.** The question for an expired role is a one-line banner above the roles (the role name, "Closed. Did you fill it?", Answer, X). "Answer" opens the question in a bottom sheet. A pop-up that opens by itself was discarded: recruiters arrive to answer applicants, and two thirds already close the app-rating pop-up without answering.
 - **The X asks once more.** A closed banner comes back once, 14 days later; a second close ends it for that role.
 
 ## Still open
