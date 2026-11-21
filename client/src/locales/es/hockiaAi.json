@@ -50,7 +50,7 @@
     "coachFind": "Buscar oportunidades para entrenar",
     "prepareApplication": "Preparar mi postulación",
     "brandAmbassadors": "Buscar posibles embajadores/as",
-    "brandOffersMonth": "¿Cómo les fue a mis campañas este mes?",
+    "brandOffersMonth": "¿Cómo van mis campañas?",
     "brandWriteOffer": "Escribir una campaña nueva para integrantes",
     "umpireAddMatch": "Agregar mi último partido",
     "umpireMissing": "¿Qué le falta a mi trayectoria?",
@@ -105,7 +105,9 @@
     "opportunities_one": "{{count}} oportunidad nueva desde la última vez",
     "opportunities_many": "{{count}} oportunidades nuevas desde la última vez",
     "opportunities_other": "{{count}} oportunidades nuevas desde la última vez",
-    "opportunitiesCta": "Verlas"
+    "opportunitiesCta": "Verlas",
+    "campaignEnded": "“{{title}}” terminó",
+    "campaignEndedCta": "Ver cómo le fue"
   },
   "sheet": {
     "placeholder": "Pregúntale a Hockia AI…",
@@ -586,5 +588,22 @@
       "boys": "Juega en Juveniles caballeros",
       "mixed": "Juega en Mixto"
     }
+  },
+  "campaigns": {
+    "none": "Todavía no tienes campañas. Una campaña lleva tu marca a las personas para las que es.",
+    "error": "No pude leer tus campañas en este momento. Intenta de nuevo en un rato.",
+    "leadLive_one": "Tienes {{count}} campaña publicada. Así va.",
+    "leadLive_other": "Tienes {{count}} campañas publicadas. Así van.",
+    "leadLive_many": "Tienes {{count}} campañas publicadas. Así van.",
+    "leadEnded": "Ahora no hay nada publicado. Así les fue a tus últimas campañas.",
+    "endedOn": "Terminó el {{date}}",
+    "notUseful": "No útil",
+    "report": "Ver informe",
+    "new": "Nueva campaña",
+    "all": "Todas las campañas",
+    "source": "Estos números salen de tus resultados, no de una estimación. Cada uno cuenta integrantes distintos.",
+    "reading_one": "Hasta ahora se mostró a {{shown}} integrante; {{opened}} la abrieron.",
+    "reading_other": "Hasta ahora se mostró a {{shown}} integrantes; {{opened}} la abrieron.",
+    "reading_many": "Hasta ahora se mostró a {{shown}} integrantes; {{opened}} la abrieron."
   }
 }

@@ -13,7 +13,7 @@ export interface HockiaAiSeed { text: string; send: boolean }
 /** 'builder' = "Fill my profile for me" (handoff P0–P3): its own conversation inside the same sheet.
  *  'history' = the saved chats (handoff C2). 'steps' = a next step done with
  *  the member: photo, bio, links (2026-10-18). */
-export type HockiaAiMode = 'chat' | 'builder' | 'apply' | 'history' | 'steps'
+export type HockiaAiMode = 'chat' | 'builder' | 'apply' | 'history' | 'steps' | 'campaigns'
 export type HockiaAiStep = 'photo' | 'bio' | 'video' | 'career' | 'links' | 'position' | 'passport'
 
 /** The role "Prepare my application" is for (handoff A4): what the draft card shows before the role loads. */

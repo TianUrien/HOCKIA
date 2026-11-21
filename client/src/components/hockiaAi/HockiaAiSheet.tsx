@@ -22,6 +22,7 @@ import { useHockiaAiSheet } from './hockiaAiSheetStore'
 import { useWordReveal } from './useWordReveal'
 import { ProfileBuilder } from './ProfileBuilder'
 import { ApplyFlow } from './ApplyFlow'
+import { CampaignDesk } from './CampaignDesk'
 import { ChatHistory } from './ChatHistory'
 import { NextStepPlan, NextSteps } from './NextSteps'
 import { useNextSteps } from './useNextSteps'
@@ -124,7 +125,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   const { facts, steps: nextSteps } = useNextSteps(open && canBuild)
   const stepping = mode === 'steps' && canBuild && step !== null
   const plan = canBuild && !roleContext && nextSteps && nextSteps.length > 0 ? nextSteps : null
-  const special = builder || applying || history || stepping
+  const campaigning = mode === 'campaigns' && signedIn && profile?.role === 'brand'
+  const special = builder || applying || history || stepping || campaigning
   // What lit the dot (founder 2026-11-21): shown first, with the one action that deals with it.
   const news = useHockiaAiSuggestion((s) => s.shown)
   const actOnNews = () => {
@@ -132,6 +134,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     void hapticSelection()
     trackDbEvent('hockia_ai_suggestion_click', undefined, undefined, { kind: news.kind })
     if (news.kind === 'profile_step') { startStep(news.step); return }
+    if (news.kind === 'campaign_ended') { setMode('campaigns'); return }
     close()
     navigate('/opportunities')
   }
@@ -141,11 +144,11 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
       <span className="min-w-0 flex-1">
         <span className="block text-caption font-semibold tracking-[0.04em] text-brand-primary">{t('suggestion.eyebrow')}</span>
         <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">
-          {news.kind === 'applicants_waiting' ? t('suggestion.applicants', { count: news.count }) : news.kind === 'new_opportunities' ? t('suggestion.opportunities', { count: news.count }) : t(`suggestion.${news.step}`)}
+          {news.kind === 'applicants_waiting' ? t('suggestion.applicants', { count: news.count }) : news.kind === 'new_opportunities' ? t('suggestion.opportunities', { count: news.count }) : news.kind === 'campaign_ended' ? t('suggestion.campaignEnded', { title: news.title }) : t(`suggestion.${news.step}`)}
         </span>
       </span>
       <span className="shrink-0 text-[15px] font-semibold text-brand-primary">
-        {news.kind === 'applicants_waiting' ? t('suggestion.applicantsCta') : news.kind === 'new_opportunities' ? t('suggestion.opportunitiesCta') : t(`suggestion.${news.step}Cta`)}
+        {news.kind === 'applicants_waiting' ? t('suggestion.applicantsCta') : news.kind === 'new_opportunities' ? t('suggestion.opportunitiesCta') : news.kind === 'campaign_ended' ? t('suggestion.campaignEndedCta') : t(`suggestion.${news.step}Cta`)}
       </span>
     </button>
   ) : null
@@ -279,6 +282,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   const runOption = (o: RoleOption) => {
     if (o.action.type === 'ask') send(o.action.query, o.action.shown)
     else if (o.action.type === 'builder') startBuilder()
+    else if (o.action.type === 'campaigns') { void hapticSelection(); setMode('campaigns') }
     else { close(); navigate(o.action.to) }
   }
   const optionRows = roleOptions?.map((o) => ({ eyebrow: o.eyebrow, label: o.label, run: () => runOption(o) })) ?? null
@@ -395,6 +399,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
             onAddVideo={() => setMode('builder')}
             onFindSimilar={(q, shown) => { setMode('chat'); setTimeout(() => send(q, shown), 0) }}
           />
+        ) : campaigning ? (
+          <CampaignDesk onGo={(to) => { close(); navigate(to) }} />
         ) : builder ? <ProfileBuilder onClose={close} /> : (<>
         <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', panel ? 'px-6' : 'px-4')}>
           {(!large || (panel && !hasMessages)) && (

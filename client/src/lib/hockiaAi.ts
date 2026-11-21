@@ -123,7 +123,7 @@ const CANDIDATE_COACH_EXAMPLES = ['examples.coach1', 'examples.coach2', 'example
 type AiViewer = { role?: string | null; coach_recruits_for_team?: boolean | null } | null | undefined
 
 /** What a role option does: ask Hockia AI, open the profile builder, or open the screen where it happens. */
-export type RoleOptionAction = { type: 'ask'; query: string; /** The same prompt in the member's language, for their chat bubble. */ shown: string } | { type: 'builder' } | { type: 'go'; to: string }
+export type RoleOptionAction = { type: 'ask'; query: string; /** The same prompt in the member's language, for their chat bubble. */ shown: string } | { type: 'builder' } | { type: 'go'; to: string } | /** A brand's campaigns as cards in the chat, read from its results (no model, no invented numbers). */ { type: 'campaigns' }
 export interface RoleOption {
   /** FIND / LEARN / ASK: Hockia AI answers. DO IT FOR ME: the builder. OPEN: a screen, no AI answer. Translate with `eyebrowLabel`. */
   eyebrow: 'FIND' | 'LEARN' | 'ASK' | 'DO IT FOR ME' | 'OPEN'
@@ -179,7 +179,8 @@ export function roleOptionsFor(profile: AiViewer, activeRoleTitle?: string | nul
       // Ambassadors: no per-brand country list on the server yet, so no "in my countries".
       return [
         go('options.brandAmbassadors', '/dashboard/ambassadors'),
-        go('options.brandOffersMonth', '/dashboard/results'),
+        // Answered inside the sheet with cards built from real counts (founder 2026-11-21).
+        { eyebrow: 'ASK', label: tx('options.brandOffersMonth'), action: { type: 'campaigns' } },
         go('options.brandWriteOffer', '/dashboard/offers/new'),
       ]
     case 'umpire':

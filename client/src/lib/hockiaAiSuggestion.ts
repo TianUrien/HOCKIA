@@ -14,6 +14,7 @@ export type AiSuggestion =
   | { kind: 'applicants_waiting'; count: number; signature: string }
   | { kind: 'profile_step'; step: 'photo' | 'bio'; signature: string }
   | { kind: 'new_opportunities'; count: number; signature: string }
+  | { kind: 'campaign_ended'; title: string; signature: string }
 
 export type AiSuggestionKind = AiSuggestion['kind']
 export type SeenSignatures = Partial<Record<AiSuggestionKind, string>>
@@ -107,10 +108,26 @@ async function newOpportunities(viewer: SuggestionViewer, seen: SeenSignatures, 
   return { kind: 'new_opportunities', count: rows.length, signature: rows[0].published_at as string }
 }
 
+/** A campaign is news for this long after it ended. */
+export const CAMPAIGN_ENDED_DAYS = 14
+
+/** The brand's campaign that ended most recently, within the last two weeks: its closing summary is waiting in Hockia AI. */
+async function campaignEnded(viewer: SuggestionViewer, now: Date): Promise<AiSuggestion | null> {
+  if (viewer.role !== 'brand') return null
+  const { data, error } = await supabase.rpc('get_my_brand_offers')
+  if (error || !data) return null
+  const since = now.getTime() - CAMPAIGN_ENDED_DAYS * 86_400_000
+  const ended = (data as unknown as { id: string; status: string; title: string | null; live_at: string | null; ended_at: string | null }[])
+    .filter((o) => o.status === 'ended' && o.live_at && o.ended_at && new Date(o.ended_at).getTime() >= since)
+    .sort((a, b) => (b.ended_at as string).localeCompare(a.ended_at as string))[0]
+  return ended ? { kind: 'campaign_ended', title: ended.title?.trim() ?? '', signature: `${ended.id}:${ended.ended_at}` } : null
+}
+
 /**
  * Everything Hockia AI could suggest to this member, most useful first.
  * Recruiters: applicants waiting. Players and coaches: a missing photo or
- * bio, then new opportunities. A failed read means no suggestion, never a guess.
+ * bio, then new opportunities. Brands: a campaign that just ended. A failed
+ * read means no suggestion, never a guess.
  */
 export async function loadSuggestions(viewer: SuggestionViewer, seen: SeenSignatures, now = new Date()): Promise<AiSuggestion[]> {
   const out: AiSuggestion[] = []
@@ -123,6 +140,8 @@ export async function loadSuggestions(viewer: SuggestionViewer, seen: SeenSignat
     if (step) out.push(step)
     const fresh = await newOpportunities(viewer, seen, now)
     if (fresh) out.push(fresh)
+    const closed = await campaignEnded(viewer, now)
+    if (closed) out.push(closed)
   } catch (err) {
     logger.debug('[hockiaAiSuggestion] load failed', err)
   }

@@ -287,6 +287,17 @@ export function closingLine(offer: Pick<BrandOffer, 'shown' | 'opened'>, ranDays
   ].filter(Boolean).join(' ')
 }
 
+/** At most this many campaign cards in one Hockia AI answer. */
+export const DESK_CAMPAIGNS_MAX = 3
+/** The campaigns worth an answer: live and paused ones first, then the most recently ended. Drafts have nothing to report. */
+export function deskCampaigns(offers: BrandOffer[]): BrandOffer[] {
+  const running = offers.filter((o) => o.status === 'live' || o.status === 'paused')
+  const ended = offers
+    .filter((o) => o.status === 'ended' && o.live_at)
+    .sort((x, y) => (y.ended_at ?? y.updated_at).localeCompare(x.ended_at ?? x.updated_at))
+  return [...running, ...ended].slice(0, DESK_CAMPAIGNS_MAX)
+}
+
 /** "today" / "yesterday" / "3 days ago" (B1 status lines). */
 export function daysAgoWord(iso: string | null, now: Date = new Date()): string {
   if (!iso) return tBrands('offers.daysAgo.recently')

@@ -296,9 +296,10 @@ Founder ruling 2026-11-21: count the members who reach Hockia AI at all, and let
 
 | Event | Properties | Fired when |
 |---|---|---|
-| `hockia_ai_open` | `entry` (header, home, opportunities, profile, role, search, link), `mode` (chat, builder, apply, history, steps), `suggestion` (the kind that lit the dot, or null) | The sheet opens, from any entry point (one place: `GlobalHockiaAiSheet`) |
-| `hockia_ai_suggestion_shown` | `kind: applicants_waiting \| profile_step \| new_opportunities` | The dot lights for a suggestion, once per member, kind and fact per app load |
+| `hockia_ai_open` | `entry` (header, home, opportunities, profile, role, search, link), `mode` (chat, builder, apply, history, steps, campaigns), `suggestion` (the kind that lit the dot, or null) | The sheet opens, from any entry point (one place: `GlobalHockiaAiSheet`) |
+| `hockia_ai_suggestion_shown` | `kind: applicants_waiting \| profile_step \| new_opportunities \| campaign_ended` | The dot lights for a suggestion, once per member, kind and fact per app load |
 | `hockia_ai_suggestion_click` | `kind` | The member taps the "New for you" row inside the sheet |
+| `hockia_ai_campaigns_view` | none | none | A brand opened "How are my campaigns doing?" in Hockia AI and the campaign cards were shown (added 2026-11-21). The suggestion events above also carry `kind: campaign_ended` for brands |
 
 Reads: unique openers = distinct `user_id` on `hockia_ai_open`; by entry point = the same split by `entry`; dot effect = opens with a non-null `suggestion` over `hockia_ai_suggestion_shown`; follow-through = `hockia_ai_suggestion_click` over those opens.
 
