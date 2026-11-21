@@ -854,7 +854,7 @@ export function useChat({
 
       trackDbEvent('message_send', 'conversation', conversationIdForMetrics)
       // A first message to a brand from one of its offers counts as "contacted".
-      reportOfferContactIfPending(otherParticipantId)
+      reportOfferContactIfPending(currentUserId, otherParticipantId)
       trackMessageSend()
 
       if (onMessageSent && (deliveredMessage || optimisticMessage)) {

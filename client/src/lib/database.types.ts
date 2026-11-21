@@ -1041,6 +1041,7 @@ export type Database = {
           image_url: string | null
           link_url: string | null
           live_at: string | null
+          objective: string
           pending: Json | null
           pending_status: string | null
           perk: string | null
@@ -1069,6 +1070,7 @@ export type Database = {
           image_url?: string | null
           link_url?: string | null
           live_at?: string | null
+          objective?: string
           pending?: Json | null
           pending_status?: string | null
           perk?: string | null
@@ -1097,6 +1099,7 @@ export type Database = {
           image_url?: string | null
           link_url?: string | null
           live_at?: string | null
+          objective?: string
           pending?: Json | null
           pending_status?: string | null
           perk?: string | null
@@ -7964,6 +7967,7 @@ export type Database = {
           perk: string
           promo_code: string
           code_copies: number
+          objective: string
           regions: string[]
           live_at: string
           not_useful: number
@@ -7994,6 +7998,7 @@ export type Database = {
           p_regions?: string[]
           p_image_url: string
           p_link_url: string
+          p_objective?: string
           p_offer_id: string
           p_roles: string[]
           p_starts_at: string
