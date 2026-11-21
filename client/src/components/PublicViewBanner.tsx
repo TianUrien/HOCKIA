@@ -28,7 +28,7 @@ export default function PublicViewBanner({ compactOnPhone = false, clubView = fa
       {compactOnPhone && (
         <div className="flex items-center gap-2 bg-ink-1 px-5 pb-2.5 pt-[max(10px,env(safe-area-inset-top))] text-white lg:hidden">
           <Eye className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <p className="min-w-0 flex-1 truncate text-secondary">{clubView
+          <p className="min-w-0 flex-1 text-secondary">{clubView
             ? <Trans t={t} i18nKey="publicViewBanner.clubView" components={{ strong: <span className="font-semibold" /> }} />
             : <Trans t={t} i18nKey="publicViewBanner.publicView" components={{ strong: <span className="font-semibold" /> }} />}</p>
           <button type="button" onClick={handleReturnToDashboard} className="shrink-0 text-secondary font-semibold text-white underline-offset-2">{t('publicViewBanner.done')}</button>

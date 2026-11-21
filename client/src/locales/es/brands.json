@@ -464,7 +464,7 @@
     "navParent": "Perfil",
     "title": "Embajadores/as",
     "tabs": {
-      "mine": "Tus embajadores/as",
+      "mine": "Embajadores/as",
       "candidates": "Candidatos/as"
     },
     "intro": "Jugadores/as que viven en {{countries}} y activaron las alianzas con marcas. La cantidad de seguidores/as es la que declaró cada persona.",

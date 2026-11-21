@@ -962,7 +962,7 @@
     },
     "roles": {
       "title": "Oportunidades abiertas",
-      "post": "+ Publicar una oportunidad",
+      "post": "+ Publicar",
       "seeAll": "Ver todo",
       "empty": "No hay oportunidades abiertas por ahora.",
       "seeAllCount_one": "Ver {{count}} oportunidad",
