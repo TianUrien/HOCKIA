@@ -25,7 +25,7 @@ describe('aiContextChip', () => {
   it('per role: coach, club, brand, umpire', () => {
     expect(label({ role: 'coach', entry: 'opportunities', openOpportunities: 6 })).toBe('Coaching opportunities: 6 open')
     expect(label({ role: 'club', recruiter: true, myOpenRoles: 2 })).toBe('Your opportunities: 2 open')
-    expect(label({ role: 'brand', liveOffers: 2 })).toBe('Your offers: 2 live')
+    expect(label({ role: 'brand', liveOffers: 2 })).toBe('Your campaigns: 2 live')
     expect(label({ role: 'umpire', matchesOfficiated: 12 })).toBe('Your record: 12 matches officiated')
     expect(label({ role: 'umpire', matchesOfficiated: 1 })).toBe('Your record: 1 match officiated')
   })

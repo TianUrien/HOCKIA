@@ -9,8 +9,8 @@ describe('brand dashboard Offers card (Figma B0 / B0b)', () => {
   it('B0: no offers → one Primary that opens the editor', () => {
     const onCreate = vi.fn()
     render(<OffersCard offers={[]} totals={null} onCreate={onCreate} onOpen={vi.fn()} />)
-    expect(screen.getByText('Bring something useful to members where they live. Free, and live as soon as you publish.')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Create your first offer' }))
+    expect(screen.getByText('Reach the members your brand is for. Say what you want them to do, and see what happened. Free, and live as soon as you publish.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Create your first campaign' }))
     expect(onCreate).toHaveBeenCalled()
   })
 

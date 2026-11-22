@@ -54,7 +54,8 @@ describe('AdminPreferences', () => {
       expect(screen.getByText('User Preferences')).toBeInTheDocument()
     })
 
-    expect(screen.getByText(/100/)).toBeInTheDocument()
+    // The title is on screen before the summary loads: wait for the count instead of reading it at once.
+    expect(await screen.findByText(/100/)).toBeInTheDocument()
   })
 
   it('shows all notification preference rows', async () => {

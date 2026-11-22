@@ -9,6 +9,7 @@ import * as Sentry from '@sentry/react';
 import { logger } from '@/lib/logger';
 import { recoverFromStaleChunk } from '@/lib/swUpdate';
 import { tCommon } from '@/i18n/ns/common';
+import { HockiaHelpLine } from '@/components/HockiaHelpLine';
 
 interface Props {
   children: ReactNode;
@@ -138,6 +139,8 @@ export class ErrorBoundary extends Component<Props, State> {
               {t('errorBoundary.retry')}
             </button>
           </div>
+          {/* Hockia's own help, and nobody else's, next to a failure (founder 2026-11-21). */}
+          <HockiaHelpLine moment="error_screen" hard className="mt-4" />
         </div>
       </div>
     );

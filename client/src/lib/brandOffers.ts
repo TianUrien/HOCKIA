@@ -19,6 +19,41 @@ export type OfferStatus = 'draft' | 'in_review' | 'not_approved' | 'live' | 'pau
 export type OfferRole = 'player' | 'coach' | 'club' | 'umpire'
 export type OfferAction = 'pause' | 'resume' | 'end' | 'delete'
 
+/**
+ * What the brand wants members to do (founder 2026-11-21, proposal
+ * docs/product/proposals/brand-promotion.md). It sets the member's button,
+ * the fields the editor asks for and the number that counts.
+ */
+export type OfferObjective = 'ask' | 'product' | 'offer' | 'ambassador'
+export const OFFER_OBJECTIVES: { value: OfferObjective; readonly label: string; readonly hint: string }[] = [
+  withLazyText({ value: 'ask' as OfferObjective }, { label: () => tBrands('offers.objectives.ask.label'), hint: () => tBrands('offers.objectives.ask.hint') }),
+  withLazyText({ value: 'product' as OfferObjective }, { label: () => tBrands('offers.objectives.product.label'), hint: () => tBrands('offers.objectives.product.hint') }),
+  withLazyText({ value: 'offer' as OfferObjective }, { label: () => tBrands('offers.objectives.offer.label'), hint: () => tBrands('offers.objectives.offer.hint') }),
+  withLazyText({ value: 'ambassador' as OfferObjective }, { label: () => tBrands('offers.objectives.ambassador.label'), hint: () => tBrands('offers.objectives.ambassador.hint') }),
+]
+/** A campaign that asks members to write or to apply needs no store link. */
+export const linkOptional = (o: OfferObjective | null | undefined) => o === 'ask' || o === 'ambassador'
+
+/** A campaign runs 7 to 15 days and stops by itself (founder 2026-11-21). */
+export const CAMPAIGN_MIN_DAYS = 7
+export const CAMPAIGN_MAX_DAYS = 15
+export const CAMPAIGN_DEFAULT_DAYS = 14
+const DAY_MS = 86_400_000
+const dayStart = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+/** The day a campaign's window is counted from: its start date, else when it went live, else today. */
+export function campaignStart(f: Pick<OfferFields, 'starts_at'>, liveAt?: string | null, now: Date = new Date()): Date {
+  return new Date(f.starts_at ?? liveAt ?? now)
+}
+/** The end of the day `days` after the start, as the date field stores it. */
+export function campaignEnd(start: Date, days: number = CAMPAIGN_DEFAULT_DAYS): string {
+  return `${new Date(dayStart(start) + days * DAY_MS).toISOString().slice(0, 10)}T23:59:59Z`
+}
+/** Whole days from the start day to the end day, or null with no end. */
+export function campaignDays(f: Pick<OfferFields, 'starts_at' | 'ends_at'>, liveAt?: string | null, now: Date = new Date()): number | null {
+  if (!f.ends_at) return null
+  return Math.round((dayStart(new Date(f.ends_at)) - dayStart(campaignStart(f, liveAt, now))) / DAY_MS)
+}
+
 export const OFFER_LIVE_LIMIT = 5
 export const OFFER_TITLE_MAX = 60
 export const OFFER_BODY_MAX = 140
@@ -54,6 +89,8 @@ export interface OfferFields {
   perk?: string | null
   /** A code members copy on the offer page, so the brand counts sales (2026-11-07). */
   promo_code?: string | null
+  /** What the brand wants members to do; absent from servers before 2026-11-21 (then an offer). */
+  objective?: OfferObjective | null
 }
 
 export const OFFER_PERK_MAX = 24
@@ -155,11 +192,14 @@ export function liveLimitLine(offers: Pick<BrandOffer, 'status'>[]): string {
 }
 
 /** "158 shown · 31 opened · 12 went to your store · 5 contacted" (+ "· 2 not useful" when any). */
-export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful' | 'code_copies'>>): string {
+export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contacted'> & Partial<Pick<BrandOffer, 'store_visits' | 'not_useful' | 'code_copies' | 'objective'>>): string {
+  // Under five members, exact counts would say what one person did (founder 2026-11-21).
+  if (isSmallAudience(o)) return tBrands('offers.counts.fewer', { n: SMALL_AUDIENCE })
   return [
     countPart('shown', o.shown),
     countPart('opened', o.opened),
-    countPart('storeVisits', o.store_visits ?? 0),
+    // A campaign that asks members to write or to apply has no store to go to.
+    linkOptional(o.objective) && !(o.store_visits ?? 0) ? null : countPart('storeVisits', o.store_visits ?? 0),
     (o.code_copies ?? 0) > 0 ? countPart('codeCopies', o.code_copies ?? 0) : null,
     countPart('contacted', o.contacted),
     (o.not_useful ?? 0) > 0 ? countPart('notUseful', o.not_useful ?? 0) : null,
@@ -167,7 +207,137 @@ export function offerCountsLine(o: Pick<BrandOffer, 'shown' | 'opened' | 'contac
 }
 
 function countPart(key: 'shown' | 'opened' | 'storeVisits' | 'codeCopies' | 'contacted' | 'notUseful', n: number): string {
-  return tBrands(`offers.counts.${key}`, { count: n, n: brandCount(n) })
+  // "fewer than 5 opened": the masked form takes the plural.
+  return tBrands(`offers.counts.${key}`, { count: isFewer(n) ? SMALL_AUDIENCE : n, n: countInLine(n) })
+}
+
+/** "3 days left" on a live campaign with an end date; "Ends today" on its last day. */
+export function daysLeftLine(o: Pick<BrandOffer, 'ends_at'>, now: Date = new Date()): string | null {
+  if (!o.ends_at) return null
+  // In the reader's own calendar days: counted in UTC, a brand west of UTC
+  // would read "Ends today" a day early.
+  const localDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const left = Math.round((localDay(new Date(o.ends_at)) - localDay(now)) / DAY_MS)
+  if (left < 0) return null
+  return left === 0 ? tBrands('offers.daysLeft.today') : tBrands('offers.daysLeft.days', { count: left })
+}
+
+// ── The campaign report (2026-11-21) ────────────────────────────────────────
+
+/**
+ * Under this many members a campaign's counts are not shown: with one or two
+ * people, an exact "opened 1, not useful 1" says what a person did. The same
+ * threshold as the breakdowns (founder 2026-10-23), applied to every
+ * per-campaign total (founder 2026-11-21). Nobody at all is a plain zero.
+ */
+export const SMALL_AUDIENCE = 5
+/**
+ * How many members met the campaign at all. "Shown" counts the card inside
+ * Hockia; a member who opens the page from a shared link is counted as opened
+ * with no impression, so the audience is the largest of the three counts.
+ */
+export function campaignAudience(o: Pick<BrandOffer, 'shown'> & Partial<Pick<BrandOffer, 'opened' | 'contacted'>>): number {
+  return Math.max(o.shown, o.opened ?? 0, o.contacted ?? 0)
+}
+export function isSmallAudience(o: Pick<BrandOffer, 'shown'> & Partial<Pick<BrandOffer, 'opened' | 'contacted'>>): boolean {
+  const n = campaignAudience(o)
+  return n > 0 && n < SMALL_AUDIENCE
+}
+/** Members opened it from a link, and the card was never shown inside Hockia. */
+export function isLinkOnly(o: Pick<BrandOffer, 'shown'> & Partial<Pick<BrandOffer, 'opened' | 'contacted'>>): boolean {
+  return o.shown === 0 && campaignAudience(o) > 0
+}
+/** A per-campaign total the brand may not read exactly: one to four members. */
+export const isFewer = (n: number) => n > 0 && n < SMALL_AUDIENCE
+/**
+ * A per-campaign total as the brand reads it (founder 2026-11-21): one to four
+ * reads "Fewer than 5", like the breakdowns; zero and five or more are
+ * numbers. A zero is only printed beside an audience of five or more (see
+ * isSmallAudience), where it cannot be traced to a person.
+ */
+export function campaignCount(n: number): string {
+  return isFewer(n) ? tBrands('campaignReport.fewer', { n: SMALL_AUDIENCE }) : brandCount(n)
+}
+/** The same inside a sentence: "fewer than 5". */
+const countInLine = (n: number) => (isFewer(n) ? tBrands('offers.counts.fewerN', { n: SMALL_AUDIENCE }) : brandCount(n))
+
+export type CampaignHeadline = 'asked' | 'applied' | 'store'
+/**
+ * The one number a campaign is judged by, from its objective: members who
+ * wrote (a question), players who applied (ambassadors), or members who went
+ * to the store (a product or an offer).
+ */
+export function campaignHeadline(o: Pick<BrandOffer, 'contacted' | 'store_visits'> & { objective?: OfferObjective | null }): { key: CampaignHeadline; n: number } {
+  if (o.objective === 'ask') return { key: 'asked', n: o.contacted }
+  if (o.objective === 'ambassador') return { key: 'applied', n: o.contacted }
+  return { key: 'store', n: o.store_visits ?? 0 }
+}
+
+/** Whole days the campaign has run or ran, from the day it went live. 0 means less than a day. */
+export function campaignRanDays(o: Pick<BrandOffer, 'live_at' | 'starts_at' | 'ended_at' | 'ends_at' | 'status'>, now: Date = new Date()): number | null {
+  const from = o.starts_at ?? o.live_at
+  if (!from) return null
+  const to = o.status === 'ended' ? o.ended_at ?? o.ends_at ?? now.toISOString() : now.toISOString()
+  return Math.max(0, Math.round((new Date(to).getTime() - new Date(from).getTime()) / DAY_MS))
+}
+
+/**
+ * An ended campaign that Hockia had taken down: the hourly job ends a
+ * taken-down campaign at its end date and the note stays on the row
+ * (publishing again clears it).
+ */
+export function wasTakenDown(o: Partial<Pick<BrandOffer, 'review_note'>>): boolean {
+  return Boolean((o.review_note ?? '').trim())
+}
+
+/**
+ * "It ran 14 days. It was shown to 84 members and 19 opened it. 6 wrote to
+ * you." Every part has its own singular; under a day it says so; under five
+ * members it gives no counts.
+ */
+export function closingLine(offer: Pick<BrandOffer, 'shown' | 'opened'> & Partial<Pick<BrandOffer, 'contacted' | 'review_note'>>, ranDays: number | null, headline: { key: CampaignHeadline; n: number }): string {
+  // Taken down by Hockia and never published again: it did not run its
+  // course, so no "It ran N days" (the days after the take-down were not live).
+  const ran = wasTakenDown(offer) ? tBrands('campaignReport.closingTakenDown') : ranDays === null ? null : ranDays < 1 ? tBrands('campaignReport.closingRanUnderDay') : tBrands('campaignReport.closingRan', { count: ranDays })
+  if (campaignAudience(offer) === 0) return [ran, tBrands('campaignReport.nobodyEnded')].filter(Boolean).join(' ')
+  // It has ended: "so far" and "once 5 have" can no longer come true.
+  if (isSmallAudience(offer)) return [ran, tBrands('campaignReport.smallEnded', { n: SMALL_AUDIENCE })].filter(Boolean).join(' ')
+  const headlinePart = isFewer(headline.n)
+    ? tBrands(`campaignReport.closingHeadlineFewer.${headline.key}`, { n: SMALL_AUDIENCE })
+    : tBrands(`campaignReport.closingHeadline.${headline.key}`, { count: headline.n, n: brandCount(headline.n) })
+  // Opened from a shared link only: the card was never shown inside Hockia.
+  if (isLinkOnly(offer)) {
+    return [ran, tBrands('campaignReport.closingLinkOnly', { count: isFewer(offer.opened) ? SMALL_AUDIENCE : offer.opened, n: countInLine(offer.opened) }), headlinePart].filter(Boolean).join(' ')
+  }
+  return [
+    ran,
+    tBrands('campaignReport.closingShown', { count: offer.shown, n: brandCount(offer.shown) }),
+    tBrands('campaignReport.closingOpened', { count: isFewer(offer.opened) ? SMALL_AUDIENCE : offer.opened, n: countInLine(offer.opened) }),
+    headlinePart,
+  ].filter(Boolean).join(' ')
+}
+
+/** At most this many campaign cards in one Hockia AI answer. */
+export const DESK_CAMPAIGNS_MAX = 3
+/**
+ * The campaigns worth an answer: live ones, then paused ones, then the most
+ * recently ended. Drafts have nothing to report. `focusId` is the campaign
+ * the member came to see (the one the dot announced): it is always among the
+ * cards, first.
+ */
+export function deskCampaigns(offers: BrandOffer[], focusId?: string | null): BrandOffer[] {
+  const live = offers.filter((o) => o.status === 'live')
+  const paused = offers.filter((o) => o.status === 'paused')
+  const ended = offers
+    .filter((o) => o.status === 'ended' && o.live_at)
+    .sort((x, y) => (y.ended_at ?? y.updated_at).localeCompare(x.ended_at ?? x.updated_at) || x.id.localeCompare(y.id))
+  const all = [...live, ...paused, ...ended]
+  const focus = focusId ? all.find((o) => o.id === focusId) : undefined
+  return (focus ? [focus, ...all.filter((o) => o !== focus)] : all).slice(0, DESK_CAMPAIGNS_MAX)
+}
+/** Everything deskCampaigns chooses from: campaigns that have gone live and are not drafts. */
+export function deskCampaignTotal(offers: BrandOffer[]): number {
+  return offers.filter((o) => o.status === 'live' || o.status === 'paused' || (o.status === 'ended' && o.live_at)).length
 }
 
 /** "today" / "yesterday" / "3 days ago" (B1 status lines). */
@@ -194,13 +364,15 @@ export function offerStatusLine(o: BrandOffer, now: Date = new Date()): string {
   // Taken down by an admin: the reason word for word, and the way back.
   if (o.status === 'not_approved') return note ? tBrands('offers.status.takenDownNote', { note }) : tBrands('offers.status.takenDown')
   switch (o.status) {
-    case 'live': return offerCountsLine(o)
+    case 'live': return [offerCountsLine(o), daysLeftLine(o, now)].filter(Boolean).join('. ')
     case 'in_review':
     case 'draft': return tBrands('offers.status.notPublished')
     case 'paused': return tBrands('offers.status.paused', { when: daysAgoWord(o.updated_at, now) })
     default: return tBrands('offers.status.ended', {
       date: shortDate(o.ended_at ?? o.updated_at),
-      counts: [countPart('shown', o.shown), countPart('storeVisits', o.store_visits ?? 0), countPart('contacted', o.contacted)].join(', '),
+      counts: isSmallAudience(o)
+        ? tBrands('offers.counts.fewer', { n: SMALL_AUDIENCE })
+        : [countPart('shown', o.shown), linkOptional(o.objective) && !(o.store_visits ?? 0) ? null : countPart('storeVisits', o.store_visits ?? 0), countPart('contacted', o.contacted)].filter(Boolean).join(', '),
     })
   }
 }
@@ -215,11 +387,14 @@ function pickFields(o: OfferFields): OfferFields {
     title: o.title, body: o.body, image_url: o.image_url, link_url: o.link_url,
     country_ids: o.country_ids ?? [], area: o.area, roles: o.roles ?? [], starts_at: o.starts_at, ends_at: o.ends_at,
     everywhere: o.everywhere ?? false, regions: o.regions ?? [], perk: o.perk ?? null, promo_code: o.promo_code ?? null,
+    objective: o.objective ?? 'offer',
   }
 }
 
 export const EMPTY_OFFER: OfferFields = {
   title: '', body: '', image_url: null, link_url: '', country_ids: [], area: '', roles: [], starts_at: null, ends_at: null, everywhere: false, regions: [], perk: '', promo_code: '',
+  // A new campaign starts with no objective: the editor asks first.
+  objective: null,
 }
 
 // ── Content rules (B2) ──────────────────────────────────────────────────────
@@ -247,7 +422,8 @@ export function unprovableClaim(text: string | null | undefined): string | null 
 }
 
 /** What still blocks "Publish", in the editor's order, or null. */
-export function offerMissing(f: OfferFields): string | null {
+export function offerMissing(f: OfferFields, liveAt?: string | null): string | null {
+  if (!f.objective) return tBrands('offers.missing.objective')
   // A real photo makes offers look trustworthy; required to publish (2026-11-07, client-side so old apps keep working).
   if (!f.image_url) return tBrands('offers.missing.photo')
   if (!f.title?.trim()) return tBrands('offers.missing.title')
@@ -256,10 +432,15 @@ export function offerMissing(f: OfferFields): string | null {
   if (f.body.trim().length > OFFER_BODY_MAX) return tBrands('offers.missing.bodyTooLong', { max: OFFER_BODY_MAX })
   if ((f.perk ?? '').trim().length > OFFER_PERK_MAX) return tBrands('offers.missing.perkTooLong', { max: OFFER_PERK_MAX })
   if ((f.promo_code ?? '').trim() && !PROMO_CODE_RE.test((f.promo_code ?? '').trim())) return tBrands('offers.missing.promoCode')
-  if (!normalizeOfferLink(f.link_url)) return tBrands('offers.missing.link')
+  if ((f.link_url ?? '').trim() || !linkOptional(f.objective)) {
+    if (!normalizeOfferLink(f.link_url)) return tBrands('offers.missing.link')
+  }
   if (!f.everywhere && f.country_ids.length === 0 && (f.regions ?? []).length === 0) return tBrands('offers.missing.where')
   if (f.roles.length === 0) return tBrands('offers.missing.who')
-  if (f.ends_at && new Date(f.ends_at).getTime() <= Date.now()) return tBrands('offers.missing.endDate')
+  if (!f.ends_at) return tBrands('offers.missing.endRequired')
+  if (new Date(f.ends_at).getTime() <= Date.now()) return tBrands('offers.missing.endDate')
+  const days = campaignDays(f, liveAt)
+  if (days != null && (days < CAMPAIGN_MIN_DAYS || days > CAMPAIGN_MAX_DAYS)) return tBrands('offers.missing.window', { min: CAMPAIGN_MIN_DAYS, max: CAMPAIGN_MAX_DAYS })
   return null
 }
 
@@ -337,7 +518,7 @@ export async function fetchMyOffers(): Promise<BrandOffer[]> {
 }
 
 export async function saveOffer(offerId: string | null, f: OfferFields, submit: boolean): Promise<string> {
-  const { data, error } = await supabase.rpc('save_brand_offer', {
+  const args = {
     p_offer_id: offerId as string,
     p_title: (f.title ?? '').trim(),
     p_body: (f.body ?? '').trim(),
@@ -351,9 +532,15 @@ export async function saveOffer(offerId: string | null, f: OfferFields, submit: 
     p_submit: submit,
     p_everywhere: f.everywhere ?? false,
     p_regions: f.regions ?? [],
-    p_perk: (f.perk ?? '').trim(),
-    p_promo_code: (f.promo_code ?? '').trim(),
-  })
+    // Perk and code belong to an offer; another objective clears them.
+    p_perk: f.objective && f.objective !== 'offer' ? '' : (f.perk ?? '').trim(),
+    p_promo_code: f.objective && f.objective !== 'offer' ? '' : (f.promo_code ?? '').trim(),
+  }
+  const first = await supabase.rpc('save_brand_offer', { ...args, p_objective: f.objective ?? undefined })
+  // A server that has not learned objectives yet (PGRST202: no such signature)
+  // still saves an offer or a product, which it treats the same way.
+  const serverIsOlder = first.error?.code === 'PGRST202' && !linkOptional(f.objective)
+  const { data, error } = serverIsOlder ? await supabase.rpc('save_brand_offer', args) : first
   if (error) throw error
   return data as string
 }
@@ -387,6 +574,8 @@ export async function takeDownOffer(offerId: string, reason: string): Promise<st
 export function offerErrorMessage(err: unknown): string {
   const msg = typeof err === 'object' && err && 'message' in err ? String((err as { message?: unknown }).message ?? '') : ''
   if (msg.startsWith('live_limit')) return tBrands('offers.errors.liveLimit', { limit: OFFER_LIVE_LIMIT })
+  if (msg.startsWith('campaign_window')) return tBrands('offers.missing.window', { min: CAMPAIGN_MIN_DAYS, max: CAMPAIGN_MAX_DAYS })
+  if (msg.startsWith('invalid_offer: open_to_partners')) return tBrands('offers.errors.openToPartners')
   if (msg.startsWith('invalid_offer')) return tBrands('offers.errors.invalid')
   if (msg.startsWith('offer_expired')) return tBrands('offers.errors.expired')
   if (msg.startsWith('too_many_offers')) return tBrands('offers.errors.tooMany')

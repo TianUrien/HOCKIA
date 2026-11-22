@@ -170,7 +170,7 @@
     "waiting_many": "{{count}} personas esperan respuesta",
     "oldestWrote": "El mensaje más antiguo llegó {{ago}}",
     "reply": "Responder",
-    "offersTitle": "Tus ofertas, últimos 30 días",
+    "offersTitle": "Tus campañas, últimos 30 días",
     "market_one": "{{count}} integrante vive donde vendes",
     "market_other": "{{count}} integrantes viven donde vendes",
     "market_many": "{{count}} integrantes viven donde vendes",

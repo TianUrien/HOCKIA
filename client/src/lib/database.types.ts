@@ -1041,6 +1041,7 @@ export type Database = {
           image_url: string | null
           link_url: string | null
           live_at: string | null
+          objective: string
           pending: Json | null
           pending_status: string | null
           perk: string | null
@@ -1069,6 +1070,7 @@ export type Database = {
           image_url?: string | null
           link_url?: string | null
           live_at?: string | null
+          objective?: string
           pending?: Json | null
           pending_status?: string | null
           perk?: string | null
@@ -1097,6 +1099,7 @@ export type Database = {
           image_url?: string | null
           link_url?: string | null
           live_at?: string | null
+          objective?: string
           pending?: Json | null
           pending_status?: string | null
           perk?: string | null
@@ -7964,6 +7967,7 @@ export type Database = {
           perk: string
           promo_code: string
           code_copies: number
+          objective: string
           regions: string[]
           live_at: string
           not_useful: number
@@ -7994,6 +7998,7 @@ export type Database = {
           p_regions?: string[]
           p_image_url: string
           p_link_url: string
+          p_objective?: string
           p_offer_id: string
           p_roles: string[]
           p_starts_at: string
@@ -9806,6 +9811,7 @@ export type Database = {
         Returns: string
       }
       facebook_login_enabled: { Args: never; Returns: boolean }
+      hockia_help_profile_id: { Args: never; Returns: string }
       feed_item_engageable: { Args: { p_item_type: string }; Returns: boolean }
       fetch_club_opportunities_with_counts: {
         Args: {

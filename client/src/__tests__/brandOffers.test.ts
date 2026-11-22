@@ -3,8 +3,12 @@ import { describe, expect, it, vi } from 'vitest'
 // No Supabase env in CI: the RPC wrappers are not exercised here.
 vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 import {
+  CAMPAIGN_DEFAULT_DAYS,
   OFFER_LIVE_LIMIT,
   audienceLine,
+  campaignDays,
+  campaignEnd,
+  daysLeftLine,
   daysAgoWord,
   liveLimitLine,
   normalizeOfferLink,
@@ -57,8 +61,8 @@ describe('brand offers: list groups and words (Figma B1-all)', () => {
 
   it('writes the status line for each state', () => {
     expect(offerStatusLine(offer(), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 5 contacted')
-    expect(offerStatusLine(offer({ not_useful: 2 }), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 5 contacted, 2 not useful')
-    expect(offerStatusLine(offer({ code_copies: 3 }), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 3 copied the code, 5 contacted')
+    expect(offerStatusLine(offer({ not_useful: 2 }), NOW)).toBe('158 shown, 31 opened, 12 went to your store, 5 contacted, fewer than 5 not useful')
+    expect(offerStatusLine(offer({ code_copies: 3 }), NOW)).toBe('158 shown, 31 opened, 12 went to your store, fewer than 5 copied the code, 5 contacted')
     expect(offerStatusLine(offer({ status: 'in_review' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'draft' }), NOW)).toBe('Not published yet')
     expect(offerStatusLine(offer({ status: 'paused', updated_at: '2026-10-20T10:00:00Z' }), NOW)).toBe("Paused 3 days ago. Members don't see it.")
@@ -96,7 +100,7 @@ describe('brand offers: content rules (Figma B2)', () => {
   })
 
   it('names the first thing missing before Send for review', () => {
-    const base = offerShownFields(offer({ image_url: 'https://cdn.example.com/kit.jpg' }))
+    const base = { ...offerShownFields(offer({ image_url: 'https://cdn.example.com/kit.jpg' })), ends_at: campaignEnd(new Date()) }
     expect(offerMissing(base)).toBeNull()
     expect(offerMissing({ ...base, image_url: null })).toBe('Add a photo')
     expect(offerMissing({ ...base, perk: 'x'.repeat(25) })).toBe('Keep the perk under 24 characters')
@@ -115,8 +119,47 @@ describe('brand offers: content rules (Figma B2)', () => {
     expect(audienceLine(['England', 'Netherlands'], ['player', 'coach'])).toBe('England, Netherlands. Players, coaches')
   })
 
+  it('a campaign starts from an objective, and only an offer or a product needs a link', () => {
+    const base = { ...offerShownFields(offer({ image_url: 'https://cdn.example.com/kit.jpg' })), ends_at: campaignEnd(new Date()) }
+    expect(offerMissing({ ...base, objective: null })).toBe('Choose what you want members to do')
+    expect(offerMissing({ ...base, objective: 'ask', link_url: '' })).toBeNull()
+    expect(offerMissing({ ...base, objective: 'ambassador', link_url: null })).toBeNull()
+    expect(offerMissing({ ...base, objective: 'ask', link_url: 'http://x.com' })).toBe('Add a link that starts with https')
+    expect(offerMissing({ ...base, objective: 'product', link_url: '' })).toBe('Add a link that starts with https')
+    // A campaign saved before objectives existed is an offer.
+    expect(offerShownFields(offer({})).objective).toBe('offer')
+  })
+
+  it('a campaign runs 7 to 15 days, 14 by default, counted from its start', () => {
+    const base = offerShownFields(offer({ image_url: 'https://cdn.example.com/kit.jpg' }))
+    const start = new Date('2026-12-01T10:00:00Z')
+    expect(campaignEnd(start)).toBe('2026-12-15T23:59:59Z')
+    expect(campaignDays({ starts_at: start.toISOString(), ends_at: campaignEnd(start) })).toBe(CAMPAIGN_DEFAULT_DAYS)
+    expect(offerMissing({ ...base, ends_at: null })).toBe('Choose an end date')
+    const today = new Date()
+    expect(offerMissing({ ...base, ends_at: campaignEnd(today, 6) })).toBe('A campaign runs 7 to 15 days. Change the end date.')
+    expect(offerMissing({ ...base, ends_at: campaignEnd(today, 7) })).toBeNull()
+    expect(offerMissing({ ...base, ends_at: campaignEnd(today, 15) })).toBeNull()
+    expect(offerMissing({ ...base, ends_at: campaignEnd(today, 16) })).toBe('A campaign runs 7 to 15 days. Change the end date.')
+    // A live campaign is measured from the day it went live, not from today.
+    const liveAt = new Date(today.getTime() - 10 * 86_400_000).toISOString()
+    expect(offerMissing({ ...base, ends_at: campaignEnd(new Date(liveAt), 14) }, liveAt)).toBeNull()
+    expect(offerErrorMessage({ message: 'campaign_window: 7 to 15 days' })).toBe('A campaign runs 7 to 15 days. Change the end date.')
+  })
+
+  it('a live campaign says how long it has left', () => {
+    // Counted in the reader's own calendar days, whatever their time zone.
+    const now = new Date(2026, 11, 1, 20, 0, 0)
+    const endOf = (day: number) => new Date(2026, 11, day, 18, 0, 0).toISOString()
+    expect(daysLeftLine({ ends_at: endOf(4) }, now)).toBe('3 days left')
+    expect(daysLeftLine({ ends_at: endOf(2) }, now)).toBe('1 day left')
+    expect(daysLeftLine({ ends_at: new Date(2026, 11, 1, 23, 0, 0).toISOString() }, now)).toBe('Ends today')
+    expect(daysLeftLine({ ends_at: new Date(2026, 10, 30, 23, 0, 0).toISOString() }, now)).toBeNull()
+    expect(daysLeftLine({ ends_at: null }, now)).toBeNull()
+  })
+
   it('turns server refusals into plain words', () => {
-    expect(offerErrorMessage({ message: 'live_limit: brand has 5 live offers' })).toMatch(/5 live offers/)
+    expect(offerErrorMessage({ message: 'live_limit: brand has 5 live offers' })).toMatch(/5 live campaigns/)
     expect(offerErrorMessage(new Error('boom'))).toBe('Something went wrong. Please try again.')
   })
 })
@@ -128,23 +171,23 @@ describe('brand offers: review notices (Figma N1 / N2)', () => {
   it('tells the brand an offer is live, in the Inbox and by push', () => {
     const n = note('brand_offer_approved', { offer_title: 'Kit for your first season abroad', change: false })
     const cfg = getNotificationConfig(n)
-    expect(cfg.getTitle(n)).toBe('Your offer is live')
+    expect(cfg.getTitle(n)).toBe('Your campaign is live')
     expect(cfg.getDescription?.(n)).toBe('"Kit for your first season abroad" is now shown to members.')
     expect(cfg.getRoute?.(n)).toBe('/dashboard/offers')
     const push = buildPushPayload('brand_offer_approved', { offer_title: 'Kit for your first season abroad' }, 'Hockia')
-    expect(push.title).toBe('Your offer is live')
+    expect(push.title).toBe('Your campaign is live')
     expect(push.url).toBe('/dashboard/offers')
   })
 
   it('passes the admin reason word for word when not approved', () => {
     const n = note('brand_offer_not_approved', { offer_title: 'Summer camp places', reason: 'Remove "the best camp in Ireland".' })
     const cfg = getNotificationConfig(n)
-    expect(cfg.getTitle(n)).toBe('Your offer needs a change')
+    expect(cfg.getTitle(n)).toBe('Your campaign needs a change')
     expect(cfg.getDescription?.(n)).toBe('"Summer camp places" wasn’t approved. Reason: Remove "the best camp in Ireland". Edit and publish again.')
     const t = note('brand_offer_not_approved', { offer_title: 'Summer camp places', reason: 'Remove "the best camp in Ireland".', takedown: true })
-    expect(getNotificationConfig(t).getTitle(t)).toBe('Your offer was taken down')
+    expect(getNotificationConfig(t).getTitle(t)).toBe('Your campaign was taken down')
     expect(getNotificationConfig(t).getDescription?.(t)).toBe('"Summer camp places" was taken down. Reason: Remove "the best camp in Ireland". Edit and publish again.')
-    expect(buildPushPayload('brand_offer_not_approved', { offer_title: 'Summer camp places', takedown: true }, 'Hockia').title).toBe('Your offer was taken down')
+    expect(buildPushPayload('brand_offer_not_approved', { offer_title: 'Summer camp places', takedown: true }, 'Hockia').title).toBe('Your campaign was taken down')
     expect(buildPushPayload('brand_offer_not_approved', { offer_title: 'Summer camp places' }, 'Hockia').body).toBe('Summer camp places: see the reason, then edit and publish again.')
   })
 })

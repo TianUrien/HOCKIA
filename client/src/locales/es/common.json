@@ -378,5 +378,12 @@
     "offerSuffix": "Oferta para integrantes",
     "seeAll": "Ver todo para {{where}}",
     "notNow": "Ahora no"
+  },
+  "hockiaHelp": {
+    "notWorking": "¿No funciona?",
+    "cantFind": "¿No lo encuentras?",
+    "question": "¿Tienes una duda?",
+    "ask": "Pregunta a Hockia",
+    "draft": "Necesito ayuda en esta pantalla: {{screen}}"
   }
 }

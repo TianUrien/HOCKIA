@@ -50,8 +50,8 @@
     "coachFind": "Buscar oportunidades para entrenar",
     "prepareApplication": "Preparar mi postulación",
     "brandAmbassadors": "Buscar posibles embajadores/as",
-    "brandOffersMonth": "¿Cómo les fue a mis ofertas este mes?",
-    "brandWriteOffer": "Escribir una oferta nueva para integrantes",
+    "brandOffersMonth": "¿Cómo van mis campañas?",
+    "brandWriteOffer": "Escribir una campaña nueva para integrantes",
     "umpireAddMatch": "Agregar mi último partido",
     "umpireMissing": "¿Qué le falta a mi trayectoria?",
     "umpireCountry": "¿Qué árbitros/as hay en mi país?"
@@ -77,7 +77,7 @@
   "context": {
     "chipLabel": "{{topic}}: {{fact}}",
     "yourOpportunities": "Tus oportunidades",
-    "yourOffers": "Tus ofertas",
+    "yourOffers": "Tus campañas",
     "yourRecord": "Tu trayectoria",
     "coachingOpportunities": "Oportunidades para entrenar",
     "opportunities": "Oportunidades",
@@ -105,7 +105,9 @@
     "opportunities_one": "{{count}} oportunidad nueva desde la última vez",
     "opportunities_many": "{{count}} oportunidades nuevas desde la última vez",
     "opportunities_other": "{{count}} oportunidades nuevas desde la última vez",
-    "opportunitiesCta": "Verlas"
+    "opportunitiesCta": "Verlas",
+    "campaignEnded": "“{{title}}” terminó",
+    "campaignEndedCta": "Ver cómo le fue"
   },
   "sheet": {
     "placeholder": "Pregúntale a Hockia AI…",
@@ -586,5 +588,28 @@
       "boys": "Juega en Juveniles caballeros",
       "mixed": "Juega en Mixto"
     }
+  },
+  "campaigns": {
+    "none": "Todavía no tienes campañas. Una campaña lleva tu marca a las personas para las que es.",
+    "error": "No pude leer tus campañas en este momento. Intenta de nuevo en un rato.",
+    "leadLive_one": "Tienes {{count}} campaña publicada.",
+    "leadLive_other": "Tienes {{count}} campañas publicadas.",
+    "leadLive_many": "Tienes {{count}} campañas publicadas.",
+    "leadEnded": "Ahora no hay nada publicado. Así les fue a tus últimas campañas.",
+    "endedOn": "Terminó el {{date}}",
+    "notUseful": "No útil",
+    "report": "Ver informe",
+    "new": "Nueva campaña",
+    "all": "Todas las campañas",
+    "source": "Estos números salen de tus resultados, no de una estimación. Cada uno cuenta integrantes distintos.",
+    "reading_one": "Hasta ahora se mostró a {{shown}} integrante; {{opened}} la abrieron.",
+    "reading_other": "Hasta ahora se mostró a {{shown}} integrantes; {{opened}} la abrieron.",
+    "reading_many": "Hasta ahora se mostró a {{shown}} integrantes; {{opened}} la abrieron.",
+    "leadPaused_one": "Ahora no hay nada publicado. Tienes {{count}} campaña pausada.",
+    "leadPaused_other": "Ahora no hay nada publicado. Tienes {{count}} campañas pausadas.",
+    "leadPaused_many": "Ahora no hay nada publicado. Tienes {{count}} campañas pausadas.",
+    "leadSome_one": "Acá va {{count}} de tus {{total}} campañas.",
+    "leadSome_other": "Acá van {{count}} de tus {{total}} campañas.",
+    "leadSome_many": "Acá van {{count}} de tus {{total}} campañas."
   }
 }

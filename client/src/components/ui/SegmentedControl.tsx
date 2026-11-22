@@ -4,9 +4,10 @@ import { useCommonT } from '@/i18n/ns/common'
 export interface SegmentOption<T extends string> {
   value: T
   label: string
-  /** Shown instead of `label` below 430 px, so the segment stays on one line
-   *  on narrow phones ("Open · 24" for "Open opportunities · 24"). Screen
-   *  readers always get the full label. */
+  /** Shown instead of `label` below 640 px, so the segment stays on one line
+   *  on every phone ("Open (24)" for "Open opportunities (24)"). It was 430 px,
+   *  but on the widest phones (440 pt) the long Spanish label still did not
+   *  fit half the track. Screen readers always get the full label. */
   shortLabel?: string
   /** Rendered as "Label · N" when > 0 (Figma: "Requests · 4"). */
   count?: number
@@ -73,8 +74,8 @@ export function SegmentedControl<T extends string>({
           >
             {option.shortLabel ? (
               <>
-                <span className="truncate min-[430px]:hidden">{withCount(option.shortLabel)}</span>
-                <span className="hidden truncate min-[430px]:inline">{label}</span>
+                <span className="truncate sm:hidden">{withCount(option.shortLabel)}</span>
+                <span className="hidden truncate sm:inline">{label}</span>
               </>
             ) : (
               <span className="truncate">{label}</span>

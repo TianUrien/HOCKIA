@@ -60,7 +60,7 @@ export default function BrandPartnershipsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-subtle" data-testid="brand-partnerships">
+    <div className="min-h-screen bg-surface-subtle pt-[env(safe-area-inset-top)]" data-testid="brand-partnerships">
       <Header mobileHidden />
       <DetailNavBar parent={t('partnerships.navParent')} title={t('partnerships.title')} fallbackPath="/settings" />
       <main className="mx-auto max-w-[640px] pb-28 pt-2 lg:pt-under-header-lg">

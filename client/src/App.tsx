@@ -9,6 +9,7 @@ import * as Sentry from '@sentry/react'
 // (EditProfileModal, JourneyTab, CommentsTab... and their catalogs).
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { HockiaHelpLine } from '@/components/HockiaHelpLine'
 import Layout from '@/components/Layout'
 import SentryTestButton from '@/components/SentryTestButton'
 import RecruiterOnlyRoute from '@/components/RecruiterOnlyRoute'
@@ -112,6 +113,7 @@ const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingP
 const NeedPage = lazyWithRetry(() => import('@/pages/NeedPage'))
 const BrandOffersPage = lazyWithRetry(() => import('@/pages/BrandOffersPage'))
 const BrandResultsPage = lazyWithRetry(() => import('@/pages/BrandResultsPage'))
+const CampaignReportPage = lazyWithRetry(() => import('@/pages/CampaignReportPage'))
 const BrandAmbassadorsPage = lazyWithRetry(() => import('@/pages/BrandAmbassadorsPage'))
 const BrandPartnershipsPage = lazyWithRetry(() => import('@/pages/BrandPartnershipsPage'))
 const OfferDetailPage = lazyWithRetry(() => import('@/pages/OfferDetailPage'))
@@ -190,6 +192,7 @@ const RouteErrorFallback = () => (
           Go to Home
         </button>
       </div>
+      <HockiaHelpLine moment="route_error" hard className="mt-4" />
     </div>
   </div>
 )
@@ -482,6 +485,7 @@ function App() {
                 <Route path="/dashboard/results" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandResultsPage /></ErrorBoundary>} />
                 <Route path="/dashboard/ambassadors" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandAmbassadorsPage /></ErrorBoundary>} />
                 <Route path="/dashboard/offers/new" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="new" /></ErrorBoundary>} />
+                <Route path="/dashboard/offers/:offerId/report" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CampaignReportPage /></ErrorBoundary>} />
                 <Route path="/dashboard/offers/:offerId/edit" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOffersPage mode="edit" /></ErrorBoundary>} />
 
                 {/* Public Investor Dashboard (shareable link) */}

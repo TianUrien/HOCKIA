@@ -12,20 +12,29 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { chipTone } from '@/components/ui/chipClasses'
 import { fieldInput, fieldLabel, fieldLabelRow, fieldOptionalTag } from '@/components/ui/fieldClasses'
 import {
+  CAMPAIGN_DEFAULT_DAYS,
+  CAMPAIGN_MAX_DAYS,
+  CAMPAIGN_MIN_DAYS,
   OFFER_BODY_MAX,
+  OFFER_OBJECTIVES,
   OFFER_PERK_MAX,
   OFFER_REGIONS,
   OFFER_ROLES,
   OFFER_TITLE_MAX,
+  campaignEnd,
+  campaignStart,
   fetchOfferReach,
+  linkOptional,
   offerMissing,
   reachLine,
   unprovableClaim,
   type BrandOffer,
   type OfferFields,
+  type OfferObjective,
   type OfferRole,
 } from '@/lib/brandOffers'
-import { OfferPreviewCard, OfferThumb, OfferPill } from './OfferParts'
+import { OfferThumb, OfferPill } from './OfferParts'
+import { CampaignPreview } from './CampaignPreview'
 import { useCountryNames } from '@/hooks/useCountryNames'
 import { NeedPicker } from '@/components/marketplace/NeedPicker'
 import type { Need } from '@/lib/marketplace'
@@ -41,6 +50,8 @@ interface OfferEditorProps {
   offer: BrandOffer | null
   initial: OfferFields
   brandName: string
+  /** The brand takes ambassador applications ("Open to partners"). */
+  openToPartners?: boolean
   userId: string
   saving: 'draft' | 'submit' | null
   onSave: (fields: OfferFields, submit: boolean) => void
@@ -52,11 +63,14 @@ interface OfferEditorProps {
 }
 
 /**
- * Create / edit an offer (Figma B2 phone, D1 desktop panel). Publish makes it
- * live at once (founder 2026-10-25: no approval step); edits to a live or
- * paused offer apply at once. Anything not live can also be saved as a draft.
+ * Create / edit a campaign (Figma B2 phone, D1 desktop panel). The brand first
+ * says what it wants members to do (founder 2026-11-21); that objective sets
+ * the fields below and the member's button. Publish makes it live at once
+ * (founder 2026-10-25: no approval step); edits to a live or paused campaign
+ * apply at once. Anything not live can also be saved as a draft. A campaign
+ * runs 7 to 15 days and stops by itself.
  */
-export function OfferEditor({ offer, initial, brandName, userId, saving, onSave, onCancel, layout, need, onNeedChange }: OfferEditorProps) {
+export function OfferEditor({ offer, initial, brandName, openToPartners = false, userId, saving, onSave, onCancel, layout, need, onNeedChange }: OfferEditorProps) {
   const t = useBrandsT()
   const [f, setF] = useState<OfferFields>(initial)
   const [tried, setTried] = useState(false)
@@ -67,7 +81,23 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
   const countryNames = names(f.country_ids)
 
   const isChange = offer?.status === 'live' || offer?.status === 'paused'
-  const missing = offerMissing(f)
+  const objective = f.objective ?? null
+  const needsOpen = objective === 'ambassador' && !openToPartners
+  // Same rule as the server: only a running campaign that already has an end
+  // date keeps its window; anything going live starts a new one today.
+  const anchor = isChange && offer?.ends_at ? offer.starts_at ?? offer.live_at : null
+  const starts = anchor ? f.starts_at ?? anchor : f.starts_at && new Date(f.starts_at).getTime() > Date.now() ? f.starts_at : null
+  const missing = needsOpen ? t('offerEditor.ambassadorNeedsOpen') : offerMissing({ ...f, starts_at: starts }, anchor)
+  const start = campaignStart({ starts_at: starts }, anchor)
+  const pickObjective = (o: OfferObjective) => setF((prev) => ({
+    ...prev,
+    objective: o,
+    // Only players can be ambassadors.
+    roles: o === 'ambassador' ? ['player'] : prev.roles,
+    // The window starts at 14 days; the brand can change it within 7 to 15.
+    ends_at: prev.ends_at ?? campaignEnd(start),
+  }))
+  const objKey = objective ?? 'offer'
   const claim = unprovableClaim(`${f.title ?? ''} ${f.body ?? ''}`)
   const busy = saving !== null
   const title = offer ? t('offerEditor.titleEdit') : t('offerEditor.titleNew')
@@ -78,9 +108,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
     onSave(f, true)
   }
 
-  const preview = (
-    <OfferPreviewCard fields={f} brandName={brandName} reasonCountry={countryNames[0] ?? null} reasonRole={f.roles[0] ?? null} />
-  )
+  const preview = <CampaignPreview fields={f} brandName={brandName} countryNames={countryNames} />
 
   const actions = (
     <div className="space-y-2">
@@ -99,6 +127,31 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
 
   const form = (
     <div className="space-y-6">
+      <fieldset data-testid="offer-objective">
+        <legend className={fieldLabel}>{t('offerEditor.objectiveLabel')}</legend>
+        <div className="space-y-2">
+          {OFFER_OBJECTIVES.map((o) => {
+            const on = objective === o.value
+            return (
+              <button
+                key={o.value}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => pickObjective(o.value)}
+                className={cn('block w-full rounded-[16px] bg-white px-4 py-3 text-left ring-1 ring-inset', on ? 'bg-brand-soft ring-[1.5px] ring-brand-primary' : 'ring-line')}
+                data-testid={`offer-objective-${o.value}`}
+              >
+                <span className={cn('block text-body font-semibold', on ? 'text-brand-primary' : 'text-ink-1')}>{o.label}</span>
+                <span className="mt-0.5 block text-row text-ink-2">{o.hint}</span>
+              </button>
+            )
+          })}
+        </div>
+        {objective ? null : <p className="mt-1.5 text-caption text-ink-3">{t('offerEditor.objectiveHint')}</p>}
+      </fieldset>
+
+      {objective ? (<>
       <PhotoField url={f.image_url} userId={userId} onChange={(url) => set('image_url', url)} />
 
       <div>
@@ -109,7 +162,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
             value={f.title ?? ''}
             maxLength={OFFER_TITLE_MAX}
             onChange={(e) => set('title', e.target.value)}
-            placeholder={t('offerEditor.titlePlaceholder')}
+            placeholder={t(`offerEditor.titlePlaceholders.${objKey}`)}
             className={cn(fieldInput, 'pr-16')}
           />
           <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-caption text-ink-3">{(f.title ?? '').length}/{OFFER_TITLE_MAX}</span>
@@ -119,7 +172,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
       <NeedPicker value={need} onChange={onNeedChange} idPrefix="offer-need" />
 
       <div>
-        <div className={fieldLabelRow}><label htmlFor="offer-body">{t('offerEditor.bodyLabel')}</label></div>
+        <div className={fieldLabelRow}><label htmlFor="offer-body">{objective === 'ask' ? t('offerEditor.bodyLabelAsk') : t('offerEditor.bodyLabel')}</label></div>
         <div className="relative">
           <textarea
             id="offer-body"
@@ -127,7 +180,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
             maxLength={OFFER_BODY_MAX}
             rows={3}
             onChange={(e) => set('body', e.target.value)}
-            placeholder={t('offerEditor.bodyPlaceholder')}
+            placeholder={t(`offerEditor.bodyPlaceholders.${objKey}`)}
             className={cn(fieldInput, 'h-auto resize-none py-3 pr-16')}
           />
           <span className="pointer-events-none absolute right-3.5 top-3 text-caption text-ink-3">{(f.body ?? '').length}/{OFFER_BODY_MAX}</span>
@@ -135,10 +188,11 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
         <p className={cn('mt-1.5 text-caption', claim ? 'text-status-warning' : 'text-ink-3')}>
           {claim
             ? t('offerEditor.claimWarning', { claim })
-            : t('offerEditor.bodyHint')}
+            : objective === 'ask' ? t('offerEditor.bodyHintAsk') : t('offerEditor.bodyHint')}
         </p>
       </div>
 
+      {objective === 'offer' ? (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <div className={fieldLabelRow}><label htmlFor="offer-perk">{t('offerEditor.perkLabel')}</label><span className={fieldOptionalTag}>{t('offerEditor.optional')}</span></div>
@@ -151,9 +205,10 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
           <p className="mt-1.5 text-caption text-ink-3">{t('offerEditor.codeHint')}</p>
         </div>
       </div>
+      ) : null}
 
       <div>
-        <label htmlFor="offer-link" className={fieldLabel}>{t('offerEditor.linkLabel')}</label>
+        <div className={fieldLabelRow}><label htmlFor="offer-link">{t('offerEditor.linkLabel')}</label>{linkOptional(objective) ? <span className={fieldOptionalTag}>{t('offerEditor.optional')}</span> : null}</div>
         <input
           id="offer-link"
           value={f.link_url ?? ''}
@@ -164,7 +219,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
           placeholder={t('offerEditor.linkPlaceholder')}
           className={fieldInput}
         />
-        <p className="mt-1.5 text-caption text-ink-3">{t('offerEditor.linkHint')}</p>
+        <p className="mt-1.5 text-caption text-ink-3">{linkOptional(objective) ? t('offerEditor.linkHintOptional') : t('offerEditor.linkHint')}</p>
       </div>
 
       <PlaceField
@@ -187,6 +242,14 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
         />
       )}
 
+      {objective === 'ambassador' ? (
+        <div>
+          <p className={fieldLabel}>{t('offerEditor.whoFor')}</p>
+          <p className={cn('text-row', needsOpen ? 'text-status-warning' : 'text-ink-2')} data-testid="offer-ambassador-note">
+            {needsOpen ? t('offerEditor.ambassadorNeedsOpen') : t('offerEditor.ambassadorPlayersOnly')}
+          </p>
+        </div>
+      ) : (
       <fieldset>
         <legend className={fieldLabel}>{t('offerEditor.whoFor')}</legend>
         <div className="flex flex-wrap gap-2">
@@ -206,6 +269,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
           })}
         </div>
       </fieldset>
+      )}
       <ReachLine fields={f} />
 
       <div className="space-y-4">
@@ -215,10 +279,21 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
           <p className="mt-1.5 text-caption text-ink-3">{f.starts_at ? '' : t('offerEditor.startsHint')}</p>
         </div>
         <div>
-          <div className={fieldLabelRow}><label htmlFor="offer-end">{t('offerEditor.endsLabel')}</label><span className={fieldOptionalTag}>{t('offerEditor.optional')}</span></div>
-          <input id="offer-end" type="date" value={toDateInput(f.ends_at)} onChange={(e) => set('ends_at', fromDateInput(e.target.value, true))} className={fieldInput} />
+          <label htmlFor="offer-end" className={fieldLabel}>{t('offerEditor.endsLabel')}</label>
+          <input
+            id="offer-end"
+            type="date"
+            value={toDateInput(f.ends_at)}
+            min={toDateInput(campaignEnd(start, CAMPAIGN_MIN_DAYS))}
+            max={toDateInput(campaignEnd(start, CAMPAIGN_MAX_DAYS))}
+            onChange={(e) => set('ends_at', fromDateInput(e.target.value, true))}
+            className={fieldInput}
+            data-testid="offer-end-input"
+          />
+          <p className="mt-1.5 text-caption text-ink-3">{t('offerEditor.endsHint', { min: CAMPAIGN_MIN_DAYS, max: CAMPAIGN_MAX_DAYS, days: CAMPAIGN_DEFAULT_DAYS })}</p>
         </div>
       </div>
+      </>) : null}
     </div>
   )
 
@@ -234,7 +309,7 @@ export function OfferEditor({ offer, initial, brandName, userId, saving, onSave,
             <button type="button" onClick={onCancel} className="flex h-11 items-center px-1 text-[14px] font-semibold text-ink-2 hover:text-ink-1">{t('offerEditor.close')}</button>
           </div>
         </div>
-        <div className="grid grid-cols-[minmax(0,1fr)_260px] items-start gap-6">
+        <div className="grid grid-cols-[minmax(0,1fr)_300px] items-start gap-6">
           {form}
           <div className="sticky top-24 space-y-2.5">
             <p className="text-[14px] font-medium leading-[1.3] text-ink-1">{t('offerEditor.previewTitle')}</p>

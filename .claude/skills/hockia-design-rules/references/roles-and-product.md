@@ -57,7 +57,7 @@ Evidence-based definition of what HOCKIA is for and what each role is, does and 
 - **Promise:** "Build your brand in the hockey community", reach and recruit athletes as ambassadors.
 - **Can:** profile with cover, logo, products (taps to store counted with consent), updates in the feed, followers, invite ambassadors (players only, two-sided), "Open to partners" (default off), owner stats (views, search appearances); Hockia AI: find ambassadors.
 - **Never:** posts roles, applies, references, friends (followers instead), recruiter tools.
-- **Direction (2026-10-20, not built):** offers with a target, roles + location (never nationality), shown in Community › Brands, ≤ 1 labelled card per Home visit when it fits, and under Hockia AI answers; admin-reviewed while free; aggregate stats only; members can mute. See `docs/product/proposals/brand-reach.md`.
+- **Campaigns (built; offers since 2026-10-23, objectives since 2026-11-21):** a brand creates a campaign with one objective (ask a question, see a product, use an offer, become an ambassador), an audience by role and by where members live (never nationality) and a window of 7 to 15 days. Shown in Community › Brands, the Home rail and under Hockia AI answers; live at once, an admin can take it down; aggregate results only; members can dismiss or hide a brand. See `docs/product/proposals/brand-promotion.md`.
 - **Home Next step:** profile views + search appearances; tapping opens who viewed you ("View"), not the composer (2026-10-16).
 
 ## Known gaps and inconsistencies (fix or decide)

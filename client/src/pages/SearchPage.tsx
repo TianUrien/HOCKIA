@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { HockiaHelpLine } from '@/components/HockiaHelpLine'
 import { chipTone } from '@/components/ui/chipClasses'
 import { useSearchParams } from 'react-router-dom'
 import { Loader2, SearchX } from 'lucide-react'
@@ -172,6 +173,7 @@ function DesktopSearchPage() {
             <SearchX className="w-12 h-12 mx-auto mb-3 text-gray-500" />
             <p className="text-sm font-medium">{t('searchPage.noResults')}</p>
             <p className="text-xs mt-1">{t('searchPage.noResultsHint')}</p>
+            <HockiaHelpLine moment="search_empty" className="mt-4" />
           </div>
         ) : (
           <div className="space-y-3">

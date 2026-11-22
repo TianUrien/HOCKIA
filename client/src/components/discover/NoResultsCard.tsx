@@ -1,4 +1,5 @@
 import type { AppliedSearch, SuggestedAction } from '@/hooks/useDiscover'
+import { HockiaHelpLine } from '@/components/HockiaHelpLine'
 import ActionChipRow from './ActionChipRow'
 import AppliedSearchStrip from './AppliedSearchStrip'
 import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
@@ -59,6 +60,7 @@ export default function NoResultsCard({
       <p className="text-row text-ink-1 whitespace-pre-line">{headline}</p>
       {subline && <p className="mt-1 text-secondary text-ink-2 whitespace-pre-line">{subline}</p>}
       <ActionChipRow actions={actions} onAction={onAction} />
+      <HockiaHelpLine moment="ai_no_result" className="mt-2" />
     </div>
   )
 }

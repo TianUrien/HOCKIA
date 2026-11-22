@@ -22,6 +22,7 @@ import { useHockiaAiSheet } from './hockiaAiSheetStore'
 import { useWordReveal } from './useWordReveal'
 import { ProfileBuilder } from './ProfileBuilder'
 import { ApplyFlow } from './ApplyFlow'
+import { CampaignDesk } from './CampaignDesk'
 import { ChatHistory } from './ChatHistory'
 import { NextStepPlan, NextSteps } from './NextSteps'
 import { useNextSteps } from './useNextSteps'
@@ -36,6 +37,7 @@ import type { AiStep } from '@/lib/aiStream'
 import { HockiaAiOffer } from '@/components/offers/HockiaAiOffer'
 import { hockiaAiOfferTopic } from '@/lib/memberOffers'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
+import { registerBackOverlay } from '@/lib/nativeBack'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -85,6 +87,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     if (topic) setAiOffer({ answerId: answer.id, topic })
   }, [revealId, isPending, messages, aiOffer])
   const [moreOpen, setMoreOpen] = useState(false)
+  // The campaign the dot announced: it must be among the cards when the brand taps through.
+  const [deskFocus, setDeskFocus] = useState<string | null>(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [drag, setDrag] = useState(0)
   const dragStart = useRef<number | null>(null)
@@ -124,7 +128,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   const { facts, steps: nextSteps } = useNextSteps(open && canBuild)
   const stepping = mode === 'steps' && canBuild && step !== null
   const plan = canBuild && !roleContext && nextSteps && nextSteps.length > 0 ? nextSteps : null
-  const special = builder || applying || history || stepping
+  const campaigning = mode === 'campaigns' && signedIn && profile?.role === 'brand'
+  const special = builder || applying || history || stepping || campaigning
   // What lit the dot (founder 2026-11-21): shown first, with the one action that deals with it.
   const news = useHockiaAiSuggestion((s) => s.shown)
   const actOnNews = () => {
@@ -132,6 +137,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     void hapticSelection()
     trackDbEvent('hockia_ai_suggestion_click', undefined, undefined, { kind: news.kind })
     if (news.kind === 'profile_step') { startStep(news.step); return }
+    if (news.kind === 'campaign_ended') { setDeskFocus(news.id); setMode('campaigns'); return }
     close()
     navigate('/opportunities')
   }
@@ -141,11 +147,11 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
       <span className="min-w-0 flex-1">
         <span className="block text-caption font-semibold tracking-[0.04em] text-brand-primary">{t('suggestion.eyebrow')}</span>
         <span className="block text-[16px] font-semibold leading-[21px] text-ink-1">
-          {news.kind === 'applicants_waiting' ? t('suggestion.applicants', { count: news.count }) : news.kind === 'new_opportunities' ? t('suggestion.opportunities', { count: news.count }) : t(`suggestion.${news.step}`)}
+          {news.kind === 'applicants_waiting' ? t('suggestion.applicants', { count: news.count }) : news.kind === 'new_opportunities' ? t('suggestion.opportunities', { count: news.count }) : news.kind === 'campaign_ended' ? t('suggestion.campaignEnded', { title: news.title }) : t(`suggestion.${news.step}`)}
         </span>
       </span>
       <span className="shrink-0 text-[15px] font-semibold text-brand-primary">
-        {news.kind === 'applicants_waiting' ? t('suggestion.applicantsCta') : news.kind === 'new_opportunities' ? t('suggestion.opportunitiesCta') : t(`suggestion.${news.step}Cta`)}
+        {news.kind === 'applicants_waiting' ? t('suggestion.applicantsCta') : news.kind === 'new_opportunities' ? t('suggestion.opportunitiesCta') : news.kind === 'campaign_ended' ? t('suggestion.campaignEndedCta') : t(`suggestion.${news.step}Cta`)}
       </span>
     </button>
   ) : null
@@ -171,6 +177,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   }, [open, panel])
   useEffect(() => { if ((hasMessages || special) && open && detent === 'medium') setDetent('large') }, [hasMessages, special, open, detent, setDetent])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }) }, [messages, reduced])
+  // Android system Back closes this sheet first (it has no focus trap to be counted by).
+  useEffect(() => { if (open) return registerBackOverlay() }, [open])
   useEffect(() => {
     if (!open) return
     // A sheet opened over the builder (attach menu) handles its own Escape.
@@ -279,6 +287,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   const runOption = (o: RoleOption) => {
     if (o.action.type === 'ask') send(o.action.query, o.action.shown)
     else if (o.action.type === 'builder') startBuilder()
+    else if (o.action.type === 'campaigns') { void hapticSelection(); setDeskFocus(null); setMode('campaigns') }
     else { close(); navigate(o.action.to) }
   }
   const optionRows = roleOptions?.map((o) => ({ eyebrow: o.eyebrow, label: o.label, run: () => runOption(o) })) ?? null
@@ -395,6 +404,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
             onAddVideo={() => setMode('builder')}
             onFindSimilar={(q, shown) => { setMode('chat'); setTimeout(() => send(q, shown), 0) }}
           />
+        ) : campaigning ? (
+          <CampaignDesk focusId={deskFocus} onGo={(to) => { close(); navigate(to) }} />
         ) : builder ? <ProfileBuilder onClose={close} /> : (<>
         <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', panel ? 'px-6' : 'px-4')}>
           {(!large || (panel && !hasMessages)) && (

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import { useState } from 'react'
-import { handleNativeBack, type BackDeps } from '@/lib/nativeBack'
+import { backOverlayCount, handleNativeBack, registerBackOverlay, type BackDeps } from '@/lib/nativeBack'
 import { activeFocusTrapCount } from '@/hooks/useFocusTrap'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 
@@ -101,5 +101,26 @@ describe('with the real sheets', () => {
     await act(async () => { done = await handleNativeBack(true, d) })
     expect(done).toBe('navigated')
     expect(d.goBack).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('an overlay with no focus trap (the Hockia AI sheet)', () => {
+  it('counts while it is registered, so Back closes it instead of navigating the page behind', async () => {
+    const before = backOverlayCount()
+    const unregister = registerBackOverlay()
+    expect(backOverlayCount()).toBe(before + 1)
+    const goBack = vi.fn()
+    // The sheet closes on Escape and takes itself off the count.
+    const done = await handleNativeBack(true, { overlayCount: backOverlayCount, pressEscape: unregister, goBack, leaveApp: vi.fn(), wait: () => Promise.resolve() })
+    expect(done).toBe('closed-overlay')
+    expect(goBack).not.toHaveBeenCalled()
+    expect(backOverlayCount()).toBe(before)
+  })
+
+  it('unregistering twice takes it off the count once', () => {
+    const before = backOverlayCount()
+    const unregister = registerBackOverlay()
+    unregister(); unregister()
+    expect(backOverlayCount()).toBe(before)
   })
 })

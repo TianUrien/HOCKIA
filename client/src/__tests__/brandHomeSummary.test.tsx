@@ -29,7 +29,7 @@ describe('BrandHomeSummary', () => {
     expect(await screen.findByText('2 people are waiting for your reply')).toBeInTheDocument()
     expect(screen.getByText('40 members live where you sell')).toBeInTheDocument()
     expect(screen.getByText('To your store')).toBeInTheDocument()
-    expect(screen.getByText('32 members live in Argentina and none of your offers reach them.')).toBeInTheDocument()
+    expect(screen.getByText('32 members live in Argentina and none of your campaigns reach them.')).toBeInTheDocument()
   })
   it('renders nothing for other roles', () => {
     role = 'player'

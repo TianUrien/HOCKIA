@@ -38,7 +38,7 @@ export default function RecruitConfirmScreen() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white" data-testid="recruit-confirm">
+    <div className="flex min-h-screen flex-col bg-white pt-[env(safe-area-inset-top)]" data-testid="recruit-confirm">
       <DetailNavBar parent={t('recruitConfirm.back')} fallbackPath="/opportunities" />
       <div className="flex flex-1 flex-col items-center px-6 pt-16 text-center">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">

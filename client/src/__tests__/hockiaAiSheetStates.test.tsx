@@ -13,6 +13,8 @@ import { render, screen, fireEvent, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import type { DiscoverChatMessage, OpportunityResultItem } from '@/hooks/useDiscover'
 
+// The campaigns view reads the brand's results; here only its place in the sheet matters (covered in campaignDesk.test.tsx).
+vi.mock('@/components/hockiaAi/CampaignDesk', () => ({ CampaignDesk: () => <div data-testid="campaign-desk-stub" /> }))
 vi.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: vi.fn() } } }))
 vi.mock('@/lib/sentryHelpers', () => ({ reportSupabaseError: vi.fn() }))
 vi.mock('@/components/Avatar', () => ({ default: () => <div data-testid="avatar" /> }))
@@ -332,10 +334,22 @@ describe('Hockia AI sheet — three choices per role (rebrand page 17)', () => {
     authState.profile = { id: 'b1', role: 'brand', full_name: 'Grip Co' }
     openMedium()
     // OPEN rows show they leave the chat (design 2026-11-06).
-    expect(screen.getAllByTestId('hockia-ai-option-leaves')).toHaveLength(3)
-    fireEvent.click(screen.getByText('How did my offers do this month?'))
+    expect(screen.getAllByTestId('hockia-ai-option-leaves')).toHaveLength(2)
+    fireEvent.click(screen.getByText('Write a new campaign for members'))
     expect(sendMessage).not.toHaveBeenCalled()
-    expect(screen.getByTestId('where')).toHaveTextContent('/dashboard/results')
+    expect(screen.getByTestId('where')).toHaveTextContent('/dashboard/offers/new')
+  })
+
+  it('a brand asking how its campaigns are doing is answered in the sheet with cards, without the language model', () => {
+    const sendMessage = vi.fn()
+    useDiscoverChat.setState({ sendMessage })
+    authState.profile = { id: 'b1', role: 'brand', full_name: 'Grip Co' }
+    openMedium()
+    fireEvent.click(screen.getByText('How are my campaigns doing?'))
+    expect(screen.getByTestId('campaign-desk-stub')).toBeInTheDocument()
+    expect(sendMessage).not.toHaveBeenCalled()
+    // It stays in the sheet: the route did not change.
+    expect(screen.getByTestId('where')).toHaveTextContent('/home')
   })
 
   it('an umpire starts with "Add my latest match", which opens the Add editor', () => {
