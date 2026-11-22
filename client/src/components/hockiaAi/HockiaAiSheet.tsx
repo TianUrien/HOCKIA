@@ -37,6 +37,7 @@ import type { AiStep } from '@/lib/aiStream'
 import { HockiaAiOffer } from '@/components/offers/HockiaAiOffer'
 import { hockiaAiOfferTopic } from '@/lib/memberOffers'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
+import { registerBackOverlay } from '@/lib/nativeBack'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -176,6 +177,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   }, [open, panel])
   useEffect(() => { if ((hasMessages || special) && open && detent === 'medium') setDetent('large') }, [hasMessages, special, open, detent, setDetent])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }) }, [messages, reduced])
+  // Android system Back closes this sheet first (it has no focus trap to be counted by).
+  useEffect(() => { if (open) return registerBackOverlay() }, [open])
   useEffect(() => {
     if (!open) return
     // A sheet opened over the builder (attach menu) handles its own Escape.

@@ -65,7 +65,7 @@ export default function BrandAmbassadorsPage() {
   const countryLine = countries.length ? countries.map((id) => names([id])[0]).filter(Boolean).slice(0, 3).join(', ') : null
 
   return (
-    <div className="min-h-screen bg-surface-subtle" data-testid="brand-ambassadors">
+    <div className="min-h-screen bg-surface-subtle pt-[env(safe-area-inset-top)]" data-testid="brand-ambassadors">
       <Header mobileHidden />
       <DetailNavBar parent={t('ambassadors.navParent')} title={t('ambassadors.title')} fallbackPath="/dashboard/profile" />
       <main className="mx-auto max-w-[960px] px-4 pb-28 pt-3 lg:pt-under-header-lg">
