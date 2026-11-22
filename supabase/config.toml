@@ -462,6 +462,8 @@ verify_jwt = true
 verify_jwt = true
 [functions.role-description-draft]
 verify_jwt = true
+[functions.campaign-draft]
+verify_jwt = true
 
 [functions.profile-builder]
 verify_jwt = true

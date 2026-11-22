@@ -18,8 +18,9 @@ describe('roleOptionsFor (rebrand page 17, founder 2026-11-06)', () => {
     const brand = roleOptionsFor({ role: 'brand' })!
     // 2026-11-07: candidates are a real screen. 2026-11-21: "How are my campaigns doing?" is answered in the sheet with
     // cards read from the brand's results (no language model), so it is an ASK that never leaves for a screen.
-    expect(brand.map((o) => o.action)).toEqual([{ type: 'go', to: '/dashboard/ambassadors' }, { type: 'campaigns' }, { type: 'go', to: '/dashboard/offers/new' }])
-    expect(brand.map((o) => o.eyebrow)).toEqual(['OPEN', 'ASK', 'OPEN'])
+    // The same day, "Write a new campaign" became a draft from one sentence, reviewed in the sheet and finished in the editor.
+    expect(brand.map((o) => o.action)).toEqual([{ type: 'go', to: '/dashboard/ambassadors' }, { type: 'campaigns' }, { type: 'campaignDraft' }])
+    expect(brand.map((o) => o.eyebrow)).toEqual(['OPEN', 'ASK', 'DO IT FOR ME'])
     expect(roleOptionsFor({ role: 'umpire' })![0].action).toEqual({ type: 'go', to: '/dashboard/profile?tab=officiating&add=match' })
   })
 

@@ -1,0 +1,65 @@
+import { supabase } from '@/lib/supabase'
+import { EMPTY_OFFER, campaignEnd, type OfferFields, type OfferObjective, type OfferRole } from '@/lib/brandOffers'
+import type { Need } from '@/lib/marketplace'
+
+/**
+ * "Write a campaign with Hockia AI" (founder 2026-11-21, step C). One sentence
+ * from the brand becomes a draft through the campaign-draft edge function,
+ * which checks every field against the editor's own vocabularies and limits.
+ * The draft is never published from here: the brand continues in the editor,
+ * where the photo, the link and the dates are set.
+ */
+export interface CampaignDraft {
+  objective: OfferObjective
+  title: string
+  body: string
+  need: Need | null
+  roles: OfferRole[]
+  place: 'everywhere' | 'my_country'
+  perk: string | null
+}
+
+export type DraftFailure = 'unavailable' | 'limit'
+export type DraftResult = { draft: CampaignDraft } | { draft: null; reason: DraftFailure }
+
+export const CAMPAIGN_SENTENCE_MAX = 500
+
+/**
+ * The sentence a brand was writing, kept while the app is open so closing
+ * Hockia AI (even mid-request) never loses it. Held per member and in memory
+ * only: it is gone on reload, and another account never sees it.
+ */
+let kept: { owner: string; text: string } | null = null
+export const keptSentence = (owner: string | null | undefined): string => (owner && kept?.owner === owner ? kept.text : '')
+export function keepSentence(owner: string | null | undefined, text: string): void {
+  kept = owner && text.trim() ? { owner, text } : null
+}
+
+export async function draftCampaign(sentence: string): Promise<DraftResult> {
+  // No locale: the draft is written in the language of the sentence, so a perk stays in the brand's own words.
+  const { data, error } = await supabase.functions.invoke('campaign-draft', { body: { text: sentence } })
+  if (error) throw error
+  const res = data as { draft?: CampaignDraft | null; reason?: string } | null
+  if (res?.draft) return { draft: res.draft }
+  return { draft: null, reason: res?.reason === 'limit' ? 'limit' : 'unavailable' }
+}
+
+/**
+ * The draft as the editor's fields. "My country" needs the brand's own
+ * country; without one it reaches everyone, like a new campaign. The window
+ * starts at the default 14 days so the editor has an end date to show.
+ */
+export function draftToFields(d: CampaignDraft, brandCountryId: number | null | undefined, now: Date = new Date()): OfferFields {
+  const ownCountry = d.place === 'my_country' && brandCountryId != null
+  return {
+    ...EMPTY_OFFER,
+    objective: d.objective,
+    title: d.title,
+    body: d.body,
+    roles: d.roles,
+    everywhere: !ownCountry,
+    country_ids: ownCountry ? [brandCountryId] : [],
+    perk: d.objective === 'offer' ? d.perk ?? '' : '',
+    ends_at: campaignEnd(now),
+  }
+}

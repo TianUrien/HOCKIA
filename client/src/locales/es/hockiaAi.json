@@ -611,5 +611,28 @@
     "leadSome_one": "Acá va {{count}} de tus {{total}} campañas.",
     "leadSome_other": "Acá van {{count}} de tus {{total}} campañas.",
     "leadSome_many": "Acá van {{count}} de tus {{total}} campañas."
+  },
+  "composer": {
+    "ask": "Dime en una frase qué quieres que haga la comunidad, y para quién.",
+    "askNote": "Preparo un borrador. No se publica nada hasta que lo publiques en el editor.",
+    "placeholder": "Quiero que jugadores/as nos escriban con dudas para elegir un palo",
+    "inputLabel": "Qué quieres que haga la comunidad",
+    "send": "Escribir el borrador",
+    "manual": "Escribirla por mi cuenta",
+    "drafting": "Escribiendo tu borrador…",
+    "ready": "Este es un borrador con lo que escribiste. Revísalo y cambia lo que necesites.",
+    "forLabel": "Para",
+    "needLabel": "Necesidad",
+    "runsLabel": "Duración",
+    "runs": "{{days}} días, después se detiene sola",
+    "objectiveLabel": "Qué hace la comunidad",
+    "next": "Después, en el editor: agrega una foto, revisa los detalles y publica.",
+    "continue": "Seguir en el editor",
+    "rewrite": "Escribir otra frase",
+    "saveFailed": "No se pudo guardar el borrador. Revisa tu conexión e intenta de nuevo.",
+    "limit": "Ya usaste los borradores de hoy con Hockia AI. Igual puedes escribir la campaña por tu cuenta.",
+    "unavailable": "No pude escribir un borrador con eso en este momento. Puedes intentar de nuevo o escribirla por tu cuenta.",
+    "openEditor": "Abrir el editor",
+    "tryAgain": "Intentar de nuevo"
   }
 }

@@ -15,6 +15,7 @@ import type { DiscoverChatMessage, OpportunityResultItem } from '@/hooks/useDisc
 
 // The campaigns view reads the brand's results; here only its place in the sheet matters (covered in campaignDesk.test.tsx).
 vi.mock('@/components/hockiaAi/CampaignDesk', () => ({ CampaignDesk: () => <div data-testid="campaign-desk-stub" /> }))
+vi.mock('@/components/hockiaAi/CampaignComposer', () => ({ CampaignComposer: () => <div data-testid="campaign-composer-stub" /> }))
 vi.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: vi.fn() } } }))
 vi.mock('@/lib/sentryHelpers', () => ({ reportSupabaseError: vi.fn() }))
 vi.mock('@/components/Avatar', () => ({ default: () => <div data-testid="avatar" /> }))
@@ -334,10 +335,21 @@ describe('Hockia AI sheet — three choices per role (rebrand page 17)', () => {
     authState.profile = { id: 'b1', role: 'brand', full_name: 'Grip Co' }
     openMedium()
     // OPEN rows show they leave the chat (design 2026-11-06).
-    expect(screen.getAllByTestId('hockia-ai-option-leaves')).toHaveLength(2)
-    fireEvent.click(screen.getByText('Write a new campaign for members'))
+    expect(screen.getAllByTestId('hockia-ai-option-leaves')).toHaveLength(1)
+    fireEvent.click(screen.getByText('Find ambassador candidates'))
     expect(sendMessage).not.toHaveBeenCalled()
-    expect(screen.getByTestId('where')).toHaveTextContent('/dashboard/offers/new')
+    expect(screen.getByTestId('where')).toHaveTextContent('/dashboard/ambassadors')
+  })
+
+  it('a brand writing a new campaign stays in the sheet with the one-sentence composer', () => {
+    const sendMessage = vi.fn()
+    useDiscoverChat.setState({ sendMessage })
+    authState.profile = { id: 'b1', role: 'brand', full_name: 'Grip Co' }
+    openMedium()
+    fireEvent.click(screen.getByText('Write a new campaign for members'))
+    expect(screen.getByTestId('campaign-composer-stub')).toBeInTheDocument()
+    expect(sendMessage).not.toHaveBeenCalled()
+    expect(screen.getByTestId('where')).not.toHaveTextContent('/dashboard/offers/new')
   })
 
   it('a brand asking how its campaigns are doing is answered in the sheet with cards, without the language model', () => {
