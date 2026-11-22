@@ -65,7 +65,7 @@ export function RoleRailDesktop({ title, subtitle, onSeeAll, cards, testId }: { 
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {onSeeAll && (
-            <button type="button" onClick={onSeeAll} className="mr-1 text-[14px] font-semibold leading-[19px] text-brand-primary hover:underline">{t('list.seeAll')}</button>
+            <button type="button" onClick={onSeeAll} className="-my-3 mr-1 flex min-h-[44px] items-center text-[14px] font-semibold leading-[19px] text-brand-primary hover:underline">{t('list.seeAll')}</button>
           )}
           <button type="button" onClick={() => setPage(current - 1)} disabled={current === 0} aria-label={t('list.railPrevious')} className={pagerButton}><ChevronLeft className="h-4 w-4" strokeWidth={2.2} /></button>
           <button type="button" onClick={() => setPage(current + 1)} disabled={current >= pages - 1} aria-label={t('list.railMore')} className={pagerButton}><ChevronRight className="h-4 w-4" strokeWidth={2.2} /></button>

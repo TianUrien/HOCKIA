@@ -178,11 +178,12 @@ export function roleOptionsFor(profile: AiViewer, activeRoleTitle?: string | nul
     case 'brand':
       // Ambassadors: no per-brand country list on the server yet, so no "in my countries".
       return [
+        // One sentence becomes a draft the brand reviews here and finishes in the editor (founder 2026-11-21).
+        // First (founder 2026-11-22): as the third choice it sat under the fade on small phones.
+        { eyebrow: 'DO IT FOR ME', label: tx('options.brandWriteOffer'), action: { type: 'campaignDraft' } },
         go('options.brandAmbassadors', '/dashboard/ambassadors'),
         // Answered inside the sheet with cards built from real counts (founder 2026-11-21).
         { eyebrow: 'ASK', label: tx('options.brandOffersMonth'), action: { type: 'campaigns' } },
-        // One sentence becomes a draft the brand reviews here and finishes in the editor (founder 2026-11-21).
-        { eyebrow: 'DO IT FOR ME', label: tx('options.brandWriteOffer'), action: { type: 'campaignDraft' } },
       ]
     case 'umpire':
       return [
