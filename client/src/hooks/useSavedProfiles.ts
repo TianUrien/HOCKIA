@@ -27,6 +27,7 @@
  *   don't re-render the whole grid.
  */
 
+import { DEFAULT_SHORTLIST_NAME } from '@/lib/shortlistName'
 import { useCallback, useEffect, useState } from 'react'
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
@@ -288,7 +289,7 @@ export function useIsProfileSaved(profileId: string | null | undefined): UseIsPr
         } else {
           const { data: created, error: createErr } = await supabase
             .from('shortlists')
-            .insert({ owner_id: viewerId, name: 'Saved players', is_default: true })
+            .insert({ owner_id: viewerId, name: DEFAULT_SHORTLIST_NAME, is_default: true })
             .select('id')
             .single()
           if (createErr) {

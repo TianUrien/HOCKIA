@@ -178,7 +178,9 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     return () => { cancelAnimationFrame(frame); setEntered(false); trigger?.focus({ preventScroll: true }) }
   }, [open, panel])
   useEffect(() => { if ((hasMessages || special) && open && detent === 'medium') setDetent('large') }, [hasMessages, special, open, detent, setDetent])
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }) }, [messages, reduced])
+  // Follow the conversation to its newest message. Without messages there is
+  // nothing to follow: the sheet opens at its top, on the greeting.
+  useEffect(() => { if (messages.length > 0) bottomRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }) }, [messages, reduced])
   // Android system Back closes this sheet first (it has no focus trap to be counted by).
   useEffect(() => { if (open) return registerBackOverlay() }, [open])
   useEffect(() => {
@@ -229,8 +231,28 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     else if (Math.abs(dy) < 6) setDetent(detent === 'large' ? 'medium' : 'large')
   }
 
-  if (!open && !leaving) return null
   const large = panel || detent === 'large'
+  // The medium sheet scrolls when its cards are taller than it. While there
+  // is more below, the last row fades out at the edge instead of ending in a
+  // hard cut that reads as a broken layout.
+  const mediumScrollRef = useRef<HTMLDivElement>(null)
+  const [moreBelow, setMoreBelow] = useState(false)
+  const checkMoreBelow = useCallback(() => {
+    const el = mediumScrollRef.current
+    if (el) setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 8)
+  }, [])
+  useEffect(() => {
+    const el = mediumScrollRef.current
+    if (!open || !el) return
+    checkMoreBelow()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(checkMoreBelow)
+    ro.observe(el)
+    if (el.firstElementChild) ro.observe(el.firstElementChild)
+    return () => ro.disconnect()
+  }, [open, large, mode, checkMoreBelow])
+
+  if (!open && !leaving) return null
   const askFromPlan = (text: string, shown?: string) => { setMode('chat'); setTimeout(() => send(text, shown), 0) }
   const planCard = plan ? <NextStepPlan steps={plan} question={t('sheet.planQuestion')} onPick={startStep} onOther={askFromPlan} /> : null
   const canSend = input.trim().length > 0 && !isPending
@@ -412,7 +434,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
         ) : composing ? (
           <CampaignComposer onGo={(to) => { close(); navigate(to) }} />
         ) : builder ? <ProfileBuilder onClose={close} /> : (<>
-        <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', panel ? 'px-6' : 'px-4')}>
+        <div ref={mediumScrollRef} onScroll={checkMoreBelow} data-more-below={!large && moreBelow ? '' : undefined} className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', panel ? 'px-6' : 'px-4', !large && moreBelow && '[mask-image:linear-gradient(to_bottom,black_calc(100%-28px),transparent)]')}>
           {(!large || (panel && !hasMessages)) && (
             <div className="flex flex-col gap-3 pb-3" data-testid="hockia-ai-medium">
               {panel ? (

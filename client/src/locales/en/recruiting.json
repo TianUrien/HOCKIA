@@ -843,6 +843,7 @@
     "saveNote": "Save note"
   },
   "shortlistsIndex": {
+    "defaultName": "Saved players",
     "documentTitle": "Shortlists",
     "signedOutTitle": "Sign in to manage shortlists",
     "signedOutBody": "Group players you're scouting and triage them later.",
