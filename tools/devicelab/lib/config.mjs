@@ -40,6 +40,12 @@ export function clubCredentials() {
   if (!env.QA_CLUB_EMAIL || !env.QA_CLUB_PASSWORD) throw new Error('QA_CLUB_EMAIL / QA_CLUB_PASSWORD missing in ~/.config/hockia/staging-qa.env')
   return { email: env.QA_CLUB_EMAIL, password: env.QA_CLUB_PASSWORD }
 }
+/** Staging E2E brand for the brand journeys (client/.env, never printed). */
+export function brandCredentials() {
+  const env = parseEnvFile(path.join(CLIENT_DIR, '.env'))
+  if (!env.E2E_BRAND_EMAIL || !env.E2E_BRAND_PASSWORD) throw new Error('E2E_BRAND_EMAIL / E2E_BRAND_PASSWORD missing in client/.env')
+  return { email: env.E2E_BRAND_EMAIL, password: env.E2E_BRAND_PASSWORD }
+}
 export function loadDevices(filter) {
   const all = JSON.parse(fs.readFileSync(path.join(LAB_DIR, 'devices.json'), 'utf8')).devices
   if (!filter || filter === 'all') return all
