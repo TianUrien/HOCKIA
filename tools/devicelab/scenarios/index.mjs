@@ -102,11 +102,12 @@ async function signInAs(lab, ctx, { email, password }, label) {
     try { await lab.go('/signin') } catch (err) { if (!/navigation to \/signin ended/.test(err.message)) throw err }
     await sleep(1500)
   }
-  // The native app opens on its welcome screen; "Log in" leads to the form.
+  // The native app opens on its welcome screen; "I already have an account"
+  // ("Ya tengo una cuenta") leads to the form. "Log in" was its earlier label.
   const hasForm = await lab.eval(() => !!document.querySelector('input[type="email"]'))
   if (!hasForm) {
     await ctx.shot('welcome')
-    await lab.eval(() => { const b = [...document.querySelectorAll('a, button')].find((x) => /^log in$/i.test(x.textContent?.trim() || '')); b?.click() })
+    await lab.eval(() => { const b = [...document.querySelectorAll('a, button')].find((x) => /^(i already have an account|ya tengo (una )?cuenta|log in|iniciar sesi[oó]n)$/i.test(x.textContent?.trim() || '')); b?.click() })
   }
   await lab.waitFor('input[type="email"]')
   await ctx.shot('signin-form')
