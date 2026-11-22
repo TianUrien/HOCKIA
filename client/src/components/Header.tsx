@@ -214,7 +214,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
           )}
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden min-w-0 items-center justify-end gap-1 lg:flex lg:flex-1">
             {user && profile ? (
               <>
                 {/* Primary nav (rebrand page 16): text only; active = ink on a
@@ -255,7 +255,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                 <button
                   type="button"
                   onClick={() => handleNavigate('/search')}
-                  className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[14px] text-ink-2 transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:bg-surface-muted-pressed min-[1440px]:w-[310px] min-[1440px]:justify-start min-[1440px]:gap-2 min-[1440px]:px-4 min-[1440px]:text-left"
+                  className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[14px] text-ink-2 transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:bg-surface-muted-pressed min-[1440px]:w-[310px] min-[1440px]:min-w-[180px] min-[1440px]:shrink min-[1440px]:justify-start min-[1440px]:gap-2 min-[1440px]:px-4 min-[1440px]:text-left"
                   aria-label={t('nav.search')}
                   title={t('nav.search')}
                   data-testid="header-search-desktop"
@@ -328,7 +328,7 @@ export default function Header({ mobileHidden = false, onNewPost, hideOnScroll =
                 <button
                   type="button"
                   onClick={() => handleNavigate('/search')}
-                  className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[14px] text-ink-2 transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:bg-surface-muted-pressed min-[1440px]:w-[310px] min-[1440px]:justify-start min-[1440px]:gap-2 min-[1440px]:px-4 min-[1440px]:text-left"
+                  className="relative ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[14px] text-ink-2 transition-colors before:absolute before:-inset-0.5 before:content-[''] hover:bg-surface-muted-pressed min-[1440px]:w-[310px] min-[1440px]:min-w-[180px] min-[1440px]:shrink min-[1440px]:justify-start min-[1440px]:gap-2 min-[1440px]:px-4 min-[1440px]:text-left"
                   aria-label={t('nav.search')}
                   title={t('nav.search')}
                   data-testid="header-search-desktop"

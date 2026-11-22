@@ -129,7 +129,7 @@ export function ChatHeader({ participant, onBack, backLabel: backLabelProp, prof
         {/* iOS: chevron + where the chat was opened from. Android: the Material arrow alone, in ink. */}
         <button type="button" onClick={onBack} aria-label={t('chat.header.backTo', { label: backLabel })} className={cn('flex h-11 items-center pr-1 text-body', ANDROID_CHROME ? 'text-ink-1' : 'text-hockia-primary')}>
           <span className="flex h-11 w-9 items-center justify-center"><BackGlyph className="h-6 w-6" strokeWidth={2} /></span>
-          {!ANDROID_CHROME && <span className="max-w-[72px] truncate">{backLabel}</span>}
+          {!ANDROID_CHROME && <span className="max-w-[96px] truncate">{backLabel}</span>}
         </button>
         {profilePath ? (
           <Link to={profilePath} className="flex min-w-0 flex-1 items-center gap-2.5" aria-label={t('chat.header.viewNamedProfile', { name: participantName })}>{identity}</Link>

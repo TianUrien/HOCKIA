@@ -321,7 +321,7 @@ export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | '
     position: d.position,
     position_required: player && d.positionRequired,
     gender: player ? playerRoleGender(d.gender) : d.gender,
-    title: d.title.trim().slice(0, TITLE_MAX) || defaultTitle(d) || 'New opportunity',
+    title: d.title.trim().slice(0, TITLE_MAX) || defaultTitle(d) || tClub('postRole.newTitle'),
     level_sought: d.level,
     level_required: player && d.levelRequired && d.level !== null,
     specialist_skills_wanted: player ? pruneSpecialistSkillsForPosition(d.skills, d.position) : [],

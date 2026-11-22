@@ -870,6 +870,7 @@
     "saveNote": "Guardar nota"
   },
   "shortlistsIndex": {
+    "defaultName": "Perfiles guardados",
     "documentTitle": "Preselecciones",
     "signedOutTitle": "Iniciar sesión para gestionar preselecciones",
     "signedOutBody": "Agrupa los perfiles que estás observando y ordénalos más adelante.",

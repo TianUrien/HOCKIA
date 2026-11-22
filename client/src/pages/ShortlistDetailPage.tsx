@@ -9,6 +9,7 @@
  * RLS gates everything on owner_id = auth.uid().
  */
 
+import { shortlistDisplayName } from '@/lib/shortlistName'
 import { useEffect, useState } from 'react'
 import { Chip } from '@/components/ui/Chip'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -59,7 +60,7 @@ export default function ShortlistDetailPage() {
         .eq('id', id)
         .single()
       if (cancelled) return
-      setListName(data?.name ?? null)
+      setListName(data ? shortlistDisplayName(data) : null)
       setIsDefault(Boolean(data?.is_default))
     })()
     return () => { cancelled = true }

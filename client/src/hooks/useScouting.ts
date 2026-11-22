@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react'
+import { DEFAULT_SHORTLIST_NAME } from '@/lib/shortlistName'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
@@ -290,7 +291,7 @@ export function useShortlistWrites(roleTitle: string | null) {
   const ensureList = useCallback(async (): Promise<{ id: string; name: string } | null> => {
     if (list) return list
     if (!viewerId) return null
-    const name = roleTitle?.trim() || 'Saved players'
+    const name = roleTitle?.trim() || DEFAULT_SHORTLIST_NAME
     const isDefault = !roleTitle
     const { data, error } = await supabase.from('shortlists').insert({ owner_id: viewerId, name, is_default: isDefault }).select('id, name').single()
     if (error) {

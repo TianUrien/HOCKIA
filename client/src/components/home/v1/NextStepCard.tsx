@@ -105,8 +105,8 @@ export function NextStepCard({ onCompose }: { onCompose: () => void }) {
               >
                 <Visual visual={step.visual} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body font-semibold text-white">{step.title}</span>
-                  {step.subtitle && <span className="block truncate text-secondary text-white/75">{step.subtitle}</span>}
+                  <span className="line-clamp-2 text-body font-semibold text-white">{step.title}</span>
+                  {step.subtitle && <span className="line-clamp-2 text-secondary text-white/75">{step.subtitle}</span>}
                 </span>
                 <span className="flex h-11 min-w-[58px] shrink-0 items-center justify-center rounded-full bg-white px-4 text-[14px] font-semibold text-hockia-primary">
                   {busy === step.key ? '…' : step.cta}
