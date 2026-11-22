@@ -856,7 +856,7 @@ export const scenarios = {
     await ctx.shot('sheet')
     const options = await lab.eval(() => document.querySelectorAll('[data-testid="hockia-ai-option"]').length)
     ctx.note(`${options} choices in the sheet`)
-    await lab.eval(() => { document.querySelectorAll('[data-testid="hockia-ai-option"]')[1]?.click() })
+    await lab.eval(() => { document.querySelectorAll('[data-testid="hockia-ai-option"]')[2]?.click() })
     await lab.waitFor('[data-testid="hockia-ai-campaigns"]', 8000)
     try { await lab.waitFor('[data-testid="hockia-ai-campaigns-lead"]', 20000) } catch { ctx.note('campaign cards never showed their lead line') }
     await sleep(800)
@@ -882,7 +882,7 @@ export const scenarios = {
     await lab.tap('[data-testid="hockia-ai-button"]')
     await lab.waitFor('[data-testid="hockia-ai-sheet"]', 8000)
     await sleep(700)
-    await lab.eval(() => { document.querySelectorAll('[data-testid="hockia-ai-option"]')[2]?.click() })
+    await lab.eval(() => { document.querySelectorAll('[data-testid="hockia-ai-option"]')[0]?.click() })
     await lab.waitFor('[data-testid="hockia-ai-campaign-composer"]', 8000)
     await sleep(600)
     await ctx.shot('composer-empty')

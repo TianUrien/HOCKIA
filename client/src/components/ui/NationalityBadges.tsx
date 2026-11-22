@@ -81,7 +81,7 @@ export function NationalitiesTile({ nationalities, permits = [], missingLabel, o
         </span>
       ))}
       {onAdd && (
-        <button type="button" onClick={onAdd} className="self-start text-secondary font-semibold text-brand-primary">{nationalities.length === 0 ? t('nationality.addPassport') : t('nationality.addAnother')}</button>
+        <button type="button" onClick={onAdd} className="-my-3 flex min-h-[44px] items-center self-start text-secondary font-semibold text-brand-primary">{nationalities.length === 0 ? t('nationality.addPassport') : t('nationality.addAnother')}</button>
       )}
     </div>
   )

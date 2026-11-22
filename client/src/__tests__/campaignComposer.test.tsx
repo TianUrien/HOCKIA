@@ -13,7 +13,7 @@ vi.mock('@/lib/auth', () => ({ useAuthStore: (pick: (s: { user: { id: string } |
 
 import { CampaignComposer } from '@/components/hockiaAi/CampaignComposer'
 import { draftAs, draftToFields, keepDraft, keepSentence, keptDraft, keptSentence, type CampaignDraft } from '@/lib/campaignDraft'
-import { EMPTY_OFFER, freshWindow } from '@/lib/brandOffers'
+import { EMPTY_OFFER, freshWindow, startFromDay } from '@/lib/brandOffers'
 import { roleOptionsFor } from '@/lib/hockiaAi'
 
 /**
@@ -293,5 +293,19 @@ describe('found before production, 2026-11-22', () => {
     write('a'.repeat(620))
     expect(screen.getByTestId<HTMLTextAreaElement>('hockia-ai-campaign-input').value).toHaveLength(500)
     expect(screen.getByTestId('hockia-ai-campaign-max')).toHaveTextContent('That is the longest it can be: 500 characters.')
+  })
+})
+
+describe('the start date a brand picks', () => {
+  const now = new Date('2026-11-22T15:00:00Z')
+  it('today is "when it is published": the field stays empty (iOS writes today when its picker is only opened and closed)', () => {
+    expect(startFromDay('2026-11-22', now)).toBeNull()
+    expect(startFromDay('', now)).toBeNull()
+  })
+  it('another day starts at midnight UTC', () => {
+    expect(startFromDay('2026-11-25', now)).toBe('2026-11-25T00:00:00Z')
+  })
+  it('for brands, writing a campaign is the first choice in Hockia AI', () => {
+    expect(roleOptionsFor({ role: 'brand' })![0].action).toEqual({ type: 'campaignDraft' })
   })
 })

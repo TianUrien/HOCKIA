@@ -37,6 +37,17 @@ export const linkOptional = (o: OfferObjective | null | undefined) => o === 'ask
 /** A campaign runs 7 to 15 days and stops by itself (founder 2026-11-21). */
 export const CAMPAIGN_MIN_DAYS = 7
 export const CAMPAIGN_MAX_DAYS = 15
+
+/**
+ * The start a brand picked in the date field (a day, UTC midnight). Today
+ * means "when it is published", which is the empty field: iOS writes today
+ * into the field when its picker is opened and closed without choosing
+ * (device lab, 2026-11-22), and a start that is not in the future was
+ * already treated as "on publish".
+ */
+export function startFromDay(day: string, now: Date = new Date()): string | null {
+  return day && day !== now.toISOString().slice(0, 10) ? `${day}T00:00:00Z` : null
+}
 export const CAMPAIGN_DEFAULT_DAYS = 14
 const DAY_MS = 86_400_000
 const dayStart = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())

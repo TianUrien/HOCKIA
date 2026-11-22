@@ -127,9 +127,9 @@ export function CampaignComposer({ onGo }: { onGo: (to: string) => void }) {
               data-testid="hockia-ai-campaign-input"
             />
             {text.length >= CAMPAIGN_SENTENCE_MAX ? <p className="mt-1.5 text-row text-ink-2" role="status" data-testid="hockia-ai-campaign-max">{t('composer.maxReached', { max: CAMPAIGN_SENTENCE_MAX })}</p> : null}
-            <div className="mt-2 flex items-center gap-2">
-              <button type="button" onClick={() => void send()} disabled={sentence.length < 3} className="inline-flex h-11 items-center rounded-full bg-brand-primary px-5 text-body font-semibold text-white disabled:opacity-40" data-testid="hockia-ai-campaign-send">{t('composer.send')}</button>
-              <button type="button" onClick={() => onGo('/dashboard/offers/new')} className="inline-flex h-11 items-center px-2 text-body font-semibold text-ink-2">{t('composer.manual')}</button>
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <button type="button" onClick={() => void send()} disabled={sentence.length < 3} className="inline-flex h-11 items-center whitespace-nowrap rounded-full bg-brand-primary px-5 text-body font-semibold text-white disabled:opacity-40" data-testid="hockia-ai-campaign-send">{t('composer.send')}</button>
+              <button type="button" onClick={() => onGo('/dashboard/offers/new')} className="inline-flex h-11 items-center whitespace-nowrap px-2 text-body font-semibold text-ink-2">{t('composer.manual')}</button>
             </div>
           </div>
         ) : <UserBubble text={sentence} />}
