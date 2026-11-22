@@ -17,6 +17,7 @@ export interface CampaignDraft {
   roles: OfferRole[]
   place: 'everywhere' | 'my_country'
   perk: string | null
+  promo_code?: string | null
 }
 
 export type DraftFailure = 'unavailable' | 'limit'
@@ -60,6 +61,7 @@ export function draftToFields(d: CampaignDraft, brandCountryId: number | null | 
     everywhere: !ownCountry,
     country_ids: ownCountry ? [brandCountryId] : [],
     perk: d.objective === 'offer' ? d.perk ?? '' : '',
+    promo_code: d.objective === 'offer' ? d.promo_code ?? '' : '',
     ends_at: campaignEnd(now),
   }
 }
