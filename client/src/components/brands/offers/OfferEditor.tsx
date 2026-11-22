@@ -48,8 +48,10 @@ const BUCKET = 'brand-products'
  * iOS WebKit sizes a date field by its own content and ignores width: 100%,
  * so it ran 14 px past the screen on an iPhone (device lab, 2026-11-22).
  * Without the native appearance and its minimum width it obeys the column.
+ * WebKit then centres the date and pins it to the top of the field, so the
+ * value is put back on the left and in the middle, like every other input.
  */
-const DATE_FIELD = 'block min-w-0 max-w-full appearance-none [-webkit-min-logical-width:0]'
+const DATE_FIELD = 'flex min-w-0 max-w-full appearance-none items-center [-webkit-min-logical-width:0] [&::-webkit-date-and-time-value]:m-0 [&::-webkit-date-and-time-value]:text-left'
 const MAX_COUNTRIES = 30
 
 interface OfferEditorProps {
