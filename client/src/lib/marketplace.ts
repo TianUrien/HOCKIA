@@ -46,6 +46,8 @@ export interface MarketItem {
   country_id: number
   base_country_id: number | null
   perk?: string | null
+  /** What the campaign asks members to do. Absent on a product row and from a server that predates 2026-11-22. */
+  objective?: 'ask' | 'product' | 'offer' | 'ambassador' | null
 }
 
 export async function fetchMarketplace(countryId: number | null): Promise<MarketItem[]> {

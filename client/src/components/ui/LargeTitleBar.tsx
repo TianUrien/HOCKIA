@@ -17,8 +17,8 @@ interface LargeTitleBarProps {
 export function LargeTitleBar({ title, trailing, className }: LargeTitleBarProps) {
   return (
     <div className={cn('flex items-center justify-between py-1 pl-5 pr-2 lg:hidden', className)}>
-      <h1 className="text-large-title text-ink-1">{title}</h1>
-      {trailing ? <div className="flex items-center">{trailing}</div> : null}
+      <h1 className="min-w-0 truncate text-large-title text-ink-1">{title}</h1>
+      {trailing ? <div className="flex shrink-0 items-center">{trailing}</div> : null}
     </div>
   )
 }

@@ -291,7 +291,10 @@
     "openLabel": "{{summary}}. Toca para ver la vista previa.",
     "offerCount_one": "{{count}} oferta",
     "offerCount_other": "{{count}} ofertas",
-    "offerCount_many": "{{count}} ofertas"
+    "offerCount_many": "{{count}} ofertas",
+    "campaignCount_one": "{{count}} campaña",
+    "campaignCount_other": "{{count}} campañas",
+    "campaignCount_many": "{{count}} campañas"
   },
   "clubCard": {
     "openLabel": "{{name}}, {{meta}}. Toca para ver la vista previa.",
