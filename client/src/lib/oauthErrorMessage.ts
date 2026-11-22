@@ -13,7 +13,23 @@ export function noEmailMessage(): string {
   return tAuth('errors.oauthNoEmail')
 }
 
+/**
+ * Supabase answers "User is banned" when the account's access is closed: a
+ * frozen under-18 account (the age gate closes access together with the
+ * goodbye email) or a moderation block. The server does not say which, so
+ * the words fit both. Retrying never helps, and it is not a fault to report
+ * (2026-11-22: frozen members retried up to four times on "Sign-in failed").
+ */
+export function isAccountUnavailable(description: string | null | undefined): boolean {
+  return /user is banned|user_banned/i.test(description ?? '')
+}
+
+export function accountUnavailableMessage(): string {
+  return tAuth('errors.accountUnavailable')
+}
+
 export function oauthErrorMessage(description: string | null | undefined, fallback: string): string {
+  if (isAccountUnavailable(description)) return accountUnavailableMessage()
   const d = (description ?? '').toLowerCase()
   if (d.includes('email') && (d.includes('external provider') || d.includes('provider') || d.includes('missing'))) {
     return noEmailMessage()

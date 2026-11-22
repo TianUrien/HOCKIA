@@ -5,7 +5,7 @@ import { supabase, AUTH_STORAGE_KEY } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
-import { oauthErrorMessage, noEmailMessage } from '@/lib/oauthErrorMessage'
+import { oauthErrorMessage, noEmailMessage, isAccountUnavailable } from '@/lib/oauthErrorMessage'
 import { detectInAppBrowser, getExternalBrowserInstructions } from '@/lib/inAppBrowser'
 import { consumeCarriedRedirect } from '@/lib/redirectIntentCarry'
 import { tAuth, useAuthT } from '@/i18n/ns/auth'
@@ -41,6 +41,7 @@ export default function AuthCallback() {
   const [error, setError] = useState<string | null>(null)
   /** The provider returned no email (Facebook by phone number): its own screen, below. */
   const [noEmail, setNoEmail] = useState(false)
+  const [unavailable, setUnavailable] = useState(false)
   // The effect below runs once and outlives renders, so it translates with
   // tAuth (reads the active language when called) rather than the hook's `t`.
   const [status, setStatus] = useState<string>(() => tAuth('callback.verifyingEmail'))
@@ -99,6 +100,7 @@ export default function AuthCallback() {
       logger.error('[AUTH_CALLBACK] Error in URL:', errorParam)
       const message = oauthErrorMessage(errorDescription, tAuth('callback.failed'))
       setNoEmail(message === noEmailMessage())
+      setUnavailable(isAccountUnavailable(errorDescription))
       setError(message)
       return
     }
@@ -454,6 +456,32 @@ export default function AuthCallback() {
   // Check for in-app browser issues
   const browserInfo = detectInAppBrowser()
   const isInAppBrowserIssue = browserInfo.isInAppBrowser && error
+
+  if (error && unavailable) {
+    // Access is closed (frozen under-18 or blocked): retrying never helps.
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4" data-testid="auth-account-unavailable">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('callback.unavailableTitle')}</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/juniors-waitlist')}
+              className="w-full px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+            >
+              {t('callback.unavailableWaitlist')}
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              {t('callback.noEmailBack')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (error && noEmail) {
     // Facebook account without an email: retrying never helps, so offer email sign-up.
