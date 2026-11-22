@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logger } from '@/lib/logger'
@@ -7,16 +8,18 @@ import { UserBubble } from '@/components/discover/UserBubble'
 import { chipTone } from '@/components/ui/chipClasses'
 import { fieldInput } from '@/components/ui/fieldClasses'
 import { useMyBrand } from '@/hooks/useMyBrand'
+import { MY_OFFERS } from '@/hooks/useBrandOffers'
 import { useCountryNames } from '@/hooks/useCountryNames'
 import { CAMPAIGN_DEFAULT_DAYS, OFFER_OBJECTIVES, audienceLine, saveOffer, type OfferObjective } from '@/lib/brandOffers'
 import { needLabel, setOfferNeed } from '@/lib/marketplace'
-import { CAMPAIGN_SENTENCE_MAX, draftCampaign, draftToFields, keepSentence, keptSentence, type CampaignDraft, type DraftFailure } from '@/lib/campaignDraft'
+import { CAMPAIGN_SENTENCE_MAX, draftAs, draftCampaign, draftToFields, keepDraft, keepSentence, keptDraft, keptSentence, type CampaignDraft, type DraftFailure } from '@/lib/campaignDraft'
 import { useAuthStore } from '@/lib/auth'
 import { useBrandsT } from '@/i18n/ns/brands'
 import { useHockiaAiT } from '@/i18n/ns/hockiaAi'
 import { MascotAvatar } from './mascot'
 
-type Phase = { step: 'ask' } | { step: 'drafting' } | { step: 'draft'; draft: CampaignDraft } | { step: 'failed'; reason: DraftFailure }
+/** `original` is what the model returned; `draft` is that draft under the objective the brand chose. */
+type Phase = { step: 'ask' } | { step: 'drafting' } | { step: 'draft'; original: CampaignDraft; draft: CampaignDraft } | { step: 'failed'; reason: DraftFailure }
 
 function Turn({ children, thinking = false }: { children: React.ReactNode; thinking?: boolean }) {
   return (
@@ -35,7 +38,9 @@ function Turn({ children, thinking = false }: { children: React.ReactNode; think
  * to do; Hockia AI returns a draft as a card; the brand can change the
  * objective with one tap and continues in the editor, where it adds the photo
  * and publishes. Nothing is published, and nothing is saved, until the brand
- * taps "Continue in the editor", which saves a draft only.
+ * taps "Continue in the editor", which saves a draft only. The sentence and
+ * the draft that came back for it are kept while the app is open, so closing
+ * Hockia AI, even mid-request, loses neither.
  */
 export function CampaignComposer({ onGo }: { onGo: (to: string) => void }) {
   const t = useHockiaAiT()
@@ -44,9 +49,13 @@ export function CampaignComposer({ onGo }: { onGo: (to: string) => void }) {
   const names = useCountryNames()
   const owner = useAuthStore((s) => s.user?.id ?? null)
   // Closing the sheet, even while the draft is being written, keeps the sentence.
+  const qc = useQueryClient()
   const [text, setTextState] = useState(() => keptSentence(owner))
   const setText = (v: string) => { setTextState(v); keepSentence(owner, v) }
-  const [phase, setPhase] = useState<Phase>({ step: 'ask' })
+  const [phase, setPhase] = useState<Phase>(() => {
+    const back = keptDraft(owner, keptSentence(owner))
+    return back ? { step: 'draft', original: back.draft, draft: draftAs(back.draft, back.objective) } : { step: 'ask' }
+  })
   const [saving, setSaving] = useState(false)
   const [saveFailed, setSaveFailed] = useState(false)
   const sentence = text.trim()
@@ -57,7 +66,9 @@ export function CampaignComposer({ onGo }: { onGo: (to: string) => void }) {
     try {
       const res = await draftCampaign(sentence)
       trackDbEvent('hockia_ai_campaign_draft', undefined, undefined, res.draft ? { result: 'draft', objective: res.draft.objective } : { result: res.reason })
-      setPhase(res.draft ? { step: 'draft', draft: res.draft } : { step: 'failed', reason: res.reason })
+      // Kept before it is shown: the sheet may have been closed while this was being written.
+      keepDraft(owner, sentence, res.draft)
+      setPhase(res.draft ? { step: 'draft', original: res.draft, draft: res.draft } : { step: 'failed', reason: res.reason })
     } catch (err) {
       logger.error('[CampaignComposer] draft failed', err)
       trackDbEvent('hockia_ai_campaign_draft', undefined, undefined, { result: 'unavailable' })
@@ -67,8 +78,11 @@ export function CampaignComposer({ onGo }: { onGo: (to: string) => void }) {
 
   const setObjective = (o: OfferObjective) => {
     if (phase.step !== 'draft') return
-    setPhase({ step: 'draft', draft: { ...phase.draft, objective: o, roles: o === 'ambassador' ? ['player'] : phase.draft.roles, perk: o === 'offer' ? phase.draft.perk : null } })
+    keepDraft(owner, sentence, phase.original, o)
+    setPhase({ step: 'draft', original: phase.original, draft: draftAs(phase.original, o) })
   }
+
+  const startOver = () => { keepDraft(owner, sentence, null); setPhase({ step: 'ask' }) }
 
   const continueInEditor = async (draft: CampaignDraft) => {
     setSaving(true)
@@ -81,6 +95,9 @@ export function CampaignComposer({ onGo }: { onGo: (to: string) => void }) {
       }
       trackDbEvent('hockia_ai_campaign_draft_continue', 'brand_offer', id, { objective: draft.objective })
       keepSentence(owner, '')
+      keepDraft(owner, '', null)
+      // The campaigns page opens a draft from its list: a list loaded before this save does not have it yet.
+      try { await qc.refetchQueries({ queryKey: MY_OFFERS }) } catch (err) { logger.error('[CampaignComposer] list not refreshed', err) }
       onGo(`/dashboard/offers/${id}/edit`)
     } catch (err) {
       logger.error('[CampaignComposer] save failed', err)
@@ -109,6 +126,7 @@ export function CampaignComposer({ onGo }: { onGo: (to: string) => void }) {
               className={cn(fieldInput, 'h-auto resize-none py-3')}
               data-testid="hockia-ai-campaign-input"
             />
+            {text.length >= CAMPAIGN_SENTENCE_MAX ? <p className="mt-1.5 text-row text-ink-2" role="status" data-testid="hockia-ai-campaign-max">{t('composer.maxReached', { max: CAMPAIGN_SENTENCE_MAX })}</p> : null}
             <div className="mt-2 flex items-center gap-2">
               <button type="button" onClick={() => void send()} disabled={sentence.length < 3} className="inline-flex h-11 items-center rounded-full bg-brand-primary px-5 text-body font-semibold text-white disabled:opacity-40" data-testid="hockia-ai-campaign-send">{t('composer.send')}</button>
               <button type="button" onClick={() => onGo('/dashboard/offers/new')} className="inline-flex h-11 items-center px-2 text-body font-semibold text-ink-2">{t('composer.manual')}</button>
@@ -172,7 +190,7 @@ export function CampaignComposer({ onGo }: { onGo: (to: string) => void }) {
               <button type="button" onClick={() => void continueInEditor(phase.draft)} disabled={saving} className="inline-flex h-11 items-center gap-2 rounded-full bg-brand-primary px-5 text-body font-semibold text-white disabled:opacity-60" data-testid="hockia-ai-campaign-continue">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}{t('composer.continue')}
               </button>
-              <button type="button" onClick={() => setPhase({ step: 'ask' })} disabled={saving} className="inline-flex h-11 items-center px-2 text-body font-semibold text-ink-2">{t('composer.rewrite')}</button>
+              <button type="button" onClick={startOver} disabled={saving} className="inline-flex h-11 items-center px-2 text-body font-semibold text-ink-2">{t('composer.rewrite')}</button>
             </div>
           </Turn>
         ) : null}

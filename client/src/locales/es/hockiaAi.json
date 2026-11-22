@@ -617,6 +617,7 @@
     "askNote": "Preparo un borrador. No se publica nada hasta que lo publiques en el editor.",
     "placeholder": "Quiero que jugadores/as nos escriban con dudas para elegir un palo",
     "inputLabel": "Qué quieres que haga la comunidad",
+    "maxReached": "Ese es el largo máximo: {{max}} caracteres.",
     "send": "Escribir el borrador",
     "manual": "Escribirla por mi cuenta",
     "drafting": "Escribiendo tu borrador…",

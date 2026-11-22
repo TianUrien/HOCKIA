@@ -96,8 +96,13 @@ export async function handleCampaignDraft(req: Request, deps: CampaignDraftDeps)
     // A refusal is never a draft, and a reply cut at max_tokens can carry a
     // tool call that is only half written.
     if (data.stop_reason === 'refusal' || data.stop_reason === 'max_tokens') throw new Error(`stopped: ${data.stop_reason}`)
-    if (!call) throw new Error('no tool call')
-    const draft = validateCampaignDraft(call.input, text)
+    if (!call) throw new Error(`no tool call (stop_reason ${data.stop_reason ?? 'none'}, blocks ${(data.content ?? []).map((c) => c.type).join('+') || 'none'})`)
+    // Which field was left out and which check did it: names only, so a
+    // refused sentence can be explained without logging what anyone wrote.
+    const dropped: string[] = []
+    const draft = validateCampaignDraft(call.input, text, dropped)
+    if (!draft) log(`[campaign-draft] no draft: ${dropped.join(', ') || 'nothing usable'}`)
+    else if (dropped.length) log(`[campaign-draft] dropped: ${dropped.join(', ')}`)
     return draft ? json({ draft, source: 'ai' }) : json({ draft: null, reason: 'unavailable' })
   } catch (err) {
     // The error only: never the sentence, never the model's text.

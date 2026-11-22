@@ -36,6 +36,36 @@ export function keepSentence(owner: string | null | undefined, text: string): vo
   kept = owner && text.trim() ? { owner, text } : null
 }
 
+/**
+ * The draft that came back for a sentence, kept the same way. A brand that
+ * closes Hockia AI while the draft is being written finds it on return
+ * instead of spending another of the day's drafts on the same sentence.
+ */
+let keptAnswer: { owner: string; sentence: string; draft: CampaignDraft; objective: OfferObjective } | null = null
+export function keptDraft(owner: string | null | undefined, sentence: string): { draft: CampaignDraft; objective: OfferObjective } | null {
+  return owner && keptAnswer?.owner === owner && keptAnswer.sentence === sentence.trim() ? { draft: keptAnswer.draft, objective: keptAnswer.objective } : null
+}
+export function keepDraft(owner: string | null | undefined, sentence: string, draft: CampaignDraft | null, objective: OfferObjective | null = null): void {
+  keptAnswer = owner && draft ? { owner, sentence: sentence.trim(), draft, objective: objective ?? draft.objective } : null
+}
+
+/**
+ * The draft as it reads under another objective. Always derived from the
+ * draft the model returned, never from the last one shown, so choosing an
+ * objective and coming back restores the perk, the code and who it is for.
+ */
+export function draftAs(original: CampaignDraft, objective: OfferObjective): CampaignDraft {
+  const offer = objective === 'offer'
+  return {
+    ...original,
+    objective,
+    // Only players can be ambassadors.
+    roles: objective === 'ambassador' ? ['player'] : original.roles,
+    perk: offer ? original.perk : null,
+    promo_code: offer ? original.promo_code ?? null : null,
+  }
+}
+
 export async function draftCampaign(sentence: string): Promise<DraftResult> {
   // No locale: the draft is written in the language of the sentence, so a perk stays in the brand's own words.
   const { data, error } = await supabase.functions.invoke('campaign-draft', { body: { text: sentence } })
