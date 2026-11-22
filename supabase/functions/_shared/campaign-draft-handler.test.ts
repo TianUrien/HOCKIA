@@ -153,3 +153,20 @@ Deno.test('other methods: OPTIONS answers the preflight, GET is refused', async 
   assertEquals((await w.call(undefined, 'good', 'OPTIONS')).status, 200)
   assertEquals((await w.call(undefined, 'good', 'GET')).status, 405)
 })
+
+Deno.test('a draft that loses a line, or all of them, logs which check did it and none of the words', async () => {
+  const input = { ...TOOL_INPUT, title: 'The best sticks, 50% off', body: 'Write to us about sizes and materials.' }
+  const partial = world({ answer: () => Response.json(reply({ content: [{ type: 'tool_use', name: 'fill_campaign', input }] })) })
+  assertEquals((await (await partial.call()).json()).draft.title, '')
+  assertEquals(partial.seen.logs, ['[campaign-draft] dropped: title:unprovable, title:number, title:statement:discount'])
+
+  const nothing = world({ answer: () => Response.json(reply({ content: [{ type: 'tool_use', name: 'fill_campaign', input: { ...input, body: 'Guaranteed results.' } }] })) })
+  assertEquals(await (await nothing.call()).json(), { draft: null, reason: 'unavailable' })
+  assertEquals(nothing.seen.logs.length, 1)
+  assertEquals(nothing.seen.logs[0].startsWith('[campaign-draft] no draft: title:unprovable'), true)
+  assertEquals(/sticks|results|stick\b/i.test(nothing.seen.logs[0]), false)
+
+  const silent = world({ answer: () => Response.json(reply({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'Which product do you mean?' }] })) })
+  assertEquals(await (await silent.call()).json(), { draft: null, reason: 'unavailable' })
+  assertEquals(silent.seen.logs, ['[campaign-draft] no tool call (stop_reason end_turn, blocks text)'])
+})

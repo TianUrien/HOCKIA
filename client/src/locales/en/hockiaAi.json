@@ -592,6 +592,7 @@
     "askNote": "I’ll set up a draft. Nothing is published until you publish it in the editor.",
     "placeholder": "I want players to write to us with questions about choosing a stick",
     "inputLabel": "What you want members to do",
+    "maxReached": "That is the longest it can be: {{max}} characters.",
     "send": "Write the draft",
     "manual": "Write it myself",
     "drafting": "Writing your draft…",

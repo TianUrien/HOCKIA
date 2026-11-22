@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
-const h = vi.hoisted(() => ({ invoke: vi.fn(), rpc: vi.fn(), track: vi.fn(), countryId: 48 as number | null, userId: 'brand-1' as string | null }))
+const h = vi.hoisted(() => ({ invoke: vi.fn(), rpc: vi.fn(), track: vi.fn(), refetch: vi.fn(), order: [] as string[], countryId: 48 as number | null, userId: 'brand-1' as string | null }))
 vi.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: (...a: unknown[]) => h.invoke(...a) }, rpc: (...a: unknown[]) => h.rpc(...a) } }))
+vi.mock('@tanstack/react-query', async (orig) => ({ ...(await orig<typeof import('@tanstack/react-query')>()), useQueryClient: () => ({ refetchQueries: (...a: unknown[]) => h.refetch(...a) }) }))
+vi.mock('@/hooks/useBrandOffers', () => ({ MY_OFFERS: ['brand-offers', 'mine'] }))
 vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: (...a: unknown[]) => h.track(...a) }))
 vi.mock('@/hooks/useMyBrand', () => ({ useMyBrand: () => ({ brand: { name: 'Northline', country_id: h.countryId } }) }))
 vi.mock('@/hooks/useCountryNames', () => ({ useCountryNames: () => (ids: number[]) => ids.map(() => 'Spain') }))
@@ -10,7 +12,7 @@ vi.mock('@/components/hockiaAi/mascot', () => ({ MascotAvatar: () => null }))
 vi.mock('@/lib/auth', () => ({ useAuthStore: (pick: (s: { user: { id: string } | null }) => unknown) => pick({ user: h.userId ? { id: h.userId } : null }) }))
 
 import { CampaignComposer } from '@/components/hockiaAi/CampaignComposer'
-import { draftToFields, keepSentence, keptSentence, type CampaignDraft } from '@/lib/campaignDraft'
+import { draftAs, draftToFields, keepDraft, keepSentence, keptDraft, keptSentence, type CampaignDraft } from '@/lib/campaignDraft'
 import { EMPTY_OFFER, freshWindow } from '@/lib/brandOffers'
 import { roleOptionsFor } from '@/lib/hockiaAi'
 
@@ -22,7 +24,7 @@ import { roleOptionsFor } from '@/lib/hockiaAi'
 const DRAFT: CampaignDraft = { objective: 'ask', title: 'Questions about choosing a stick?', body: 'Write to us about sizes and materials.', need: 'gear', roles: ['player'], place: 'everywhere', perk: null }
 const write = (text: string) => fireEvent.change(screen.getByTestId('hockia-ai-campaign-input'), { target: { value: text } })
 
-beforeEach(() => { h.invoke.mockReset(); h.rpc.mockReset(); h.track.mockReset(); h.countryId = 48; h.userId = 'brand-1'; keepSentence('brand-1', '') })
+beforeEach(() => { h.invoke.mockReset(); h.rpc.mockReset(); h.track.mockReset(); h.countryId = 48; h.userId = 'brand-1'; h.order = []; h.refetch.mockReset(); h.refetch.mockImplementation(() => { h.order.push('refetch'); return Promise.resolve() }); keepSentence('brand-1', ''); keepDraft('brand-1', '', null) })
 
 describe('the brand option', () => {
   it('"Write a new campaign for members" is done in the sheet', () => {
@@ -204,5 +206,92 @@ describe('a draft opened in the editor days later', () => {
     expect(freshWindow(saved, true, new Date('2026-12-10T10:00:00Z'))).toBe(saved)
     const noDate = { ...saved, ends_at: null }
     expect(freshWindow(noDate, false, new Date('2026-12-10T10:00:00Z'))).toBe(noDate)
+  })
+})
+
+describe('found before production, 2026-11-22', () => {
+  const OFFER: CampaignDraft = { objective: 'offer', title: '15% off kits', body: 'Clubs and coaches get 15% off kits.', need: 'gear', roles: ['club', 'coach'], place: 'everywhere', perk: '15% off', promo_code: 'KIT15' }
+
+  it('the list of campaigns is read again before the editor opens, so the new draft is in it', async () => {
+    h.invoke.mockResolvedValue({ data: { draft: DRAFT }, error: null })
+    h.rpc.mockImplementation((fn: string) => Promise.resolve({ data: fn === 'save_brand_offer' ? 'new-id' : null, error: null }))
+    const onGo = vi.fn(() => { h.order.push('go') })
+    render(<CampaignComposer onGo={onGo} />)
+    write('questions about sticks')
+    fireEvent.click(screen.getByTestId('hockia-ai-campaign-send'))
+    fireEvent.click(await screen.findByTestId('hockia-ai-campaign-continue'))
+    await waitFor(() => expect(onGo).toHaveBeenCalledWith('/dashboard/offers/new-id/edit'))
+    expect(h.refetch).toHaveBeenCalledWith({ queryKey: ['brand-offers', 'mine'] })
+    expect(h.order).toEqual(['refetch', 'go'])
+  })
+
+  it('a list that cannot be read again does not stop the editor from opening', async () => {
+    h.invoke.mockResolvedValue({ data: { draft: DRAFT }, error: null })
+    h.rpc.mockImplementation((fn: string) => Promise.resolve({ data: fn === 'save_brand_offer' ? 'new-id' : null, error: null }))
+    h.refetch.mockRejectedValue(new Error('offline'))
+    const onGo = vi.fn()
+    render(<CampaignComposer onGo={onGo} />)
+    write('questions about sticks')
+    fireEvent.click(screen.getByTestId('hockia-ai-campaign-send'))
+    fireEvent.click(await screen.findByTestId('hockia-ai-campaign-continue'))
+    await waitFor(() => expect(onGo).toHaveBeenCalledWith('/dashboard/offers/new-id/edit'))
+  })
+
+  it('choosing another objective and coming back restores the perk, the code and who it is for', async () => {
+    h.invoke.mockResolvedValue({ data: { draft: OFFER }, error: null })
+    h.rpc.mockResolvedValue({ data: 'new-id', error: null })
+    render(<CampaignComposer onGo={vi.fn()} />)
+    write('15% off kits for clubs and coaches with code KIT15')
+    fireEvent.click(screen.getByTestId('hockia-ai-campaign-send'))
+    expect(await screen.findByTestId('hockia-ai-campaign-draft-code')).toHaveTextContent('KIT15')
+    for (const other of ['ambassador', 'ask', 'product'] as const) {
+      fireEvent.click(screen.getByTestId(`hockia-ai-campaign-objective-${other}`))
+      // Neither the perk nor the code travels with these objectives, so neither is shown.
+      expect(screen.queryByTestId('hockia-ai-campaign-draft-perk')).toBeNull()
+      expect(screen.queryByTestId('hockia-ai-campaign-draft-code')).toBeNull()
+    }
+    fireEvent.click(screen.getByTestId('hockia-ai-campaign-objective-offer'))
+    expect(screen.getByTestId('hockia-ai-campaign-draft-perk')).toHaveTextContent('15% off')
+    expect(screen.getByTestId('hockia-ai-campaign-draft-code')).toHaveTextContent('KIT15')
+    expect(screen.getByTestId('hockia-ai-campaign-draft-for')).toHaveTextContent('Everywhere. Clubs, coaches')
+    fireEvent.click(screen.getByTestId('hockia-ai-campaign-continue'))
+    await waitFor(() => expect(h.rpc).toHaveBeenCalled())
+    expect(h.rpc.mock.calls.find((c) => c[0] === 'save_brand_offer')![1]).toMatchObject({ p_objective: 'offer', p_roles: ['club', 'coach'], p_perk: '15% off', p_promo_code: 'KIT15' })
+    expect(draftAs(OFFER, 'ambassador')).toMatchObject({ roles: ['player'], perk: null, promo_code: null })
+    expect(draftAs(draftAs(OFFER, 'ambassador'), 'offer').roles).toEqual(['player'])
+  })
+
+  it('a draft that arrives after Hockia AI was closed is there on return, with the objective last chosen, and no second call is made', async () => {
+    let answer: (v: unknown) => void = () => {}
+    h.invoke.mockReturnValue(new Promise((res) => { answer = res }))
+    const first = render(<CampaignComposer onGo={vi.fn()} />)
+    write('15% off kits for clubs and coaches with code KIT15')
+    fireEvent.click(screen.getByTestId('hockia-ai-campaign-send'))
+    expect(await screen.findByText('Writing your draft…')).toBeTruthy()
+    first.unmount()
+    answer({ data: { draft: OFFER }, error: null })
+    await waitFor(() => expect(keptDraft('brand-1', '15% off kits for clubs and coaches with code KIT15')).not.toBeNull())
+
+    const second = render(<CampaignComposer onGo={vi.fn()} />)
+    expect(screen.getByTestId('hockia-ai-campaign-draft-title')).toHaveTextContent('15% off kits')
+    fireEvent.click(screen.getByTestId('hockia-ai-campaign-objective-product'))
+    second.unmount()
+    render(<CampaignComposer onGo={vi.fn()} />)
+    expect(screen.getByTestId('hockia-ai-campaign-objective-product').getAttribute('aria-checked')).toBe('true')
+    expect(h.invoke).toHaveBeenCalledTimes(1)
+    // Another member never sees it, and "Write another sentence" lets it go.
+    expect(keptDraft('brand-2', '15% off kits for clubs and coaches with code KIT15')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Write another sentence' }))
+    expect(keptDraft('brand-1', '15% off kits for clubs and coaches with code KIT15')).toBeNull()
+    expect(screen.getByTestId<HTMLTextAreaElement>('hockia-ai-campaign-input').value).toBe('15% off kits for clubs and coaches with code KIT15')
+  })
+
+  it('says when the sentence has reached its longest, and not before', () => {
+    render(<CampaignComposer onGo={vi.fn()} />)
+    write('a'.repeat(499))
+    expect(screen.queryByTestId('hockia-ai-campaign-max')).toBeNull()
+    write('a'.repeat(620))
+    expect(screen.getByTestId<HTMLTextAreaElement>('hockia-ai-campaign-input').value).toHaveLength(500)
+    expect(screen.getByTestId('hockia-ai-campaign-max')).toHaveTextContent('That is the longest it can be: 500 characters.')
   })
 })

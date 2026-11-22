@@ -377,34 +377,34 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
           // Side panel header: mascot, name and Beta; More and close on the right.
           <div className="flex shrink-0 items-center gap-3 px-6 pb-3 pt-4" data-testid="hockia-ai-panel-header">
             {special && (
-                <button type="button" onClick={() => setMode('chat')} aria-label={t('sheet.backToChat')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-to-chat">
+                <button type="button" onClick={() => setMode('chat')} aria-label={t('sheet.backToChat')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-to-chat">
                 <MessageSquare className="h-5 w-5" strokeWidth={2} />
               </button>
             )}
             <MascotAvatar size={32} />
             <span className="flex min-w-0 flex-1 items-center gap-2 text-[17px] font-semibold text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></span>
             {!special && (
-                <button type="button" onClick={() => setMoreOpen(true)} aria-label={t('sheet.more')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-more">
+                <button type="button" onClick={() => setMoreOpen(true)} aria-label={t('sheet.more')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-more">
                 <MoreHorizontal className="h-5 w-5" strokeWidth={2} />
               </button>
             )}
-            <button type="button" onClick={close} aria-label={t('sheet.close')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-close">
+            <button type="button" onClick={close} aria-label={t('sheet.close')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-close">
               <X className="h-5 w-5" strokeWidth={2} />
             </button>
           </div>
         ) : large && !history ? (
           <div className="flex shrink-0 items-center justify-between px-4 pb-2">
             {special ? (
-              <button type="button" onClick={() => setMode('chat')} aria-label={t('sheet.backToChat')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-to-chat">
+              <button type="button" onClick={() => setMode('chat')} aria-label={t('sheet.backToChat')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-to-chat">
                 <MessageSquare className="h-5 w-5" strokeWidth={2} />
               </button>
             ) : (
-              <button type="button" onClick={() => setMoreOpen(true)} aria-label={t('sheet.more')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-more">
+              <button type="button" onClick={() => setMoreOpen(true)} aria-label={t('sheet.more')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-more">
                 <MoreHorizontal className="h-5 w-5" strokeWidth={2} />
               </button>
             )}
             <span className="flex items-center gap-2 text-[17px] font-semibold text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></span>
-            <button type="button" onClick={close} aria-label={t('sheet.close')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-close">
+            <button type="button" onClick={close} aria-label={t('sheet.close')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-close">
               <X className="h-5 w-5" strokeWidth={2} />
             </button>
           </div>

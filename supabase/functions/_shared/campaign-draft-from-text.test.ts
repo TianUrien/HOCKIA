@@ -1,5 +1,5 @@
 import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts'
-import { CAMPAIGN_DRAFT_TOOL, addressesFromBrand, cleanCampaignText, lineFromBrand, numbersFromBrand, perkFromBrand, promoCodeFromBrand, sentenceCase, statementsNotFromBrand, validateCampaignDraft } from './campaign-draft-from-text.ts'
+import { CAMPAIGN_DRAFT_TOOL, addressesFromBrand, cleanCampaignText, lineFailures, lineFromBrand, numbersFromBrand, perkFromBrand, promoCodeFromBrand, sentenceCase, statementsNotFromBrand, validateCampaignDraft, withoutUnnamedCode } from './campaign-draft-from-text.ts'
 
 Deno.test('a brand that wants questions gets an ask campaign with only what it said', () => {
   const source = 'I want players to write to us with questions about choosing a stick'
@@ -198,4 +198,59 @@ Deno.test('a title in Title Case goes back to sentence case, keeping the brand\'
   assertEquals(sentenceCase('Sticks for players in Argentina', source), 'Sticks for players in Argentina')
   assertEquals(sentenceCase('Questions? Ask Us Anything Today', 'questions'), 'Questions? Ask us anything today')
   assertEquals(sentenceCase('Entrenadores: prueben nuestras canilleras', 'canilleras'), 'Entrenadores: prueben nuestras canilleras')
+})
+
+Deno.test('a discount code referred to without the code loses that clause, or the sentence when it is in the middle', () => {
+  const source = 'Players get 15% off our new carbon sticks this month with code LAB15'
+  // Seen on staging 2026-11-22: the code has its own field and the body was left saying "with the code."
+  assertEquals(withoutUnnamedCode('Players get 15% off our new carbon sticks this month with the code.', source), 'Players get 15% off our new carbon sticks this month.')
+  assertEquals(withoutUnnamedCode('Jugadoras: 15% de descuento este mes con el código.', 'Jugadoras: 15% de descuento este mes con el código LAB15'), 'Jugadoras: 15% de descuento este mes.')
+  assertEquals(withoutUnnamedCode('Get 15% off sticks. Use the code at checkout.', source), 'Get 15% off sticks.')
+  // The code itself is there: nothing changes.
+  assertEquals(withoutUnnamedCode('Get 15% off with code LAB15.', source), 'Get 15% off with code LAB15.')
+  // The brand wrote no code: a line that refers to one refers to nothing.
+  assertEquals(withoutUnnamedCode('Get 15% off with the code.', 'Players get 15% off'), 'Get 15% off.')
+  // Only a code clause: nothing is left.
+  assertEquals(withoutUnnamedCode('With the code.', source), '')
+  assertEquals(withoutUnnamedCode('Questions about choosing a stick?', source), 'Questions about choosing a stick?')
+
+  const d = validateCampaignDraft({ objective: 'offer', title: '15% off new carbon sticks', body: 'Players get 15% off our new carbon sticks this month with the code.', need: 'gear', roles: ['player'], place: null, perk: '15% off', promo_code: 'LAB15' }, source)
+  assertEquals(d?.body, 'Players get 15% off our new carbon sticks this month.')
+  assertEquals(d?.promo_code, 'LAB15')
+})
+
+Deno.test('a sentence that names the brand’s code is left alone, whatever the objective, and so is a code that is not a discount code', () => {
+  const source = 'Free shipping on goalkeeper pads for coaches and clubs this month, use code KEEPER10 at keeperpro.example.com'
+  // The code is named: it stays even when no code was kept (objective product or ask).
+  assertEquals(withoutUnnamedCode('Use code KEEPER10 at checkout.', source), 'Use code KEEPER10 at checkout.')
+  const dropped: string[] = []
+  const d = validateCampaignDraft({ objective: 'product', title: 'Goalkeeper pads with code KEEPER10', body: 'Free shipping this month. Use code KEEPER10 at keeperpro.example.com.', need: 'gear', roles: ['coach', 'club'], place: null, perk: null, promo_code: 'KEEPER10' }, source, dropped)
+  assertEquals(d?.title, 'Goalkeeper pads with code KEEPER10')
+  assertEquals(d?.body, 'Free shipping this month. Use code KEEPER10 at keeperpro.example.com.')
+  assertEquals(dropped, ['code:not-an-offer'])
+  // "at" follows "code" in neither text as the code: a reference without the code is still caught.
+  assertEquals(withoutUnnamedCode('Use the code at checkout.', source), '')
+  // Not a discount code: left alone.
+  assertEquals(withoutUnnamedCode('Ask us about our dress code for teams.', 'We want clubs to ask about our dress code for teams'), 'Ask us about our dress code for teams.')
+  assertEquals(withoutUnnamedCode('Ask us about our dress code for teams.', 'Clubs can ask us anything'), 'Ask us about our dress code for teams.')
+  assertEquals(withoutUnnamedCode('Lee nuestro código de conducta.', 'Queremos que lean nuestro código de conducta'), 'Lee nuestro código de conducta.')
+})
+
+Deno.test('what was left out is reported by field and check name, never with anyone’s words', () => {
+  const source = 'We sell carbon sticks for players'
+  const dropped: string[] = []
+  const none = validateCampaignDraft({ objective: 'offer', title: 'Free shipping on the best sticks', body: 'Get 20% off at shop.example.com', need: null, roles: [], place: null, perk: '20% off', promo_code: 'SAVE20' }, source, dropped)
+  assertEquals(none, null)
+  assertEquals(dropped, ['code:not-in-sentence', 'title:unprovable', 'title:statement:free', 'title:statement:delivery', 'body:number', 'body:statement:discount', 'body:address'])
+  assertEquals(lineFailures('Carbon sticks for players', source), [])
+  assertEquals(dropped.join(' ').includes('shipping'), false)
+
+  const kept: string[] = []
+  const d = validateCampaignDraft({ objective: 'product', title: 'Carbon sticks for players', body: null, need: 'gear', roles: ['player'], place: null, perk: '10% off', promo_code: null }, source, kept)
+  assertEquals(d?.title, 'Carbon sticks for players')
+  assertEquals(kept, ['body:empty', 'perk:not-an-offer'])
+
+  const unknown: string[] = []
+  assertEquals(validateCampaignDraft({ objective: 'sale' }, source, unknown), null)
+  assertEquals(unknown, ['objective:unknown'])
 })
