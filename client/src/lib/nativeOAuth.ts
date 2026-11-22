@@ -16,6 +16,7 @@ import { App, type URLOpenListenerEvent } from '@capacitor/app'
 import { supabase } from './supabase'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
+import { isAccountUnavailable } from './oauthErrorMessage'
 import { scopesFor, type OAuthProvider } from './oauthSignIn'
 
 function breadcrumb(message: string, data?: Record<string, unknown>) {
@@ -174,10 +175,16 @@ export async function signInWithOAuthNative(provider: OAuthProvider): Promise<vo
         if (errorParam) {
           const providerErr = new Error(errorDesc || errorParam)
           providerErr.name = 'OAuthProviderError'
-          reportAuthFlowError('native_oauth.provider_error', providerErr, {
-            provider,
-            errorCode: errorParam,
-          })
+          // A closed account (frozen under-18 or blocked) is the server
+          // doing its job, not a fault: keep a breadcrumb, not an issue.
+          if (isAccountUnavailable(errorDesc)) {
+            breadcrumb('account_unavailable', { provider })
+          } else {
+            reportAuthFlowError('native_oauth.provider_error', providerErr, {
+              provider,
+              errorCode: errorParam,
+            })
+          }
           reject(providerErr)
           return
         }

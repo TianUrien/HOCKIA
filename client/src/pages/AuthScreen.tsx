@@ -14,6 +14,7 @@
  * Choose your role → Set up. This screen is sign-in only.
  */
 
+import { accountUnavailableMessage, isAccountUnavailable } from '@/lib/oauthErrorMessage'
 import { useEffect, useState } from 'react'
 import { networkErrorCopy } from '@/lib/networkCopy'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
@@ -160,6 +161,13 @@ export default function AuthScreen() {
         if (captchaErrorMessage(signInError.message)) {
           trackLoginFailed('password', 'captcha')
           setCaptchaFailed(true)
+          return
+        }
+        // Access is closed (frozen under-18 or blocked): the password is not
+        // the problem, so don't say it is, and don't count a failed attempt.
+        if (isAccountUnavailable(signInError.message) || isAccountUnavailable(signInError.code)) {
+          trackLoginFailed('password', 'account_unavailable')
+          setError(accountUnavailableMessage())
           return
         }
         reportAuthFlowError('password_signin', signInError, { emailDomain: email.split('@')[1] ?? null })
