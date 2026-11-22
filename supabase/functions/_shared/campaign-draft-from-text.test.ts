@@ -230,6 +230,10 @@ Deno.test('a sentence that names the brand’s code is left alone, whatever the 
   assertEquals(dropped, ['code:not-an-offer'])
   // "at" follows "code" in neither text as the code: a reference without the code is still caught.
   assertEquals(withoutUnnamedCode('Use the code at checkout.', source), '')
+  // The code twice, the first time glued to another word: the second, whole one still names it.
+  assertEquals(withoutUnnamedCode('Try SKEEPER10 pads with code KEEPER10.', source), 'Try SKEEPER10 pads with code KEEPER10.')
+  // Only ever glued to another word: the code is not named.
+  assertEquals(withoutUnnamedCode('Use the code SKEEPER10 today.', source), '')
   // Not a discount code: left alone.
   assertEquals(withoutUnnamedCode('Ask us about our dress code for teams.', 'We want clubs to ask about our dress code for teams'), 'Ask us about our dress code for teams.')
   assertEquals(withoutUnnamedCode('Ask us about our dress code for teams.', 'Clubs can ask us anything'), 'Ask us about our dress code for teams.')

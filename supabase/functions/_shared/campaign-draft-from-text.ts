@@ -223,7 +223,15 @@ const DISCOUNT_CODE = /\b(?:(?:with|use|using|enter|apply)\s+(?:the|a|our|your)\
 export function withoutUnnamedCode(line: string, source: string): string {
   if (!CODE_WORD.test(line)) return line
   const written = [...source.matchAll(AFTER_CODE)].map((m) => m[1])
-  const names = (sentence: string) => written.some((c) => new RegExp(`(?<![A-Za-z0-9_-])${c.replace(/[-]/g, '\\-')}(?![A-Za-z0-9_-])`).test(sentence))
+  // The token as a whole word, at any of its places in the sentence: "LAB15" is not in "SLAB15 … LAB15X".
+  const edge = /[A-Za-z0-9_-]/
+  const whole = (sentence: string, c: string) => {
+    for (let at = sentence.indexOf(c); at >= 0; at = sentence.indexOf(c, at + 1)) {
+      if (!edge.test(sentence[at - 1] ?? '') && !edge.test(sentence[at + c.length] ?? '')) return true
+    }
+    return false
+  }
+  const names = (sentence: string) => written.some((c) => whole(sentence, c))
   return line
     .split(/(?<=[.?])\s+/)
     .map((sentence) => {
