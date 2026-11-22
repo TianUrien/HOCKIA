@@ -7,7 +7,7 @@
  */
 import fs from 'node:fs'
 import path from 'node:path'
-import { qaCredentials, clubCredentials, LAB_DIR } from '../lib/config.mjs'
+import { qaCredentials, clubCredentials, brandCredentials, LAB_DIR } from '../lib/config.mjs'
 
 const FIXTURES = JSON.parse(fs.readFileSync(path.join(LAB_DIR, 'fixtures.json'), 'utf8')).staging
 
@@ -128,6 +128,28 @@ async function phoneWidth(lab, ctx) {
   return lab.eval(() => window.innerWidth < 1024)
 }
 async function restoreWidth(lab) { if (lab.device.platform === 'web' && lab.device.viewport) await lab.page.setViewportSize(lab.device.viewport) }
+
+/** Layout facts inside a root: sideways overflow, tap targets under 44 px, controls past the screen edge. */
+async function layoutFacts(lab, scope) {
+  return lab.eval((sel) => {
+    const root = document.querySelector(sel) ?? document.body
+    const vw = window.innerWidth
+    const small = []; const off = []
+    for (const el of root.querySelectorAll('button, a[href], input, textarea, [role="radio"], [role="tab"]')) {
+      const b = el.getBoundingClientRect()
+      if (!b.width || !b.height) continue
+      const name = (el.getAttribute('data-testid') || el.getAttribute('aria-label') || el.textContent || el.tagName).trim().slice(0, 30)
+      // A control drawn smaller may carry a larger hit area (a ::before inset): a tap just outside each edge still lands on it (counted as the 2 px inset the app uses).
+      const hit = (x, y) => { const at = document.elementFromPoint(x, y); return at === el || el.contains(at) }
+      const cx = b.left + b.width / 2; const cy = b.top + b.height / 2
+      const wide = hit(b.left - 1.5, cy) && hit(b.right + 1.5, cy) ? 4 : 0
+      const tall = hit(cx, b.top - 1.5) && hit(cx, b.bottom + 1.5) ? 4 : 0
+      if (b.height + tall < 43.5 || b.width + wide < 43.5) small.push(`${name} ${Math.round(b.width)}x${Math.round(b.height)}`)
+      if (b.right > vw + 1 || b.left < -1) off.push(name)
+    }
+    return { overflowX: document.documentElement.scrollWidth - vw, small, off }
+  }, scope)
+}
 
 export const scenarios = {
   async 'sign-in'(lab, ctx) {
@@ -815,9 +837,135 @@ export const scenarios = {
     await signOut(lab)
     await ctx.shot('signed-out')
   },
+  // ── Brand campaigns (--scenario brand). Nothing is saved or published. ──
+  async 'brand-sign-in'(lab, ctx) {
+    await signInAs(lab, ctx, brandCredentials(), 'brand')
+  },
+
+  /** The campaign list, the Hockia AI sheet, its campaign cards and the empty composer with the keyboard up. */
+  async 'brand-campaigns'(lab, ctx) {
+    await lab.go('/dashboard/offers')
+    await lab.waitFor('[data-testid="brand-offers"]', 30000)
+    await sleep(1500)
+    await ctx.shot('list')
+    const m = await layoutFacts(lab, 'body')
+    if (m.overflowX > 1) throw new Error(`campaign list scrolls sideways by ${m.overflowX}px`)
+    await lab.tap('[data-testid="hockia-ai-button"]')
+    await lab.waitFor('[data-testid="hockia-ai-sheet"]', 8000)
+    await sleep(900)
+    await ctx.shot('sheet')
+    const options = await lab.eval(() => document.querySelectorAll('[data-testid="hockia-ai-option"]').length)
+    ctx.note(`${options} choices in the sheet`)
+    await lab.eval(() => { document.querySelectorAll('[data-testid="hockia-ai-option"]')[1]?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-campaigns"]', 8000)
+    try { await lab.waitFor('[data-testid="hockia-ai-campaigns-lead"]', 20000) } catch { ctx.note('campaign cards never showed their lead line') }
+    await sleep(800)
+    await ctx.shot('campaign-cards')
+    const cards = await layoutFacts(lab, '[data-testid="hockia-ai-sheet"]')
+    ctx.note(`campaign cards: small targets ${JSON.stringify(cards.small)}, off screen ${JSON.stringify(cards.off)}`)
+    await lab.swipeUp(0.4)
+    await ctx.shot('campaign-cards-scrolled')
+  },
+
+  /**
+   * A sentence, the draft card, then "Continue in the editor". With
+   * LAB_MOCK_DRAFT=1 the function's answer is given in the page, so no model
+   * call is made and none of the brand's 15 daily drafts is used; without it,
+   * one real call (about 0.003 USD). "Continue" saves a draft campaign: the
+   * journey deletes it from the list afterwards.
+   */
+  async 'brand-campaign-draft'(lab, ctx) {
+    const mocked = process.env.LAB_MOCK_DRAFT === '1'
+    await lab.go('/dashboard/offers')
+    await lab.waitFor('[data-testid="brand-offers"]', 30000)
+    await sleep(1200)
+    await lab.tap('[data-testid="hockia-ai-button"]')
+    await lab.waitFor('[data-testid="hockia-ai-sheet"]', 8000)
+    await sleep(700)
+    await lab.eval(() => { document.querySelectorAll('[data-testid="hockia-ai-option"]')[2]?.click() })
+    await lab.waitFor('[data-testid="hockia-ai-campaign-composer"]', 8000)
+    await sleep(600)
+    await ctx.shot('composer-empty')
+    if (mocked) {
+      await lab.eval((answer) => {
+        const real = window.fetch.bind(window)
+        window.fetch = (input, init) => (String(typeof input === 'string' ? input : input?.url ?? input).includes('/functions/v1/campaign-draft')
+          ? ((window.__labDraftMocked = true), Promise.resolve(new Response(JSON.stringify(answer), { status: 200, headers: { 'Content-Type': 'application/json' } })))
+          : real(input, init))
+      }, { draft: { objective: 'offer', title: '[QA] Lab 15% off new carbon sticks', body: 'Players get 15% off our new carbon sticks this month with code LAB15.', need: 'gear', roles: ['player'], place: 'everywhere', perk: '15% off', promo_code: 'LAB15' }, source: 'ai' })
+      ctx.note('draft answer mocked in the page: no model call')
+    }
+    await lab.type('[data-testid="hockia-ai-campaign-input"]', 'Players get 15% off our new carbon sticks this month with code LAB15')
+    await sleep(900)
+    await ctx.shot('composer-typed-keyboard')
+    // With the keyboard up, the send button must still be on screen.
+    const send = await lab.eval(() => { const b = document.querySelector('[data-testid="hockia-ai-campaign-send"]')?.getBoundingClientRect(); const vv = window.visualViewport; return b ? { top: Math.round(b.top), bottom: Math.round(b.bottom), visibleHeight: Math.round(vv ? vv.height + vv.offsetTop : window.innerHeight), inner: window.innerHeight } : null })
+    ctx.note(`send button with keyboard: ${JSON.stringify(send)}`)
+    if (send && send.bottom > send.visibleHeight + 1) ctx.note('SEND BUTTON IS UNDER THE KEYBOARD')
+    const t0 = Date.now()
+    await lab.tap('[data-testid="hockia-ai-campaign-send"]')
+    await sleep(600)
+    await ctx.shot('thinking')
+    await lab.waitFor('[data-testid="hockia-ai-campaign-draft"], [data-testid="hockia-ai-campaign-failed"]', 45000)
+    await sleep(900)
+    await ctx.shot('result')
+    if (mocked && !(await lab.eval(() => window.__labDraftMocked === true))) throw new Error('LAB_MOCK_DRAFT=1 but the page did not use the mocked answer: a real model call was made')
+    const failed = await lab.eval(() => document.querySelector('[data-testid="hockia-ai-campaign-failed"]')?.textContent || '')
+    if (failed) throw new Error(`no draft: "${failed.slice(0, 120)}"`)
+    const draft = await lab.eval(() => ({ title: document.querySelector('[data-testid="hockia-ai-campaign-draft-title"]')?.textContent, perk: document.querySelector('[data-testid="hockia-ai-campaign-draft-perk"]')?.textContent, code: document.querySelector('[data-testid="hockia-ai-campaign-draft-code"]')?.textContent, forWho: document.querySelector('[data-testid="hockia-ai-campaign-draft-for"]')?.textContent }))
+    ctx.note(`drafted in ${Math.round((Date.now() - t0) / 100) / 10} s: ${JSON.stringify(draft)}`)
+    const facts = await layoutFacts(lab, '[data-testid="hockia-ai-sheet"]')
+    ctx.note(`draft card: small targets ${JSON.stringify(facts.small)}, off screen ${JSON.stringify(facts.off)}, sideways ${facts.overflowX}`)
+    await lab.swipeUp(0.4)
+    await ctx.shot('result-scrolled')
+    await lab.tap('[data-testid="hockia-ai-campaign-continue"]')
+    await lab.waitFor('[data-testid="offer-editor"]', 15000)
+    await sleep(1500)
+    await ctx.shot('editor-top')
+    const fields = await lab.eval(() => ({ title: document.querySelector('#offer-title')?.value, perk: document.querySelector('[data-testid="offer-perk-input"]')?.value, code: document.querySelector('[data-testid="offer-code-input"]')?.value, end: document.querySelector('[data-testid="offer-end-input"]')?.value }))
+    ctx.note(`editor fields: ${JSON.stringify(fields)}`)
+    if (!fields.title) throw new Error('the editor opened without the drafted title')
+    // Which elements reach past the screen edge, so a sideways scroll can be traced; the failure is raised after the clean-up.
+    const wide = await lab.eval(() => {
+      const vw = window.innerWidth
+      const past = [...document.querySelectorAll('[data-testid="offer-editor"] *')].filter((el) => { const b = el.getBoundingClientRect(); return b.width > 0 && b.right > vw + 0.5 })
+      const leaf = past.filter((el) => !past.some((o) => o !== el && el.contains(o)))
+      return { by: document.documentElement.scrollWidth - vw, vw, els: leaf.slice(0, 6).map((el) => { const b = el.getBoundingClientRect(); return `${el.tagName.toLowerCase()}${el.getAttribute('data-testid') ? `[${el.getAttribute('data-testid')}]` : ''}${el.id ? `#${el.id}` : ''}.${String(el.className).slice(0, 70)} left=${Math.round(b.left)} right=${Math.round(b.right)} y=${Math.round(b.top + window.scrollY)}` }) }
+    })
+    const sideways = wide.by > 1 ? `editor scrolls sideways by ${wide.by}px at ${wide.vw}px: ${wide.els.join(' | ') || 'no element past the edge found'}` : null
+    await lab.swipeUp(0.6); await ctx.shot('editor-middle')
+    await lab.swipeUp(0.6); await ctx.shot('editor-bottom')
+    // "Continue" saved a draft campaign: delete it, so the run leaves the brand as it found it.
+    const title = fields.title
+    await lab.go('/dashboard/offers')
+    await lab.waitFor('[data-testid="brand-offers"]', 30000)
+    await sleep(1500)
+    const opened = await lab.eval((t) => {
+      const row = [...document.querySelectorAll('[data-testid="offer-row"]')].find((r) => r.textContent?.includes(t))
+      row?.querySelector('[data-testid="offer-row-menu"]')?.click()
+      return Boolean(row)
+    }, title)
+    if (!opened) { ctx.note(`the saved draft "${title}" was not in the list: nothing deleted`); if (sideways) throw new Error(sideways); return }
+    await lab.waitFor('[data-testid="offer-action-delete"]', 8000)
+    await lab.tap('[data-testid="offer-action-delete"]')
+    await lab.waitFor('[data-testid="offer-confirm-yes"]', 8000)
+    await lab.tap('[data-testid="offer-confirm-yes"]')
+    await sleep(4000)
+    const left = await lab.eval((t) => [...document.querySelectorAll('[data-testid="offer-row"]')].filter((r) => r.textContent?.includes(t)).length, title)
+    const cleaned = left ? `${left} draft(s) titled "${title}" still in the list` : 'the saved draft was deleted'
+    ctx.note(cleaned)
+    if (sideways) throw new Error(`${sideways} (${cleaned})`)
+  },
+
+  async 'brand-sign-out'(lab, ctx) {
+    await signOut(lab)
+    await ctx.shot('signed-out')
+  },
 }
 
 export const CORE_ORDER = ['sign-in', 'home-feed', 'opportunities-role-apply', 'hockia-ai-sheet', 'role-cover-render', 'inbox-thread', 'community-profile', 'profile-edit']
 export const CLUB_ORDER = ['club-sign-in', 'club-roles', 'club-post-role-cover', 'role-cover-render', 'club-sign-out']
 // Club speed journeys (--scenario club-speed): sign in as the club, run them, sign out.
 export const CLUB_SPEED_ORDER = ['club-sign-in', 'club-your-replies', 'club-select-decline', 'club-review-advance', 'club-close-sheet', 'club-post-again', 'club-ai-start', 'club-sign-out']
+// Brand campaign journeys (--scenario brand). brand-campaign-draft makes one real model call unless LAB_MOCK_DRAFT=1.
+export const BRAND_ORDER = ['brand-sign-in', 'brand-campaigns', 'brand-campaign-draft', 'brand-sign-out']

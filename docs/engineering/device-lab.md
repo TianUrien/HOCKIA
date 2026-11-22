@@ -36,6 +36,14 @@ Devices are declared in `tools/devicelab/devices.json`. The Android tablet and s
 
 Each journey is written once against a small lab API (`go`, `waitFor`, `tap`, `type`, `swipeUp`, `eval`, `shot`) implemented twice: `lib/appium.mjs` (WebView context for DOM, `NATIVE_APP` context for gestures) and `lib/web.mjs` (Playwright). A failing assertion keeps a `FAILED` screenshot.
 
+## Brand campaign journeys (`--scenario brand`, added 2026-11-22)
+
+Source: the pre-production test of the campaign flow (PR #640). `brand-sign-in`, `brand-campaigns`, `brand-campaign-draft`, `brand-sign-out`, as the staging E2E brand (`E2E_BRAND_EMAIL` / `E2E_BRAND_PASSWORD` in `client/.env`). They cover the campaign list, the Hockia AI sheet and its campaign cards, the composer with the keyboard up, the draft card, "Continue in the editor" and the editor's fields. "Continue in the editor" saves a draft campaign, which the journey deletes; nothing is published.
+
+Run them with `LAB_MOCK_DRAFT=1` unless the model itself is under test: the draft answer is then given inside the page, no model call is made and none of the brand's 15 daily drafts (a rolling 24 hours) is used. The journey fails if the page did not use the mocked answer.
+
+What they measure: tap targets by their hit area (a control drawn at 40 px with a 2 px inset counts as 44), controls past the screen edge, and a sideways scroll in the editor, naming the elements that reach past the edge. First runs on 2026-11-22 (builds from `0aa6f36d`): Android Small Phone passes; iPhone 17 Pro Max opens the editor and then fails on a 14 px sideways scroll caused by the two date inputs (`#offer-start`, `#offer-end`, 434 px wide in a 440 px screen), which Chromium at the same width does not show.
+
 ## How to run
 
 ```bash

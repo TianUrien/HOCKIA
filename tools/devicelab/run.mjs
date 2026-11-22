@@ -9,12 +9,12 @@ import path from 'node:path'
 import { LAB_DIR, loadDevices, IOS_APP, ANDROID_APK } from './lib/config.mjs'
 import { startAppium, openSession } from './lib/appium.mjs'
 import { openWeb } from './lib/web.mjs'
-import { scenarios, CORE_ORDER, CLUB_ORDER, CLUB_SPEED_ORDER } from './scenarios/index.mjs'
+import { scenarios, CORE_ORDER, CLUB_ORDER, CLUB_SPEED_ORDER, BRAND_ORDER } from './scenarios/index.mjs'
 
 const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? (process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : true) : def }
 const devices = loadDevices(arg('device', 'all'))
 const wanted = arg('scenario', 'all')
-const names = wanted === 'all' ? CORE_ORDER : wanted === 'club' ? CLUB_ORDER : wanted === 'club-speed' ? CLUB_SPEED_ORDER : wanted.split(',')
+const names = wanted === 'all' ? CORE_ORDER : wanted === 'club' ? CLUB_ORDER : wanted === 'club-speed' ? CLUB_SPEED_ORDER : wanted === 'brand' ? BRAND_ORDER : wanted.split(',')
 const writes = arg('writes', false) === true
 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
 const outDir = path.join(LAB_DIR, 'report', stamp)
