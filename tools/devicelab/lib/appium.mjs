@@ -39,6 +39,8 @@ function capabilitiesFor(device) {
       'appium:udid': udid,
       'appium:app': IOS_APP,
       'appium:bundleId': APP_ID,
+      // LAB_IOS_LANG=es LAB_IOS_LOCALE=es_AR runs the session in that language. The driver leaves the simulator in it: restore the device's own language afterwards.
+      ...(process.env.LAB_IOS_LANG ? { 'appium:language': process.env.LAB_IOS_LANG, 'appium:locale': process.env.LAB_IOS_LOCALE ?? process.env.LAB_IOS_LANG } : {}),
       'appium:newCommandTimeout': 600,
       'appium:wdaLaunchTimeout': 300000,
       'appium:simulatorStartupTimeout': 300000,

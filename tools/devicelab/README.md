@@ -35,6 +35,8 @@ Signs in as the staging E2E brand (`E2E_BRAND_EMAIL` / `E2E_BRAND_PASSWORD` in `
 
 With `LAB_MOCK_DRAFT=1` the draft answer is given inside the page: no model call, and none of the brand's 15 daily drafts is used. The journey fails if the page did not use the mocked answer. Without the variable it makes one real model call (about 0.003 USD) and uses one of the 15; the limit is a rolling 24 hours.
 
+`brand-campaign-draft` also opens both date pickers in the editor, picks another end date (two days before the default end, computed from today), saves the draft, reopens it and reads the date back. On iOS, `LAB_IOS_LANG=es LAB_IOS_LOCALE=es_AR` runs the session with the simulator in Spanish, to read how dates and the picker are shown; the driver leaves the simulator in that language, so set it back afterwards.
+
 ## Publisher (club) journeys
 
 ```bash
