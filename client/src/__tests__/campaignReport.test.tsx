@@ -74,7 +74,7 @@ describe('campaign report', () => {
     expect(screen.queryByTestId('campaign-report-rows')).toBeNull()
     // The list row and the ended line follow the same rule.
     expect(offerCountsLine({ shown: 3, opened: 1, contacted: 1, not_useful: 1 })).toBe('Fewer than 5 members have seen it')
-    expect(offerStatusLine(campaign({ status: 'ended', shown: 1, opened: 1, ended_at: '2026-11-15T00:00:00Z' }))).toContain('Fewer than 5 members have seen it')
+    expect(offerStatusLine(campaign({ status: 'ended', shown: 1, opened: 1, contacted: 0, ended_at: '2026-11-15T00:00:00Z' }))).toContain('Fewer than 5 members have seen it')
     expect(offerCountsLine({ shown: 5, opened: 5, contacted: 5, objective: 'ask' })).toBe('5 shown, 5 opened, 5 contacted')
   })
 
@@ -92,6 +92,22 @@ describe('campaign report', () => {
     expect(offerCountsLine({ shown: 40, opened: 4, contacted: 3, store_visits: 0, objective: 'ask' })).toBe('40 shown, fewer than 5 opened, fewer than 5 contacted')
     expect(closingLine({ shown: 40, opened: 4 }, 14, { key: 'asked', n: 3 })).toBe('It ran 14 days. It was shown to 40 members and fewer than 5 opened it. Fewer than 5 wrote to you.')
     expect(closingLine({ shown: 40, opened: 12 }, 14, { key: 'store', n: 2 })).toBe('It ran 14 days. It was shown to 40 members and 12 opened it. Fewer than 5 went to your store.')
+  })
+
+  it('opened only from a shared link: it never says "Nobody has seen it" above people who opened it and wrote', () => {
+    // A visit from a link records an open with no impression, so shown stays 0.
+    renderReport(campaign({ shown: 0, opened: 7, contacted: 6, not_useful: 0 }))
+    expect(screen.getByTestId('campaign-report-number').textContent).toBe('6')
+    expect(screen.queryByTestId('campaign-report-nobody')).toBeNull()
+    expect(screen.getByTestId('campaign-report-link-only').textContent).toBe('It has not been shown inside Hockia yet. The members counted here opened it from a link.')
+    expect(closingLine({ shown: 0, opened: 7, contacted: 6 }, 14, { key: 'asked', n: 6 })).toBe('It ran 14 days. It was not shown inside Hockia; 7 members opened it from a link. 6 wrote to you.')
+    // The under-five rule counts whoever met the campaign, not only impressions.
+    expect(offerCountsLine({ shown: 0, opened: 2, contacted: 1, objective: 'ask' })).toBe('Fewer than 5 members have seen it')
+  })
+
+  it('an ended campaign few members saw says so in the past tense', () => {
+    renderReport(campaign({ status: 'ended', shown: 2, opened: 1, contacted: 0, not_useful: 0, ended_at: '2026-11-15T00:00:00Z' }))
+    expect(screen.getByTestId('campaign-report-small').textContent).toBe('Fewer than 5 members saw it, so its counts are not shown.')
   })
 
   it('nobody at all is a plain zero, said in words', () => {
@@ -144,8 +160,18 @@ describe('campaign report', () => {
     expect(closingLine({ shown: 84, opened: 19 }, 14, asked(6))).toBe('It ran 14 days. It was shown to 84 members and 19 opened it. 6 wrote to you.')
     expect(closingLine({ shown: 5, opened: 5 }, 1, asked(5))).toBe('It ran 1 day. It was shown to 5 members and 5 opened it. 5 wrote to you.')
     expect(closingLine({ shown: 6, opened: 0 }, 0, asked(0))).toBe('It ran less than a day. It was shown to 6 members and 0 opened it. 0 wrote to you.')
-    expect(closingLine({ shown: 1, opened: 1 }, 7, asked(1))).toBe('It ran 7 days. Fewer than 5 members have seen it so far. Counts appear once 5 have, so nobody’s actions can be told apart.')
-    expect(closingLine({ shown: 0, opened: 0 }, 7, asked(0))).toBe('It ran 7 days. Nobody has seen it yet.')
+    // It has ended: no "so far", no "once 5 have".
+    expect(closingLine({ shown: 1, opened: 1 }, 7, asked(1))).toBe('It ran 7 days. Fewer than 5 members saw it, so its counts are not shown.')
+    expect(closingLine({ shown: 0, opened: 0 }, 7, asked(0))).toBe('It ran 7 days. Nobody saw it.')
+  })
+
+  it('a campaign Hockia took down and that then reached its end date does not read as if it ran its course', () => {
+    const asked = (n: number) => ({ key: 'asked' as const, n })
+    const down = { review_note: 'The image is not yours to use.' }
+    expect(closingLine({ shown: 84, opened: 19, ...down }, 14, asked(6))).toBe('Hockia took this campaign down before its end date. It was shown to 84 members and 19 opened it. 6 wrote to you.')
+    expect(closingLine({ shown: 0, opened: 0, ...down }, 14, asked(0))).toBe('Hockia took this campaign down before its end date. Nobody saw it.')
+    // A note of spaces is no note.
+    expect(closingLine({ shown: 84, opened: 19, review_note: '  ' }, 14, asked(6))).toMatch(/^It ran 14 days\./)
   })
 
   it('a campaign that ended without ever going live cannot be edited', () => {

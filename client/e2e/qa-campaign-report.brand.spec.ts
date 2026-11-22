@@ -100,4 +100,20 @@ test.describe('campaign preview and report QA', () => {
     await preview.scrollIntoViewIfNeeded()
     if (QA_PROBE) await preview.screenshot({ path: `${OUT}/preview-page-offer-phone.png` })
   })
+
+  test('phone: "How are my campaigns doing?" is answered inside Hockia AI with a card per campaign', async ({ page }) => {
+    await page.setViewportSize(PHONE)
+    await page.goto('/dashboard/offers')
+    await expect(page.getByTestId('brand-offers')).toBeVisible({ timeout: 20_000 })
+    await settle(page)
+    await page.getByTestId('hockia-ai-button').first().click()
+    await expect(page.getByTestId('hockia-ai-sheet')).toBeVisible()
+    // The second brand choice: answered in the sheet, it does not leave for a screen.
+    await page.getByTestId('hockia-ai-option').nth(1).click()
+    await expect(page.getByTestId('hockia-ai-campaigns')).toBeVisible()
+    await expect(page.getByTestId('hockia-ai-campaigns-lead')).toBeVisible({ timeout: 20_000 })
+    await expect(page).toHaveURL(/\/dashboard\/offers$/)
+    if (QA_PROBE) await page.waitForTimeout(600)
+    await shot(page, 'ai-campaigns.png')
+  })
 })

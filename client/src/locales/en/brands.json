@@ -1172,6 +1172,7 @@
     "whoWrote": "See who wrote to you in Results",
     "closingRan_one": "It ran {{count}} day.",
     "closingRan_other": "It ran {{count}} days.",
+    "closingTakenDown": "Hockia took this campaign down before its end date.",
     "closingRanUnderDay": "It ran less than a day.",
     "closingShown_one": "It was shown to {{n}} member",
     "closingShown_other": "It was shown to {{n}} members",
@@ -1181,6 +1182,11 @@
       "asked": "Fewer than {{n}} wrote to you.",
       "applied": "Fewer than {{n}} applied.",
       "store": "Fewer than {{n}} went to your store."
-    }
+    },
+    "smallEnded": "Fewer than {{n}} members saw it, so its counts are not shown.",
+    "nobodyEnded": "Nobody saw it.",
+    "linkOnly": "It has not been shown inside Hockia yet. The members counted here opened it from a link.",
+    "closingLinkOnly_one": "It was not shown inside Hockia; {{n}} member opened it from a link.",
+    "closingLinkOnly_other": "It was not shown inside Hockia; {{n}} members opened it from a link."
   }
 }

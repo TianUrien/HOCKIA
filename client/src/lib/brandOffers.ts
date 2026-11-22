@@ -231,8 +231,21 @@ export function daysLeftLine(o: Pick<BrandOffer, 'ends_at'>, now: Date = new Dat
  * per-campaign total (founder 2026-11-21). Nobody at all is a plain zero.
  */
 export const SMALL_AUDIENCE = 5
-export function isSmallAudience(o: Pick<BrandOffer, 'shown'>): boolean {
-  return o.shown > 0 && o.shown < SMALL_AUDIENCE
+/**
+ * How many members met the campaign at all. "Shown" counts the card inside
+ * Hockia; a member who opens the page from a shared link is counted as opened
+ * with no impression, so the audience is the largest of the three counts.
+ */
+export function campaignAudience(o: Pick<BrandOffer, 'shown'> & Partial<Pick<BrandOffer, 'opened' | 'contacted'>>): number {
+  return Math.max(o.shown, o.opened ?? 0, o.contacted ?? 0)
+}
+export function isSmallAudience(o: Pick<BrandOffer, 'shown'> & Partial<Pick<BrandOffer, 'opened' | 'contacted'>>): boolean {
+  const n = campaignAudience(o)
+  return n > 0 && n < SMALL_AUDIENCE
+}
+/** Members opened it from a link, and the card was never shown inside Hockia. */
+export function isLinkOnly(o: Pick<BrandOffer, 'shown'> & Partial<Pick<BrandOffer, 'opened' | 'contacted'>>): boolean {
+  return o.shown === 0 && campaignAudience(o) > 0
 }
 /** A per-campaign total the brand may not read exactly: one to four members. */
 export const isFewer = (n: number) => n > 0 && n < SMALL_AUDIENCE
@@ -269,22 +282,62 @@ export function campaignRanDays(o: Pick<BrandOffer, 'live_at' | 'starts_at' | 'e
 }
 
 /**
+ * An ended campaign that Hockia had taken down: the hourly job ends a
+ * taken-down campaign at its end date and the note stays on the row
+ * (publishing again clears it).
+ */
+export function wasTakenDown(o: Partial<Pick<BrandOffer, 'review_note'>>): boolean {
+  return Boolean((o.review_note ?? '').trim())
+}
+
+/**
  * "It ran 14 days. It was shown to 84 members and 19 opened it. 6 wrote to
  * you." Every part has its own singular; under a day it says so; under five
  * members it gives no counts.
  */
-export function closingLine(offer: Pick<BrandOffer, 'shown' | 'opened'>, ranDays: number | null, headline: { key: CampaignHeadline; n: number }): string {
-  const ran = ranDays === null ? null : ranDays < 1 ? tBrands('campaignReport.closingRanUnderDay') : tBrands('campaignReport.closingRan', { count: ranDays })
-  if (offer.shown === 0) return [ran, tBrands('campaignReport.nobody')].filter(Boolean).join(' ')
-  if (isSmallAudience(offer)) return [ran, tBrands('campaignReport.small', { n: SMALL_AUDIENCE })].filter(Boolean).join(' ')
+export function closingLine(offer: Pick<BrandOffer, 'shown' | 'opened'> & Partial<Pick<BrandOffer, 'contacted' | 'review_note'>>, ranDays: number | null, headline: { key: CampaignHeadline; n: number }): string {
+  // Taken down by Hockia and never published again: it did not run its
+  // course, so no "It ran N days" (the days after the take-down were not live).
+  const ran = wasTakenDown(offer) ? tBrands('campaignReport.closingTakenDown') : ranDays === null ? null : ranDays < 1 ? tBrands('campaignReport.closingRanUnderDay') : tBrands('campaignReport.closingRan', { count: ranDays })
+  if (campaignAudience(offer) === 0) return [ran, tBrands('campaignReport.nobodyEnded')].filter(Boolean).join(' ')
+  // It has ended: "so far" and "once 5 have" can no longer come true.
+  if (isSmallAudience(offer)) return [ran, tBrands('campaignReport.smallEnded', { n: SMALL_AUDIENCE })].filter(Boolean).join(' ')
+  const headlinePart = isFewer(headline.n)
+    ? tBrands(`campaignReport.closingHeadlineFewer.${headline.key}`, { n: SMALL_AUDIENCE })
+    : tBrands(`campaignReport.closingHeadline.${headline.key}`, { count: headline.n, n: brandCount(headline.n) })
+  // Opened from a shared link only: the card was never shown inside Hockia.
+  if (isLinkOnly(offer)) {
+    return [ran, tBrands('campaignReport.closingLinkOnly', { count: isFewer(offer.opened) ? SMALL_AUDIENCE : offer.opened, n: countInLine(offer.opened) }), headlinePart].filter(Boolean).join(' ')
+  }
   return [
     ran,
     tBrands('campaignReport.closingShown', { count: offer.shown, n: brandCount(offer.shown) }),
     tBrands('campaignReport.closingOpened', { count: isFewer(offer.opened) ? SMALL_AUDIENCE : offer.opened, n: countInLine(offer.opened) }),
-    isFewer(headline.n)
-      ? tBrands(`campaignReport.closingHeadlineFewer.${headline.key}`, { n: SMALL_AUDIENCE })
-      : tBrands(`campaignReport.closingHeadline.${headline.key}`, { count: headline.n, n: brandCount(headline.n) }),
+    headlinePart,
   ].filter(Boolean).join(' ')
+}
+
+/** At most this many campaign cards in one Hockia AI answer. */
+export const DESK_CAMPAIGNS_MAX = 3
+/**
+ * The campaigns worth an answer: live ones, then paused ones, then the most
+ * recently ended. Drafts have nothing to report. `focusId` is the campaign
+ * the member came to see (the one the dot announced): it is always among the
+ * cards, first.
+ */
+export function deskCampaigns(offers: BrandOffer[], focusId?: string | null): BrandOffer[] {
+  const live = offers.filter((o) => o.status === 'live')
+  const paused = offers.filter((o) => o.status === 'paused')
+  const ended = offers
+    .filter((o) => o.status === 'ended' && o.live_at)
+    .sort((x, y) => (y.ended_at ?? y.updated_at).localeCompare(x.ended_at ?? x.updated_at) || x.id.localeCompare(y.id))
+  const all = [...live, ...paused, ...ended]
+  const focus = focusId ? all.find((o) => o.id === focusId) : undefined
+  return (focus ? [focus, ...all.filter((o) => o !== focus)] : all).slice(0, DESK_CAMPAIGNS_MAX)
+}
+/** Everything deskCampaigns chooses from: campaigns that have gone live and are not drafts. */
+export function deskCampaignTotal(offers: BrandOffer[]): number {
+  return offers.filter((o) => o.status === 'live' || o.status === 'paused' || (o.status === 'ended' && o.live_at)).length
 }
 
 /** "today" / "yesterday" / "3 days ago" (B1 status lines). */
