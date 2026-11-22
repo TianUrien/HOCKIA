@@ -795,6 +795,7 @@
     "publishChanges": "Publish changes",
     "publish": "Publish",
     "saveDraft": "Save draft",
+    "saveDraftShort": "Save draft",
     "saving": "Saving…",
     "noteChangesPhone": "Members see the changes right away.",
     "noteNew": "Members see it right away. Hockia takes down campaigns that break the rules.",
@@ -1059,6 +1060,9 @@
   },
   "marketParts": {
     "offerPill": "Offer",
+    "askPill": "Questions",
+    "productPill": "Product",
+    "ambassadorPill": "Ambassadors",
     "optionsFor": "Options for {{title}}",
     "menuAria": "Item options",
     "notUseful": "Not useful",

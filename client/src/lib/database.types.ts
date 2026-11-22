@@ -7926,6 +7926,7 @@ export type Database = {
           link_url: string
           perk: string
           need: string
+          objective: string
           title: string
         }[]
       }

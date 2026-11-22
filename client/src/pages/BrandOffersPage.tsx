@@ -273,9 +273,9 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
           <>
             <LargeTitleBar
               title={t('offersPage.title')}
-              className="-mx-4 pr-3"
+              className="-mx-4 pr-2"
               trailing={
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5">
                   <HockiaAiButton onClick={() => showAi('header')} />
                   <button type="button" onClick={openNew} aria-label={t('offersPage.newOffer')} className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:bg-brand-primary-pressed" data-testid="offers-new">
                     <Plus className="h-6 w-6" strokeWidth={2} />

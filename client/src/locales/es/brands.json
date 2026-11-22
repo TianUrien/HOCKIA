@@ -821,6 +821,7 @@
     "publishChanges": "Publicar cambios",
     "publish": "Publicar",
     "saveDraft": "Guardar borrador",
+    "saveDraftShort": "Guardar",
     "saving": "Guardando…",
     "noteChangesPhone": "La comunidad ve los cambios al instante.",
     "noteNew": "La comunidad la ve al instante. Hockia retira las campañas que no cumplen las reglas.",
@@ -1092,6 +1093,9 @@
   },
   "marketParts": {
     "offerPill": "Oferta",
+    "askPill": "Preguntas",
+    "productPill": "Producto",
+    "ambassadorPill": "Embajadores/as",
     "optionsFor": "Opciones de {{title}}",
     "menuAria": "Opciones",
     "notUseful": "No es útil",

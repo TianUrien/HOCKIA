@@ -50,9 +50,15 @@ function ItemImage({ item, className, logoClassName, eager }: { item: MarketItem
   )
 }
 
-export function OfferPill({ className, perk }: { className?: string; perk?: string | null }) {
+/**
+ * What a campaign is, in one word, so a question campaign never reads as an
+ * offer (founder 2026-11-22). An offer shows its perk when it has one. A
+ * server that does not say the objective yet keeps the plain "Offer".
+ */
+export function OfferPill({ className, perk, objective }: { className?: string; perk?: string | null; objective?: MarketItem['objective'] }) {
   const t = useBrandsT()
-  return <span className={cn('rounded-full bg-brand-soft px-2.5 py-0.5 text-caption font-semibold text-brand-primary', className)}>{(perk ?? '').trim() || t('marketParts.offerPill')}</span>
+  const kind = objective === 'ask' ? t('marketParts.askPill') : objective === 'product' ? t('marketParts.productPill') : objective === 'ambassador' ? t('marketParts.ambassadorPill') : null
+  return <span className={cn('rounded-full bg-brand-soft px-2.5 py-0.5 text-caption font-semibold text-brand-primary', className)} data-testid="market-item-pill">{kind ?? ((perk ?? '').trim() || t('marketParts.offerPill'))}</span>
 }
 
 /** Rail tile (MK1): 200 pt for offers, 160 pt for the need rails. */
@@ -89,14 +95,12 @@ export function MarketRow({ item, surface, detail, onOpen, onMenu }: { item: Mar
         <ItemImage item={item} className="h-16 w-16 shrink-0 rounded-[14px]" logoClassName="h-10 w-10 rounded-[10px] shadow-[0_2px_10px_rgba(15,15,20,0.18)]" eager />
         <span className="min-w-0 flex-1">
           <span className="block text-body font-semibold leading-[22px] text-ink-1 line-clamp-2">{item.title}</span>
-          <span className="mt-0.5 block text-row text-ink-2 line-clamp-2">
-            {item.brand_name}
-            {item.brand_name && about ? ' ' : null}
-            {about ? <span className={item.brand_name ? 'ml-2 text-ink-3' : undefined}>{about}</span> : null}
-          </span>
+          {/* Two lines of their own: side by side, the second wrapped with its left margin and read as a gap. */}
+          {item.brand_name ? <span className="mt-0.5 block truncate text-row text-ink-2">{item.brand_name}</span> : null}
+          {about ? <span className={cn('block truncate text-row', item.brand_name ? 'text-ink-3' : 'mt-0.5 text-ink-2')}>{about}</span> : null}
         </span>
       </button>
-      {item.kind === 'offer' ? <OfferPill className="shrink-0" perk={item.perk} /> : null}
+      {item.kind === 'offer' ? <OfferPill className="shrink-0" perk={item.perk} objective={item.objective} /> : null}
       <button type="button" onClick={onMenu} aria-label={t('marketParts.optionsFor', { title: item.title })} className="-mr-1 flex h-11 w-9 shrink-0 items-center justify-center text-ink-3">
         <MoreHorizontal className="h-4 w-4" />
       </button>
