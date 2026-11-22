@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Plus, Search, X } from 'lucide-react'
+import { isIOSUserAgent } from '@/lib/shortLinks'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -33,6 +34,7 @@ import {
   type OfferFields,
   type OfferObjective,
   type OfferRole,
+  startFromDay,
 } from '@/lib/brandOffers'
 import { OfferThumb, OfferPill } from './OfferParts'
 import { CampaignPreview } from './CampaignPreview'
@@ -51,7 +53,9 @@ const BUCKET = 'brand-products'
  * WebKit then centres the date and pins it to the top of the field, so the
  * value is put back on the left and in the middle, like every other input.
  */
-const DATE_FIELD = 'flex min-w-0 max-w-full appearance-none items-center [-webkit-min-logical-width:0] [&::-webkit-date-and-time-value]:m-0 [&::-webkit-date-and-time-value]:text-left'
+const IOS_DATE_FIELD = 'flex min-w-0 max-w-full appearance-none items-center [-webkit-min-logical-width:0] [&::-webkit-date-and-time-value]:m-0 [&::-webkit-date-and-time-value]:text-left'
+/** iOS only: on Android the same classes took away the field's own chevron and fixed nothing (it never overflowed there). */
+const DATE_FIELD = typeof navigator !== 'undefined' && isIOSUserAgent(navigator.userAgent, navigator.maxTouchPoints) ? IOS_DATE_FIELD : ''
 const MAX_COUNTRIES = 30
 
 interface OfferEditorProps {
@@ -284,7 +288,7 @@ export function OfferEditor({ offer, initial, brandName, openToPartners = false,
       <div className="space-y-4">
         <div>
           <div className={fieldLabelRow}><label htmlFor="offer-start">{t('offerEditor.startsLabel')}</label><span className={fieldOptionalTag}>{t('offerEditor.optional')}</span></div>
-          <input id="offer-start" type="date" value={toDateInput(f.starts_at)} onChange={(e) => set('starts_at', fromDateInput(e.target.value, false))} className={cn(fieldInput, DATE_FIELD)} />
+          <input id="offer-start" type="date" value={toDateInput(f.starts_at)} onChange={(e) => set('starts_at', startFromDay(e.target.value))} className={cn(fieldInput, DATE_FIELD)} />
           <p className="mt-1.5 text-caption text-ink-3">{f.starts_at ? '' : t('offerEditor.startsHint')}</p>
         </div>
         <div>

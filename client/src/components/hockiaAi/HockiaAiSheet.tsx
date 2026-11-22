@@ -528,7 +528,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
                 data-testid="hockia-ai-composer"
               />
             </label>
-            <button type="button" onClick={() => send(input)} disabled={!canSend} aria-label={t('sheet.send')} className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-hockia-primary text-white transition-opacity', !canSend && 'opacity-40')} data-testid="hockia-ai-send">
+            <button type="button" onClick={() => send(input)} disabled={!canSend} aria-label={t('sheet.send')} className={cn("relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-hockia-primary text-white transition-opacity before:absolute before:-inset-0.5 before:content-['']", !canSend && 'opacity-40')} data-testid="hockia-ai-send">
               <ArrowUp className="h-5 w-5" strokeWidth={2.25} />
             </button>
           </div>

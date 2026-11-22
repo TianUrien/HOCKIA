@@ -108,8 +108,8 @@ test.describe('campaign preview and report QA', () => {
     await settle(page)
     await page.getByTestId('hockia-ai-button').first().click()
     await expect(page.getByTestId('hockia-ai-sheet')).toBeVisible()
-    // The second brand choice: answered in the sheet, it does not leave for a screen.
-    await page.getByTestId('hockia-ai-option').nth(1).click()
+    // The third brand choice: answered in the sheet, it does not leave for a screen.
+    await page.getByTestId('hockia-ai-option').nth(2).click()
     await expect(page.getByTestId('hockia-ai-campaigns')).toBeVisible()
     await expect(page.getByTestId('hockia-ai-campaigns-lead')).toBeVisible({ timeout: 20_000 })
     await expect(page).toHaveURL(/\/dashboard\/offers$/)
@@ -128,7 +128,8 @@ test.describe('campaign preview and report QA', () => {
     await settle(page)
     await page.getByTestId('hockia-ai-button').first().click()
     await expect(page.getByTestId('hockia-ai-sheet')).toBeVisible()
-    await page.getByTestId('hockia-ai-option').nth(2).click()
+    // Writing a campaign is the first brand choice (founder 2026-11-22).
+    await page.getByTestId('hockia-ai-option').nth(0).click()
     await expect(page.getByTestId('hockia-ai-campaign-composer')).toBeVisible()
     await page.getByTestId('hockia-ai-campaign-input').fill('I want players to write to us with questions about choosing a stick')
     if (QA_PROBE) await page.waitForTimeout(400)
