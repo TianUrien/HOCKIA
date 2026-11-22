@@ -140,6 +140,7 @@ export function CampaignComposer({ onGo }: { onGo: (to: string) => void }) {
               <p className="mt-1 text-body font-semibold text-ink-1" data-testid="hockia-ai-campaign-draft-title">{phase.draft.title || tb('offerParts.yourTitle')}</p>
               <p className="mt-1 text-row text-ink-2">{phase.draft.body || tb('offerParts.whatMembersGet')}</p>
               {phase.draft.perk ? <span className="mt-2 inline-block rounded-full bg-brand-soft px-2.5 py-0.5 text-caption font-semibold text-brand-primary" data-testid="hockia-ai-campaign-draft-perk">{phase.draft.perk}</span> : null}
+              {phase.draft.promo_code ? <span className="ml-1.5 mt-2 inline-block rounded-full border border-line px-2.5 py-0.5 text-caption font-semibold text-ink-1" data-testid="hockia-ai-campaign-draft-code">{phase.draft.promo_code}</span> : null}
               <dl className="mt-3 grid grid-cols-[84px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-secondary">
                 <dt className="text-ink-2">{t('composer.forLabel')}</dt>
                 <dd className="text-ink-1" data-testid="hockia-ai-campaign-draft-for">

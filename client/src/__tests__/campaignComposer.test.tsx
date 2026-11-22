@@ -41,6 +41,9 @@ describe('the draft as the editor reads it', () => {
   })
   it('"my country" uses the brand\'s own country, and falls back to everyone when the brand has none', () => {
     expect(draftToFields({ ...DRAFT, place: 'my_country' }, 48, now)).toMatchObject({ everywhere: false, country_ids: [48] })
+    // The code travels to the editor's own field, and only on an offer.
+    expect(draftToFields({ ...DRAFT, objective: 'offer', perk: '20% off', promo_code: 'HOCKIA20' }, 48, now)).toMatchObject({ perk: '20% off', promo_code: 'HOCKIA20' })
+    expect(draftToFields({ ...DRAFT, objective: 'product', promo_code: 'HOCKIA20' }, 48, now).promo_code).toBe('')
     expect(draftToFields({ ...DRAFT, place: 'my_country' }, null, now)).toMatchObject({ everywhere: true, country_ids: [] })
   })
   it('a perk travels only with an offer', () => {
