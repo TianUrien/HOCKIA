@@ -300,6 +300,8 @@ Founder ruling 2026-11-21: count the members who reach Hockia AI at all, and let
 | `hockia_ai_suggestion_shown` | `kind: applicants_waiting \| profile_step \| new_opportunities \| campaign_ended` | The dot lights for a suggestion, once per member, kind and fact per app load |
 | `hockia_ai_suggestion_click` | `kind` | The member taps the "New for you" row inside the sheet |
 | `hockia_ai_campaigns_view` | `cards` (how many campaign cards were shown, 1 to 3) | A brand opened "How are my campaigns doing?" in Hockia AI and at least one campaign card was shown; once per opening, never for the empty or failed state (added 2026-11-21). The suggestion events above also carry `kind: campaign_ended` for brands |
+| `hockia_ai_campaign_draft` | `result: draft \| unavailable \| limit`, `objective` (when a draft came back) | A brand sent its sentence to "Write a new campaign" in Hockia AI (added 2026-11-21). The sentence itself is never sent |
+| `hockia_ai_campaign_draft_continue` | `brand_offer` (the saved draft), `objective` | "Continue in the editor": the draft was saved and the editor opens |
 
 Reads: unique openers = distinct `user_id` on `hockia_ai_open`; by entry point = the same split by `entry`; dot effect = opens with a non-null `suggestion` over `hockia_ai_suggestion_shown`; follow-through = `hockia_ai_suggestion_click` over those opens.
 

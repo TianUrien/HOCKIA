@@ -23,6 +23,7 @@ import { useWordReveal } from './useWordReveal'
 import { ProfileBuilder } from './ProfileBuilder'
 import { ApplyFlow } from './ApplyFlow'
 import { CampaignDesk } from './CampaignDesk'
+import { CampaignComposer } from './CampaignComposer'
 import { ChatHistory } from './ChatHistory'
 import { NextStepPlan, NextSteps } from './NextSteps'
 import { useNextSteps } from './useNextSteps'
@@ -38,6 +39,8 @@ import { HockiaAiOffer } from '@/components/offers/HockiaAiOffer'
 import { hockiaAiOfferTopic } from '@/lib/memberOffers'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 import { registerBackOverlay } from '@/lib/nativeBack'
+import { useBottomPrompt } from '@/lib/bottomPrompt'
+import { HOCKIA_AI_SHEET_OVERLAY } from '@/lib/overlaySequence'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -103,6 +106,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   // and usable (HANDOFF-phase1 "Hockia AI", rebrand page 17, 2026-11-06).
   const panel = useMediaQuery('(min-width: 1024px)')
   useBodyScrollLock(open && !panel)
+  // The cookie banner steps aside while the sheet covers the bottom of the phone.
+  useBottomPrompt(HOCKIA_AI_SHEET_OVERLAY, open && !panel)
 
   // Recruiters: "Find available players for <role>" names the active recruiting role (audit A7).
   const { active: recruitingRole } = useRecruitingContext()
@@ -129,7 +134,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   const stepping = mode === 'steps' && canBuild && step !== null
   const plan = canBuild && !roleContext && nextSteps && nextSteps.length > 0 ? nextSteps : null
   const campaigning = mode === 'campaigns' && signedIn && profile?.role === 'brand'
-  const special = builder || applying || history || stepping || campaigning
+  const composing = mode === 'campaignDraft' && signedIn && profile?.role === 'brand'
+  const special = builder || applying || history || stepping || campaigning || composing
   // What lit the dot (founder 2026-11-21): shown first, with the one action that deals with it.
   const news = useHockiaAiSuggestion((s) => s.shown)
   const actOnNews = () => {
@@ -176,7 +182,9 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     return () => { cancelAnimationFrame(frame); setEntered(false); trigger?.focus({ preventScroll: true }) }
   }, [open, panel])
   useEffect(() => { if ((hasMessages || special) && open && detent === 'medium') setDetent('large') }, [hasMessages, special, open, detent, setDetent])
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }) }, [messages, reduced])
+  // Follow the conversation to its newest message. Without messages there is
+  // nothing to follow: the sheet opens at its top, on the greeting.
+  useEffect(() => { if (messages.length > 0) bottomRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }) }, [messages, reduced])
   // Android system Back closes this sheet first (it has no focus trap to be counted by).
   useEffect(() => { if (open) return registerBackOverlay() }, [open])
   useEffect(() => {
@@ -227,8 +235,28 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     else if (Math.abs(dy) < 6) setDetent(detent === 'large' ? 'medium' : 'large')
   }
 
-  if (!open && !leaving) return null
   const large = panel || detent === 'large'
+  // The medium sheet scrolls when its cards are taller than it. While there
+  // is more below, the last row fades out at the edge instead of ending in a
+  // hard cut that reads as a broken layout.
+  const mediumScrollRef = useRef<HTMLDivElement>(null)
+  const [moreBelow, setMoreBelow] = useState(false)
+  const checkMoreBelow = useCallback(() => {
+    const el = mediumScrollRef.current
+    if (el) setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 8)
+  }, [])
+  useEffect(() => {
+    const el = mediumScrollRef.current
+    if (!open || !el) return
+    checkMoreBelow()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(checkMoreBelow)
+    ro.observe(el)
+    if (el.firstElementChild) ro.observe(el.firstElementChild)
+    return () => ro.disconnect()
+  }, [open, large, mode, checkMoreBelow])
+
+  if (!open && !leaving) return null
   const askFromPlan = (text: string, shown?: string) => { setMode('chat'); setTimeout(() => send(text, shown), 0) }
   const planCard = plan ? <NextStepPlan steps={plan} question={t('sheet.planQuestion')} onPick={startStep} onOther={askFromPlan} /> : null
   const canSend = input.trim().length > 0 && !isPending
@@ -288,6 +316,7 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
     if (o.action.type === 'ask') send(o.action.query, o.action.shown)
     else if (o.action.type === 'builder') startBuilder()
     else if (o.action.type === 'campaigns') { void hapticSelection(); setDeskFocus(null); setMode('campaigns') }
+    else if (o.action.type === 'campaignDraft') { void hapticSelection(); setMode('campaignDraft') }
     else { close(); navigate(o.action.to) }
   }
   const optionRows = roleOptions?.map((o) => ({ eyebrow: o.eyebrow, label: o.label, run: () => runOption(o) })) ?? null
@@ -348,34 +377,34 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
           // Side panel header: mascot, name and Beta; More and close on the right.
           <div className="flex shrink-0 items-center gap-3 px-6 pb-3 pt-4" data-testid="hockia-ai-panel-header">
             {special && (
-                <button type="button" onClick={() => setMode('chat')} aria-label={t('sheet.backToChat')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-to-chat">
+                <button type="button" onClick={() => setMode('chat')} aria-label={t('sheet.backToChat')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-to-chat">
                 <MessageSquare className="h-5 w-5" strokeWidth={2} />
               </button>
             )}
             <MascotAvatar size={32} />
             <span className="flex min-w-0 flex-1 items-center gap-2 text-[17px] font-semibold text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></span>
             {!special && (
-                <button type="button" onClick={() => setMoreOpen(true)} aria-label={t('sheet.more')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-more">
+                <button type="button" onClick={() => setMoreOpen(true)} aria-label={t('sheet.more')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-more">
                 <MoreHorizontal className="h-5 w-5" strokeWidth={2} />
               </button>
             )}
-            <button type="button" onClick={close} aria-label={t('sheet.close')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-close">
+            <button type="button" onClick={close} aria-label={t('sheet.close')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-close">
               <X className="h-5 w-5" strokeWidth={2} />
             </button>
           </div>
         ) : large && !history ? (
           <div className="flex shrink-0 items-center justify-between px-4 pb-2">
             {special ? (
-              <button type="button" onClick={() => setMode('chat')} aria-label={t('sheet.backToChat')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-to-chat">
+              <button type="button" onClick={() => setMode('chat')} aria-label={t('sheet.backToChat')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-to-chat">
                 <MessageSquare className="h-5 w-5" strokeWidth={2} />
               </button>
             ) : (
-              <button type="button" onClick={() => setMoreOpen(true)} aria-label={t('sheet.more')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-more">
+              <button type="button" onClick={() => setMoreOpen(true)} aria-label={t('sheet.more')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-more">
                 <MoreHorizontal className="h-5 w-5" strokeWidth={2} />
               </button>
             )}
             <span className="flex items-center gap-2 text-[17px] font-semibold text-ink-1">{HOCKIA_AI_TITLE} <BetaPill /></span>
-            <button type="button" onClick={close} aria-label={t('sheet.close')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)]" data-testid="hockia-ai-close">
+            <button type="button" onClick={close} aria-label={t('sheet.close')} className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] before:absolute before:-inset-0.5 before:content-['']" data-testid="hockia-ai-close">
               <X className="h-5 w-5" strokeWidth={2} />
             </button>
           </div>
@@ -406,8 +435,10 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
           />
         ) : campaigning ? (
           <CampaignDesk focusId={deskFocus} onGo={(to) => { close(); navigate(to) }} />
+        ) : composing ? (
+          <CampaignComposer onGo={(to) => { close(); navigate(to) }} />
         ) : builder ? <ProfileBuilder onClose={close} /> : (<>
-        <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', panel ? 'px-6' : 'px-4')}>
+        <div ref={mediumScrollRef} onScroll={checkMoreBelow} data-more-below={!large && moreBelow ? '' : undefined} className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain', panel ? 'px-6' : 'px-4', !large && moreBelow && '[mask-image:linear-gradient(to_bottom,black_calc(100%-28px),transparent)]')}>
           {(!large || (panel && !hasMessages)) && (
             <div className="flex flex-col gap-3 pb-3" data-testid="hockia-ai-medium">
               {panel ? (

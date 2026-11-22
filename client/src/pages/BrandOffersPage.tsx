@@ -50,7 +50,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
   const { user, profile } = useAuthStore()
   const isPhone = useMediaQuery('(max-width: 1023px)')
   const { brand, isLoading: brandLoading } = useMyBrand()
-  const { offers, isLoading, save, setState, duplicate } = useMyBrandOffers(Boolean(brand))
+  const { offers, isLoading, isFetching, refetch, save, setState, duplicate } = useMyBrandOffers(Boolean(brand))
   const addToast = useToastStore((s) => s.addToast)
   const showAi = useHockiaAiSheet((s) => s.show)
   const names = useCountryNames()
@@ -80,6 +80,19 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
 
   const editing = mode === 'edit' ? offers.find((o) => o.id === offerId) ?? null : null
   const deskOffer = deskOpen && deskOpen !== 'new' ? offers.find((o) => o.id === deskOpen) ?? null : null
+  // A campaign saved somewhere else (Hockia AI's draft, a notification on
+  // another device) may not be in a list loaded earlier. Ask once more before
+  // deciding the address leads nowhere.
+  const wanted = mode === 'edit' ? offerId ?? null : !isPhone && deskOpen && deskOpen !== 'new' ? deskOpen : null
+  const found = wanted ? offers.some((o) => o.id === wanted) : true
+  const [askedAgain, setAskedAgain] = useState<{ id: string; done: boolean } | null>(null)
+  useEffect(() => {
+    if (!wanted || found || isLoading || isFetching || askedAgain?.id === wanted) return
+    setAskedAgain({ id: wanted, done: false })
+    const settle = () => setAskedAgain((a) => (a?.id === wanted ? { id: wanted, done: true } : a))
+    void Promise.resolve(refetch()).then(settle, settle)
+  }, [wanted, found, isLoading, isFetching, askedAgain, refetch])
+  const stillLooking = Boolean(wanted) && !found && (isFetching || askedAgain?.id !== wanted || !askedAgain.done)
   const live = liveCount(offers)
 
   const grouped = useMemo(() => {
@@ -177,7 +190,7 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
 
   // ── Phone editor screens (B2) ────────────────────────────────────────────
   if (isPhone && mode !== 'list') {
-    if (loading) return <div className="min-h-screen bg-surface-subtle" />
+    if (loading || stillLooking) return <div className="min-h-screen bg-surface-subtle" data-testid="offer-editor-loading" />
     if (mode === 'edit' && !editing) return <Navigate to="/dashboard/offers" replace />
     return (
       <>
@@ -260,9 +273,9 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
           <>
             <LargeTitleBar
               title={t('offersPage.title')}
-              className="-mx-4 pr-3"
+              className="-mx-4 pr-2"
               trailing={
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5">
                   <HockiaAiButton onClick={() => showAi('header')} />
                   <button type="button" onClick={openNew} aria-label={t('offersPage.newOffer')} className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white active:bg-brand-primary-pressed" data-testid="offers-new">
                     <Plus className="h-6 w-6" strokeWidth={2} />
@@ -289,7 +302,10 @@ export default function BrandOffersPage({ mode = 'list' }: { mode?: 'list' | 'ne
               {offers.length === 0 && !loading ? null : body}
             </div>
             <div>
-              {deskOpen ? (
+              {deskOpen && deskOpen !== 'new' && !deskOffer && (loading || stillLooking) ? (
+                // The campaign is being read: never an empty editor that would save as a new one.
+                <div className="min-h-[320px] rounded-[24px] bg-white ring-1 ring-inset ring-line" data-testid="offer-editor-loading" />
+              ) : deskOpen && (deskOpen === 'new' || deskOffer) ? (
                 <OfferEditor
                   key={deskOpen}
                   offer={deskOffer}

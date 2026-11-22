@@ -9,6 +9,7 @@
  * RLS gates everything on owner_id = auth.uid().
  */
 
+import { shortlistDisplayName } from '@/lib/shortlistName'
 import { useEffect, useState } from 'react'
 import { Chip } from '@/components/ui/Chip'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -59,7 +60,7 @@ export default function ShortlistDetailPage() {
         .eq('id', id)
         .single()
       if (cancelled) return
-      setListName(data?.name ?? null)
+      setListName(data ? shortlistDisplayName(data) : null)
       setIsDefault(Boolean(data?.is_default))
     })()
     return () => { cancelled = true }
@@ -82,7 +83,7 @@ export default function ShortlistDetailPage() {
       <div className="max-w-3xl mx-auto px-4 pt-under-header pb-12">
         <Link
           to="/dashboard/shortlists"
-          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4"
+          className="inline-flex min-h-[44px] items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-1"
         >
           <ArrowLeft className="w-4 h-4" />
           {t('shortlistDetail.allShortlists')}

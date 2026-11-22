@@ -54,11 +54,11 @@ function closedLabel(r: ClubRole): { label: string; tone: 'positive' | 'grey' } 
 function DraftCard({ role, onContinue }: { role: ClubRole; onContinue: () => void }) {
   const t = useClubT()
   return (
-    <article className="flex flex-col gap-1.5 self-start rounded-[24px] border border-dashed border-line px-4 py-3.5" data-testid="club-draft-card">
+    <article className="flex w-full flex-col gap-1.5 self-start rounded-[24px] border border-dashed border-line px-4 py-3.5" data-testid="club-draft-card">
       <div className="flex items-center gap-2">
         <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[3px] text-caption font-semibold text-ink-2">{t('clubRoles.draft')}</span>
         <h3 className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[21px] text-ink-1">{roleTitle(role)}</h3>
-        <button type="button" onClick={onContinue} className="shrink-0 text-[16px] font-semibold leading-[21px] text-brand-primary">{t('clubRoles.continue')}</button>
+        <button type="button" onClick={onContinue} className="-my-3 flex min-h-[44px] shrink-0 items-center pl-2 text-[16px] font-semibold leading-[21px] text-brand-primary">{t('clubRoles.continue')}</button>
       </div>
       <p className="text-secondary text-ink-2">{t('clubRoles.draftHint')}</p>
     </article>

@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core'
 import { getConsentStatus, enableGA4 } from '@/lib/cookieConsent'
 import { initPostHog } from '@/lib/posthog'
 import { useBottomPrompt, useBottomPromptActive } from '@/lib/bottomPrompt'
-import { COOKIE_BANNER_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix } from '@/lib/overlaySequence'
+import { COOKIE_BANNER_OVERLAY, HOCKIA_AI_SHEET_OVERLAY, TERMS_GATE_OVERLAY, matchesRoutePrefix } from '@/lib/overlaySequence'
 import { useCommonT } from '@/i18n/ns/common'
 import { Trans } from 'react-i18next'
 
@@ -38,6 +38,10 @@ export default function CookieConsent() {
   const onAuthRoute = matchesRoutePrefix(location.pathname, AUTH_FLOW_PREFIXES)
   const shown = visible && !onAuthRoute && !termsOpen
   useBottomPrompt(COOKIE_BANNER_OVERLAY, shown)
+  // The Hockia AI sheet fills the bottom of the phone: the banner sat on top of
+  // its choices. It steps aside while the sheet is open and comes back when it
+  // closes; it keeps its slot meanwhile, so the install card still waits.
+  const aiSheetOpen = useBottomPromptActive(HOCKIA_AI_SHEET_OVERLAY)
 
   useEffect(() => {
     // Native apps don't use cookies — skip consent prompt entirely
@@ -64,7 +68,7 @@ export default function CookieConsent() {
     setVisible(false)
   }
 
-  if (!shown) return null
+  if (!shown || aiSheetOpen) return null
 
   // Slim single-row bar. Previous version was a 158px tall card that
   // blanketed the bottom of the viewport — at z-9999 it intercepted

@@ -24,6 +24,8 @@ export const TERMS_GATE_OVERLAY = 'terms-gate'
 export const COOKIE_BANNER_OVERLAY = 'cookie-banner'
 /** Coordinator id the install card registers while it is visible. */
 export const INSTALL_OVERLAY = 'install'
+/** Coordinator id the Hockia AI bottom sheet registers while it is open (not the desktop side panel). */
+export const HOCKIA_AI_SHEET_OVERLAY = 'hockia-ai-sheet'
 
 const SESSION_KEY = 'hockia-app-session'
 const FIRST_VISIT_KEY = 'hockia-first-app-session'

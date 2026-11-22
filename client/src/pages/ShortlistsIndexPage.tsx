@@ -15,6 +15,7 @@
  * the schema upgrade put every legacy row there.
  */
 
+import { shortlistDisplayName } from '@/lib/shortlistName'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, BookmarkCheck, Check, ChevronRight, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
@@ -72,7 +73,7 @@ export default function ShortlistsIndexPage() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4"
+          className="inline-flex min-h-[44px] items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-1"
         >
           <ArrowLeft className="w-4 h-4" />
           {t('shortlistsIndex.back')}
@@ -214,7 +215,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
         ) : (
           <Link to={`/dashboard/shortlists/${list.id}`} className="flex-1 min-w-0">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{list.name}</span>
+              <span className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{shortlistDisplayName(list)}</span>
               {list.is_default && (
                 <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-hockia-soft px-2 py-0.5 text-caption font-semibold text-brand-text">
                   <Star className="w-3 h-3 fill-current" />

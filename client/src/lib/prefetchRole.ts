@@ -56,9 +56,13 @@ function drain(): void {
   }
 }
 
+const ROLE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 /** Warm the role page for this role id (deduped; never throws). */
 export function prefetchRole(id: string | null | undefined, reason: PrefetchReason = 'press'): void {
-  if (!id || !prefetchAllowed(reason)) return
+  // A role that is not saved yet (the preview card in the editor carries the id
+  // "preview") has no page to warm: asking for it is a 400 from the database.
+  if (!id || !ROLE_ID.test(id) || !prefetchAllowed(reason)) return
   preloadChunk()
   if (pending.has(id) || hasWarmRoleDetail(id)) return
   if (reason === 'viewport') {

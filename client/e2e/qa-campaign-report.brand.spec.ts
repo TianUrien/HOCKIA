@@ -116,4 +116,29 @@ test.describe('campaign preview and report QA', () => {
     if (QA_PROBE) await page.waitForTimeout(600)
     await shot(page, 'ai-campaigns.png')
   })
+
+  test('phone: a campaign from one sentence shows a draft card in Hockia AI (the draft function is mocked; nothing is saved)', async ({ page }) => {
+    await page.setViewportSize(PHONE)
+    // The edge function is answered here, so the test spends no model call and does not depend on its deploy.
+    await page.route('**/functions/v1/campaign-draft', (r) => r.fulfill({
+      json: { draft: { objective: 'ask', title: 'Questions about choosing a stick?', body: 'Write to us about sizes and materials. A person answers.', need: 'gear', roles: ['player'], place: 'everywhere', perk: null }, source: 'ai' },
+    }))
+    await page.goto('/dashboard/offers')
+    await expect(page.getByTestId('brand-offers')).toBeVisible({ timeout: 20_000 })
+    await settle(page)
+    await page.getByTestId('hockia-ai-button').first().click()
+    await expect(page.getByTestId('hockia-ai-sheet')).toBeVisible()
+    await page.getByTestId('hockia-ai-option').nth(2).click()
+    await expect(page.getByTestId('hockia-ai-campaign-composer')).toBeVisible()
+    await page.getByTestId('hockia-ai-campaign-input').fill('I want players to write to us with questions about choosing a stick')
+    if (QA_PROBE) await page.waitForTimeout(400)
+    await shot(page, 'ai-compose-ask.png')
+    await page.getByTestId('hockia-ai-campaign-send').click()
+    await expect(page.getByTestId('hockia-ai-campaign-draft-title')).toHaveText('Questions about choosing a stick?')
+    await expect(page.getByTestId('hockia-ai-campaign-objective-ask')).toHaveAttribute('aria-checked', 'true')
+    // It has not left the page and has not saved anything: that only happens on "Continue in the editor".
+    await expect(page).toHaveURL(/\/dashboard\/offers$/)
+    if (QA_PROBE) await page.waitForTimeout(400)
+    await shot(page, 'ai-compose-draft.png')
+  })
 })

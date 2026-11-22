@@ -23,6 +23,7 @@ import {
   OFFER_TITLE_MAX,
   campaignEnd,
   campaignStart,
+  freshWindow,
   fetchOfferReach,
   linkOptional,
   offerMissing,
@@ -43,6 +44,14 @@ import { useBrandsT } from '@/i18n/ns/brands'
 import { countryLabel } from '@/i18n/countryNames'
 
 const BUCKET = 'brand-products'
+/**
+ * iOS WebKit sizes a date field by its own content and ignores width: 100%,
+ * so it ran 14 px past the screen on an iPhone (device lab, 2026-11-22).
+ * Without the native appearance and its minimum width it obeys the column.
+ * WebKit then centres the date and pins it to the top of the field, so the
+ * value is put back on the left and in the middle, like every other input.
+ */
+const DATE_FIELD = 'flex min-w-0 max-w-full appearance-none items-center [-webkit-min-logical-width:0] [&::-webkit-date-and-time-value]:m-0 [&::-webkit-date-and-time-value]:text-left'
 const MAX_COUNTRIES = 30
 
 interface OfferEditorProps {
@@ -72,7 +81,7 @@ interface OfferEditorProps {
  */
 export function OfferEditor({ offer, initial, brandName, openToPartners = false, userId, saving, onSave, onCancel, layout, need, onNeedChange }: OfferEditorProps) {
   const t = useBrandsT()
-  const [f, setF] = useState<OfferFields>(initial)
+  const [f, setF] = useState<OfferFields>(() => freshWindow(initial, offer?.status === 'live' || offer?.status === 'paused'))
   const [tried, setTried] = useState(false)
   const topBar = useRef<HTMLDivElement>(null)
   const bottomBar = useRef<HTMLDivElement>(null)
@@ -275,7 +284,7 @@ export function OfferEditor({ offer, initial, brandName, openToPartners = false,
       <div className="space-y-4">
         <div>
           <div className={fieldLabelRow}><label htmlFor="offer-start">{t('offerEditor.startsLabel')}</label><span className={fieldOptionalTag}>{t('offerEditor.optional')}</span></div>
-          <input id="offer-start" type="date" value={toDateInput(f.starts_at)} onChange={(e) => set('starts_at', fromDateInput(e.target.value, false))} className={fieldInput} />
+          <input id="offer-start" type="date" value={toDateInput(f.starts_at)} onChange={(e) => set('starts_at', fromDateInput(e.target.value, false))} className={cn(fieldInput, DATE_FIELD)} />
           <p className="mt-1.5 text-caption text-ink-3">{f.starts_at ? '' : t('offerEditor.startsHint')}</p>
         </div>
         <div>
@@ -287,7 +296,7 @@ export function OfferEditor({ offer, initial, brandName, openToPartners = false,
             min={toDateInput(campaignEnd(start, CAMPAIGN_MIN_DAYS))}
             max={toDateInput(campaignEnd(start, CAMPAIGN_MAX_DAYS))}
             onChange={(e) => set('ends_at', fromDateInput(e.target.value, true))}
-            className={fieldInput}
+            className={cn(fieldInput, DATE_FIELD)}
             data-testid="offer-end-input"
           />
           <p className="mt-1.5 text-caption text-ink-3">{t('offerEditor.endsHint', { min: CAMPAIGN_MIN_DAYS, max: CAMPAIGN_MAX_DAYS, days: CAMPAIGN_DEFAULT_DAYS })}</p>
@@ -352,13 +361,13 @@ export function OfferEditor({ offer, initial, brandName, openToPartners = false,
       data-testid="offer-editor"
     >
       <div ref={topBar} className="sticky top-0 z-10 flex h-[calc(env(safe-area-inset-top)+44px)] items-end justify-between bg-surface-subtle/95 px-2 pb-0 pt-[env(safe-area-inset-top)] backdrop-blur">
-        <button type="button" onClick={onCancel} className="flex h-11 items-center px-3 text-body text-brand-primary">{t('offerEditor.cancel')}</button>
-        <h1 className="text-body font-semibold text-ink-1">{title}</h1>
+        <button type="button" onClick={onCancel} className="flex h-11 shrink-0 items-center whitespace-nowrap px-3 text-body text-brand-primary">{t('offerEditor.cancel')}</button>
+        <h1 className="min-w-0 truncate text-body font-semibold leading-[44px] text-ink-1">{title}</h1>
         {isChange ? (
-          <span className="w-[76px]" />
+          <span className="w-[76px] shrink-0" />
         ) : (
-          <button type="button" onClick={() => onSave(f, false)} disabled={busy} className="flex h-11 items-center px-3 text-body font-semibold text-brand-primary disabled:opacity-40" data-testid="offer-save-draft">
-            {saving === 'draft' ? t('offerEditor.saving') : t('offerEditor.saveDraft')}
+          <button type="button" onClick={() => onSave(f, false)} disabled={busy} className="flex h-11 shrink-0 items-center whitespace-nowrap px-3 text-body font-semibold text-brand-primary disabled:opacity-40" data-testid="offer-save-draft">
+            {saving === 'draft' ? t('offerEditor.saving') : t('offerEditor.saveDraftShort')}
           </button>
         )}
       </div>

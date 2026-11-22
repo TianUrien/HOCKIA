@@ -19,7 +19,7 @@ export function HardnessPill({ on, onToggle, label }: { on: boolean; onToggle: (
       aria-checked={on}
       aria-label={on ? t('roleForm.mustHaveAria', { label }) : t('roleForm.niceToHaveAria', { label })}
       onClick={onToggle}
-      className={cn('flex h-6 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium', on ? 'bg-hockia-soft text-hockia-primary' : 'bg-surface-grouped text-ink-2')}
+      className={cn("relative flex h-6 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium before:absolute before:inset-x-0 before:-inset-y-2.5 before:content-['']", on ? 'bg-hockia-soft text-hockia-primary' : 'bg-surface-grouped text-ink-2')}
     >
       {on && <Check className="h-3.5 w-3.5" strokeWidth={2.4} />}
       {on ? t('roleForm.mustHave') : t('roleForm.niceToHave')}

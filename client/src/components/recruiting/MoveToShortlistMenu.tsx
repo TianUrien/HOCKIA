@@ -14,6 +14,7 @@
  * picker.
  */
 
+import { shortlistDisplayName } from '@/lib/shortlistName'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Plus, Check, Loader2 } from 'lucide-react'
 import { useShortlists } from '@/hooks/useShortlists'
@@ -132,7 +133,7 @@ export default function MoveToShortlistMenu({
                 ].join(' ')}
               >
                 <span className="truncate flex-1">
-                  {list.name}
+                  {shortlistDisplayName(list)}
                   {list.is_default && (
                     <span className="ml-1.5 text-[9px] uppercase tracking-wider text-hockia-primary font-bold">
                       {t('moveToShortlist.defaultTag')}

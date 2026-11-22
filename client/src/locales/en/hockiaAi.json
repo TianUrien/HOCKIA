@@ -586,5 +586,29 @@
     "leadPaused_other": "Nothing is live right now. You have {{count}} paused campaigns.",
     "leadSome_one": "Here is {{count}} of your {{total}} campaigns.",
     "leadSome_other": "Here are {{count}} of your {{total}} campaigns."
+  },
+  "composer": {
+    "ask": "Tell me in one sentence what you want members to do, and for whom.",
+    "askNote": "I’ll set up a draft. Nothing is published until you publish it in the editor.",
+    "placeholder": "I want players to write to us with questions about choosing a stick",
+    "inputLabel": "What you want members to do",
+    "maxReached": "That is the longest it can be: {{max}} characters.",
+    "send": "Write the draft",
+    "manual": "Write it myself",
+    "drafting": "Writing your draft…",
+    "ready": "Here is a draft from what you wrote. Check it and change what you need.",
+    "forLabel": "For",
+    "needLabel": "Need",
+    "runsLabel": "Runs",
+    "runs": "{{days}} days, then it stops by itself",
+    "objectiveLabel": "What members do",
+    "next": "Next, in the editor: add a photo, check the details and publish.",
+    "continue": "Continue in the editor",
+    "rewrite": "Write another sentence",
+    "saveFailed": "The draft could not be saved. Check your connection and try again.",
+    "limit": "You have used today’s drafts with Hockia AI. You can still write the campaign yourself.",
+    "unavailable": "I couldn’t write a draft from that right now. You can try again or write it yourself.",
+    "openEditor": "Open the editor",
+    "tryAgain": "Try again"
   }
 }

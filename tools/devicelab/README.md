@@ -24,6 +24,17 @@ npm run run -- --device android-phone --scenario club-speed
 
 Signs in as the staging club and runs Your replies, select several + bulk decline, review moves on (+ Undo), the close sheet, Post again and Start with Hockia AI. Nothing is written: decisions are undone inside the 5 s window (an in-page script on Android, step by step on iOS) and every sheet is cancelled. They use `fixtures.json → speedRoleId` ("[QA] Club speed", two pending applications from [QA] players); if a run is interrupted mid-Undo, set those applications back to `pending`. `club-ai-start` makes one real Hockia AI call on staging.
 
+## Brand campaign journeys
+
+```bash
+LAB_MOCK_DRAFT=1 npm run run -- --device iphone-max --scenario brand
+LAB_MOCK_DRAFT=1 npm run run -- --device android-small --scenario brand
+```
+
+Signs in as the staging E2E brand (`E2E_BRAND_EMAIL` / `E2E_BRAND_PASSWORD` in `client/.env`, never printed) and runs `brand-sign-in`, `brand-campaigns` (the campaign list, the Hockia AI sheet and its campaign cards), `brand-campaign-draft` (one sentence in the composer with the keyboard up, the draft card, "Continue in the editor", the editor's fields) and `brand-sign-out`. "Continue in the editor" saves a draft campaign; the journey deletes it from the list and notes whether it did. Nothing is published.
+
+With `LAB_MOCK_DRAFT=1` the draft answer is given inside the page: no model call, and none of the brand's 15 daily drafts is used. The journey fails if the page did not use the mocked answer. Without the variable it makes one real model call (about 0.003 USD) and uses one of the 15; the limit is a rolling 24 hours.
+
 ## Publisher (club) journeys
 
 ```bash

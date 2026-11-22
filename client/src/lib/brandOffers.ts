@@ -48,6 +48,21 @@ export function campaignStart(f: Pick<OfferFields, 'starts_at'>, liveAt?: string
 export function campaignEnd(start: Date, days: number = CAMPAIGN_DEFAULT_DAYS): string {
   return `${new Date(dayStart(start) + days * DAY_MS).toISOString().slice(0, 10)}T23:59:59Z`
 }
+/**
+ * A campaign that is not running, opened in the editor: its window is counted
+ * from today, so an end date saved days ago (a draft, a draft Hockia AI
+ * wrote, an ended campaign) can sit outside 7 to 15 days and the server would
+ * refuse the publish. Such a date goes back to the default 14 days from the
+ * start; a date still inside the window is the brand's own and is kept.
+ */
+export function freshWindow(f: OfferFields, running: boolean, now: Date = new Date()): OfferFields {
+  if (running || !f.ends_at || !f.objective) return f
+  const starts = f.starts_at && new Date(f.starts_at).getTime() > now.getTime() ? f.starts_at : null
+  const days = campaignDays({ starts_at: starts, ends_at: f.ends_at }, null, now)
+  if (days != null && days >= CAMPAIGN_MIN_DAYS && days <= CAMPAIGN_MAX_DAYS) return f
+  return { ...f, ends_at: campaignEnd(campaignStart({ starts_at: starts }, null, now)) }
+}
+
 /** Whole days from the start day to the end day, or null with no end. */
 export function campaignDays(f: Pick<OfferFields, 'starts_at' | 'ends_at'>, liveAt?: string | null, now: Date = new Date()): number | null {
   if (!f.ends_at) return null

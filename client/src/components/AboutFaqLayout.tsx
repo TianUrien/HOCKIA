@@ -18,7 +18,7 @@ export default function AboutFaqLayout({ heading, items, other }: Props) {
       <div className="mx-auto max-w-4xl">
         <button
           onClick={() => navigate(-1)}
-          className="group mb-6 flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-900"
+          className="group mb-4 flex min-h-[44px] items-center gap-2 text-gray-600 transition-colors hover:text-gray-900"
         >
           <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
           <span className="font-medium">Back</span>

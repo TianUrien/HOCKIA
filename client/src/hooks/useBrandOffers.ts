@@ -13,7 +13,8 @@ import {
   type OfferFields,
 } from '@/lib/brandOffers'
 
-const MY_OFFERS = ['brand-offers', 'mine'] as const
+/** The signed-in brand's own campaigns. Exported so a save made outside this hook (Hockia AI's composer) can refresh the list. */
+export const MY_OFFERS = ['brand-offers', 'mine'] as const
 const ADMIN_OFFERS = ['brand-offers', 'admin'] as const
 
 /** The signed-in brand's offers with their distinct-member counts (Phase 1). */
