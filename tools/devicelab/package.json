@@ -9,9 +9,9 @@
     "doctor": "node doctor.mjs"
   },
   "devDependencies": {
-    "appium": "^3.9.0",
-    "appium-uiautomator2-driver": "^8.7.3",
-    "appium-xcuitest-driver": "^12.22.8",
-    "webdriverio": "^10.1.0"
+    "appium": "^4.0.0",
+    "appium-uiautomator2-driver": "^9.2.2",
+    "appium-xcuitest-driver": "^13.2.0",
+    "webdriverio": "^10.2.0"
   }
 }
