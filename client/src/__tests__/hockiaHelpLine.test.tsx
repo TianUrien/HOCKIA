@@ -85,7 +85,8 @@ describe('HockiaHelpLine', () => {
     renderRouted(<HockiaHelpLine moment="search_empty" />, onNavigate)
     const ask = await screen.findByRole('button', { name: 'Ask Hockia' })
     expect(screen.getByTestId('hockia-help-line').textContent).toBe('Can’t find it? Ask Hockia')
-    expect(track).toHaveBeenCalledWith('help_moment_shown', undefined, undefined, { moment: 'search_empty', screen: '/opportunities/:id' })
+    // The "shown" event is recorded in an effect after the line is on screen, so wait for it.
+    await waitFor(() => expect(track).toHaveBeenCalledWith('help_moment_shown', undefined, undefined, { moment: 'search_empty', screen: '/opportunities/:id' }))
 
     fireEvent.click(ask)
     await waitFor(() => expect(onNavigate).toHaveBeenCalledWith(`/messages?new=${HELP}`))
