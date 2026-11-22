@@ -39,6 +39,8 @@ import { HockiaAiOffer } from '@/components/offers/HockiaAiOffer'
 import { hockiaAiOfferTopic } from '@/lib/memberOffers'
 import { useKeyboardInset } from '@/hooks/useKeyboardInset'
 import { registerBackOverlay } from '@/lib/nativeBack'
+import { useBottomPrompt } from '@/lib/bottomPrompt'
+import { HOCKIA_AI_SHEET_OVERLAY } from '@/lib/overlaySequence'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 
@@ -104,6 +106,8 @@ export function HockiaAiSheet({ leaving = false }: { leaving?: boolean } = {}) {
   // and usable (HANDOFF-phase1 "Hockia AI", rebrand page 17, 2026-11-06).
   const panel = useMediaQuery('(min-width: 1024px)')
   useBodyScrollLock(open && !panel)
+  // The cookie banner steps aside while the sheet covers the bottom of the phone.
+  useBottomPrompt(HOCKIA_AI_SHEET_OVERLAY, open && !panel)
 
   // Recruiters: "Find available players for <role>" names the active recruiting role (audit A7).
   const { active: recruitingRole } = useRecruitingContext()

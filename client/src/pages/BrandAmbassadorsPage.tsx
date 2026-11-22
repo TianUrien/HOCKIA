@@ -96,7 +96,7 @@ export default function BrandAmbassadorsPage() {
               <div className="mt-4 rounded-[20px] bg-white p-5" data-testid="candidates-empty">
                 <p className="text-body font-semibold text-ink-1">{t('ambassadors.empty.title')}</p>
                 <p className="mt-1 text-row text-ink-2">{t('ambassadors.empty.body')}</p>
-                <button type="button" onClick={() => navigate('/dashboard/offers')} className="mt-3 text-row font-semibold text-brand-primary">{t('ambassadors.empty.openOffers')}</button>
+                <button type="button" onClick={() => navigate('/dashboard/offers')} className="mt-1 flex min-h-[44px] items-center text-row font-semibold text-brand-primary">{t('ambassadors.empty.openOffers')}</button>
               </div>
             ) : null}
             <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="candidates-grid">

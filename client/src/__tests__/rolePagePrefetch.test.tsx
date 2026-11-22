@@ -82,10 +82,17 @@ describe('role page prefetch', () => {
     expect(mocks.single).not.toHaveBeenCalled()
   })
 
+  it('a role that is not saved yet (the editor preview) is never read', () => {
+    prefetchRole('preview', 'viewport')
+    prefetchRole('preview', 'press')
+    expect(mocks.single).not.toHaveBeenCalled()
+  })
+
   it('caps reads in flight at 2 and queues the rest', async () => {
     let release: () => void = () => {}
     mocks.single.mockImplementation(() => new Promise((r) => { release = () => r({ data: role, error: null }) }))
-    prefetchRole('a', 'viewport'); prefetchRole('b', 'viewport'); prefetchRole('c', 'viewport')
+    const id = (n: number) => `${n}${ROLE_ID.slice(1)}`
+    prefetchRole(id(2), 'viewport'); prefetchRole(id(3), 'viewport'); prefetchRole(id(4), 'viewport')
     expect(mocks.single).toHaveBeenCalledTimes(2)
     release()
     await waitFor(() => expect(mocks.single).toHaveBeenCalledTimes(3))

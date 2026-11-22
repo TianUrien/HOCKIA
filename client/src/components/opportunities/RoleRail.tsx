@@ -32,7 +32,7 @@ export function RoleRail({ title, subtitle, onSeeAll, children, testId }: { titl
           <p className="text-secondary text-ink-2">{subtitle}</p>
         </div>
         {onSeeAll && (
-          <button type="button" onClick={onSeeAll} className="shrink-0 text-[14px] font-semibold leading-[19px] text-brand-primary">{t('list.seeAll')}</button>
+          <button type="button" onClick={onSeeAll} className="-my-3 flex min-h-[44px] shrink-0 items-center pl-3 text-[14px] font-semibold leading-[19px] text-brand-primary">{t('list.seeAll')}</button>
         )}
       </div>
       <div className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

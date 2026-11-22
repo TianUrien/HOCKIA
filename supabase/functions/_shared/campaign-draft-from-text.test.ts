@@ -1,5 +1,5 @@
 import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts'
-import { CAMPAIGN_DRAFT_TOOL, addressesFromBrand, cleanCampaignText, lineFromBrand, numbersFromBrand, perkFromBrand, promoCodeFromBrand, statementsNotFromBrand, validateCampaignDraft } from './campaign-draft-from-text.ts'
+import { CAMPAIGN_DRAFT_TOOL, addressesFromBrand, cleanCampaignText, lineFromBrand, numbersFromBrand, perkFromBrand, promoCodeFromBrand, sentenceCase, statementsNotFromBrand, validateCampaignDraft } from './campaign-draft-from-text.ts'
 
 Deno.test('a brand that wants questions gets an ask campaign with only what it said', () => {
   const source = 'I want players to write to us with questions about choosing a stick'
@@ -187,4 +187,15 @@ Deno.test('my country needs the brand to say it is its own', () => {
   assertEquals(validateCampaignDraft({ ...base, place: 'my_country' }, 'sticks for players in our country')?.place, 'my_country')
   assertEquals(validateCampaignDraft({ ...base, place: 'my_country' }, 'palos para jugadoras de nuestro país')?.place, 'my_country')
   assertEquals(validateCampaignDraft({ ...base, place: 'everywhere' }, 'sticks for players in our country')?.place, 'everywhere')
+})
+
+Deno.test('a title in Title Case goes back to sentence case, keeping the brand\'s own capitals', () => {
+  const source = 'We want players in Argentina to try our new carbon stick and get 20% off with code HOCKIA20'
+  assertEquals(sentenceCase('20% Off Our New Carbon Stick', source), '20% off our new carbon stick')
+  assertEquals(sentenceCase('Try Our Sticks In Argentina', source), 'Try our sticks in Argentina')
+  assertEquals(sentenceCase('Use Code HOCKIA20 Today', source), 'Use code HOCKIA20 today')
+  // Already sentence case: untouched, names included.
+  assertEquals(sentenceCase('Sticks for players in Argentina', source), 'Sticks for players in Argentina')
+  assertEquals(sentenceCase('Questions? Ask Us Anything Today', 'questions'), 'Questions? Ask us anything today')
+  assertEquals(sentenceCase('Entrenadores: prueben nuestras canilleras', 'canilleras'), 'Entrenadores: prueben nuestras canilleras')
 })

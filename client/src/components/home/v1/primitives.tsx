@@ -24,7 +24,7 @@ export function SectionHeader({ title, action, to, onAction, onLinkClick, classN
   const actionCls = 'flex min-h-[44px] items-center pl-3 text-secondary font-semibold text-hockia-primary'
   return (
     <div className={cn('flex items-center px-4', className)}>
-      <h2 className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-[21px] text-ink-1">{title}</h2>
+      <h2 className="min-w-0 flex-1 line-clamp-2 text-[16px] font-semibold leading-[21px] text-ink-1">{title}</h2>
       {action && to && <Link to={to} onClick={onLinkClick} className={actionCls}>{action}</Link>}
       {action && !to && onAction && <button type="button" onClick={onAction} className={actionCls}>{action}</button>}
     </div>

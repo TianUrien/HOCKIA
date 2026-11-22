@@ -10,7 +10,7 @@ export default function Terms() {
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors group"
+          className="flex min-h-[44px] items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors group"
         >
           <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium">Back</span>
@@ -59,11 +59,11 @@ export default function Terms() {
               <p>
                 By creating an account, you represent and warrant that:
               </p>
-              <ul className="list-none space-y-3 ml-4">
-                <li>- You meet the minimum age requirement.</li>
-                <li>- The information you provide is accurate, complete, and current.</li>
-                <li>- You have the legal capacity to enter into these Terms.</li>
-                <li>- Your use of the Platform does not violate any applicable law or regulation.</li>
+              <ul className="list-disc space-y-3 pl-5 ml-4">
+                <li>You meet the minimum age requirement.</li>
+                <li>The information you provide is accurate, complete, and current.</li>
+                <li>You have the legal capacity to enter into these Terms.</li>
+                <li>Your use of the Platform does not violate any applicable law or regulation.</li>
               </ul>
             </div>
           </section>
@@ -77,7 +77,7 @@ export default function Terms() {
               <p>
                 To use Hockia, you must create an account using one of the following methods: email and password, Google Sign-In, or Sign In with Apple. During registration, you will select a role that defines your experience on the Platform:
               </p>
-              <ul className="list-none space-y-3 ml-4">
+              <ul className="list-disc space-y-3 pl-5 ml-4">
                 <li><strong>Player:</strong> Individual field hockey players who can create profiles, showcase their career history, connect with others, apply for opportunities, and request references.</li>
                 <li><strong>Coach:</strong> Field hockey coaches who can create profiles, post opportunities, connect with players and clubs, and manage applications.</li>
                 <li><strong>Club:</strong> Field hockey clubs and organizations that can create club profiles, post opportunities for players and coaches, manage members, and recruit talent.</li>
@@ -105,11 +105,11 @@ export default function Terms() {
               <p className="font-medium">
                 You represent and warrant that:
               </p>
-              <ul className="list-none space-y-3 ml-4">
-                <li>- You own or have the necessary rights to post your User Content.</li>
-                <li>- Your User Content does not infringe any third-party intellectual property rights.</li>
-                <li>- Your User Content does not contain illegal, offensive, defamatory, or harmful material.</li>
-                <li>- Your User Content does not contain malware, viruses, or any harmful code.</li>
+              <ul className="list-disc space-y-3 pl-5 ml-4">
+                <li>You own or have the necessary rights to post your User Content.</li>
+                <li>Your User Content does not infringe any third-party intellectual property rights.</li>
+                <li>Your User Content does not contain illegal, offensive, defamatory, or harmful material.</li>
+                <li>Your User Content does not contain malware, viruses, or any harmful code.</li>
               </ul>
               <p>
                 All Hockia branding, logos, designs, and platform features are the intellectual property of Hockia and may not be used without written permission.
@@ -124,30 +124,30 @@ export default function Terms() {
             <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">5. Platform Features and Acceptable Use</h2>
             <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>Hockia provides the following features, among others:</p>
-              <ul className="list-none space-y-3 ml-4">
-                <li>- User profiles with personal information, career history, media galleries, and social links.</li>
-                <li>- A directory of players, coaches, clubs, and brands from around the world.</li>
-                <li>- An opportunity board where clubs and coaches can post opportunities and users can apply.</li>
-                <li>- A messaging system for direct communication between users.</li>
-                <li>- Friend connections and networking features.</li>
-                <li>- A reference and endorsement system for professional credibility.</li>
-                <li>- A community section with questions and discussions.</li>
-                <li>- Profile comments visible to the profile owner and visitors.</li>
-                <li>- Push notifications and email notifications for relevant activity.</li>
-                <li>- Brand profiles, product catalogs, and ambassador programs.</li>
+              <ul className="list-disc space-y-3 pl-5 ml-4">
+                <li>User profiles with personal information, career history, media galleries, and social links.</li>
+                <li>A directory of players, coaches, clubs, and brands from around the world.</li>
+                <li>An opportunity board where clubs and coaches can post opportunities and users can apply.</li>
+                <li>A messaging system for direct communication between users.</li>
+                <li>Friend connections and networking features.</li>
+                <li>A reference and endorsement system for professional credibility.</li>
+                <li>A community section with questions and discussions.</li>
+                <li>Profile comments visible to the profile owner and visitors.</li>
+                <li>Push notifications and email notifications for relevant activity.</li>
+                <li>Brand profiles, product catalogs, and ambassador programs.</li>
               </ul>
               <p className="font-medium mt-4">You agree not to:</p>
-              <ul className="list-none space-y-3 ml-4">
-                <li>- Use the Platform for harassment, bullying, threats, or intimidation.</li>
-                <li>- Send spam, unsolicited messages, or promotional content to other users.</li>
-                <li>- Misrepresent your identity, role, qualifications, or affiliations.</li>
-                <li>- Post false, misleading, or fraudulent opportunity listings.</li>
-                <li>- Attempt to access, hack, scrape, or reverse-engineer any part of the Platform.</li>
-                <li>- Use automated tools, bots, or scripts to interact with the Platform.</li>
-                <li>- Collect or harvest other users' personal data without their consent.</li>
-                <li>- Upload content that is sexually explicit, violent, or promotes hatred.</li>
-                <li>- Interfere with the normal operation of the Platform or its infrastructure.</li>
-                <li>- Create multiple accounts for deceptive or abusive purposes.</li>
+              <ul className="list-disc space-y-3 pl-5 ml-4">
+                <li>Use the Platform for harassment, bullying, threats, or intimidation.</li>
+                <li>Send spam, unsolicited messages, or promotional content to other users.</li>
+                <li>Misrepresent your identity, role, qualifications, or affiliations.</li>
+                <li>Post false, misleading, or fraudulent opportunity listings.</li>
+                <li>Attempt to access, hack, scrape, or reverse-engineer any part of the Platform.</li>
+                <li>Use automated tools, bots, or scripts to interact with the Platform.</li>
+                <li>Collect or harvest other users' personal data without their consent.</li>
+                <li>Upload content that is sexually explicit, violent, or promotes hatred.</li>
+                <li>Interfere with the normal operation of the Platform or its infrastructure.</li>
+                <li>Create multiple accounts for deceptive or abusive purposes.</li>
               </ul>
             </div>
           </section>
@@ -176,12 +176,12 @@ export default function Terms() {
               <p>
                 By creating an account, you consent to receive communications from Hockia, including:
               </p>
-              <ul className="list-none space-y-3 ml-4">
-                <li>- Transactional emails (account verification, password reset, security alerts).</li>
-                <li>- Notification emails (new messages, friend requests, opportunity updates, reference requests, profile views).</li>
-                <li>- Email digests summarizing your recent activity and notifications.</li>
-                <li>- Push notifications on supported devices and browsers.</li>
-                <li>- Platform announcements and service updates.</li>
+              <ul className="list-disc space-y-3 pl-5 ml-4">
+                <li>Transactional emails (account verification, password reset, security alerts).</li>
+                <li>Notification emails (new messages, friend requests, opportunity updates, reference requests, profile views).</li>
+                <li>Email digests summarizing your recent activity and notifications.</li>
+                <li>Push notifications on supported devices and browsers.</li>
+                <li>Platform announcements and service updates.</li>
               </ul>
               <p>
                 You can manage your notification preferences at any time through the Settings page. You may opt out of non-essential notifications, but transactional and security-related communications are required for account operation.
@@ -201,11 +201,11 @@ export default function Terms() {
               <p>
                 We may take the following actions without prior notice:
               </p>
-              <ul className="list-none space-y-3 ml-4">
-                <li>- Remove or restrict access to User Content.</li>
-                <li>- Issue warnings to users.</li>
-                <li>- Temporarily suspend or permanently ban accounts that violate these Terms.</li>
-                <li>- Report illegal activity to relevant authorities.</li>
+              <ul className="list-disc space-y-3 pl-5 ml-4">
+                <li>Remove or restrict access to User Content.</li>
+                <li>Issue warnings to users.</li>
+                <li>Temporarily suspend or permanently ban accounts that violate these Terms.</li>
+                <li>Report illegal activity to relevant authorities.</li>
               </ul>
               <p>
                 Users who have been blocked or banned may not create new accounts to circumvent enforcement actions.
@@ -255,12 +255,12 @@ export default function Terms() {
               <p>
                 To the fullest extent permitted by applicable law, Hockia, its operator, affiliates, and contributors shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, opportunities, goodwill, or other intangible losses, resulting from:
               </p>
-              <ul className="list-none space-y-3 ml-4">
-                <li>- Your use of or inability to use the Platform.</li>
-                <li>- Any interactions or arrangements between users.</li>
-                <li>- Unauthorized access to or alteration of your data.</li>
-                <li>- Any third-party content or conduct on the Platform.</li>
-                <li>- Any errors, bugs, or interruptions in service.</li>
+              <ul className="list-disc space-y-3 pl-5 ml-4">
+                <li>Your use of or inability to use the Platform.</li>
+                <li>Any interactions or arrangements between users.</li>
+                <li>Unauthorized access to or alteration of your data.</li>
+                <li>Any third-party content or conduct on the Platform.</li>
+                <li>Any errors, bugs, or interruptions in service.</li>
               </ul>
             </div>
           </section>
