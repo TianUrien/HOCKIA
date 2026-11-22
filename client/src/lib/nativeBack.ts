@@ -46,6 +46,25 @@ export async function handleNativeBack(canGoBack: boolean, deps: BackDeps): Prom
   return 'left-app'
 }
 
+let overlaysWithoutTrap = 0
+
+/**
+ * For an overlay that closes on Escape but holds no focus trap (the Hockia AI
+ * sheet keeps focus free so the page behind stays usable on desktop). It
+ * counts itself here while open, so Back closes it like any other overlay.
+ * Returns the function that takes it off the count.
+ */
+export function registerBackOverlay(): () => void {
+  overlaysWithoutTrap += 1
+  let done = false
+  return () => { if (!done) { done = true; overlaysWithoutTrap -= 1 } }
+}
+
+/** Every overlay Back should close before it navigates. */
+export function backOverlayCount(): number {
+  return activeFocusTrapCount() + overlaysWithoutTrap
+}
+
 function pressEscape(): void {
   // From the focused element (inside the top overlay) so element-level and
   // document-level key handlers both see it.
@@ -67,7 +86,7 @@ export function initNativeBack(): void {
         if (busy) return
         busy = true
         void handleNativeBack(canGoBack, {
-          overlayCount: activeFocusTrapCount,
+          overlayCount: backOverlayCount,
           pressEscape,
           goBack: () => window.history.back(),
           leaveApp: () => { void App.minimizeApp() },

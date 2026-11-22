@@ -50,7 +50,7 @@ export default function BrandResultsPage() {
   const r = q.data
 
   return (
-    <div className="min-h-screen bg-surface-subtle" data-testid="brand-results">
+    <div className="min-h-screen bg-surface-subtle pt-[env(safe-area-inset-top)]" data-testid="brand-results">
       <Header mobileHidden />
       <DetailNavBar parent={t('results.navParent')} title={t('results.title')} fallbackPath="/dashboard/profile" />
       <main className="mx-auto max-w-[720px] space-y-3 px-4 pb-28 pt-3 lg:pt-under-header-lg">

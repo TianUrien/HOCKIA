@@ -75,7 +75,7 @@ export default function CampaignReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-subtle" data-testid="campaign-report">
+    <div className="min-h-screen bg-surface-subtle pt-[env(safe-area-inset-top)]" data-testid="campaign-report">
       <Header mobileHidden />
       <DetailNavBar parent={t('offersPage.title')} title={t('campaignReport.title')} fallbackPath="/dashboard/offers" />
       <main className="mx-auto max-w-[720px] space-y-3 px-4 pb-28 pt-3 lg:pt-under-header-lg">

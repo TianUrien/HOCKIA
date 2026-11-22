@@ -48,7 +48,7 @@ export default function NeedPage() {
   const moving = meta.key === 'moving_abroad'
 
   return (
-    <div className="min-h-screen bg-surface-subtle" data-testid="need-page">
+    <div className="min-h-screen bg-surface-subtle pt-[env(safe-area-inset-top)]" data-testid="need-page">
       <Header mobileHidden />
       <DetailNavBar parent={t('needPage.parent')} fallbackPath="/community/brands" onBack={() => navigate(`/community/brands${countryId != null ? `?near=${countryId}` : ''}`)} />
       <main className="mx-auto max-w-[760px] px-4 pb-28 lg:pt-under-header-lg">
