@@ -101,7 +101,8 @@ describe('the question after a role closed on its own', () => {
     render(<RoleOutcomePrompt recruiterId="club-1" closed={closed} />)
     expect(await screen.findByTestId('role-outcome-banner')).toHaveTextContent('Role newClosed. Did you fill it?')
     expect(screen.queryByTestId('role-outcome-sheet')).not.toBeInTheDocument()
-    expect(h.events.filter((e) => e.name === 'role_outcome_asked')).toEqual([{ name: 'role_outcome_asked', id: 'new', props: { via: 'expiry' } }])
+    // The "asked" event is recorded in an effect after the banner is on screen, so wait for it.
+    await waitFor(() => expect(h.events.filter((e) => e.name === 'role_outcome_asked')).toEqual([{ name: 'role_outcome_asked', id: 'new', props: { via: 'expiry' } }]))
     fireEvent.click(screen.getByTestId('role-outcome-answer'))
     expect(await screen.findByTestId('role-outcome-sheet')).toHaveTextContent('Only you and Hockia see this answer')
     expect(h.upserts).toHaveLength(0)
