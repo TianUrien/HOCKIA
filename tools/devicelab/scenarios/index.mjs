@@ -932,6 +932,65 @@ export const scenarios = {
       const leaf = past.filter((el) => !past.some((o) => o !== el && el.contains(o)))
       return { by: document.documentElement.scrollWidth - vw, vw, els: leaf.slice(0, 6).map((el) => { const b = el.getBoundingClientRect(); return `${el.tagName.toLowerCase()}${el.getAttribute('data-testid') ? `[${el.getAttribute('data-testid')}]` : ''}${el.id ? `#${el.id}` : ''}.${String(el.className).slice(0, 70)} left=${Math.round(b.left)} right=${Math.round(b.right)} y=${Math.round(b.top + window.scrollY)}` }) }
     })
+    // Date fields (added 2026-11-22): each native picker opens on tap; another end date is picked, saved with the draft and read back after reopening it.
+    const ios = lab.device.platform === 'ios'
+    const center = async (sel) => { await lab.backToWeb(); await lab.eval((q) => { document.querySelector(q)?.scrollIntoView({ block: 'center' }) }, sel); await sleep(900) }
+    const labels = async () => { await lab.native(); const src = await lab.driver.getPageSource(); return [...new Set([...src.matchAll(/(?:label|content-desc|text)="([^"]{0,60}(?:Dec|dic|Nov|nov)[^"]{0,40}|OK|Cancel|Done|Set|Reset|Aceptar|Cancelar|Listo|[0-9]{1,2})"/g)].map((m) => m[1]))].slice(0, 60) }
+    const tapNative = async (selectors) => { await lab.native(); for (const q of selectors) { try { const el = await lab.driver.$(q); if (await el.isExisting()) { await el.click(); return q } } catch { /* next */ } } return null }
+    // Start field: only that the picker opens; dismissed without choosing.
+    await center('#offer-start')
+    await ctx.shot('dates-before')
+    await lab.tap('#offer-start'); await sleep(1800)
+    await ctx.shot('start-picker-open')
+    if (ios) { await lab.native(); await lab.driver.execute('mobile: tap', { x: 220, y: 120 }); } else { const c = await tapNative(['android=new UiSelector().resourceId("android:id/button2")', 'android=new UiSelector().textMatches("(?i)cancel|cancelar")']); ctx.note(`start picker dismissed with ${c}`) }
+    await sleep(1000)
+    ctx.note(`start value after dismiss: ${JSON.stringify(await lab.eval(() => document.querySelector('#offer-start')?.value))}`)
+    // End field: pick a day near the default end (today + 14), in the same month the picker opens on and inside the 7 to 15 day window.
+    const end0 = new Date(); end0.setDate(end0.getDate() + 14)
+    const want = new Date(end0); want.setDate(end0.getDate() + (end0.getDate() > 2 ? -2 : 1))
+    const dd = want.getDate(); const yyyy = want.getFullYear()
+    const monthEn = want.toLocaleString('en-GB', { month: 'long' }); const monthEs = want.toLocaleString('es', { month: 'long' })
+    const wantIso = `${yyyy}-${String(want.getMonth() + 1).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
+    await center('#offer-end')
+    await lab.tap('#offer-end'); await sleep(1800)
+    await ctx.shot('end-picker-open')
+    const seen = await labels()
+    if (!seen.length) ctx.note('the end date picker showed no day labels')
+    const day = ios
+      ? await tapNative([`-ios predicate string:label ENDSWITH " ${dd} ${monthEn}" OR label ENDSWITH " ${dd} de ${monthEs}"`, `-ios predicate string:label == "${dd}"`])
+      : await tapNative([`android=new UiSelector().descriptionMatches("(?i)0?${dd} (${monthEn}|de ${monthEs} de) ${yyyy}")`, `android=new UiSelector().text("${dd}")`])
+    ctx.note(`day tapped with ${day}`)
+    await sleep(900)
+    await ctx.shot('end-picker-day-chosen')
+    const ok = ios
+      ? await tapNative(['~Done', '~Confirm', '-ios predicate string:label == "Done" OR label == "Confirm" OR label == "Listo" OR label == "OK"'])
+      : await tapNative(['android=new UiSelector().resourceId("android:id/button1")', 'android=new UiSelector().textMatches("(?i)ok|set|aceptar")'])
+    ctx.note(`picker confirmed with ${ok}`)
+    if (ios && !ok) { await lab.native(); await lab.driver.execute('mobile: tap', { x: 220, y: 120 }) }
+    await sleep(1200)
+    await lab.backToWeb()
+    const picked = await lab.eval(() => document.querySelector('#offer-end')?.value)
+    ctx.note(`end date picked: ${picked} (wanted ${wantIso})`)
+    if (picked !== wantIso) throw new Error(`the end date field holds ${picked} after picking ${wantIso}`)
+    await center('#offer-end')
+    await ctx.shot('dates-after-pick')
+    // Save the draft, reopen it from the list, read the date again.
+    await lab.tap('[data-testid="offer-save-draft"]')
+    await lab.waitFor('[data-testid="brand-offers"]', 30000)
+    await sleep(2500)
+    const reopened = await lab.eval((t) => { const row = [...document.querySelectorAll('[data-testid="offer-row"]')].find((r) => r.textContent?.includes(t)); row?.querySelector('[data-testid="offer-row-menu"]')?.click(); return Boolean(row) }, fields.title)
+    if (reopened) {
+      await lab.waitFor('[data-testid="offer-action-edit"]', 8000)
+      await lab.tap('[data-testid="offer-action-edit"]')
+      await lab.waitFor('[data-testid="offer-editor"]', 15000)
+      await sleep(1500)
+      const kept = await lab.eval(() => document.querySelector('#offer-end')?.value)
+      ctx.note(`end date after save and reopen: ${kept}`)
+      if (kept !== wantIso) throw new Error(`the end date reads ${kept} after save and reopen, not ${wantIso}`)
+      await center('#offer-end')
+      await ctx.shot('dates-after-reopen')
+      await lab.eval(() => window.scrollTo(0, 0)); await sleep(400)
+    } else ctx.note('the saved draft was not found in the list to reopen')
     const sideways = wide.by > 1 ? `editor scrolls sideways by ${wide.by}px at ${wide.vw}px: ${wide.els.join(' | ') || 'no element past the edge found'}` : null
     await lab.swipeUp(0.6); await ctx.shot('editor-middle')
     await lab.swipeUp(0.6); await ctx.shot('editor-bottom')
