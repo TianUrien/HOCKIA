@@ -228,7 +228,7 @@ export default function WorldClubPage() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mb-4 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+            className="mb-1 inline-flex min-h-[44px] items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4" />
             {t('worldClub.back')}

@@ -10,7 +10,7 @@ export default function PrivacyPolicy() {
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors group"
+          className="flex min-h-[44px] items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors group"
         >
           <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-medium">Back</span>
@@ -52,11 +52,11 @@ export default function PrivacyPolicy() {
               <p>We collect the following categories of information:</p>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">2.1 Account Information</h3>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- Email address</li>
-                <li>- Password (securely hashed; never stored in plain text)</li>
-                <li>- Selected role (player, coach, club, brand, or umpire)</li>
-                <li>- Authentication provider (email, Google, Apple, or Facebook)</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>Email address</li>
+                <li>Password (securely hashed; never stored in plain text)</li>
+                <li>Selected role (player, coach, club, brand, or umpire)</li>
+                <li>Authentication provider (email, Google, Apple, or Facebook)</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">2.1.1 Information From Sign-In Providers</h3>
@@ -65,47 +65,47 @@ export default function PrivacyPolicy() {
               </p>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">2.2 Profile Information</h3>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- Full name</li>
-                <li>- Date of birth (players and coaches)</li>
-                <li>- Gender</li>
-                <li>- Nationality (primary and secondary)</li>
-                <li>- Location (city, country)</li>
-                <li>- Profile photo / avatar</li>
-                <li>- Bio and personal description</li>
-                <li>- Playing position (players)</li>
-                <li>- Current club affiliation</li>
-                <li>- Contact email (may differ from account email)</li>
-                <li>- Social media links (Instagram, TikTok, Twitter/X, LinkedIn, YouTube, personal website)</li>
-                <li>- Availability status</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>Full name</li>
+                <li>Date of birth (players and coaches)</li>
+                <li>Gender</li>
+                <li>Nationality (primary and secondary)</li>
+                <li>Location (city, country)</li>
+                <li>Profile photo / avatar</li>
+                <li>Bio and personal description</li>
+                <li>Playing position (players)</li>
+                <li>Current club affiliation</li>
+                <li>Contact email (may differ from account email)</li>
+                <li>Social media links (Instagram, TikTok, Twitter/X, LinkedIn, YouTube, personal website)</li>
+                <li>Availability status</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">2.3 User-Generated Content</h3>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- Career history and journey entries (including images)</li>
-                <li>- Media gallery photos and videos</li>
-                <li>- Highlight video links</li>
-                <li>- Messages sent to other users</li>
-                <li>- Profile comments</li>
-                <li>- References and endorsements</li>
-                <li>- Opportunity listings</li>
-                <li>- Applications to opportunities (including cover letters)</li>
-                <li>- Community questions and answers</li>
-                <li>- Brand posts and product listings</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>Career history and journey entries (including images)</li>
+                <li>Media gallery photos and videos</li>
+                <li>Highlight video links</li>
+                <li>Messages sent to other users</li>
+                <li>Profile comments</li>
+                <li>References and endorsements</li>
+                <li>Opportunity listings</li>
+                <li>Applications to opportunities (including cover letters)</li>
+                <li>Community questions and answers</li>
+                <li>Brand posts and product listings</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">2.4 Usage and Device Data</h3>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- Device type and platform (iOS, Android, desktop)</li>
-                <li>- Browser type and version</li>
-                <li>- Pages visited and features used</li>
-                <li>- Search queries and filters applied</li>
-                <li>- Session duration and interaction patterns</li>
-                <li>- PWA installation status</li>
-                <li>- Push notification subscription status</li>
-                <li>- Profile view analytics (who viewed your profile)</li>
-                <li>- Error and crash reports</li>
-                <li>- Approximate country of your connection, read from your IP address when you open the Home screen without a country on your profile. It is used only to suggest your country, and nothing is saved unless you confirm it.</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>Device type and platform (iOS, Android, desktop)</li>
+                <li>Browser type and version</li>
+                <li>Pages visited and features used</li>
+                <li>Search queries and filters applied</li>
+                <li>Session duration and interaction patterns</li>
+                <li>PWA installation status</li>
+                <li>Push notification subscription status</li>
+                <li>Profile view analytics (who viewed your profile)</li>
+                <li>Error and crash reports</li>
+                <li>Approximate country of your connection, read from your IP address when you open the Home screen without a country on your profile. It is used only to suggest your country, and nothing is saved unless you confirm it.</li>
               </ul>
 
               <p className="font-medium mt-4">
@@ -123,43 +123,43 @@ export default function PrivacyPolicy() {
               <p>We use your information for the following purposes:</p>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">3.1 Platform Operation</h3>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- Create and manage your account and profile.</li>
-                <li>- Authenticate your identity and maintain session security.</li>
-                <li>- Enable communication between users via messaging.</li>
-                <li>- Process opportunity listings and applications.</li>
-                <li>- Facilitate friend connections, references, and endorsements.</li>
-                <li>- Display your profile to other users of the Platform.</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>Create and manage your account and profile.</li>
+                <li>Authenticate your identity and maintain session security.</li>
+                <li>Enable communication between users via messaging.</li>
+                <li>Process opportunity listings and applications.</li>
+                <li>Facilitate friend connections, references, and endorsements.</li>
+                <li>Display your profile to other users of the Platform.</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">3.2 Communications</h3>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- Send transactional emails (verification, password reset, security alerts).</li>
-                <li>- Send notification emails for Platform activity (messages, friend requests, applications, references, profile views).</li>
-                <li>- Send email digests summarizing your notifications and activity.</li>
-                <li>- Deliver push notifications for real-time updates.</li>
-                <li>- Send Platform announcements and service updates.</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>Send transactional emails (verification, password reset, security alerts).</li>
+                <li>Send notification emails for Platform activity (messages, friend requests, applications, references, profile views).</li>
+                <li>Send email digests summarizing your notifications and activity.</li>
+                <li>Deliver push notifications for real-time updates.</li>
+                <li>Send Platform announcements and service updates.</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">3.3 Analytics and Improvement</h3>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- Understand how users interact with the Platform.</li>
-                <li>- Identify and fix bugs, errors, and performance issues.</li>
-                <li>- Improve features, user experience, and Platform reliability.</li>
-                <li>- Track aggregate trends and usage patterns.</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>Understand how users interact with the Platform.</li>
+                <li>Identify and fix bugs, errors, and performance issues.</li>
+                <li>Improve features, user experience, and Platform reliability.</li>
+                <li>Track aggregate trends and usage patterns.</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">3.4 Hockia AI</h3>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- When you use Hockia AI, the text you send and the profile and opportunity information it needs to answer are processed by our AI model provider to generate the reply.</li>
-                <li>- Hockia AI only uses information already on the Platform. It does not use data received from sign-in providers.</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>When you use Hockia AI, the text you send and the profile and opportunity information it needs to answer are processed by our AI model provider to generate the reply.</li>
+                <li>Hockia AI only uses information already on the Platform. It does not use data received from sign-in providers.</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-gray-800 mt-4">3.5 Safety and Compliance</h3>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- Detect and prevent fraud, abuse, and violations of our Terms.</li>
-                <li>- Enforce our community standards and content policies.</li>
-                <li>- Comply with legal obligations and respond to lawful requests.</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>Detect and prevent fraud, abuse, and violations of our Terms.</li>
+                <li>Enforce our community standards and content policies.</li>
+                <li>Comply with legal obligations and respond to lawful requests.</li>
               </ul>
             </div>
           </section>
@@ -173,7 +173,7 @@ export default function PrivacyPolicy() {
               <p>
                 We use trusted third-party services to operate and improve the Platform. These services process data on our behalf and are contractually obligated to protect your information:
               </p>
-              <ul className="list-none space-y-3 ml-4">
+              <ul className="list-disc space-y-3 pl-5 ml-4">
                 <li><strong>Supabase:</strong> Database hosting, user authentication, and file storage. Your data is stored in encrypted databases hosted in the European Union (Sweden).</li>
                 <li><strong>Vercel:</strong> Hosting of the website and web app. Vercel processes technical request data, such as IP addresses, to serve the Platform.</li>
                 <li><strong>Google Analytics (GA4):</strong> Anonymous usage analytics to understand how the Platform is used. We track page views, feature usage, and aggregate trends. Your user ID is associated with analytics data to provide personalized insights.</li>
@@ -221,12 +221,12 @@ export default function PrivacyPolicy() {
               <p>
                 Hockia uses browser local storage (not traditional cookies) to maintain your session, store preferences, and improve your experience. The following data is stored locally on your device:
               </p>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- Authentication session tokens (to keep you signed in).</li>
-                <li>- Draft messages and form data (to prevent data loss).</li>
-                <li>- Recent search queries (for convenience).</li>
-                <li>- UI preferences and navigation state.</li>
-                <li>- Device tracking session flag (to avoid duplicate tracking).</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>Authentication session tokens (to keep you signed in).</li>
+                <li>Draft messages and form data (to prevent data loss).</li>
+                <li>Recent search queries (for convenience).</li>
+                <li>UI preferences and navigation state.</li>
+                <li>Device tracking session flag (to avoid duplicate tracking).</li>
               </ul>
               <p>
                 Google Analytics and PostHog run only on the website and only after you accept analytics cookies in the cookie banner. If you decline, neither is loaded. The mobile apps do not use them.
@@ -244,7 +244,7 @@ export default function PrivacyPolicy() {
             <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">7. Your Rights and Choices</h2>
             <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>You have the following rights regarding your personal data:</p>
-              <ul className="list-none space-y-3 ml-4">
+              <ul className="list-disc space-y-3 pl-5 ml-4">
                 <li><strong>Access:</strong> You can view and access all your personal data through your profile and Settings page at any time.</li>
                 <li><strong>Correction:</strong> You can edit and update your profile information, career history, and other personal data directly on the Platform.</li>
                 <li><strong>Deletion:</strong> You can permanently delete your account and all associated data through the Settings page. Upon deletion, we remove your profile, messages, applications, media files, career history, notifications, connections, references, push subscriptions, and stored files.</li>
@@ -271,11 +271,11 @@ export default function PrivacyPolicy() {
               <p>
                 Some data may be retained beyond account deletion in the following cases:
               </p>
-              <ul className="list-none space-y-2 ml-4">
-                <li>- Messages already delivered to other users may remain in their conversation history.</li>
-                <li>- References and endorsements you provided to other users may persist on their profiles.</li>
-                <li>- Anonymized, aggregated data that cannot identify you may be retained for analytics purposes.</li>
-                <li>- Data required to be retained by law or for legal proceedings.</li>
+              <ul className="list-disc space-y-2 pl-5 ml-4">
+                <li>Messages already delivered to other users may remain in their conversation history.</li>
+                <li>References and endorsements you provided to other users may persist on their profiles.</li>
+                <li>Anonymized, aggregated data that cannot identify you may be retained for analytics purposes.</li>
+                <li>Data required to be retained by law or for legal proceedings.</li>
               </ul>
             </div>
           </section>

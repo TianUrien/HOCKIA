@@ -273,7 +273,7 @@
     "countsLine": "{{clubs}}, {{leagues}}"
   },
   "worldSearch": {
-    "placeholder": "Buscar países o clubes...",
+    "placeholder": "Buscar países o clubes",
     "countries": "Países",
     "clubCount_one": "{{count}} club",
     "clubCount_other": "{{count}} clubes",

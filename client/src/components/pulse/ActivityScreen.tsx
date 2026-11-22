@@ -1,3 +1,4 @@
+import Header from '@/components/Header'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Shield } from 'lucide-react'
@@ -82,8 +83,9 @@ export function ActivityScreen() {
 
   return (
     <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)]" data-testid="activity-screen">
+      <Header mobileHidden />
       <DetailNavBar parent={backLabelFrom(location.state, tCommon('nav.home'))} fallbackPath="/home" />
-      <div className="mx-auto flex max-w-md flex-col gap-3 px-4 pb-10">
+      <div className="mx-auto flex max-w-md flex-col gap-3 px-4 pb-10 lg:pt-under-header-lg">
         <h1 className="px-1 pb-2 text-[22px] font-bold leading-7 text-ink-1">{t('pulse.activity.title')}</h1>
 
         {loading && [0, 1, 2].map((i) => <div key={i} className="h-[76px] animate-pulse rounded-[20px] bg-surface-muted" />)}
@@ -93,8 +95,8 @@ export function ActivityScreen() {
             <button type="button" onClick={() => go(s)} className="flex w-full items-center gap-3 px-4 py-4 text-left active:opacity-80">
               <Stack visual={s.visual} />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{s.title}</span>
-                {s.subtitle && <span className="block truncate text-secondary text-ink-2">{s.subtitle}</span>}
+                <span className="line-clamp-2 text-[16px] font-semibold leading-[21px] text-ink-1">{s.title}</span>
+                {s.subtitle && <span className="line-clamp-2 text-secondary text-ink-2">{s.subtitle}</span>}
               </span>
             </button>
           </SquircleBox>
@@ -134,10 +136,10 @@ export function ActivityScreen() {
                 ))}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
+                <span className="line-clamp-2 text-[16px] font-semibold leading-[21px] text-ink-1">
                   {recruiters > 0 ? t('pulse.activity.clubsViewed', { count: recruiters }) : t('pulse.activity.profileViews', { count: views })}
                 </span>
-                <span className="block truncate text-secondary text-ink-2">{t('pulse.activity.viewsHint')}</span>
+                <span className="line-clamp-2 text-secondary text-ink-2">{t('pulse.activity.viewsHint')}</span>
               </span>
             </button>
             {showViewers && !viewers.loading && viewers.viewers.length > 0 && (
@@ -156,7 +158,7 @@ export function ActivityScreen() {
                 size={40}
               />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">
+                <span className="line-clamp-2 text-[16px] font-semibold leading-[21px] text-ink-1">
                   {reference.profile?.fullName ? t('pulse.activity.leftReference', { name: reference.profile.fullName.split(/\s+/)[0] }) : t('pulse.activity.receivedReference')}
                 </span>
                 {reference.endorsementText && <span className="block truncate text-secondary text-ink-2">“{reference.endorsementText}”</span>}
@@ -170,8 +172,8 @@ export function ActivityScreen() {
             <button type="button" onClick={() => go(s)} className="flex w-full items-center gap-3 px-4 py-4 text-left">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-hockia-soft text-[18px]" aria-hidden="true">✨</span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{s.title}</span>
-                {s.subtitle && <span className="block truncate text-secondary text-ink-2">{s.subtitle}</span>}
+                <span className="line-clamp-2 text-[16px] font-semibold leading-[21px] text-ink-1">{s.title}</span>
+                {s.subtitle && <span className="line-clamp-2 text-secondary text-ink-2">{s.subtitle}</span>}
               </span>
             </button>
           </SquircleBox>

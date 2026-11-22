@@ -541,7 +541,7 @@ export default function CommunityPage() {
                   <button
                     type="button"
                     onClick={() => (tabEscapesScope ? navigate(pathWithSearch(roleToPath(scopedRole), searchQuery)) : setShowEveryone((v) => !v))}
-                    className="flex-shrink-0 whitespace-nowrap text-xs font-semibold text-hockia-primary transition active:scale-95 hover:underline"
+                    className="-my-3.5 flex min-h-[44px] flex-shrink-0 items-center whitespace-nowrap pl-2 text-xs font-semibold text-hockia-primary transition active:scale-95 hover:underline"
                   >
                     {scopeReshaping ? t('page.showEveryone') : scopedRole === 'coach' ? t('page.showCoachesOnly') : t('page.showPlayersOnly')}
                   </button>
