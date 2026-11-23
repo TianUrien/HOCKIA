@@ -274,7 +274,7 @@ output and the push still goes out.
 
 `sent` means the provider accepted the push, not that the phone showed it.
 
-Why a member got no push, last 7 days:
+Why a member got no push (rows are kept 30 days):
 
 ```sql
 select created_at, kind, platform, outcome, detail
