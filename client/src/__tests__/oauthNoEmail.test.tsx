@@ -22,7 +22,7 @@ vi.mock('@/lib/auth', () => {
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() } }))
 vi.mock('@/lib/sentryHelpers', () => ({ reportSupabaseError: vi.fn() }))
 
-import { oauthErrorMessage, noEmailMessage } from '@/lib/oauthErrorMessage'
+import { oauthErrorMessage, noEmailMessage, accountUnavailableMessage, isAccountUnavailable } from '@/lib/oauthErrorMessage'
 import AuthCallback from '@/pages/AuthCallback'
 
 // The message became a function (it follows the interface language); tests run in English.
@@ -54,5 +54,35 @@ describe('AuthCallback · Facebook account without email', () => {
     window.history.replaceState({}, '', '/auth/callback?error=server_error&error_description=Error+getting+user+email+from+external+provider')
     render(<MemoryRouter initialEntries={['/auth/callback']}><AuthCallback /></MemoryRouter>)
     expect(await screen.findByTestId('auth-no-email')).toBeInTheDocument()
+  })
+})
+
+/**
+ * A frozen under-18 account (or a blocked one) gets "User is banned" from
+ * Supabase. "Sign-in failed. Please try again." made members retry in a loop
+ * (2026-11-22); they are told the account is closed and where to go.
+ */
+describe('closed account (User is banned)', () => {
+  afterEach(() => { window.history.replaceState({}, '', '/') })
+
+  it('recognises the Supabase answer and its error code', () => {
+    expect(isAccountUnavailable('User is banned')).toBe(true)
+    expect(isAccountUnavailable('user_banned')).toBe(true)
+    expect(isAccountUnavailable('access_denied')).toBe(false)
+    expect(isAccountUnavailable(null)).toBe(false)
+  })
+
+  it('says the account is closed instead of "try again"', () => {
+    expect(oauthErrorMessage('User is banned', 'Sign-in failed. Please try again.')).toBe(accountUnavailableMessage())
+    expect(accountUnavailableMessage()).toMatch(/18\+/)
+  })
+
+  it('AuthCallback offers the juniors waitlist, not "Try Again"', async () => {
+    window.history.replaceState({}, '', '/auth/callback?error=access_denied&error_code=user_banned&error_description=User+is+banned')
+    render(<MemoryRouter initialEntries={['/auth/callback']}><AuthCallback /></MemoryRouter>)
+    expect(await screen.findByTestId('auth-account-unavailable')).toBeInTheDocument()
+    expect(screen.getByText(accountUnavailableMessage())).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Juniors waitlist' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Try Again' })).not.toBeInTheDocument()
   })
 })
