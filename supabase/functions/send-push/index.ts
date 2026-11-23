@@ -3,11 +3,12 @@ import webpush from 'npm:web-push@3.6.7'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
-import { captureException } from '../_shared/sentry.ts'
+import { captureException, captureMessage } from '../_shared/sentry.ts'
 import { buildPushPayload, PUSH_PREFERENCE_COLUMNS, pushAllowed, pushLanguageOf, shouldPushWebhookEvent, unnamedActor } from './push-payload.ts'
 import { NEW_APPLICATIONS_PUSH_KIND, pushStandsDownForBatch } from '../_shared/club-reminders.ts'
 import { sendFcmNotification, isFcmConfigured } from './fcm.ts'
 import { sendApnsNotification, isApnsConfigured } from './apns.ts'
+import { type DeliveryRow, type PushOutcome, failureSummary, notificationIdOf, platformOf, providerDetail } from './delivery-log.ts'
 
 /**
  * ============================================================================
@@ -39,6 +40,11 @@ import { sendApnsNotification, isApnsConfigured } from './apns.ts'
  *
  * Preferences: notify_push is the master switch; each kind is also gated by
  * its per-type column (pushPreferenceColumn in push-payload.ts).
+ *
+ * Delivery log (20261123120000): every device attempt is written to
+ * push_delivery_log with what the provider answered, and a send that fails
+ * for a reason other than a retired token is reported to Sentry. Logging is
+ * best-effort: it never fails or delays the push.
  * ============================================================================
  */
 
@@ -194,21 +200,28 @@ Deno.serve(async (req: Request) => {
     let sent = 0
     let failed = 0
     let cleaned = 0
+    const deliveries: DeliveryRow[] = []
+    const notificationId = notificationIdOf(record)
 
     for (const sub of subscriptions) {
       const isNativeSub = !!sub.fcm_token && sub.platform !== 'web'
       const isIosSub = isNativeSub && sub.platform === 'ios'
+      const logDelivery = (outcome: PushOutcome, detail: string | null = null) => {
+        deliveries.push({ notification_id: notificationId, recipient_profile_id: recipientId, kind, platform: platformOf(sub), outcome, detail })
+      }
 
       try {
         if (isIosSub) {
           // ── APNs (native iOS — registers an APNs token, not an FCM token) ──
-          if (!hasApns) continue // iOS requires APNs; skip until configured
+          if (!hasApns) { logDelivery('not_configured', 'APNs keys missing'); continue } // iOS requires APNs; skip until configured
           const success = await sendApnsNotification(sub.fcm_token!, pushPayload)
           if (success) {
             sent++
+            logDelivery('sent')
           } else {
             await supabase.from('push_subscriptions').delete().eq('id', sub.id)
             cleaned++
+            logDelivery('rejected', 'APNs token no longer valid')
             console.log(`[send-push] Cleaned invalid APNs token ${sub.id}`)
           }
         } else if (isNativeSub && hasFcm) {
@@ -216,10 +229,12 @@ Deno.serve(async (req: Request) => {
           const success = await sendFcmNotification(sub.fcm_token!, pushPayload)
           if (success) {
             sent++
+            logDelivery('sent')
           } else {
             // Token may be invalid — clean up
             await supabase.from('push_subscriptions').delete().eq('id', sub.id)
             cleaned++
+            logDelivery('rejected', 'FCM token no longer registered')
             console.log(`[send-push] Cleaned invalid FCM token ${sub.id}`)
           }
         } else if (hasVapid && sub.endpoint && sub.p256dh && sub.auth) {
@@ -231,8 +246,10 @@ Deno.serve(async (req: Request) => {
 
           await webpush.sendNotification(pushSubscription, payloadString)
           sent++
+          logDelivery('sent')
         } else {
           // Subscription has neither valid FCM nor VAPID data — skip
+          logDelivery('not_configured', isNativeSub ? 'FCM keys missing' : 'no usable web push keys')
           continue
         }
 
@@ -248,15 +265,31 @@ Deno.serve(async (req: Request) => {
           // Subscription expired or revoked — clean up
           await supabase.from('push_subscriptions').delete().eq('id', sub.id)
           cleaned++
+          logDelivery('rejected', `web push subscription gone (${statusCode})`)
           console.log(`[send-push] Cleaned stale subscription ${sub.id} (${statusCode})`)
         } else if (statusCode === 429) {
           console.warn(`[send-push] Rate limited for ${sub.endpoint}`)
           failed++
+          logDelivery('rate_limited', providerDetail(err))
         } else {
           console.error(`[send-push] Failed to send to ${sub.endpoint || sub.fcm_token}:`, err?.message || err)
           failed++
+          logDelivery('failed', providerDetail(err))
         }
       }
+    }
+
+    // Delivery log: best-effort, never fails the push.
+    if (deliveries.length > 0) {
+      try {
+        // The generated types gain this table once the migration is applied and they are regenerated.
+        const { error: logError } = await (supabase as any).from('push_delivery_log').insert(deliveries)
+        if (logError) console.warn('[send-push] delivery log not written:', logError.message)
+      } catch (logErr: any) {
+        console.warn('[send-push] delivery log not written:', logErr?.message || logErr)
+      }
+      const summary = failureSummary(kind, deliveries)
+      if (summary) captureMessage(summary, 'error', { functionName: 'send-push' })
     }
 
     console.log(`[send-push] kind=${kind} sent=${sent} failed=${failed} cleaned=${cleaned}`)

@@ -244,3 +244,52 @@ SELECT * FROM onboarding_reminder_queue ORDER BY created_at DESC;
 -- Check sent emails
 SELECT * FROM email_sends WHERE template_key = 'onboarding_reminder' ORDER BY sent_at DESC;
 ```
+
+## Push delivery log
+
+Added 2026-11-23 (migration `20261123120000_push_delivery_log.sql`; source:
+founder request to register failures that raise no error in the app).
+
+`send-push` writes one row per device to `public.push_delivery_log` for every
+push it attempts:
+
+| outcome | meaning |
+|---|---|
+| `sent` | the provider (APNs, FCM or the browser's push service) accepted it |
+| `rejected` | the provider said the token or subscription is gone; the subscription was removed |
+| `failed` | the provider or the network refused the send; also reported to Sentry |
+| `rate_limited` | the provider answered 429 |
+| `not_configured` | the device needs a provider this project has no keys for |
+
+`detail` is a short provider reason (a status or an error name). A row never
+holds a device token, an endpoint or the push text. Pushes skipped before any
+device is tried (push switched off, no subscription, grouped by
+`club-reminders`) write no row.
+
+The table is service role only (no policy, no grant to `anon` or
+`authenticated`) and rows are pruned after 30 days by
+`prune_push_delivery_log()` (cron `prune_push_delivery_log_daily`, 04:45 UTC).
+Writing the log is best-effort: a failed insert is a warning in the function's
+output and the push still goes out.
+
+`sent` means the provider accepted the push, not that the phone showed it.
+
+Why a member got no push, last 7 days:
+
+```sql
+select created_at, kind, platform, outcome, detail
+from public.push_delivery_log
+where recipient_profile_id = '<profile id>'
+order by created_at desc;
+```
+
+Failure rate by platform and day:
+
+```sql
+select created_at::date as day, platform,
+       count(*) filter (where outcome = 'sent') as sent,
+       count(*) filter (where outcome = 'failed') as failed,
+       count(*) filter (where outcome = 'rejected') as rejected
+from public.push_delivery_log
+group by 1, 2 order by 1 desc, 2;
+```
