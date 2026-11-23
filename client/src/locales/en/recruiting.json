@@ -341,6 +341,30 @@
     "title": "Fit for this opportunity",
     "footer": "Only clubs & recruiting coaches see fit. It reads the profile and nothing else."
   },
+  "levelCard": {
+    "title": "Level played",
+    "league": "Highest league",
+    "leagueTyped": "League",
+    "nationalTeam": "National team",
+    "withClub": "with {{club}}",
+    "withClubNow": "with {{club}} now",
+    "typedNote": "written by the player, no club linked",
+    "caps_one": "{{count}} cap",
+    "caps_other": "{{count}} caps",
+    "division": {
+      "top": "top division",
+      "second": "2nd division",
+      "third": "3rd division"
+    },
+    "national": {
+      "senior": "senior",
+      "junior": "junior",
+      "masters": "masters",
+      "unnamed": "National team"
+    },
+    "empty": "No league or national team on this profile yet. Ask in a message, or look at the videos.",
+    "footer": "Only clubs & recruiting coaches see this. Facts from the profile, nothing else."
+  },
   "rankedForPill": {
     "prefix": "Ranked for",
     "ariaLabel": "Ranked for {{label}}. Change the context"

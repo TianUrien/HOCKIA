@@ -22,6 +22,8 @@ import { useProfileScrollData, type ScrollVideo } from '@/hooks/useProfileScroll
 import { useRolesHealth } from '@/hooks/useRolesHealth'
 import type { ClubOpenRole } from '@/hooks/useClubProfileScrollData'
 import { isRecruiterProfile, fullMatchVisibilityOf, canViewLinkedHighlight } from '@/lib/recruiter'
+import { LevelCard } from '@/components/club/LevelCard'
+import { usePlayerLevel } from '@/hooks/usePlayerLevels'
 import { displayPlace } from '@/lib/communityCard'
 import { basedInLine, nationalityCountries } from '@/lib/nationality'
 import { NationalitiesTile } from '@/components/ui/NationalityBadges'
@@ -217,6 +219,9 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
 
   // ── Videos (privacy kept from ProfileLongScroll) ────────────────────────
   const canWatchLocked = owner || isRecruiterProfile(viewer)
+  // Level played: clubs and recruiting coaches only, on someone else's player profile. Players never see it.
+  const showLevel = !owner && !isCoach && isRecruiterProfile(viewer) && Boolean(profileId)
+  const { level, loading: levelLoading } = usePlayerLevel(profileId, showLevel)
   const access = useVideoAccessSummary(profileId, { enabled: !owner })
   const lockFullMatches = owner
     ? fullMatchVisibilityOf(profile) === 'recruiters'
@@ -514,6 +519,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         )}
         {videosHiddenFromViewer && shownVideoCount === 0 && <p className="text-secondary text-ink-3" data-testid="profile-videos-clubs-only">{t('playerProfileV2.overview.videosClubsOnly')}</p>}
         {friendCount > 0 && <FacesRow people={faces} text={friendText} onClick={() => props.onOpenSection('friends')} />}
+        {/* Level played first, then the club's own view (application, fit). Recruiters only. */}
+        {showLevel && <div data-testid="profile-level"><LevelCard level={level} loading={levelLoading} /></div>}
         {props.clubViewSlot}
       </section>
 

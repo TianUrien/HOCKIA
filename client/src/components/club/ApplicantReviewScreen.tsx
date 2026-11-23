@@ -10,6 +10,8 @@ import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { ProfileVideoTile } from '@/components/profile/mobile/ProfileVideoTile'
 import { CareerRow, ReferenceCard } from '@/components/profile/mobile/ProfileLongScroll'
 import { FitCard } from './FitCard'
+import { LevelCard } from './LevelCard'
+import { usePlayerLevel } from '@/hooks/usePlayerLevels'
 import { DeclineSheet } from './DeclineSheet'
 import { RoadToSigningCard } from './RoadToSigningCard'
 import { BottomSheet } from '@/components/ui/BottomSheet'
@@ -136,6 +138,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
   const playerId = review?.person.id ?? null
   useEffect(() => { if (pane) return; void setStatusBarForBackground('dark-bg'); return () => { void setStatusBarForBackground('light-bg') } }, [pane])
   const scroll = useProfileScrollData(playerId, Boolean(playerId))
+  // Level played: the highest league and the national team, above everything else a recruiter reads.
+  const { level, loading: levelLoading } = usePlayerLevel(playerId, Boolean(playerId))
   const { acceptedReferences } = useTrustedReferences(playerId ?? '')
 
   useEffect(() => {
@@ -537,7 +541,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
               </section>
             )}
 
-            <div className="grid grid-cols-2 gap-4 pt-8">
+            {p.role === 'player' && <LevelCard level={level} loading={levelLoading} className="mt-8" />}
+            <div className={cn('grid grid-cols-2 gap-4', p.role === 'player' ? 'pt-4' : 'pt-8')}>
               {review.status !== 'withdrawn' ? <FitCard state={review.fit?.state} rows={rows} /> : <span />}
               <div className="overflow-hidden self-start rounded-2xl border border-line bg-white">
                 {[
@@ -759,6 +764,13 @@ export default function ApplicantReviewScreen({ roleId, applicationId, layout = 
                 <h2 className="text-[20px] font-semibold leading-6 tracking-[-0.02em] text-ink-1">{t('applicantReview.inTheirWords')}</h2>
                 <p className="mt-2 whitespace-pre-wrap break-words text-[16px] leading-[22px] text-ink-1">“{note}”</p>
               </section>
+            )}
+
+            {/* Level played — clubs only; the first thing under the name. */}
+            {p.role === 'player' && (
+              <div className="px-4 pt-4">
+                <LevelCard level={level} loading={levelLoading} />
+              </div>
             )}
 
             {/* Fit — clubs only; not for an application the player withdrew (read-only record). */}
