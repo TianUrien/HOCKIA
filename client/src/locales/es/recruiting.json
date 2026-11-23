@@ -355,6 +355,31 @@
     "title": "Encaje con esta oportunidad",
     "footer": "Solo los clubes y entrenadores/as que reclutan ven el encaje. Se basa en el perfil y en nada más."
   },
+  "levelCard": {
+    "title": "Nivel jugado",
+    "league": "Liga más alta",
+    "leagueTyped": "Liga",
+    "nationalTeam": "Selección nacional",
+    "withClub": "con {{club}}",
+    "withClubNow": "hoy con {{club}}",
+    "typedNote": "escrita en el perfil, sin club vinculado",
+    "caps_one": "{{count}} partido internacional",
+    "caps_many": "{{count}} partidos internacionales",
+    "caps_other": "{{count}} partidos internacionales",
+    "division": {
+      "top": "primera división",
+      "second": "segunda división",
+      "third": "tercera división"
+    },
+    "national": {
+      "senior": "mayor",
+      "junior": "juvenil",
+      "masters": "másters",
+      "unnamed": "Selección nacional"
+    },
+    "empty": "Este perfil todavía no tiene liga ni selección nacional. Pregunta por mensaje o mira los videos.",
+    "footer": "Solo lo ven los clubes y entrenadores/as que reclutan. Datos del perfil, nada más."
+  },
   "rankedForPill": {
     "prefix": "Ranking para",
     "ariaLabel": "Ranking para {{label}}. Cambiar el contexto"
