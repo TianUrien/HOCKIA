@@ -55,6 +55,7 @@ import AgeGate from '@/components/AgeGate'
 import { loadOpportunityDetail } from '@/lib/prefetchRole'
 import { tCommon } from '@/i18n/ns/common'
 import { useRevealFocusedField } from '@/hooks/useKeyboardInset'
+import { PageSpinner } from '@/components/ui/PageSpinner'
 
 // Lazy load heavy components
 // Neither is on a first-paint path: Settings sits behind the profile gear,
@@ -208,7 +209,7 @@ const PageLoader = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        <PageSpinner />
         <p className="text-gray-600 text-sm">{tCommon('skeletons.page')}</p>
       </div>
     </div>

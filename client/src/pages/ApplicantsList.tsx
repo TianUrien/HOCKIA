@@ -15,6 +15,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { clubRoadTag } from '@/lib/signing'
 import { humanizeToken } from '@/lib/identity'
 import { tRecruiting, useRecruitingT } from '@/i18n/ns/recruiting'
+import { PageSpinner } from '@/components/ui/PageSpinner'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
@@ -369,7 +370,7 @@ export default function ApplicantsList() {
     return (
       <div className="min-h-screen bg-surface-subtle flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-line border-t-hockia-primary mb-4"></div>
+          <PageSpinner className="mb-4 inline-block" />
           <p className="text-ink-2">{t('applicantsList.loading')}</p>
         </div>
       </div>

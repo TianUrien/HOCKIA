@@ -47,6 +47,7 @@ type PublicUmpireShape = Partial<Profile> &
 // SELECT list moved to `client/src/lib/publicProfileFields.ts` (see note
 // in PublicPlayerProfile.tsx for rationale).
 import { PUBLIC_UMPIRE_FIELDS } from '@/lib/publicProfileFields'
+import { PageSpinner } from '@/components/ui/PageSpinner'
 
 export default function PublicUmpireProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()
@@ -195,7 +196,7 @@ export default function PublicUmpireProfile() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-ink-2 mb-4"></div>
+          <PageSpinner className="mb-4 inline-block" />
           <p className="text-gray-600">{t('publicUmpireProfile.loading')}</p>
         </div>
       </div>
