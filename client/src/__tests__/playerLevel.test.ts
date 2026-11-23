@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// The hook module imports the Supabase client; CI has no Supabase variables.
+vi.mock('@/lib/supabase', () => ({ supabase: { from: vi.fn(), rpc: vi.fn() } }))
+vi.mock('@/hooks/useCountries', () => ({ useCountries: () => ({ countries: [] }) }))
+
 import { buildPlayerLevel, divisionLabel, hasLevelFacts, levelLine, levelRows, pickHighestLeague, pickNationalTeam, type LeagueCandidate } from '@/lib/playerLevel'
 import { levelsFromRows } from '@/hooks/usePlayerLevels'
 
