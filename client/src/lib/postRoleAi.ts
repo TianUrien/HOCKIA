@@ -1,7 +1,7 @@
 import { BENEFIT_TILES, genderPill } from '@/lib/opportunityCopy'
 import { positionLabel } from '@/lib/identity'
 import { tHockiaAi } from '@/i18n/ns/hockiaAi'
-import { DESCRIPTION_MAX, PAY_OPTIONS, TITLE_MAX, startLabel, type PostRoleDraft, type RoleGender, type RoleLevel, type RolePay, type RolePosition } from '@/lib/postRole'
+import { DESCRIPTION_MAX, LEVELS, PAY_OPTIONS, SKILLS, TITLE_MAX, hardnessFootnote, startLabel, type PostRoleDraft, type RoleGender, type RoleLevel, type RolePay, type RolePosition } from '@/lib/postRole'
 
 /**
  * Club speed CS1–CS2 · Start with Hockia AI (Figma 05 204:892 / 204:981).
@@ -57,9 +57,11 @@ export function applyAiDraft(base: PostRoleDraft, ai: AiRoleDraft): PostRoleDraf
 }
 
 export interface SummarySection {
-  key: 'role' | 'offer' | 'where' | 'about'
+  key: 'role' | 'who' | 'offer' | 'where' | 'about'
   label: string
   lines: string[]
+  /** "Who you want" only: what blocks a candidate and what only ranks them. */
+  note?: string
   /** "Not set · optional — level, start" */
   optionalMissing: string[]
   /** Needed before posting — position, team. */
@@ -68,7 +70,12 @@ export interface SummarySection {
 
 const join = (xs: (string | null | undefined | false)[]) => xs.filter(Boolean).join(', ')
 
-/** The four parts of "Check your role", each with an Edit. */
+/**
+ * The parts of "Check your role", each with an Edit. "Who you want" says back
+ * the level, skills and EU passport the club asked for, and which of them
+ * block a candidate (audit 2026-11-23: the check showed none of these, so a
+ * club could not see whether Hockia AI understood who it is looking for).
+ */
 export function checkSummary(d: PostRoleDraft, opts: { fromClub: boolean }): SummarySection[] {
   const player = d.type === 'player'
   const team = genderPill(d.gender)?.label
@@ -77,14 +84,24 @@ export function checkSummary(d: PostRoleDraft, opts: { fromClub: boolean }): Sum
   const pay = PAY_OPTIONS.find((p) => p.value === d.pay)?.label ?? null
   const pkg = d.benefits.map((k) => BENEFIT_TILES[k]?.label).filter(Boolean) as string[]
   const start = startLabel(d.startDate)
+  const level = player ? LEVELS.find((l) => l.value === d.level)?.label ?? null : null
+  const skills = player ? d.skills.map((k) => SKILLS.find((x) => x.value === k)?.label ?? k) : []
   const place = [d.city, d.country].map((x) => x.trim()).filter(Boolean).join(', ')
   return [
     {
       key: 'role',
       label: tHockiaAi('postRole.sectionRole'),
       lines: [join([pos, title && title.toLowerCase() !== (pos ?? '').toLowerCase() ? title : null, team ? tHockiaAi('postRole.teamLine', { team }) : null])].filter(Boolean),
-      optionalMissing: player && !d.level ? [tHockiaAi('postRole.missingLevel')] : [],
+      optionalMissing: [],
       neededMissing: [!d.position ? (player ? tHockiaAi('postRole.missingPosition') : tHockiaAi('postRole.missingRole')) : null, !d.gender ? tHockiaAi('postRole.missingTeam') : null].filter((x): x is string => Boolean(x)),
+    },
+    {
+      key: 'who',
+      label: tHockiaAi('postRole.sectionWho'),
+      lines: [level ? tHockiaAi('postRole.levelLine', { level }) : null, skills.length ? tHockiaAi('postRole.skillsLine', { skills: skills.join(', ') }) : null, d.euPassport ? tHockiaAi('postRole.euPassportLine') : null].filter((x): x is string => Boolean(x)),
+      note: hardnessFootnote(d),
+      optionalMissing: player ? [!level ? tHockiaAi('postRole.missingLevel') : null, !skills.length ? tHockiaAi('postRole.missingSkills') : null].filter((x): x is string => Boolean(x)) : [],
+      neededMissing: [],
     },
     {
       key: 'offer',

@@ -495,6 +495,11 @@
   },
   "postRole": {
     "sectionRole": "The opportunity",
+    "sectionWho": "Who you want",
+    "levelLine": "Level: {{level}}",
+    "skillsLine": "Skills: {{skills}}",
+    "euPassportLine": "EU passport required",
+    "missingSkills": "skills",
     "sectionOffer": "The offer",
     "sectionWhere": "Where",
     "sectionAbout": "About the opportunity",
