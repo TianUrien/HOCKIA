@@ -2626,7 +2626,7 @@ export async function getSpamSignals(opts: { days?: number; limit?: number; offs
   return { rows: page.rows ?? [], total: page.total ?? 0 }
 }
 
-/** One member that other members blocked (admin_get_member_blocks). Who blocked them is never returned. */
+/** One member that other members blocked (admin_get_member_blocks). The list carries counts only; who blocked is read per member with getMemberBlockers. */
 export interface MemberBlockRow {
   profile_id: string
   full_name: string | null
@@ -2658,6 +2658,28 @@ export async function getMemberBlocks(opts: { limit?: number; offset?: number } 
   if (error) throw new Error(`Failed to get member blocks: ${error.message}`)
   const page = (data ?? {}) as Partial<MemberBlocksPage>
   return { rows: page.rows ?? [], total: page.total ?? 0 }
+}
+
+/** One member who blocked the account (admin_get_member_blockers). */
+export interface MemberBlockerRow {
+  profile_id: string
+  full_name: string | null
+  role: string | null
+  avatar_url: string | null
+  blocked_at: string
+  /** The blocker's own account is blocked by an admin. */
+  is_blocked: boolean
+}
+
+/**
+ * Who blocked this member (founder 2026-11-23, admins only). Every call is
+ * written to the admin audit log on the server, so only ask when an admin
+ * opens it.
+ */
+export async function getMemberBlockers(profileId: string): Promise<MemberBlockerRow[]> {
+  const { data, error } = await adminRpc('admin_get_member_blockers', { p_profile_id: profileId })
+  if (error) throw new Error(`Failed to get who blocked this member: ${error.message}`)
+  return ((data ?? {}) as { rows?: MemberBlockerRow[] }).rows ?? []
 }
 
 export interface BanEvasionSuspect {

@@ -1,20 +1,23 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Admin "Member blocks" (founder 2026-11-09): accounts other members blocked,
-// most-blocked first, never who blocked them.
+// most-blocked first. The list carries counts only; who blocked is asked for
+// one member at a time when an admin opens it (founder 2026-11-23).
 
 type Rpc = { fn: string; args: Record<string, unknown> | undefined }
 let rpcCalls: Rpc[] = []
 let blocks: { rows: unknown[]; total: number } = { rows: [], total: 0 }
 let suspects: unknown[] = []
+let blockers: unknown[] = []
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     rpc: (fn: string, args?: Record<string, unknown>) => {
       rpcCalls.push({ fn, args })
       if (fn === 'admin_get_member_blocks') return Promise.resolve({ data: blocks, error: null })
+      if (fn === 'admin_get_member_blockers') return Promise.resolve({ data: { rows: blockers }, error: null })
       if (fn === 'admin_get_ban_evasion_suspects') return Promise.resolve({ data: { rows: suspects }, error: null })
       return Promise.resolve({ data: null, error: null })
     },
@@ -33,9 +36,9 @@ const row = (over: Record<string, unknown>) => ({
 })
 
 describe('AdminMemberBlocks', () => {
-  beforeEach(() => { rpcCalls = []; blocks = { rows: [], total: 0 }; suspects = [] })
+  beforeEach(() => { rpcCalls = []; blocks = { rows: [], total: 0 }; suspects = []; blockers = [] })
 
-  it('lists blocked members with how many members blocked them, and never who', async () => {
+  it('lists blocked members with how many members blocked them, and does not ask who until opened', async () => {
     blocks = { rows: [row({}), row({ profile_id: 'p2', full_name: 'Kim Example', block_count: 1, is_blocked: true })], total: 2 }
     render(<MemoryRouter><AdminMemberBlocks /></MemoryRouter>)
     expect(await screen.findByText('Sam Example')).toBeInTheDocument()
@@ -43,7 +46,26 @@ describe('AdminMemberBlocks', () => {
     expect(screen.getByTestId('blocks-p2').textContent).toBe('1 member')
     expect(screen.getByText('Blocked by admin')).toBeInTheDocument()
     expect(rpcCalls[0]).toEqual({ fn: 'admin_get_member_blocks', args: { p_limit: 50, p_offset: 0 } })
-    expect(screen.queryByText(/blocker/i)).toBeNull()
+    expect(rpcCalls.some((c) => c.fn === 'admin_get_member_blockers')).toBe(false)
+    expect(screen.queryByTestId('who-blocked-dialog')).toBeNull()
+  })
+
+  it('"See who blocked" asks for that one member and lists who blocked them', async () => {
+    blocks = { rows: [row({})], total: 1 }
+    blockers = [
+      { profile_id: 'b1', full_name: 'Alex Example', role: 'player', avatar_url: null, blocked_at: '2026-11-08T10:00:00Z', is_blocked: false },
+      { profile_id: 'b2', full_name: 'Robin Example', role: 'coach', avatar_url: null, blocked_at: '2026-11-01T10:00:00Z', is_blocked: true },
+    ]
+    render(<MemoryRouter><AdminMemberBlocks /></MemoryRouter>)
+    await screen.findByText('Sam Example')
+    for (const opener of screen.queryAllByRole('button', { name: /actions|more|open menu/i })) fireEvent.click(opener)
+    fireEvent.click(await screen.findByText('See who blocked'))
+    const dialog = await screen.findByTestId('who-blocked-dialog')
+    expect(dialog.textContent).toContain('Who blocked Sam Example')
+    expect(await screen.findByText('Alex Example')).toBeInTheDocument()
+    expect(screen.getByTestId('blocker-b2').textContent).toContain('Blocked by admin')
+    expect(dialog.textContent).toContain('This view was logged')
+    expect(rpcCalls.filter((c) => c.fn === 'admin_get_member_blockers')).toEqual([{ fn: 'admin_get_member_blockers', args: { p_profile_id: 'p1' } }])
   })
 
   it('says so when nobody has blocked anyone', async () => {

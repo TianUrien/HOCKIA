@@ -1,10 +1,11 @@
 /**
  * AdminMemberBlocks — members that other members blocked (founder 2026-11-09).
  * Most-blocked first, with their reports and spam signals, so an account many
- * people block stands out. Who blocked them is never shown: a block is a
- * private safety action. Each row links to the member in the User Directory
- * and offers the existing admin block action.
- * Data: admin_get_member_blocks / blockUser.
+ * people block stands out. The list shows counts only. "See who blocked"
+ * (founder 2026-11-23) opens the members who blocked one account; the server
+ * writes every such view to the admin audit log. Each row links to the member
+ * in the User Directory and offers the existing admin block action.
+ * Data: admin_get_member_blocks / admin_get_member_blockers / blockUser.
  *
  * Below it (founder 2026-11-10): accounts that are not blocked but used the
  * same device or network as an account an admin blocked — someone coming
@@ -13,11 +14,11 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Ban, RefreshCw, UserX } from 'lucide-react'
+import { Ban, Eye, RefreshCw, UserX, X } from 'lucide-react'
 import { ConfirmDialog, DataTable } from '../components'
 import type { Action, Column } from '../components'
-import { blockUser, getBanEvasionSuspects, getMemberBlocks } from '../api/adminApi'
-import type { BanEvasionSuspect, MemberBlockRow } from '../api/adminApi'
+import { blockUser, getBanEvasionSuspects, getMemberBlockers, getMemberBlocks } from '../api/adminApi'
+import type { BanEvasionSuspect, MemberBlockerRow, MemberBlockRow } from '../api/adminApi'
 import { formatAdminDate, formatAdminDateTime } from '../utils/formatDate'
 import { getRoleBadgeClasses } from '@/lib/roleColors'
 import { logger } from '@/lib/logger'
@@ -32,6 +33,7 @@ export function AdminMemberBlocks() {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [confirm, setConfirm] = useState<{ profile_id: string; full_name: string | null; reason: string } | null>(null)
+  const [who, setWho] = useState<{ profile_id: string; full_name: string | null; loading: boolean; rows: MemberBlockerRow[]; error: string | null } | null>(null)
   const [suspects, setSuspects] = useState<BanEvasionSuspect[]>([])
   const [suspectsLoading, setSuspectsLoading] = useState(true)
 
@@ -65,6 +67,18 @@ export function AdminMemberBlocks() {
   useEffect(() => { document.title = 'Member blocks | Hockia Admin' }, [])
   useEffect(() => { void fetchBlocks() }, [fetchBlocks])
   useEffect(() => { void fetchSuspects() }, [fetchSuspects])
+
+  // Asked only when an admin opens it: the server logs every view.
+  const openWho = async (row: MemberBlockRow) => {
+    setWho({ profile_id: row.profile_id, full_name: row.full_name, loading: true, rows: [], error: null })
+    try {
+      const blockers = await getMemberBlockers(row.profile_id)
+      setWho((w) => (w && w.profile_id === row.profile_id ? { ...w, loading: false, rows: blockers } : w))
+    } catch (err) {
+      logger.error('[AdminMemberBlocks] who blocked fetch failed', err)
+      setWho((w) => (w && w.profile_id === row.profile_id ? { ...w, loading: false, error: err instanceof Error ? err.message : 'Failed to load who blocked this member' } : w))
+    }
+  }
 
   const handleBlock = async () => {
     if (!confirm) return
@@ -128,6 +142,11 @@ export function AdminMemberBlocks() {
   ]
 
   const actions: Action<MemberBlockRow>[] = [
+    {
+      label: 'See who blocked',
+      icon: <Eye className="h-4 w-4" />,
+      onClick: (row) => { void openWho(row) },
+    },
     {
       label: 'Block user',
       icon: <Ban className="h-4 w-4" />,
@@ -204,7 +223,7 @@ export function AdminMemberBlocks() {
             Member blocks
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Accounts other members have blocked, most-blocked first. Who blocked them is never shown. Nothing is blocked automatically.
+            Accounts other members have blocked, most-blocked first. Open “See who blocked” on a row to see the members; each view is logged, and only admins can see it. Nothing is blocked automatically.
           </p>
         </div>
         <button
@@ -251,6 +270,50 @@ export function AdminMemberBlocks() {
           emptyMessage="No account shares a device or network with a blocked account."
         />
       </section>
+
+      {who && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setWho(null)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="who-blocked-title"
+            data-testid="who-blocked-dialog"
+            className="flex max-h-[80vh] w-full max-w-lg flex-col rounded-xl bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-gray-200 p-4">
+              <div>
+                <h2 id="who-blocked-title" className="text-lg font-semibold text-gray-900">Who blocked {who.full_name || 'this account'}</h2>
+                <p className="mt-0.5 text-sm text-gray-500">Admins only. This view was logged.</p>
+              </div>
+              <button type="button" onClick={() => setWho(null)} aria-label="Close" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4">
+              {who.loading && <p className="text-sm text-gray-500">Loading…</p>}
+              {who.error && <p className="text-sm text-red-700">{who.error}</p>}
+              {!who.loading && !who.error && who.rows.length === 0 && <p className="text-sm text-gray-500">No member blocks this account now.</p>}
+              <ul className="divide-y divide-gray-100">
+                {who.rows.map((b) => (
+                  <li key={b.profile_id} className="flex items-center justify-between gap-3 py-3" data-testid={`blocker-${b.profile_id}`}>
+                    <div className="min-w-0">
+                      <Link to={`/admin/directory?profile=${b.profile_id}`} className="font-medium text-purple-700 hover:underline">
+                        {b.full_name || 'No name'}
+                      </Link>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+                        {b.role && <span className={`rounded-full px-2 py-0.5 font-medium capitalize ${getRoleBadgeClasses(b.role)}`}>{b.role}</span>}
+                        {b.is_blocked && <span className="rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-700">Blocked by admin</span>}
+                      </div>
+                    </div>
+                    <span className="shrink-0 whitespace-nowrap text-sm text-gray-600">{formatAdminDateTime(b.blocked_at)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={confirm !== null}
