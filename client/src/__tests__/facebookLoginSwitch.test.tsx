@@ -67,9 +67,13 @@ describe('useFacebookLoginEnabled', () => {
     // Next page load: the request has not answered yet.
     resetFacebookLoginSwitch()
     localStorage.setItem('hockia.facebookLoginEnabled', '1')
-    rpc.mockReturnValue(new Promise(() => {}))
+    let answer: (v: { data: boolean; error: null }) => void = () => {}
+    rpc.mockReturnValue(new Promise((resolve) => { answer = resolve }))
     const next = renderHook(() => useFacebookLoginEnabled())
     expect(next.result.current).toBe(true)
+    // Let the request finish so nothing is left pending for the next test.
+    answer({ data: true, error: null })
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(2))
   })
 
   it('a remembered "on" is corrected when the switch has been turned off', async () => {
