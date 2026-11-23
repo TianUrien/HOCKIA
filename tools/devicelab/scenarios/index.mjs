@@ -793,7 +793,8 @@ export const scenarios = {
       await lab.waitFor('[data-testid="post-role-again-row"]', 10000)
       await sleep(600)
       await ctx.shot('start-sheet')
-      await lab.tap('[data-testid="post-role-again-row"]')
+      // The start sheet lists one row per closed role: copy the first.
+      await lab.eval(() => { document.querySelector('[data-testid="post-role-again-row"]')?.click() })
       await lab.waitFor('[data-testid="post-again-note"]', 20000)
       await sleep(1200)
       await ctx.shot('check-screen')
