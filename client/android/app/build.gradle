@@ -17,7 +17,7 @@ android {
         applicationId "com.inhockia.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 28
+        versionCode 29
         versionName "1.26"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
