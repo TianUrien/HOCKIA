@@ -29,6 +29,8 @@ import { ApplicantRowsSkeleton } from '@/components/ScreenSkeletons'
 import { isRecruitingCoach, recruiterRolesHome } from '@/lib/coachRoles'
 import { cn } from '@/lib/utils'
 import { useRecruitingT } from '@/i18n/ns/recruiting'
+import { usePlayerLevels } from '@/hooks/usePlayerLevels'
+import { levelLine } from '@/lib/playerLevel'
 import { countryLabel } from '@/i18n/countryNames'
 
 /**
@@ -71,6 +73,9 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   const [bulkDeclining, setBulkDeclining] = useState(false)
   const bulk = useBulkDecisions(roleId)
   const p = pipelineOf(data.applicants.map((a) => a.status))
+  // Level played, one line per player applicant (highest league and national team).
+  const applicantPlayerIds = useMemo(() => data.applicants.filter((a) => a.person.role === 'player').map((a) => a.person.id), [data.applicants])
+  const { levels } = usePlayerLevels(applicantPlayerIds)
   // D5 entry (Figma D5.1 398:83): the publisher's open player roles only.
   const suggestable = !!data.role && !!clubId && data.role.club_id === clubId && data.role.status === 'open' && data.role.opportunity_type === 'player'
   const suggests = useRoleSuggestions(suggestable ? roleId : null)
@@ -239,6 +244,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
                   {tag && <span className="shrink-0 rounded-full bg-surface-muted px-2 py-[2px] text-caption font-semibold text-ink-2" data-testid="applicant-status-tag">{tag}</span>}
                 </span>
                 <span className="block truncate text-secondary text-ink-2">{[personRoleLine(a.person), country].filter(Boolean).join(', ')}</span>
+                {levelLine(levels.get(a.person.id)) && <span className="block truncate text-secondary text-ink-1" data-testid="applicant-level-line">{levelLine(levels.get(a.person.id))}</span>}
                 {a.fit?.state && a.fit.state !== 'grey' ? <span className="mt-1 flex"><FitBadge state={a.fit.state} /></span> : null}
               </span>
               {right && <span className={cn('shrink-0 text-secondary font-semibold', clubReplyLineClass(a.status === 'pending' && isClubReplyUrgent(a.appliedAt, days)))}>{right}</span>}

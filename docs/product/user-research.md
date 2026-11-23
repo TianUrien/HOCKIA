@@ -32,6 +32,15 @@ Source: read-only aggregate queries (roles, applications, status history, offers
 - **Almost no satisfaction data from recruiters**: 7 app ratings from clubs and coaches (22 dismissed the prompt), and no problem reports from any role (the form is only in Settings).
 - A requirement set on a role can hide it from most of its audience: one role that required an EU passport was opened by more players than similar roles and received a fraction of their applications.
 
+### A recruiter cannot tell how high an applicant has played, member message and simulator walk, 2026-11-23
+Source: one message from a recruiting coach to the founder (direct evidence, one person), a walk of the club flow on the iPhone simulator against staging, and read-only aggregate queries on production; test accounts excluded.
+- **The recruiter's words**: after getting a lead through the app, "just to see if he has played high level before is not clear to me". The same message asked for a central defender, an EU passport and a drag flicker for the second half of the season.
+- **What the screen said**: the applicant review showed "Level: plays at a level close to yours", with no league, country or division; the league sat lower, inside Career, as a bare name.
+- **The facts exist for under half of the players**: 157 of 357 players have a linked club with a league or a national team entry; 35 have a national team entry; 120 club career entries carry only a league typed by the player.
+- **Founder (2026-11-23)**: recruiters judge level by the highest league and division played and by the national team.
+- Change: "Level played" card at the top of the applicant review and on a player's profile for recruiters, and one line per applicant in the list (`lib/playerLevel.ts`). Not measured yet.
+- Also seen in the walk, not changed: the Hockia AI check screen does not list the EU passport, the specialist skills or which fields are a must-have, so a club cannot confirm its hard requirements were understood; the role form offers four broad positions only.
+
 ### Brand promotion, production analytics and code read, 2026-11-21
 Source: read-only aggregate queries (brands, offers, products, conversations, events, Hockia AI questions, feedback); test accounts and hidden profiles excluded. Proposal: `proposals/brand-promotion.md`.
 - **No brand has used the promotion tool**: 9 brands, 0 offers ever created, 3 products from 2 brands, 0 updates, 0 ambassadors.
@@ -70,3 +79,4 @@ Instrumentation for gaps 1–8 shipped to staging on 2026-10-19 (PR #383); produ
 | 2026-10-19 | Instrumentation | Home gaps 1–8 (PR #383) | On staging; first read ≈ 2 Nov 2026 |
 | 2026-11-21 | Analytics (aggregate) | Recruiter outcomes, answers and satisfaction signals | Evidence above; proposal `proposals/recruiter-satisfaction.md` |
 | 2026-11-21 | Analytics (aggregate) and code read | Brand promotion: supply, surfaces, contact, moments | Evidence above; proposal `proposals/brand-promotion.md` |
+| 2026-11-23 | Member message (1 recruiter), simulator walk, analytics (aggregate) | How a recruiter reads a player's level; posting an opportunity as a club | Evidence above; Level played card |
