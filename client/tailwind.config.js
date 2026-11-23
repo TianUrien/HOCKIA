@@ -259,6 +259,15 @@ export default {
         panel: `${r.sheet}px`,
       },
       keyframes: {
+        // Tailwind's own `spin` animates `transform: rotate()`, which replaces
+        // the translate that centres a spinner (`-translate-x-1/2` and
+        // `-translate-y-1/2`): the circle jumped out of place and orbited
+        // while loading (founder report 2026-11-23, the Reload button). This
+        // version keeps the element's translate and rotates on top of it.
+        spin: {
+          from: { transform: 'translate(var(--tw-translate-x, 0), var(--tw-translate-y, 0)) rotate(0deg)' },
+          to: { transform: 'translate(var(--tw-translate-x, 0), var(--tw-translate-y, 0)) rotate(360deg)' },
+        },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
