@@ -7,8 +7,6 @@ import { SearchOverlay } from '@/components/search/SearchOverlay'
 import { PullToRefresh } from '@/components/PullToRefresh'
 import { HomeV1Feed } from '@/components/home/v1/HomeV1Feed'
 import { PostEntry } from '@/components/home/v1/PostEntry'
-import { GoalCard } from '@/components/home/goal/GoalCard'
-import { GearRail } from '@/components/offers/GearRail'
 import { CountryConfirmCard } from '@/components/home/CountryConfirmCard'
 import { BrandHomeSummary } from '@/components/home/BrandHomeSummary'
 import { SigningPromptSheet } from '@/components/home/v1/SigningPromptSheet'
@@ -28,8 +26,8 @@ const PostComposerModal = lazy(() => import('@/components/home/PostComposerModal
  *   3 Posts, newest first (get_home_feed_v2 with p_posts_only)
  *   4 One row of "Opportunities for you" after the 2nd post
  *   5 The end says so and offers to post
- * The Next step card and the rows of people left Home; /pulse keeps "Your
- * activity" because old native apps link to it.
+ * The Next step card, the rows of people, the goal card and the gear rail
+ * left Home; /pulse keeps "Your activity" because old native apps link to it.
  */
 export default function HomePage() {
   const t = useHomeT()
@@ -83,14 +81,6 @@ export default function HomePage() {
                 <CountryConfirmCard />
                 {/* Brands: their own results first, the feed below (2026-11-07). */}
                 <BrandHomeSummary />
-              </>
-            }
-            afterFirst={
-              <>
-                {/* Goal, then gear and deals (Figma YG G1 / HR1, founder 2026-10-25),
-                    after the first post. */}
-                <GoalCard />
-                <GearRail />
               </>
             }
           />
