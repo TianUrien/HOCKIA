@@ -102,8 +102,9 @@ test.describe('@smoke home feed player', () => {
     // Grant clipboard permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
 
-    // Look for any Share button on a post card
-    const shareButton = page.getByRole('button', { name: /share/i }).first()
+    // The Share button of a post card ("Share" or "Share post"), not the
+    // post entry at the top of Home ("Share something from your hockey").
+    const shareButton = page.getByRole('button', { name: /^share( post)?$/i }).first()
     const hasShareButton = await shareButton.isVisible({ timeout: 10000 }).catch(() => false)
 
     if (hasShareButton) {
