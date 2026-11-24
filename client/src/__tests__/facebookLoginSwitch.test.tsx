@@ -57,4 +57,31 @@ describe('useFacebookLoginEnabled', () => {
     renderHook(() => useFacebookLoginEnabled())
     await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1))
   })
+
+  it('remembers the last answer, so the button is there on the first paint of the next visit', async () => {
+    rpc.mockResolvedValue({ data: true, error: null })
+    const first = renderHook(() => useFacebookLoginEnabled())
+    await waitFor(() => expect(first.result.current).toBe(true))
+    expect(localStorage.getItem('hockia.facebookLoginEnabled')).toBe('1')
+
+    // Next page load: the request has not answered yet.
+    resetFacebookLoginSwitch()
+    localStorage.setItem('hockia.facebookLoginEnabled', '1')
+    let answer: (v: { data: boolean; error: null }) => void = () => {}
+    rpc.mockReturnValue(new Promise((resolve) => { answer = resolve }))
+    const next = renderHook(() => useFacebookLoginEnabled())
+    expect(next.result.current).toBe(true)
+    // Let the request finish so nothing is left pending for the next test.
+    answer({ data: true, error: null })
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(2))
+  })
+
+  it('a remembered "on" is corrected when the switch has been turned off', async () => {
+    localStorage.setItem('hockia.facebookLoginEnabled', '1')
+    rpc.mockResolvedValue({ data: false, error: null })
+    const { result } = renderHook(() => useFacebookLoginEnabled())
+    expect(result.current).toBe(true)
+    await waitFor(() => expect(result.current).toBe(false), { timeout: 5000 })
+    expect(localStorage.getItem('hockia.facebookLoginEnabled')).toBe('0')
+  })
 })

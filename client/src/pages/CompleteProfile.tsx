@@ -37,6 +37,7 @@ import { useOnboardingT } from '@/i18n/ns/onboarding'
 import ChooseRoleScreen from '@/components/onboarding/ChooseRoleScreen'
 import { SetupSignOut } from '@/components/onboarding/SetupSignOut'
 import { Button as UiButton } from '@/components/ui/Button'
+import { PageSpinner } from '@/components/ui/PageSpinner'
 import {
   type PlayingCategory,
   type CoachUmpireCategory,
@@ -1117,7 +1118,7 @@ export default function CompleteProfile() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hockia-primary mb-4"></div>
+          <PageSpinner className="mb-4 inline-block" />
           <p className="text-gray-600">{t('complete.status.loading')}</p>
         </div>
       </div>

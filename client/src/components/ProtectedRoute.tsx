@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger'
 import { IS_NATIVE } from '@/lib/isNative'
 import NativeLaunchSplash from '@/components/NativeLaunchSplash'
 import { tCommon } from '@/i18n/ns/common'
+import { PageSpinner } from '@/components/ui/PageSpinner'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -121,9 +122,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (IS_NATIVE) return <NativeLaunchSplash />
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hockia-primary mb-4"></div>
-          <p className="text-gray-600">{tCommon('skeletons.page')}</p>
+        {/* Same circle and text as App.tsx's PageLoader: the two paint one
+            after the other on a reload, and different ones read as a jump. */}
+        <div className="flex flex-col items-center gap-4">
+          <PageSpinner />
+          <p className="text-gray-600 text-sm">{tCommon('skeletons.page')}</p>
         </div>
       </div>
     )

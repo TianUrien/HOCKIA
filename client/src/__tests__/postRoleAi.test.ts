@@ -18,10 +18,12 @@ describe('Club speed CS2 · Start with Hockia AI', () => {
     expect(d.description).toContain('left back')
   })
 
-  it('summarises the four parts, with Not set · optional and Needed', () => {
-    const [role, offer, where, about] = checkSummary(applyAiDraft(base, ai), { fromClub: true })
+  it('summarises the five parts, with Not set · optional and Needed', () => {
+    const [role, who, offer, where, about] = checkSummary(applyAiDraft(base, ai), { fromClub: true })
     expect(role.lines[0]).toBe("Defender, Left back, Men's team")
-    expect(role.optionalMissing).toEqual(['level'])
+    expect(role.optionalMissing).toEqual([])
+    expect(who.lines).toEqual([])
+    expect(who.optionalMissing).toEqual(['level', 'skills'])
     expect(role.neededMissing).toEqual([])
     expect(offer.lines).toEqual(['Starts 1 Jan 2027, Full season', 'Paid, Housing'])
     expect(where.lines[0]).toMatch(/from your club profile$/)
@@ -29,8 +31,24 @@ describe('Club speed CS2 · Start with Hockia AI', () => {
 
     const bare = checkSummary(applyAiDraft(base, { ...ai, position: null, team: null, pay: null, duration: null, startDate: null, package: [], description: '' }), { fromClub: true })
     expect(bare[0].neededMissing).toEqual(['position', 'team'])
-    expect(bare[1].optionalMissing).toEqual(['start', 'length', 'pay'])
-    expect(bare[3].optionalMissing).toEqual(['description'])
+    expect(bare[2].optionalMissing).toEqual(['start', 'length', 'pay'])
+    expect(bare[4].optionalMissing).toEqual(['description'])
+  })
+
+  it('says back who the club wants: level, skills, EU passport and what blocks a candidate', () => {
+    const d = { ...applyAiDraft(base, { ...ai, level: 'elite', skills: ['drag_flicker'], euPassport: true }), levelRequired: true }
+    const who = checkSummary(d, { fromClub: true })[1]
+    expect(who.key).toBe('who')
+    expect(who.lines[0]).toMatch(/^Level: /)
+    expect(who.lines[1]).toMatch(/^Skills: /)
+    expect(who.lines[2]).toBe('EU passport required')
+    expect(who.optionalMissing).toEqual([])
+    expect(who.note).toContain('Must have:')
+    expect(who.note).toContain('EU passport')
+
+    const coach = checkSummary(applyAiDraft(base, { ...ai, type: 'coach', position: 'head_coach', euPassport: true }), { fromClub: true })[1]
+    expect(coach.lines).toEqual(['EU passport required'])
+    expect(coach.optionalMissing).toEqual([])
   })
 
   it('a coach draft drops player-only fields', () => {

@@ -9,6 +9,7 @@ import { oauthErrorMessage, noEmailMessage, isAccountUnavailable } from '@/lib/o
 import { detectInAppBrowser, getExternalBrowserInstructions } from '@/lib/inAppBrowser'
 import { consumeCarriedRedirect } from '@/lib/redirectIntentCarry'
 import { tAuth, useAuthT } from '@/i18n/ns/auth'
+import { PageSpinner } from '@/components/ui/PageSpinner'
 
 /**
  * AuthCallback - Handles email verification redirect from Supabase
@@ -564,7 +565,7 @@ export default function AuthCallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hockia-primary mb-4"></div>
+        <PageSpinner className="mb-4 inline-block" />
         <p className="text-gray-600">{status}</p>
         
         {/* Show hint if in-app browser detected */}

@@ -668,7 +668,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                       <span className="flex-1 text-caption font-semibold uppercase tracking-[0.48px] text-ink-2">{sec.label}</span>
                       <button
                         type="button"
-                        onClick={() => { setProblem(null); if (sec.key === 'role') setStep(1); else if (sec.key === 'offer') setStep(2); else if (sec.key === 'where') { setWhereText(''); setWhereOpen(true) } else setAboutOpen((v) => !v) }}
+                        onClick={() => { setProblem(null); if (sec.key === 'role' || sec.key === 'who') setStep(1); else if (sec.key === 'offer') setStep(2); else if (sec.key === 'where') { setWhereText(''); setWhereOpen(true) } else setAboutOpen((v) => !v) }}
                         className="-my-2 flex min-h-11 items-center pl-3 text-[14px] font-semibold text-brand-primary"
                         aria-label={t('postRole.check.editAria', { section: sec.label.toLowerCase() })}
                       >
@@ -678,6 +678,7 @@ export default function PostRoleScreen({ draftId }: Props) {
                     {sec.key === 'about' && aboutOpen ? null : sec.lines.map((line, i) => (
                       <p key={i} className={cn('text-body text-ink-1', sec.key === 'about' && 'line-clamp-3')}>{line}</p>
                     ))}
+                    {sec.note && <p className="text-secondary text-ink-2" data-testid="ai-summary-who-note">{sec.note}</p>}
                     {sec.neededMissing.length > 0 && <p className="text-secondary font-semibold text-status-warning">{t('postRole.check.needed', { items: sec.neededMissing.join(', ') })}</p>}
                     {sec.optionalMissing.length > 0 && !(sec.key === 'about' && aboutOpen) && <p className="text-secondary text-ink-3">{t('postRole.check.optionalMissing', { items: sec.optionalMissing.join(', ') })}</p>}
                   </div>

@@ -8,6 +8,7 @@
 import { Navigate } from 'react-router-dom'
 import { useAdmin } from '../hooks/useAdmin'
 import { logger } from '@/lib/logger'
+import { PageSpinner } from '@/components/ui/PageSpinner'
 
 interface AdminGuardProps {
   children: React.ReactNode
@@ -21,7 +22,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
+          <PageSpinner className="mb-4 inline-block" />
           <p className="text-gray-600">Verifying admin access...</p>
         </div>
       </div>
