@@ -97,7 +97,6 @@ vi.mock('@/hooks/useScopedMatches', () => ({ useScopedMatches: () => ({ loading:
 import OpportunitiesPage from '@/pages/OpportunitiesPage'
 import CoachMyRoles from '@/components/opportunities/CoachMyRoles'
 import { CoachRolesEmptyState } from '@/components/opportunities/CoachRolesEmptyState'
-import { YourWeekCard } from '@/components/home/YourWeekCard'
 import { queryClient } from '@/lib/queryClient'
 import { buildCoachKeyFacts, NOT_GIVEN } from '@/lib/keyFacts'
 import {
@@ -350,37 +349,6 @@ describe('Opportunities · My opportunities (coach who recruits)', () => {
     wrap(<OpportunitiesPage />, '/opportunities?view=mine')
     await waitFor(() => expect(screen.getAllByTestId('role-card')).toHaveLength(1))
     expect(screen.queryByTestId('coach-my-roles')).toBeNull()
-  })
-})
-
-// ── Home · Your week ────────────────────────────────────────────────────────
-describe('Home · Your week for a coach', () => {
-  const labels = (c: HTMLElement) => Array.from(c.querySelectorAll('.text-caption')).map((n) => n.textContent)
-
-  it('a coach who recruits gets the club version, linking to My opportunities', () => {
-    authState = { user: { id: 'coach-1' }, profile: coachProfile({ coach_recruits_for_team: true }) }
-    const { container } = render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(labels(container)).toEqual(['to review', 'profile views', 'open opportunity'])
-    expect(screen.getByTestId('your-week-0').getAttribute('href')).toBe('/opportunities?view=mine')
-    expect(screen.getByTestId('your-week-0').querySelector('.text-figure')?.className).toContain('text-hockia-primary')
-  })
-
-  it('a coach who does not recruit gets the player version, whatever the stored mode', () => {
-    pulseMode = 'recruit'
-    const { container } = render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(labels(container)).toEqual(['profile views', 'opportunities for you', 'club replies'])
-  })
-
-  it('a recruiting coach on "find" mode, or on desktop, gets the player version', () => {
-    authState = { user: { id: 'coach-1' }, profile: coachProfile({ coach_recruits_for_team: true }) }
-    pulseMode = 'find'
-    const first = render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(labels(first.container)).toEqual(['profile views', 'opportunities for you', 'club replies'])
-    first.unmount()
-    pulseMode = 'recruit'
-    phone = false
-    const second = render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(labels(second.container)).toEqual(['opportunities for you', 'profile views', 'club replies'])
   })
 })
 

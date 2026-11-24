@@ -55,7 +55,6 @@ vi.mock('@/hooks/useScopedMatches', () => ({ useScopedMatches: () => ({ loading:
 
 import DiscoverResultCard from '@/components/DiscoverResultCard'
 import { OpportunitiesForYou } from '@/components/home/pulse/OpportunitiesForYou'
-import { YourWeekCard } from '@/components/home/YourWeekCard'
 
 const result = {
   id: 'p9', full_name: 'Jordan Hall', username: null, avatar_url: null, role: 'player',
@@ -116,22 +115,5 @@ describe('Pulse OpportunitiesForYou — no "Matched" chip', () => {
     expect(screen.queryByText(/matched/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/91/)).not.toBeInTheDocument()
     expect(screen.queryByText(/%/)).not.toBeInTheDocument()
-  })
-})
-
-describe('Home YourWeekCard — "opportunities for you"', () => {
-  it('a player sees "opportunities for you", never "match"', () => {
-    setViewer('player')
-    oppsForYou.value.mode = 'matched'
-    render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(screen.getByText('opportunities for you')).toBeInTheDocument()
-    expect(screen.queryByText(/match/i)).not.toBeInTheDocument()
-  })
-
-  it('a coach sees the same wording', () => {
-    setViewer('coach')
-    render(<MemoryRouter><YourWeekCard /></MemoryRouter>)
-    expect(screen.getByText('opportunities for you')).toBeInTheDocument()
-    expect(screen.queryByText(/match/i)).not.toBeInTheDocument()
   })
 })

@@ -28,7 +28,6 @@ vi.mock('@/components', () => ({
   Avatar: ({ initials }: { initials?: string }) => <div data-testid="avatar">{initials}</div>,
   AvatarMenu: () => null,
   AvailabilityPill: () => <span data-testid="availability-pill" />,
-  DashboardMenu: () => <div data-testid="dashboard-menu" />,
   EditProfileModal: () => <div data-testid="edit-profile-modal" />,
   FriendsTab: () => <div data-testid="friends-tab">Friends tab</div>,
   FriendshipButton: () => <button data-testid="friendship-button" type="button">Friendship</button>,
