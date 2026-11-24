@@ -11,6 +11,8 @@ Home is a feed of posts, in the style of the Instagram or LinkedIn home: one pos
 - Home is a feed of posts by people, Instagram or LinkedIn style.
 - **Only posts.** Highlight videos and photos added to a profile do not come back to Home; the 2026-11-10 ruling stands. Home shows what a member chose to post.
 - **The founder accepts the low-content risk** knowing the numbers below, and will push posting himself in the first days after launch.
+- **One compact row of opportunities stays** in Home, between posts. The "next step" card and the rows of people leave Home.
+- **Design in Figma first**, then build. Nothing is built until the founder has seen the design.
 - The weekly "N joined this week" card shows once, for the current week only (shipped to staging the same day).
 
 ## What Home is today (production)
@@ -31,7 +33,7 @@ A feed of posts needs posts. Members already produce content, but they put it on
 
 ## Proposal
 
-1. **Home shows posts only.** A post is a photo, a video or text from a member, with name, role and club, likes and comments. Automatic cards (new members, open to play, opportunities) leave the feed; they already live in Community and Opportunities.
+1. **Home shows posts only**, plus one compact row of opportunities. A post is a photo, a video or text from a member, with name, role and club, likes and comments. The other automatic cards (new members, open to play, opportunity cards one by one, the "next step" card, rows of people) leave Home; they already live in Community and Opportunities.
 2. **Posting is one obvious step.** A clear "Post" entry at the top of Home, opening straight to the camera roll, with the caption optional.
 3. **Each role gets a reason to post, in one tap.** A club that signs a player, opens an opportunity or wants to share a result gets "Post this" at that moment, with the post drafted from facts it already entered. Same for a coach. Nothing is posted without the tap.
 4. **Order: newest first**, across all of HOCKIA. No ranking until there is enough volume for ranking to matter.
@@ -60,8 +62,7 @@ A feed of posts needs posts. Members already produce content, but they put it on
 
 ## Open questions for the founder
 
-1. Do opportunities leave the Home feed completely, or stay as one compact rail?
-2. Which role should get the one-tap "Post this" first: clubs (signings and new opportunities) or players (a new highlight)?
+1. Which role should get the one-tap "Post this" first: clubs (signings and new opportunities) or players (a new highlight)?
 
 ## Order of work, if approved
 
