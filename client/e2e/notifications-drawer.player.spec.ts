@@ -15,7 +15,7 @@ test.describe('notifications drawer probe', () => {
     test.skip(isMobile, 'phone has no bell: covered by the Activity test below')
 
     await page.goto('/home')
-    await expect(page.getByTestId('home-new-post')).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByTestId('home-post-entry')).toBeVisible({ timeout: 20_000 })
 
     // Drawer must NOT be open on load.
     await expect(page.getByRole('dialog')).toHaveCount(0)

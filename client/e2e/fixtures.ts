@@ -285,9 +285,9 @@ export class HomeFeedPage extends HockiaPage {
     await this.waitForLoadingToComplete()
   }
 
-  /** Home v1: "+" New post in the phone header, "New post" beside search on desktop. */
+  /** Home: the post entry under the header (every width); "+" in the phone header also opens the composer. */
   newPostButton() {
-    return this.page.locator('[data-testid="header-new-post"]:visible, button:has-text("New post"):visible').first()
+    return this.page.locator('[data-testid="home-post-entry-button"]:visible, [data-testid="header-new-post"]:visible').first()
   }
 
   async expectPostComposerVisible() {
