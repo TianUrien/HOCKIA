@@ -1,33 +1,25 @@
-import { Check } from 'lucide-react'
-import { useAuthStore } from '@/lib/auth'
 import { HOME_V1_MODULES, recordModuleImpression, useImpressionOnce } from '@/lib/homeInstrumentation'
-import { PeopleRow } from './PeopleRow'
-import { RolesRail } from './RolesRail'
+import { Button } from '@/components/ui/Button'
 import { useHomeT } from '@/i18n/ns/home'
 
 /**
- * End of feed (Figma H13 88:688): "You're all caught up" + People you may
- * know (friends of friends, then newest; same deck on tap) + Roles for you
- * for players / open coaches — clubs get Available now instead.
+ * End of feed (Figma New Hockia 2 Draft, HS S1 / S3; founder 2026-11-24).
+ * Home is a feed of posts: when it runs out it says so and offers to post.
+ * No rows of people or second rail as filler. `empty` is the same block when
+ * there is no post at all.
  */
-export function EndOfFeed() {
+export function EndOfFeed({ empty = false, onCompose }: { empty?: boolean; onCompose?: () => void }) {
   const t = useHomeT()
-  const role = useAuthStore((s) => s.profile?.role ?? null)
-  const clubSide = role === 'club'
   const impressionRef = useImpressionOnce(() => recordModuleImpression(HOME_V1_MODULES.endOfFeed.id, HOME_V1_MODULES.endOfFeed.position))
   return (
-    <section ref={impressionRef} className="pb-6" data-testid="home-end-of-feed">
-      <div className="flex flex-col items-center gap-1 px-8 pb-6 pt-7 text-center">
-        <span className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-hockia-soft">
-          <Check className="h-6 w-6 text-hockia-primary" strokeWidth={2} aria-hidden="true" />
-        </span>
-        <h2 className="text-body font-semibold text-ink-1">{t('endOfFeed.title')}</h2>
-        <p className="text-secondary text-ink-2">{t('endOfFeed.body')}</p>
-      </div>
-      <PeopleRow kind="pymk" />
-      {clubSide
-        ? <PeopleRow kind="available" module={HOME_V1_MODULES.endPeopleAvailable} />
-        : <RolesRail className="flex flex-col gap-2 pb-4" module={HOME_V1_MODULES.endRolesRail} />}
+    <section ref={impressionRef} className="flex flex-col items-center gap-1 px-8 pb-8 pt-9 text-center" data-testid={empty ? 'home-empty-feed' : 'home-end-of-feed'}>
+      <h2 className="text-body font-semibold text-ink-1">{empty ? t('endOfFeed.emptyTitle') : t('endOfFeed.title')}</h2>
+      <p className="text-secondary text-ink-2">{empty ? t('endOfFeed.emptyBody') : t('endOfFeed.body')}</p>
+      {onCompose && (
+        <Button className="mt-3" onClick={onCompose} data-testid="home-end-post">
+          {t('endOfFeed.post')}
+        </Button>
+      )}
     </section>
   )
 }

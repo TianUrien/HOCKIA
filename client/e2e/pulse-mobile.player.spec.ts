@@ -39,7 +39,7 @@ test.describe('Home + activity @ mobile viewport', () => {
     // Home: wait for the feed so the horizontal rails (the most
     // overflow-prone elements) are mounted before measuring.
     await page.goto('/home')
-    await expect(page.getByTestId('home-next-step')).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByTestId('home-post-entry')).toBeVisible({ timeout: 20_000 })
     await expect(page.getByTestId('user-post-card').first()).toBeVisible({ timeout: 30_000 })
     await page.waitForLoadState('networkidle').catch(() => {})
 

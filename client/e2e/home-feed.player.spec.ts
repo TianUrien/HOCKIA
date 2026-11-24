@@ -6,8 +6,8 @@ test.describe('@smoke home feed player', () => {
 
     // Home v1: the New post entry ("+" in the phone header) is visible.
     await homeFeedPage.expectPostComposerVisible()
-    // …and the Next step card leads the screen.
-    await expect(page.getByTestId('home-next-step')).toBeVisible({ timeout: 10000 })
+    // …and the post entry leads the screen (Home is a feed of posts).
+    await expect(page.getByTestId('home-post-entry')).toBeVisible({ timeout: 10000 })
   })
 
   test('player can open and close post composer modal', async ({ page, homeFeedPage }) => {
@@ -102,8 +102,9 @@ test.describe('@smoke home feed player', () => {
     // Grant clipboard permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
 
-    // Look for any Share button on a post card
-    const shareButton = page.getByRole('button', { name: /share/i }).first()
+    // The Share button of a post card ("Share" or "Share post"), not the
+    // post entry at the top of Home ("Share something from your hockey").
+    const shareButton = page.getByRole('button', { name: /^share( post)?$/i }).first()
     const hasShareButton = await shareButton.isVisible({ timeout: 10000 }).catch(() => false)
 
     if (hasShareButton) {

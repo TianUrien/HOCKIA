@@ -13,6 +13,8 @@ import type { ClubMember, ClubOpenRole } from '@/hooks/useClubProfileScrollData'
 let openRoles: ClubOpenRole[] = []
 let members: ClubMember[] = []
 
+// The goal card has its own tests (memberGoals); here it only needs to mount.
+vi.mock('@/components/home/goal/GoalCard', () => ({ GoalCard: () => null }))
 vi.mock('@/hooks/useClubProfileScrollData', () => ({
   useClubProfileScrollData: () => ({
     loading: false, photos: [], members, memberCount: members.length, openRoles, posts: [], postCount: 0,

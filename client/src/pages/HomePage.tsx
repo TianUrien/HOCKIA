@@ -6,17 +6,12 @@ import { FullMatchPrivacyNotice } from '@/components/home/FullMatchPrivacyNotice
 import { SearchOverlay } from '@/components/search/SearchOverlay'
 import { PullToRefresh } from '@/components/PullToRefresh'
 import { HomeV1Feed } from '@/components/home/v1/HomeV1Feed'
-import { NextStepCard } from '@/components/home/v1/NextStepCard'
-import { PeopleRow } from '@/components/home/v1/PeopleRow'
-import { GoalCard } from '@/components/home/goal/GoalCard'
-import { GearRail } from '@/components/offers/GearRail'
+import { PostEntry } from '@/components/home/v1/PostEntry'
 import { CountryConfirmCard } from '@/components/home/CountryConfirmCard'
 import { BrandHomeSummary } from '@/components/home/BrandHomeSummary'
 import { SigningPromptSheet } from '@/components/home/v1/SigningPromptSheet'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { useCoachPulseMode } from '@/hooks/useCoachPulseMode'
-import { useAuthStore } from '@/lib/auth'
 import type { HomeFeedItem } from '@/types/homeFeed'
 import { useHomeT } from '@/i18n/ns/home'
 
@@ -24,15 +19,15 @@ import { useHomeT } from '@/i18n/ns/home'
 const PostComposerModal = lazy(() => import('@/components/home/PostComposerModal').then((m) => ({ default: m.PostComposerModal })))
 
 /**
- * Home v1 (Figma t24oVt… page 02; spec 65:329): what to do today (Next step)
- * + who's new / available + a visual feed. Pulse is merged in; /pulse stays as
- * "Your activity" (H3) because old native apps link to it.
- *   1 Header: wordmark · "+" New post · Search
- *   2 Next step: one card, "1 of N" dots
- *   3 Feed (get_home_feed_v2): the first item is on the first screen (2026-11-18)
- *   4 After the 1st item: goal, gear and deals, people ("New in the community";
- *     clubs + recruiting coaches get "Available now")
- *   5 "Roles for you" after the 2nd item
+ * Home (Figma New Hockia 2 Draft, page 02, section HS; founder 2026-11-24):
+ * a feed of posts by members, Instagram or LinkedIn style.
+ *   1 Header: wordmark, "+" New post, Search
+ *   2 Post entry: your photo and "Share something from your hockey"
+ *   3 Posts, newest first (get_home_feed_v2 with p_posts_only)
+ *   4 One row of "Opportunities for you" after the 2nd post
+ *   5 The end says so and offers to post
+ * The Next step card, the rows of people, the goal card and the gear rail
+ * left Home; /pulse keeps "Your activity" because old native apps link to it.
  */
 export default function HomePage() {
   const t = useHomeT()
@@ -42,9 +37,6 @@ export default function HomePage() {
   const queryClient = useQueryClient()
   const prependItemRef = useRef<((item: HomeFeedItem) => void) | null>(null)
   const [composing, setComposing] = useState(false)
-  const role = useAuthStore((s) => s.profile?.role ?? null)
-  const [coachMode] = useCoachPulseMode()
-  const clubSide = role === 'club' || (role === 'coach' && coachMode === 'recruit')
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([
@@ -67,7 +59,7 @@ export default function HomePage() {
         <main className="mx-auto max-w-2xl pt-under-header pb-24 md:pb-10">
           <div className="hidden px-4 pt-3 lg:flex lg:items-center lg:gap-3">
             <SearchOverlay triggerClassName="flex-1" />
-            {/* Tonal, not a second Primary: the Next step card carries the
+            {/* Tonal, not a second Primary: the end of the feed carries the
                 screen's one Primary (design audit B6). */}
             <button type="button" onClick={openComposer} className="flex h-11 shrink-0 items-center rounded-full bg-brand-soft px-5 text-[15px] font-semibold text-brand-primary transition-colors hover:bg-brand-soft-hover" data-testid="home-new-post">
               {t('page.newPost')}
@@ -80,24 +72,15 @@ export default function HomePage() {
 
           <HomeV1Feed
             prependItemRef={prependItemRef}
+            onCompose={openComposer}
             header={
               <>
-                {/* Only what the member must act on stays above the feed, so a
-                    post is on the first screen (founder 2026-11-18). */}
+                {/* Posting is the first thing Home offers (founder 2026-11-24). */}
+                <PostEntry onCompose={openComposer} />
                 {/* No country on the profile: ask first, everything below picks by place (2026-11-07). */}
                 <CountryConfirmCard />
                 {/* Brands: their own results first, the feed below (2026-11-07). */}
                 <BrandHomeSummary />
-                <NextStepCard onCompose={openComposer} />
-              </>
-            }
-            afterFirst={
-              <>
-                {/* Goal, then gear and deals, then people (Figma YG G1 / HR1, founder
-                    2026-10-25): same order, now after the first feed item. */}
-                <GoalCard />
-                <GearRail />
-                <PeopleRow kind={clubSide ? 'available' : 'new'} />
               </>
             }
           />

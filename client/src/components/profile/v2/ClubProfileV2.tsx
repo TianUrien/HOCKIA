@@ -29,6 +29,7 @@ import { ClubHero } from './ClubHero'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
 import { OwnerButtons, PrimaryCard, RecruitingCard } from './OwnerArea'
+import { GoalCard } from '@/components/home/goal/GoalCard'
 import { Trans } from 'react-i18next'
 import { useWorldT } from '@/i18n/ns/world'
 import { type ActionBarButton } from './ProfileActionBar'
@@ -252,6 +253,8 @@ export default function ClubProfileV2(props: ClubProfileV2Props) {
             onPostRole={props.onPostRole}
             testId="club-recruiting-card"
           />
+          {/* Only you see it. Lives here since Home became a feed of posts (founder 2026-11-24). */}
+          <GoalCard />
           <div className="px-4">
             <button type="button" onClick={() => setViewers(true)} className="flex w-full items-center gap-3 rounded-[16px] border border-line px-3.5 py-3 text-left" data-testid="club-views-row">
               <span className="text-[22px] font-bold leading-[27px] tracking-[-0.13px] text-ink-1 tabular-nums">{views}</span>
