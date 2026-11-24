@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ChevronRight, Lock, Target } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logger } from '@/lib/logger'
 import { hapticLight } from '@/lib/haptics'
@@ -15,8 +16,8 @@ import {
   GOAL_OPTIONS,
   GOAL_TEXT_MAX,
   goalLater,
+  goalParts,
   goalRows,
-  goalTitle,
   isGoalRole,
   saveMyGoal,
   trackGoal,
@@ -26,8 +27,8 @@ import { useHomeT } from '@/i18n/ns/home'
 import { countryLabel } from '@/i18n/countryNames'
 
 /**
- * "What's your goal?" at the top of today's Home (Figma page 02, YG: G1–G5;
- * founder 2026-10-25). Ask card until the member answers or taps Later twice;
+ * "What's your goal?" (Figma page 02, YG: G1–G5; founder 2026-10-25). Since
+ * 2026-11-24 it lives in the owner-only area of the member's own profile. Ask card until the member answers or taps Later twice;
  * then the set card with up to two rows from real data. Only the member ever
  * sees their goal.
  */
@@ -59,33 +60,63 @@ export function GoalCard() {
 
   const c = profile?.base_country_id != null ? getCountryById(profile.base_country_id) : undefined
   const rows = goalRows(role, goal, actions.data ?? {}, c ? countryLabel(c.common_name || c.name) : null)
-  return <SetCard role={role} title={goalTitle(role, goal)} rows={rows} onChange={() => setEditing(true)} />
+  return <SetCard role={role} parts={goalParts(role, goal)} rows={rows} onChange={() => setEditing(true)} />
 }
 
-function SetCard({ role, title, rows, onChange }: { role: GoalRole; title: string; rows: ReturnType<typeof goalRows>; onChange: () => void }) {
+/**
+ * The goal once set (founder 2026-11-24: "more elegant, more professional;
+ * the text is very big and cannot be read in full"). A quiet white card with
+ * a hairline: a small header, each picked goal as its own soft chip, the
+ * member's own words in full at reading size, then the actions as plain
+ * rows. Nothing is truncated.
+ */
+function SetCard({ role, parts, rows, onChange }: { role: GoalRole; parts: ReturnType<typeof goalParts>; rows: ReturnType<typeof goalRows>; onChange: () => void }) {
   const t = useHomeT()
   const navigate = useNavigate()
   return (
     <section className="px-4 pb-3 pt-2" aria-label={t('goal.set.ariaLabel')} data-testid="home-goal-set">
-      <div className="rounded-[24px] bg-brand-soft p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-caption font-semibold uppercase tracking-[0.06em] text-brand-primary">{t('goal.set.eyebrow')}</p>
-          <button type="button" onClick={onChange} className="-my-2 flex h-11 items-center text-row font-semibold text-brand-primary" data-testid="home-goal-change">{t('goal.set.change')}</button>
+      <div className="rounded-[20px] border border-line bg-white shadow-[0_1px_2px_rgba(15,15,20,0.04)]">
+        <div className="flex items-center gap-2.5 pl-4 pr-2 pt-2">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-primary">
+            <Target className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <h2 className="text-row font-semibold text-ink-1">{t('goal.set.eyebrow')}</h2>
+          </span>
+          <button type="button" onClick={onChange} className="flex h-11 shrink-0 items-center px-2 text-secondary font-semibold text-brand-primary" data-testid="home-goal-change">{t('goal.set.change')}</button>
         </div>
-        {/* Two lines, so the goals just chosen read in full (design review 2026-10-25). */}
-        <p className="mt-1 line-clamp-2 text-title text-ink-1">{title}</p>
+
+        <div className="flex flex-col gap-3 px-4 pb-4">
+          {parts.labels.length > 0 && (
+            <ul className="flex flex-wrap gap-1.5" data-testid="home-goal-picks">
+              {parts.labels.map((label) => (
+                <li key={label} className="rounded-full bg-brand-soft px-3 py-1.5 text-secondary font-medium text-brand-primary">{label}</li>
+              ))}
+            </ul>
+          )}
+          {parts.other && (
+            <p className="whitespace-pre-line break-words border-l-2 border-brand-soft pl-3 text-row text-ink-1" data-testid="home-goal-own-words">{parts.other}</p>
+          )}
+          <p className="flex items-center gap-1 text-caption text-ink-3">
+            <Lock className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden="true" /> {t('goal.other.privacy')}
+          </p>
+        </div>
+
         {rows.length > 0 ? (
-          <div className="mt-3 space-y-2">
+          <div className="divide-y divide-line border-t border-line">
             {rows.map((r) => (
               <button
                 key={r.key}
                 type="button"
                 onClick={() => { trackGoal('goal_action', { goal: r.goal, action: r.key, role }); navigate(r.to) }}
-                className="flex w-full items-center gap-3 rounded-[16px] bg-white px-4 py-3 text-left"
+                className="flex min-h-[52px] w-full items-center gap-3 px-4 py-3 text-left active:bg-surface-subtle"
                 data-testid={`home-goal-row-${r.key}`}
               >
                 <span className="min-w-0 flex-1 text-row text-ink-2">{r.text}</span>
-                <span className="shrink-0 text-row font-semibold text-brand-primary">{r.action}</span>
+                <span className="flex shrink-0 items-center gap-0.5 text-secondary font-semibold text-brand-primary">
+                  {r.action}
+                  <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                </span>
               </button>
             ))}
           </div>
@@ -151,14 +182,18 @@ function AskCard({ role, initial, changing, onDone, onLater, onCancel }: AskCard
   }
 
   const chip = (selected: boolean) =>
-    cn('h-11 rounded-full border px-4 text-row', selected ? 'border-brand-primary bg-brand-soft font-semibold text-brand-primary' : 'border-line bg-white text-ink-2')
+    cn('h-11 rounded-full border px-4 text-row', selected ? 'border-transparent bg-brand-soft font-semibold text-brand-primary' : 'border-line bg-white text-ink-1')
 
   return (
     <section className="px-4 pb-3 pt-2" aria-label={t('goal.ask.ariaLabel')} data-testid="home-goal-ask">
-      <div className="rounded-[24px] border border-line bg-white p-4 shadow-[0_1px_2px_rgba(15,15,20,0.04)]">
-        <p className="text-caption font-semibold uppercase tracking-[0.06em] text-brand-primary">{t('goal.ask.eyebrow')}</p>
-        <h2 className="mt-1 text-title text-ink-1">{t('goal.ask.title')}</h2>
-        <p className="mt-1 text-row text-ink-2">{t('goal.ask.body')}</p>
+      <div className="rounded-[20px] border border-line bg-white p-4 shadow-[0_1px_2px_rgba(15,15,20,0.04)]">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-primary">
+            <Target className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+          </span>
+          <h2 className="text-body font-semibold text-ink-1">{t('goal.ask.title')}</h2>
+        </div>
+        <p className="mt-2 text-secondary text-ink-2">{t('goal.ask.body')}</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {GOAL_OPTIONS[role].map((o) => (
             <button key={o.key} type="button" aria-pressed={picked.includes(o.key)} onClick={() => toggle(o.key)} className={chip(picked.includes(o.key))} data-testid={`goal-option-${o.key}`}>
