@@ -10,9 +10,8 @@
  *   /dashboard/shortlists                → this page
  *   /dashboard/shortlists/:id            → ShortlistDetailPage
  *
- * The pre-existing /dashboard/saved (single-bucket SavedCandidatesPage)
- * stays mounted unchanged; it now reads from the default list since
- * the schema upgrade put every legacy row there.
+ * The older /dashboard/saved (one single list) redirects here: the schema
+ * upgrade put every row of it in the default list.
  */
 
 import { shortlistDisplayName } from '@/lib/shortlistName'

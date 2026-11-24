@@ -138,7 +138,7 @@ export function PrivateStats({ stats, emptyText }: { stats: Array<{ value: numbe
           </div>
         ))}
       </div>
-      <Link to="/pulse" className={cn('mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3')}>
+      <Link to="/inbox/activity" className={cn('mt-2 flex min-h-[32px] items-center gap-1 text-caption text-ink-3')}>
         <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" /> {t('ownerArea.onlyYou')} <ChevronRight className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
       </Link>
     </div>

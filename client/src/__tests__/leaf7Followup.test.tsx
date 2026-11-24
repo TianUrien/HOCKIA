@@ -15,6 +15,8 @@ import type { NotificationRecord } from '@/lib/api/notifications'
 const addToast = vi.hoisted(() => vi.fn())
 const storeState = vi.hoisted(() => ({ current: {} as Record<string, unknown> }))
 
+// The action cards have their own data hooks; these tests are about the activity rows.
+vi.mock('@/components/pulse/ActivityCards', () => ({ ActivityCards: () => <div data-testid="activity-cards" /> }))
 vi.mock('@/lib/toast', () => ({
   useToastStore: (sel?: (s: { addToast: typeof addToast }) => unknown) => (sel ? sel({ addToast }) : { addToast }),
 }))
@@ -186,6 +188,14 @@ describe('Inbox › Requests', () => {
 })
 
 describe('Inbox › Activity', () => {
+  it('shows what needs you above the list of what happened (founder 2026-11-24)', () => {
+    storeState.current = baseStore({ notifications: [note()] })
+    render(<MemoryRouter><InboxActivity /></MemoryRouter>)
+    const cards = screen.getByTestId('activity-cards')
+    const firstRow = screen.getByRole('button', { name: 'Accept' })
+    expect(Boolean(cards.compareDocumentPosition(firstRow) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true)
+  })
+
   it('the invitation row answers inline', () => {
     const respondToClubInvite = vi.fn().mockResolvedValue(true)
     storeState.current = baseStore({ notifications: [note()], respondToClubInvite })

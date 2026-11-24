@@ -27,19 +27,19 @@ test.describe('Home + activity @ mobile viewport', () => {
     })
 
     await page.goto('/home?tab=pulse')
-    await expect(page).toHaveURL(/\/pulse$/, { timeout: 20_000 })
-    await expect(page.getByTestId('activity-screen')).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole('heading', { level: 1, name: 'Your activity' })).toBeVisible()
+    // "Your activity" lives in Inbox › Activity now; the old link lands there.
+    await expect(page).toHaveURL(/\/inbox\/activity$/, { timeout: 20_000 })
+    await expect(page.getByRole('region', { name: 'Activity' })).toBeVisible({ timeout: 20_000 })
     await page.waitForLoadState('networkidle').catch(() => {})
 
     const activity = await overflow(page)
-    expect(activity.scrollW, 'no horizontal overflow on Your activity').toBeLessThanOrEqual(activity.clientW + 1)
+    expect(activity.scrollW, 'no horizontal overflow on Inbox › Activity').toBeLessThanOrEqual(activity.clientW + 1)
     await page.screenshot({ path: testInfo.outputPath('activity-mobile.png'), fullPage: true })
 
     // Home: wait for the feed so the horizontal rails (the most
     // overflow-prone elements) are mounted before measuring.
     await page.goto('/home')
-    await expect(page.getByTestId('home-next-step')).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByTestId('home-post-entry')).toBeVisible({ timeout: 20_000 })
     await expect(page.getByTestId('user-post-card').first()).toBeVisible({ timeout: 30_000 })
     await page.waitForLoadState('networkidle').catch(() => {})
 

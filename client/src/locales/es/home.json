@@ -683,8 +683,15 @@
     "seeAll": "Ver todas"
   },
   "endOfFeed": {
-    "title": "Todo al día",
-    "body": "Las nuevas incorporaciones y los highlights aparecerán acá."
+    "title": "Estás al día",
+    "body": "Publica algo de tu semana de hockey.",
+    "emptyTitle": "Todavía no hay publicaciones esta semana",
+    "emptyBody": "Sé la primera persona en compartir algo de tu hockey.",
+    "post": "Publicar"
+  },
+  "postEntry": {
+    "member": "Comparte algo de tu hockey",
+    "club": "Comparte novedades de tu club"
   },
   "cardMenu": {
     "fallbackName": "esta persona",

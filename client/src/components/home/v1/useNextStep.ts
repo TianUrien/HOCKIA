@@ -16,7 +16,7 @@ import { OWN_PROFILE_EDIT_PATH } from '@/lib/profileNavigation'
 import { useHomeT } from '@/i18n/ns/home'
 
 /** Who viewed you: Your activity with the viewer list open (players, coaches). */
-export const VIEWERS_PATH = '/pulse?viewers=1'
+export const VIEWERS_PATH = '/inbox/activity?viewers=1'
 /** A brand's viewers + search appearances: its own profile with the views sheet open. */
 export const BRAND_VIEWERS_PATH = '/dashboard/profile?viewers=1'
 
@@ -196,7 +196,7 @@ export function useNextStep() {
         subtitle: views > 0 ? t('nextStep.views.subtitle') : t('nextStep.week.subtitle'),
         cta: views > 0 ? t('nextStep.views.cta') : t('nextStep.week.cta'),
         visual: { kind: 'icon', icon: 'chart' },
-        to: views > 0 ? VIEWERS_PATH : '/pulse',
+        to: views > 0 ? VIEWERS_PATH : '/inbox/activity',
       })
     }
     return open

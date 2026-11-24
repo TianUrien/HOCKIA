@@ -68,7 +68,6 @@ const FaqPage = lazyWithRetry(() => import('@/pages/FaqPage'))
 const CompleteProfile = lazyWithRetry(() => import('@/pages/CompleteProfile'))
 const DashboardRouter = lazyWithRetry(() => import('@/pages/DashboardRouter'))
 const HomePage = lazyWithRetry(() => import('@/pages/HomePage'))
-const PulsePage = lazyWithRetry(() => import('@/pages/PulsePage'))
 const OpportunitiesEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.OpportunitiesEntry })))
 const OpportunitiesCountryEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.OpportunitiesCountryEntry })))
 const CountryWordRedirect = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.CountryWordRedirect })))
@@ -84,7 +83,6 @@ const HockiaSuggestsEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRo
 const FindPlayersEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.FindPlayersEntry })))
 const ShortlistEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ShortlistEntry })))
 const ClubEditEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ClubEditEntry })))
-const SavedCandidatesPage = lazyWithRetry(() => import('@/pages/SavedCandidatesPage'))
 const ShortlistsIndexPage = lazyWithRetry(() => import('@/pages/ShortlistsIndexPage'))
 const ShortlistDetailPage = lazyWithRetry(() => import('@/pages/ShortlistDetailPage'))
 const PublicPlayerProfile = lazyWithRetry(() => import('@/pages/PublicPlayerProfile'))
@@ -214,6 +212,12 @@ const PageLoader = () => {
       </div>
     </div>
   )
+}
+
+// /pulse → Inbox › Activity, keeping the query (?viewers=1 opens who viewed you).
+function PulseRedirect() {
+  const { search } = useLocation()
+  return <Navigate to={`/inbox/activity${search}`} replace />
 }
 
 // Engagement tracking wrapper - tracks time in app via heartbeats
@@ -505,7 +509,8 @@ function App() {
                 {/* Protected Routes (require authentication) - Lazy loaded */}
                 <Route path="/complete-profile" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CompleteProfile /></ErrorBoundary>} />
                 <Route path="/home" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HomePage /></ErrorBoundary>} />
-                <Route path="/pulse" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PulsePage /></ErrorBoundary>} />
+                {/* "Your activity" lives in Inbox › Activity (founder 2026-11-24); old apps and emails still link here. */}
+                <Route path="/pulse" element={<PulseRedirect />} />
                 <Route path="/search" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SearchPage /></ErrorBoundary>} />
                 {/* Hockia AI is one sheet (2026-10-22): /discover and the
                     /discovery alias open it over Home; ?q= goes into the composer. */}
@@ -560,7 +565,8 @@ function App() {
                 <Route path="/dashboard/opportunities/:opportunityId/suggested/ask" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HockiaSuggestsEntry refine /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants/:applicationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantReviewEntry /></ErrorBoundary>} />
                 {/* Save / shortlists: clubs + recruiting coaches only. */}
-                <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><SavedCandidatesPage /></RecruiterOnlyRoute></ErrorBoundary>} />
+                {/* The first saved list became the default shortlist; old links land there. */}
+                <Route path="/dashboard/saved" element={<Navigate to="/dashboard/shortlists" replace />} />
                 <Route path="/dashboard/find-players" element={<ErrorBoundary fallback={<RouteErrorFallback />}><FindPlayersEntry /></ErrorBoundary>} />
                 <Route path="/dashboard/shortlist" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistEntry /></ErrorBoundary>} />
                 {/* Edit club profile (Figma 04 Club D1.27): phone clubs; others → ?action=edit. */}

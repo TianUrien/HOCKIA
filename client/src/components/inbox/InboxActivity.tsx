@@ -12,6 +12,7 @@ import { activityGroup, formatActivityAge } from '@/lib/inboxTime'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { friendRequestToastType } from '@/lib/friendshipErrors'
 import { useRespondToClubInvite } from '@/hooks/useRespondToClubInvite'
+import { ActivityCards } from '@/components/pulse/ActivityCards'
 import { useInboxT } from '@/i18n/ns/inbox'
 
 const GROUP_KEYS = {
@@ -65,11 +66,18 @@ export function InboxActivity() {
   }
 
   if (loading && rows.length === 0) {
-    return <ActivityListSkeleton />
+    return (
+      <>
+        <ActivityCards />
+        <ActivityListSkeleton />
+      </>
+    )
   }
 
   return (
     <section aria-label={t('activity.label')}>
+      {/* What needs you first, then what happened (founder 2026-11-24). */}
+      <ActivityCards />
       {unreadCount > 0 && (
         <div className="flex justify-end px-5 pb-1">
           <button type="button" onClick={() => void markAllRead()} className="flex h-9 items-center text-secondary font-semibold text-hockia-primary">

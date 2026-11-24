@@ -33,6 +33,7 @@ import pitchHorizontal from '@/assets/community/pitch-full-horizontal.svg'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
 import { OwnerButtons, PrimaryCard } from './OwnerArea'
+import { GoalCard } from '@/components/home/goal/GoalCard'
 import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
@@ -407,6 +408,7 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
                 <OffersCard desktop offers={myOffers.offers} totals={offerTotals} onCreate={() => navigate('/dashboard/offers/new')} onOpen={() => navigate('/dashboard/offers')} onResults={() => navigate('/dashboard/results')} />
               )}
               {showInvites && invitesCard}
+              <GoalCard />
               <div className={card}>
                 <Section id="products" title={t('profile.section.products')} action={t('profile.section.addProductAction')} onAction={props.onAddProduct}>
                   <div className="grid grid-cols-2 gap-4 px-4 min-[1280px]:grid-cols-3">
@@ -542,6 +544,9 @@ export default function BrandProfileV2(props: BrandProfileV2Props) {
 
           {/* Ambassador card — brand-initiated invites; only with something in it (B0). */}
           {showInvites && <div className="px-4">{invitesCard}</div>}
+
+          {/* Only you see it. Lives here since Home became a feed of posts (founder 2026-11-24). */}
+          <GoalCard />
 
           {/* Private stats: hidden while every number is zero (no zero headline). */}
           {showReach && <div className="px-4" data-testid="brand-private-stats">{reachStats}{seeViewers}</div>}
