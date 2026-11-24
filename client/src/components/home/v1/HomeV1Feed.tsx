@@ -50,12 +50,15 @@ function FeedCardSentinel({ index, onVisible, children }: { index: number; onVis
 }
 
 /**
- * The Home v1 feed (Figma t24oVt… H1 / H2): get_home_feed_v2, newest first,
- * the new card set, "Roles for you" after the 2nd item, "You're all caught up"
- * at the end (H13). Owns the one comments sheet and the one Community deck.
+ * The Home feed (Figma New Hockia 2 Draft, section HS; founder 2026-11-24):
+ * posts by members only, newest first (get_home_feed_v2 with p_posts_only),
+ * one row of opportunities after the 2nd post, and an honest end that offers
+ * to post. Owns the one comments sheet and the one Community deck.
  */
-export function HomeV1Feed({ prependItemRef, header, afterFirst }: {
+export function HomeV1Feed({ prependItemRef, header, afterFirst, onCompose }: {
   prependItemRef?: React.RefObject<((item: HomeFeedItem) => void) | null>
+  /** Opens the composer: the end of the feed and the empty feed offer to post. */
+  onCompose?: () => void
   /** What the member must act on — kept on screen when the feed fails (H12b). */
   header: ReactNode
   /** Goal, gear and people: after the first feed item, so a post is on the
@@ -64,7 +67,8 @@ export function HomeV1Feed({ prependItemRef, header, afterFirst }: {
   afterFirst?: ReactNode
 }) {
   const t = useHomeT()
-  const feed = useHomeFeed({ v2: true })
+  // Home is a feed of posts (founder 2026-11-24): member posts only.
+  const feed = useHomeFeed({ v2: true, postsOnly: true })
   const { items, isLoading, isFetchingNextPage, error, refetch, hasMore, loadMore, updateItemLike, removeItem, prependItem, patchItem, newCount, showNewItems } = feed
   const addToast = useToastStore((s) => s.addToast)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -207,7 +211,13 @@ export function HomeV1Feed({ prependItemRef, header, afterFirst }: {
         {!firstLoad && !hasMore && !error && (
           <>
             {items.length > 0 && <FeedBand />}
-            <EndOfFeed />
+            <EndOfFeed empty={items.length === 0} onCompose={onCompose} />
+            {/* With fewer posts than the rail's slot, the one row of opportunities still shows. */}
+            {items.length < RAIL_AFTER && (
+              <ItemBoundary>
+                <RailSlot />
+              </ItemBoundary>
+            )}
           </>
         )}
 

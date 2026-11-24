@@ -640,8 +640,15 @@
     "seeAll": "See all"
   },
   "endOfFeed": {
-    "title": "You’re all caught up",
-    "body": "New signings and highlights will show up here."
+    "title": "You’re up to date",
+    "body": "Post something from your hockey week.",
+    "emptyTitle": "No posts yet this week",
+    "emptyBody": "Be the first to share something from your hockey.",
+    "post": "Post"
+  },
+  "postEntry": {
+    "member": "Share something from your hockey",
+    "club": "Share news from your club"
   },
   "cardMenu": {
     "fallbackName": "this member",

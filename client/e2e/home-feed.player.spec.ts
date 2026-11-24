@@ -6,8 +6,8 @@ test.describe('@smoke home feed player', () => {
 
     // Home v1: the New post entry ("+" in the phone header) is visible.
     await homeFeedPage.expectPostComposerVisible()
-    // …and the Next step card leads the screen.
-    await expect(page.getByTestId('home-next-step')).toBeVisible({ timeout: 10000 })
+    // …and the post entry leads the screen (Home is a feed of posts).
+    await expect(page.getByTestId('home-post-entry')).toBeVisible({ timeout: 10000 })
   })
 
   test('player can open and close post composer modal', async ({ page, homeFeedPage }) => {

@@ -24,6 +24,9 @@ export interface UseHomeFeedFilters {
   /** Home v1: read get_home_feed_v2 (members digest, public full matches,
    *  congrats + comment fields). Never combined with the filters above. */
   v2?: boolean
+  /** Home as a feed of posts (founder 2026-11-24): member posts only, no
+   *  automatic cards. Only with `v2`. */
+  postsOnly?: boolean
 }
 
 interface UseHomeFeedResult {
@@ -52,7 +55,7 @@ const NEW_ITEMS_CHECK_COOLDOWN = 5_000 // minimum 5s between checks
 // avoids cache misses when callers pass the same selection in different orders.
 function stableFilterKey(filters: UseHomeFeedFilters | undefined): string {
   if (!filters) return ''
-  if (filters.v2) return 'v2'
+  if (filters.v2) return filters.postsOnly ? 'v2-posts' : 'v2'
   const countryIds = (filters.countryIds ?? []).slice().sort((a, b) => a - b).join(',')
   const roles = (filters.roles ?? []).slice().sort().join(',')
   return `c:${countryIds}|r:${roles}|t:${filters.itemType ?? ''}`
@@ -108,6 +111,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
       // Home v1 knows the weekly "open to play" card; older bundled clients
       // don't send this and the server leaves the card out for them.
       if (filters?.v2) rpcParams.p_open_to_play = true
+      if (filters?.v2 && filters.postsOnly) rpcParams.p_posts_only = true
       if (hasFilters && !filters?.v2) {
         rpcParams.p_country_ids = rpcCountryIds
         rpcParams.p_roles = rpcRoles
@@ -186,6 +190,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
     return items[0].created_at // items are sorted newest-first from the RPC
   }, [items])
 
+  const postsOnly = Boolean(filters?.v2 && filters.postsOnly)
   const checkForNewItems = useCallback(async () => {
     if (!latestTimestamp) return
     // get_home_feed_new_count doesn't take filter args — under an active
@@ -200,7 +205,10 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
 
     try {
 
-      const { data, error } = await supabase.rpc('get_home_feed_new_count', {
+      // The posts-only Home counts posts only, so the pill never announces
+      // items that feed will not show. Not in the generated types yet.
+      const countRpc = (postsOnly ? 'get_home_posts_new_count' : 'get_home_feed_new_count') as 'get_home_feed_new_count'
+      const { data, error } = await supabase.rpc(countRpc, {
         p_since: latestTimestamp,
       })
       if (!error && typeof data === 'number' && data > 0) {
@@ -216,7 +224,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
         data: { error: String(err) },
       })
     }
-  }, [latestTimestamp, hasFilters])
+  }, [latestTimestamp, hasFilters, postsOnly])
 
   useEffect(() => {
     const handleVisibility = () => {
@@ -285,7 +293,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
     // not write into a filtered key (type-violating item / silently hidden
     // post). HomeFeed snaps the chip back to All on post-created.
     // Home v1 reads the v2 key; write both so either surface shows the post.
-    for (const key of [['home-feed', ''], ['home-feed', 'v2']]) {
+    for (const key of [['home-feed', ''], ['home-feed', 'v2'], ['home-feed', 'v2-posts']]) {
       queryClient.setQueryData<InfiniteData<FeedPage>>(key, (old) => {
         if (!old || old.pages.length === 0) return old
         const [firstPage, ...rest] = old.pages
