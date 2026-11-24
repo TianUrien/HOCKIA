@@ -530,7 +530,10 @@
     "thisMember": "this member",
     "selectTitle": "Select a conversation",
     "selectBody": "Your conversations open here.",
-    "selectBodyOther": "Open Messages to read a conversation."
+    "paneActivityTitle": "Your activity",
+    "paneActivityBody": "What needs you and what happened to you is in the list.",
+    "paneRequestsTitle": "Requests",
+    "paneRequestsBody": "Answer friend and squad requests in the list."
   },
   "page": {
     "documentTitle": "Inbox",
