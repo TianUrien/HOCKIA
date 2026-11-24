@@ -57,11 +57,13 @@ describe('club Opportunities on desktop: one Primary', () => {
 describe('Home and Inbox on desktop', () => {
   const read = (rel: string) => readFileSync(resolve(__dirname, '..', rel), 'utf8')
 
-  it('Home: New post is Tonal; the Next step card keeps the Primary', () => {
+  it('Home: one place to post on desktop, the post entry, and it is not a Primary', () => {
     const home = read('pages/HomePage.tsx')
-    const button = home.slice(home.indexOf('data-testid="home-new-post"') - 400, home.indexOf('data-testid="home-new-post"'))
-    expect(button).toContain('bg-brand-soft')
-    expect(button).not.toContain('bg-hockia-primary')
+    expect(home).not.toContain('data-testid="home-new-post"')
+    expect(home).toContain('<PostEntry onCompose={openComposer} />')
+    const entry = read('components/home/v1/PostEntry.tsx')
+    expect(entry).toContain('bg-surface-subtle')
+    expect(entry).not.toContain('bg-hockia-primary')
   })
 
   it('Inbox: New message is an icon button, no gradient "+ New" Primary', () => {

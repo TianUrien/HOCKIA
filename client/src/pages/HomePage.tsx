@@ -59,11 +59,8 @@ export default function HomePage() {
         <main className="mx-auto max-w-2xl pt-under-header pb-24 md:pb-10">
           <div className="hidden px-4 pt-3 lg:flex lg:items-center lg:gap-3">
             <SearchOverlay triggerClassName="flex-1" />
-            {/* Tonal, not a second Primary: the end of the feed carries the
-                screen's one Primary (design audit B6). */}
-            <button type="button" onClick={openComposer} className="flex h-11 shrink-0 items-center rounded-full bg-brand-soft px-5 text-[15px] font-semibold text-brand-primary transition-colors hover:bg-brand-soft-hover" data-testid="home-new-post">
-              {t('page.newPost')}
-            </button>
+            {/* No separate "New post" button here: the post entry right below is the one
+                place to post on desktop (production check 2026-11-24). */}
           </div>
           {/* One-time, players only; renders nothing once answered. */}
           <div className="px-4 empty:hidden">

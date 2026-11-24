@@ -172,7 +172,9 @@ export function useNextStep() {
       // No logo yet: the brand placeholder and "Add your logo" lead (founder 2026-10-26).
       if (!hasPhoto) out.push({ key: 'logo', title: t('nextStep.logo.title'), subtitle: t('nextStep.logo.subtitle'), cta: t('nextStep.logo.cta'), visual: { kind: 'placeholder', role: 'brand' }, to: OWN_PROFILE_EDIT_PATH })
       const searches = search.summary?.total ?? 0
-      out.push({
+      // Only with something to show: "0 profile views" is not something to act on
+      // (production check 2026-11-24).
+      if (views > 0 || searches > 0) out.push({
         key: 'brand',
         title: t('nextStep.views.title', { count: views }),
         subtitle: searches > 0 ? t('nextStep.brand.subtitleSearches', { count: searches }) : t('nextStep.views.subtitle'),
