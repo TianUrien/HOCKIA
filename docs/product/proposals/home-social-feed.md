@@ -12,7 +12,7 @@ Home is a feed of posts, in the style of the Instagram or LinkedIn home: one pos
 - **Only posts.** Highlight videos and photos added to a profile do not come back to Home; the 2026-11-10 ruling stands. Home shows what a member chose to post.
 - **The founder accepts the low-content risk** knowing the numbers below, and will push posting himself in the first days after launch.
 - **One compact row of opportunities stays** in Home, between posts. The "next step" card and the rows of people leave Home.
-- **Design in Figma first**, then build. Nothing is built until the founder has seen the design.
+- **Design in Figma first**, then build. The founder saw the first design (player viewer) and approved continuing with the other states and roles. The build itself still needs his go.
 - The weekly "N joined this week" card shows once, for the current week only (shipped to staging the same day).
 
 ## What Home is today (production)
