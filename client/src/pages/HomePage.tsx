@@ -27,7 +27,7 @@ const PostComposerModal = lazy(() => import('@/components/home/PostComposerModal
  *   4 One row of "Opportunities for you" after the 2nd post
  *   5 The end says so and offers to post
  * The Next step card, the rows of people, the goal card and the gear rail
- * left Home; /pulse keeps "Your activity" because old native apps link to it.
+ * left Home; the next step lives in Inbox › Activity, where /pulse redirects.
  */
 export default function HomePage() {
   const t = useHomeT()
@@ -46,8 +46,8 @@ export default function HomePage() {
   }, [queryClient])
 
   // Links in the wild (and the profile-views / application emails) still
-  // point at /home?tab=pulse — that card lives on /pulse now.
-  if (params.get('tab') === 'pulse') return <Navigate to="/pulse" replace />
+  // point at /home?tab=pulse: that lives in Inbox › Activity now.
+  if (params.get('tab') === 'pulse') return <Navigate to="/inbox/activity" replace />
 
   const openComposer = () => setComposing(true)
 

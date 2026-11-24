@@ -78,7 +78,7 @@ describe('club Your week', () => {
   it('shows to review · profile views · open opportunities; the opportunity numbers open Opportunities', () => {
     const stats = clubWeekStats({ toReview: 3, views: 6, openRoles: 1 })
     expect(stats.map((s) => `${s.value} ${s.label}`)).toEqual(['3 to review', '6 profile views', '1 open opportunity'])
-    expect(stats.map((s) => s.to)).toEqual(['/opportunities', '/pulse', '/opportunities'])
+    expect(stats.map((s) => s.to)).toEqual(['/opportunities', '/inbox/activity', '/opportunities'])
     expect(stats[0].accent).toBe(true)
     expect(clubWeekStats({ toReview: 0, views: 1, openRoles: 2 }).map((s) => s.label)).toEqual(['to review', 'profile view', 'open opportunities'])
   })
