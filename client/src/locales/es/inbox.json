@@ -45,7 +45,7 @@
     "newMessagesToast_many": "{{label}} mensajes nuevos",
     "empty": "Todavía no hay mensajes. Envía un saludo.",
     "header": {
-      "backDefault": "Mensajes",
+      "backDefault": "Inbox",
       "memberFallback": "Integrante de Hockia",
       "viewProfile": "Ver perfil",
       "markUnread": "Marcar como no leída",
@@ -507,7 +507,7 @@
   },
   "messagesPage": {
     "back": {
-      "inbox": "Mensajes",
+      "inbox": "Inbox",
       "profile": "Perfil",
       "opportunity": "Oportunidad",
       "opportunities": "Oportunidades",
@@ -518,9 +518,9 @@
     "loadFailed": "No se pudieron cargar las conversaciones. Intenta de nuevo.",
     "documentTitleThread": "{{name}}, Mensajes",
     "documentTitleMessages": "Mensajes",
-    "documentTitleInbox": "Mensajes",
+    "documentTitleInbox": "Inbox",
     "titleMessages": "Mensajes",
-    "titleInbox": "Mensajes",
+    "titleInbox": "Inbox",
     "newMessage": "Nuevo mensaje",
     "searchPlaceholder": "Buscar",
     "searchLabel": "Buscar conversaciones",
@@ -536,12 +536,15 @@
     "thisMember": "esta persona",
     "selectTitle": "Elige una conversación",
     "selectBody": "Acá se abren tus conversaciones.",
-    "selectBodyOther": "Abre Mensajes para leer una conversación."
+    "paneActivityTitle": "Tu actividad",
+    "paneActivityBody": "Lo que necesita tu acción y lo que te pasó está en la lista.",
+    "paneRequestsTitle": "Solicitudes",
+    "paneRequestsBody": "Responde las solicitudes de amistad y de plantel en la lista."
   },
   "page": {
-    "documentTitle": "Mensajes",
+    "documentTitle": "Inbox",
     "newMessage": "Nuevo mensaje",
-    "title": "Mensajes"
+    "title": "Inbox"
   },
   "newMessage": {
     "recentFailed": "No se pudieron cargar los contactos recientes. Igual puedes buscar por nombre.",
