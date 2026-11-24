@@ -76,3 +76,33 @@ describe('goal ask card (G1)', () => {
     expect(container.querySelector('[data-testid^="home-goal"]')).toBeNull()
   })
 })
+
+describe('goal set card (founder 2026-11-24: readable in full, quieter)', () => {
+  const LONG = 'Reach players and sell more products in every country where field hockey is played, starting with the Netherlands and Argentina'
+
+  it('shows each picked goal as its own chip and the member\u2019s own words in full, never truncated', async () => {
+    rpc.mockImplementation(async (fn: string) => (fn === 'get_my_goal'
+      ? { data: [{ options: ['play_abroad', 'get_sponsor'], other_text: LONG, set_at: '2026-11-01T10:00:00Z', later_count: 0, should_ask: false }], error: null }
+      : { data: {}, error: null }))
+    wrap(<GoalCard />)
+    const card = await screen.findByTestId('home-goal-set')
+    const picks = screen.getByTestId('home-goal-picks')
+    expect(Array.from(picks.querySelectorAll('li')).map((li) => li.textContent)).toEqual(['Play abroad', 'Get a sponsor'])
+    const words = screen.getByTestId('home-goal-own-words')
+    expect(words.textContent).toBe(LONG)
+    expect(card.innerHTML).not.toMatch(/line-clamp|truncate/)
+    expect(card.innerHTML).not.toContain('text-title')
+    expect(screen.getByTestId('home-goal-change')).toHaveTextContent('Change')
+  })
+
+  it('with only the member\u2019s own words there are no chips', async () => {
+    rpc.mockImplementation(async (fn: string) => (fn === 'get_my_goal'
+      ? { data: [{ options: [], other_text: 'Play in Germany', set_at: '2026-11-01T10:00:00Z', later_count: 0, should_ask: false }], error: null }
+      : { data: {}, error: null }))
+    wrap(<GoalCard />)
+    await screen.findByTestId('home-goal-set')
+    expect(screen.queryByTestId('home-goal-picks')).toBeNull()
+    expect(screen.getByTestId('home-goal-own-words').textContent).toBe('Play in Germany')
+  })
+})
+
