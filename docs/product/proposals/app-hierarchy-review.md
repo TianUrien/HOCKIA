@@ -1,6 +1,6 @@
 # App hierarchy review: what is primary, secondary and redundant
 
-Review for the founder, 2026-11-24. Nothing here is approved or built. Usage is from read-only aggregate queries on production the same day: page views and events of the last 30 days, onboarded members only, test accounts and automated views excluded. The screen map is from the code on staging the same day. Hypotheses are marked as such.
+Review for the founder, 2026-11-24. Nothing here is approved or built. Usage is from read-only aggregate queries on production the same day: page views and events of the last 30 days, onboarded members only, test accounts and automated views excluded. The screen map is from the code the same day with the posts-only Home change included (open for review, not yet merged); it was read by an automated pass over routes and links and spot-checked, not verified line by line. Hypotheses are marked as such.
 
 ## Why
 
