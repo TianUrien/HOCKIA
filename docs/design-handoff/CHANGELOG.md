@@ -3,6 +3,16 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+
+## 2026-11-24 · Home as posts only (design for review, not built)
+
+New Hockia 2 · Draft, page "02 · Home — explorations", new section "HS · Home: posts only" below "YG". Proposal and founder rulings: `docs/product/proposals/home-social-feed.md`.
+
+- S1 `309:3591` full scroll and S0 `311:3304` first screen (393×852), cloned from the shipped H1 `44:2`.
+- Removed from Home: Next step card, "New in the community" row, members digest, reference card, the single opportunity card.
+- Added: Post entry row under the header (your photo and "Share something from your hockey"); a caption under the photo post; a text post; the rail reads "Opportunities for you" and shows once; the end of feed reads "You’re up to date" with one Primary "Post".
+- Not designed yet: club and coach viewers, empty feed, loading, Android, dark mode.
+
 ## 2026-11-21 (recruiter outcome question), engineering session
 
 Figma, "New Hockia 2 · Draft", page "05 · Opportunities — explorations", section "RS · Recruiter outcome question and Report a problem (2026-11-21)" (303:1131). Drawn with the build (PR #617); same tokens and text styles as O5 and CS6, which the frames were cloned from.
