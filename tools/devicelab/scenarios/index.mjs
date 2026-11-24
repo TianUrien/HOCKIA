@@ -159,9 +159,27 @@ export const scenarios = {
 
   async 'home-feed'(lab, ctx) {
     await lab.go('/home')
-    await lab.waitFor('main, [data-testid="home-feed"], article', 20000)
-    await sleep(1500)
+    // Home is a feed of posts (founder 2026-11-24): the post entry leads, the
+    // Next step card and the rows of people are gone, and the entry opens the composer.
+    await lab.waitFor('[data-testid="home-post-entry"]', 20000)
+    await sleep(2500)
     await ctx.shot('home')
+    const blocks = await lab.eval(() => ({
+      entry: document.querySelector('[data-testid="home-post-entry-button"]')?.textContent?.trim() || '',
+      nextStep: !!document.querySelector('[data-testid="home-next-step"]'),
+      cards: [...document.querySelectorAll('[data-testid="user-post-card"]')].length,
+    }))
+    if (!blocks.entry) throw new Error('home: no post entry')
+    if (blocks.nextStep) throw new Error('home: the Next step card is still on Home')
+    ctx.note(`post entry "${blocks.entry}", ${blocks.cards} post cards on first load`)
+    await lab.tap('[data-testid="home-post-entry-button"]')
+    await lab.waitFor('[role="dialog"]', 10000)
+    await sleep(900)
+    await ctx.shot('composer-from-entry')
+    await lab.eval(() => { const c = document.querySelector('[role="dialog"] button[aria-label*="lose" i], [role="dialog"] button[aria-label*="ancel" i]'); c?.click() })
+    await sleep(700)
+    await lab.eval(() => { [...document.querySelectorAll('button')].find((x) => /^discard$/i.test(x.textContent?.trim() || ''))?.click() })
+    await sleep(600)
     await assertScrolled(lab, ctx, 'home')
     const overflow = await lab.eval(() => document.documentElement.scrollWidth > window.innerWidth + 1)
     if (overflow) throw new Error('home: horizontal overflow')
