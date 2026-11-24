@@ -2,6 +2,14 @@
 
 Review for the founder, 2026-11-24. Nothing here is approved or built. Usage is from read-only aggregate queries on production the same day: page views and events of the last 30 days, onboarded members only, test accounts and automated views excluded. The screen map is from the code the same day with the posts-only Home change included (open for review, not yet merged); it was read by an automated pass over routes and links and spot-checked, not verified line by line. Hypotheses are marked as such.
 
+## Founder rulings (2026-11-24)
+
+- **The next step lives in Inbox › Activity**, together with who viewed me. Home stays posts only.
+- **Start with the clean-up that changes nothing visible** (step 1 below).
+- The posts-only Home was merged into staging the same day.
+
+Until the next step is in Inbox › Activity, the profile's own next-step card is the only place it shows. The Home change should not go to production before that move, or the 67 members who used the card on Home lose it for a while.
+
 ## Why
 
 Founder, 2026-11-24: "We have a lot of things in the app. We need to see how we order and prioritise everything." The Home work the same day showed it in small: eight different blocks competed on Home, and two features (the goal card and the gear rail) existed nowhere else.
@@ -86,5 +94,4 @@ Not proposed: removing Search, World or the brand screens. Their use is low, but
 
 ## Open questions for the founder
 
-1. Where does the next step live: Inbox › Activity (proposed), back on top of Home, or only on the profile?
-2. Which of the five steps goes first?
+None open. See the rulings at the top.
