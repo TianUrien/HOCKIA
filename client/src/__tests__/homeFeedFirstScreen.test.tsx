@@ -34,6 +34,7 @@ vi.mock('@/components/home/v1/cards/OpportunityCard', () => ({ OpportunityCard: 
 vi.mock('@/components/home/v1/cards/DigestCard', () => ({ DigestCard: () => null, OpenToPlayWeekCard: () => null }))
 vi.mock('@/components/home/v1/RolesRail', () => ({ RolesRail: () => null }))
 vi.mock('@/components/home/v1/EndOfFeed', () => ({ EndOfFeed: () => <div data-testid="end-of-feed" /> }))
+vi.mock('@/components/home/v1/FeedOffer', () => ({ FeedOffer: () => <div data-testid="feed-offer" /> }))
 vi.mock('@/components/home/v1/CommentsSheet', () => ({ CommentsSheet: () => null }))
 vi.mock('@/components/home/v1/useHomePeople', () => ({ fetchProfilesByIds: vi.fn() }))
 
@@ -80,5 +81,18 @@ describe('Home: a post on the first screen', () => {
     const wrapper = screen.getByTestId('home-after-first')
     expect(wrapper.childNodes).toHaveLength(0)
     expect(wrapper.className).toContain('empty:hidden')
+  })
+
+  it('shows one brand offer, after the fourth post', () => {
+    feed.value.items = [post('a'), post('b'), post('c'), post('d'), post('e')]
+    renderFeed(null)
+    expect(screen.getAllByTestId('feed-offer')).toHaveLength(1)
+    expect(order('post-d', 'feed-offer', 'post-e')).toBe(true)
+  })
+
+  it('shows no offer in a feed shorter than four posts', () => {
+    feed.value.items = [post('a'), post('b')]
+    renderFeed(null)
+    expect(screen.queryByTestId('feed-offer')).toBeNull()
   })
 })

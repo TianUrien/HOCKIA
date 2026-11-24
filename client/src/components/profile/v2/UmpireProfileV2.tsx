@@ -33,6 +33,7 @@ import { ProfileHero } from './ProfileHero'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
 import { OwnerButtons, PrimaryCard, PrivateStats } from './OwnerArea'
+import { GoalCard } from '@/components/home/goal/GoalCard'
 import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, Section, type GridTile } from './ProfileSections'
@@ -267,6 +268,8 @@ export default function UmpireProfileV2(props: UmpireProfileV2Props) {
           <OwnerButtons onEdit={props.onEdit} previews={[{ key: 'public', label: t('umpireProfileV2.previewPublic'), detail: t('umpireProfileV2.previewPublicDetail'), onSelect: props.onViewPublic }]} />
           {stepCopy && step && <PrimaryCard role="umpire" stepKey={step?.key ?? null} title={stepCopy.title} subtitle={stepCopy.subtitle} cta={stepCopy.cta} onAction={runStep} />}
           <PrivateStats stats={stats} emptyText={t('umpireProfileV2.statsEmpty')} />
+          {/* Only you see it. Lives here since Home became a feed of posts (founder 2026-11-24). */}
+          <GoalCard />
         </>
       )}
 

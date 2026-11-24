@@ -49,6 +49,7 @@ import { ProfileHero } from './ProfileHero'
 import { CompactHeader, SectionAnchors } from './ProfileChrome'
 import { useScrolledPast } from './profileChromeHooks'
 import { OwnerButtons, PrimaryCard, PrivateStats, RecruitingCard } from './OwnerArea'
+import { GoalCard } from '@/components/home/goal/GoalCard'
 import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { Chip, CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, RoleRow, Section, type GridTile } from './ProfileSections'
@@ -473,6 +474,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             </div>
           )}
           <PrivateStats stats={stats} />
+          {/* Only you see it. Lives here since Home became a feed of posts (founder 2026-11-24). */}
+          <GoalCard />
         </>
       )}
 

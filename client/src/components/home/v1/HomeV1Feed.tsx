@@ -24,6 +24,7 @@ import { OpportunityCard } from './cards/OpportunityCard'
 import { DigestCard, OpenToPlayWeekCard } from './cards/DigestCard'
 import { RolesRail } from './RolesRail'
 import { EndOfFeed } from './EndOfFeed'
+import { FeedOffer } from './FeedOffer'
 import { CommentsSheet } from './CommentsSheet'
 import { useHomeT } from '@/i18n/ns/home'
 
@@ -41,6 +42,8 @@ class ItemBoundary extends Component<{ children: ReactNode }, { failed: boolean 
 
 /** The rail goes after the 2nd feed item (spec 65:329). */
 const RAIL_AFTER = 2
+/** One brand offer, at most, after the 4th post (founder 2026-11-24). */
+const OFFER_AFTER = 4
 
 /** Fires once when the card nears the viewport: card impression, post
  *  impression (surface home_v1) and the feed-depth milestones (gaps 1, 3, 4). */
@@ -198,6 +201,11 @@ export function HomeV1Feed({ prependItemRef, header, afterFirst, onCompose }: {
             {idx === RAIL_AFTER - 1 && (
               <ItemBoundary>
                 <RailSlot />
+              </ItemBoundary>
+            )}
+            {idx === OFFER_AFTER - 1 && (
+              <ItemBoundary>
+                <FeedOffer />
               </ItemBoundary>
             )}
           </Fragment>
