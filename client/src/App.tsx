@@ -68,7 +68,6 @@ const FaqPage = lazyWithRetry(() => import('@/pages/FaqPage'))
 const CompleteProfile = lazyWithRetry(() => import('@/pages/CompleteProfile'))
 const DashboardRouter = lazyWithRetry(() => import('@/pages/DashboardRouter'))
 const HomePage = lazyWithRetry(() => import('@/pages/HomePage'))
-const PulsePage = lazyWithRetry(() => import('@/pages/PulsePage'))
 const OpportunitiesEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.OpportunitiesEntry })))
 const OpportunitiesCountryEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.OpportunitiesCountryEntry })))
 const CountryWordRedirect = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.CountryWordRedirect })))
@@ -213,6 +212,12 @@ const PageLoader = () => {
       </div>
     </div>
   )
+}
+
+// /pulse → Inbox › Activity, keeping the query (?viewers=1 opens who viewed you).
+function PulseRedirect() {
+  const { search } = useLocation()
+  return <Navigate to={`/inbox/activity${search}`} replace />
 }
 
 // Engagement tracking wrapper - tracks time in app via heartbeats
@@ -504,7 +509,8 @@ function App() {
                 {/* Protected Routes (require authentication) - Lazy loaded */}
                 <Route path="/complete-profile" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CompleteProfile /></ErrorBoundary>} />
                 <Route path="/home" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HomePage /></ErrorBoundary>} />
-                <Route path="/pulse" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PulsePage /></ErrorBoundary>} />
+                {/* "Your activity" lives in Inbox › Activity (founder 2026-11-24); old apps and emails still link here. */}
+                <Route path="/pulse" element={<PulseRedirect />} />
                 <Route path="/search" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SearchPage /></ErrorBoundary>} />
                 {/* Hockia AI is one sheet (2026-10-22): /discover and the
                     /discovery alias open it over Home; ?q= goes into the composer. */}

@@ -185,6 +185,24 @@ export const scenarios = {
     if (overflow) throw new Error('home: horizontal overflow')
   },
 
+  // "Your activity" lives in Inbox › Activity (founder 2026-11-24): what
+  // needs the member sits above the list of what happened.
+  async 'inbox-activity'(lab, ctx) {
+    // The /pulse redirect itself is covered by the web E2E spec (lab.go
+    // treats a redirect as a failed navigation).
+    await lab.go('/inbox/activity')
+    const url = await lab.url()
+    await sleep(3500)
+    await ctx.shot('inbox-activity')
+    const state = await lab.eval(() => ({
+      cards: [...(document.querySelector('[data-testid="activity-cards"]')?.querySelectorAll('button, a') ?? [])].length,
+      rows: document.querySelectorAll('[data-testid="activity-group"]').length,
+      overflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+    }))
+    if (state.overflow) throw new Error('inbox activity: horizontal overflow')
+    ctx.note(`${url}: ${state.cards} action cards, ${state.rows} day groups`)
+  },
+
   async 'opportunities-role-apply'(lab, ctx) {
     await lab.go('/opportunities')
     // Role cards are tappable blocks (RoleCard on phones, OpportunityCard on desktop), not links.

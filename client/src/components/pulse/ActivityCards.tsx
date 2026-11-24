@@ -1,4 +1,3 @@
-import Header from '@/components/Header'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Shield } from 'lucide-react'
@@ -6,9 +5,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useWeeklyVisibility } from '@/hooks/useWeeklyVisibility'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { useWeekViewers } from '@/hooks/useYourWeek'
-import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
-import { backLabelFrom } from '@/lib/backLabel'
 import { getImageUrl } from '@/lib/imageUrl'
 import { referenceArrivedThisWeek } from '@/lib/pulseWeek'
 import { hapticLight } from '@/lib/haptics'
@@ -25,38 +22,37 @@ import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
 import { useCommunityT } from '@/i18n/ns/community'
-import { useCommonT } from '@/i18n/ns/common'
 
 const REFERENCES_PATH = '/dashboard/profile?tab=references'
 const TIP_KEYS = new Set(['photo', 'career', 'complete', 'crest', 'umpire'])
 
 /**
- * Your activity (Figma H3 61:247; founder ruling 11 Oct: replaces "Your week"
- * on /pulse for everyone). Every Pulse action card in priority order —
- * roles / applicants · availability check-in · who viewed you (masked
- * viewers are a generic placeholder, never a blurred crest) · a reference
- * from a friend (gold) · a profile tip. /pulse stays because old native apps
- * link to it; Home's Next step shows the same cards one at a time.
+ * What needs you (founder 2026-11-24): the Pulse action cards, at the top of
+ * Inbox › Activity. In priority order: opportunities or applicants, the
+ * availability check-in, who viewed you (masked viewers are a generic
+ * placeholder, never a blurred crest), a reference from a friend (gold), a
+ * profile tip. They used to be the "Your activity" page (/pulse) and the Next
+ * step card on Home; /pulse now redirects here. Renders nothing when there is
+ * nothing to act on, so the list of activity below keeps its own empty state.
  */
-export function ActivityScreen() {
+export function ActivityCards() {
   const location = useLocation()
   const navigate = useNavigate()
   const t = useCommunityT()
-  const tCommon = useCommonT()
   const profile = useAuthStore((s) => s.profile)
   const { steps, loading, run, dismiss, markDone } = useNextStep()
   const showAi = useHockiaAiSheet((st) => st.show)
   const vis = useWeeklyVisibility(Boolean(profile), false)
   const viewers = useWeekViewers(profile?.role === 'player' || profile?.role === 'coach')
   const refs = useTrustedReferences(profile?.id ?? '')
-  // Home's views card links here with ?viewers=1: open the list straight away.
+  // The views step links here with ?viewers=1: open the list straight away.
   const [showViewers, setShowViewers] = useState(() => new URLSearchParams(location.search).get('viewers') === '1')
-  // "Who viewed you" opened (gap 7): from Home's views card (?viewers=1) or from this screen.
-  const viewersSource = useRef(showViewers ? 'home' : 'pulse')
+  // "Who viewed you" opened (gap 7): from a link (?viewers=1) or from this block.
+  const viewersSource = useRef(showViewers ? 'link' : 'inbox_activity')
   useEffect(() => {
     if (!showViewers || !profile) return
     trackDbEvent('profile_viewers_view', 'profile', profile.id, { source: viewersSource.current })
-    viewersSource.current = 'pulse'
+    viewersSource.current = 'inbox_activity'
   }, [showViewers, profile])
   const [busy, setBusy] = useState<string | null>(null)
 
@@ -71,7 +67,9 @@ export function ActivityScreen() {
 
   const go = (s: NextStep) => {
     void hapticLight()
-    if (s.action === 'fill_profile') { trackNextStepAction(s.key, 'open', 'pulse'); showAi('home', 'builder'); return }
+    // Every tap is recorded, so the move from Home can be measured (67 members used the card there).
+    trackNextStepAction(s.key, 'open', 'inbox_activity')
+    if (s.action === 'fill_profile') { showAi('home', 'builder'); return }
     if (s.to) navigate(s.to)
   }
   const confirm = async (s: NextStep) => {
@@ -81,15 +79,11 @@ export function ActivityScreen() {
   }
   const notNow = (s: NextStep) => dismiss(s)
 
+  if (nothing || (loading && steps.length === 0 && views === 0 && !reference)) return null
+
   return (
-    <div className="min-h-screen bg-white pt-[env(safe-area-inset-top)]" data-testid="activity-screen">
-      <Header mobileHidden />
-      <DetailNavBar parent={backLabelFrom(location.state, tCommon('nav.home'))} fallbackPath="/home" />
-      <div className="mx-auto flex max-w-md flex-col gap-3 px-4 pb-10 lg:pt-under-header-lg">
-        <h1 className="px-1 pb-2 text-[22px] font-bold leading-7 text-ink-1">{t('pulse.activity.title')}</h1>
-
-        {loading && [0, 1, 2].map((i) => <div key={i} className="h-[76px] animate-pulse rounded-[20px] bg-surface-muted" />)}
-
+    <div data-testid="activity-cards">
+      <div className="mx-auto flex max-w-md flex-col gap-3 px-4 pb-3 pt-1">
         {primary.map((s, i) => (
           <SquircleBox key={s.key} radius={20} className={i === 0 ? 'bg-hockia-soft' : 'bg-surface-subtle'}>
             <button type="button" onClick={() => go(s)} className="flex w-full items-center gap-3 px-4 py-4 text-left active:opacity-80">
@@ -178,13 +172,6 @@ export function ActivityScreen() {
             </button>
           </SquircleBox>
         ))}
-
-        {nothing && (
-          <div className="px-6 py-16 text-center">
-            <p className="text-body font-semibold text-ink-1">{t('pulse.activity.emptyTitle')}</p>
-            <p className="mt-1 text-secondary text-ink-2">{t('pulse.activity.emptyBody')}</p>
-          </div>
-        )}
       </div>
     </div>
   )

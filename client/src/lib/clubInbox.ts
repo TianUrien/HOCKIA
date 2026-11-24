@@ -19,7 +19,7 @@ export interface WeekStat { value: number; label: string; to?: string; accent?: 
 export function clubWeekStats({ toReview, views, openRoles }: { toReview: number; views: number; openRoles: number }): WeekStat[] {
   return [
     { value: toReview, label: tInbox('clubInbox.week.toReview'), to: '/opportunities', accent: true },
-    { value: views, label: tInbox('clubInbox.week.views', { count: views }), to: '/pulse' },
+    { value: views, label: tInbox('clubInbox.week.views', { count: views }), to: '/inbox/activity' },
     { value: openRoles, label: tInbox('clubInbox.week.openRoles', { count: openRoles }), to: '/opportunities' },
   ]
 }
