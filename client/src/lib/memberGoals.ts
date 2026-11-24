@@ -48,6 +48,14 @@ export function goalTitle(role: GoalRole, goal: Pick<MyGoal, 'options' | 'other_
   return labels.join('. ')
 }
 
+/** The picked goals as separate labels, and the member's own words apart: the card shows each on its own. */
+export function goalParts(role: GoalRole, goal: Pick<MyGoal, 'options' | 'other_text'>): { labels: string[]; other: string | null } {
+  return {
+    labels: GOAL_OPTIONS[role].filter((o) => goal.options.includes(o.key)).map((o) => o.label),
+    other: goal.other_text?.trim() || null,
+  }
+}
+
 // ── Server calls ────────────────────────────────────────────────────────────
 
 export async function fetchMyGoal(): Promise<MyGoal | null> {
