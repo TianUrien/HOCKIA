@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Search, MessageCircle, X, Plus, Pencil } from 'lucide-react'
+import { Search, MessageCircle, X, Plus, Pencil, Bell, UserPlus } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
@@ -1307,12 +1307,16 @@ export default function MessagesPage() {
               <ThreadSkeleton onBack={handleBackToList} />
             ) : (
               <div className="flex h-full flex-col items-center justify-center bg-surface-subtle p-6 text-center" data-testid="inbox-detail-empty">
+                {/* The pane speaks about the segment in view: "Choose a conversation"
+                    under Activity or Requests read as a mistake (production check 2026-11-24). */}
                 <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted">
-                  <MessageCircle className="h-8 w-8 text-ink-3" />
+                  {segment === 'activity' ? <Bell className="h-8 w-8 text-ink-3" /> : segment === 'requests' ? <UserPlus className="h-8 w-8 text-ink-3" /> : <MessageCircle className="h-8 w-8 text-ink-3" />}
                 </div>
-                <h3 className="mb-1 text-[17px] font-semibold text-ink-1">{t('messagesPage.selectTitle')}</h3>
+                <h3 className="mb-1 text-[17px] font-semibold text-ink-1">
+                  {segment === 'activity' ? t('messagesPage.paneActivityTitle') : segment === 'requests' ? t('messagesPage.paneRequestsTitle') : t('messagesPage.selectTitle')}
+                </h3>
                 <p className="text-secondary text-ink-2">
-                  {segment === 'messages' ? t('messagesPage.selectBody') : t('messagesPage.selectBodyOther')}
+                  {segment === 'activity' ? t('messagesPage.paneActivityBody') : segment === 'requests' ? t('messagesPage.paneRequestsBody') : t('messagesPage.selectBody')}
                 </p>
               </div>
             )}
