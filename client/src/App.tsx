@@ -84,7 +84,6 @@ const HockiaSuggestsEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRo
 const FindPlayersEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.FindPlayersEntry })))
 const ShortlistEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ShortlistEntry })))
 const ClubEditEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ClubEditEntry })))
-const SavedCandidatesPage = lazyWithRetry(() => import('@/pages/SavedCandidatesPage'))
 const ShortlistsIndexPage = lazyWithRetry(() => import('@/pages/ShortlistsIndexPage'))
 const ShortlistDetailPage = lazyWithRetry(() => import('@/pages/ShortlistDetailPage'))
 const PublicPlayerProfile = lazyWithRetry(() => import('@/pages/PublicPlayerProfile'))
@@ -560,7 +559,8 @@ function App() {
                 <Route path="/dashboard/opportunities/:opportunityId/suggested/ask" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HockiaSuggestsEntry refine /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants/:applicationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantReviewEntry /></ErrorBoundary>} />
                 {/* Save / shortlists: clubs + recruiting coaches only. */}
-                <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><SavedCandidatesPage /></RecruiterOnlyRoute></ErrorBoundary>} />
+                {/* The first saved list became the default shortlist; old links land there. */}
+                <Route path="/dashboard/saved" element={<Navigate to="/dashboard/shortlists" replace />} />
                 <Route path="/dashboard/find-players" element={<ErrorBoundary fallback={<RouteErrorFallback />}><FindPlayersEntry /></ErrorBoundary>} />
                 <Route path="/dashboard/shortlist" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistEntry /></ErrorBoundary>} />
                 {/* Edit club profile (Figma 04 Club D1.27): phone clubs; others → ?action=edit. */}

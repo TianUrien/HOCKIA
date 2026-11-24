@@ -23,7 +23,7 @@ import { useCommonT } from '@/i18n/ns/common'
  *   - "Settings"        → /settings
  *   - "Sign out"
  *
- * Implementation mirrors DashboardMenu's portal + click-outside + escape
+ * Implementation: portal + click-outside + escape
  * mechanics so positioning stays robust under sticky headers / scroll.
  */
 

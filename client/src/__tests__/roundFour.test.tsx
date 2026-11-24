@@ -214,7 +214,6 @@ describe('coach profile + settings', () => {
   it('the club’s own profile has no recruiting-context control either (one Ranked for control on Community / Saved, unify ruling 16 Oct 2026)', () => {
     expect(read('../pages/ClubDashboard.tsx')).not.toContain('<RankedForControl')
     expect(read('../pages/CommunityPage.tsx')).toContain('<RankedForControl')
-    expect(read('../pages/SavedCandidatesPage.tsx')).toContain('<RankedForControl')
   })
 })
 
