@@ -1,4 +1,5 @@
 import { Workbox } from 'workbox-window'
+import * as Sentry from '@sentry/react'
 import { logger } from '@/lib/logger'
 
 /**
@@ -21,6 +22,13 @@ import { logger } from '@/lib/logger'
  * version applied silently (see `canApplySilently`). Nothing can be lost
  * there, and a returning visitor from Instagram should see today's page,
  * not a stale copy with an update prompt on top.
+ *
+ * Signed in (2026-11-25): a member who ignores the prompt used to stay on the
+ * old build. A waiting version is now also applied at the next safe moment:
+ * a move to another screen, or a return to the app after a while away, with
+ * nothing typed on the page (`applyPendingUpdate`). The prompt still covers
+ * the screen the member is on, so nothing reloads under someone reading or
+ * typing.
  *
  * Native (Capacitor) keeps its previous behaviour: the bundle only changes
  * with a store build, so a waiting worker is applied straight away (no prompt).
@@ -54,6 +62,41 @@ const SILENT_UPDATE_PATHS = new Set(['/', '/signup', '/signin'])
 const SILENT_UPDATE_WINDOW_MS = 10_000
 
 /** Default `canApplySilently` for the web build. */
+/** A return to the app after at least this long away may apply a waiting version. */
+export const AWAY_BEFORE_APPLY_MS = 2 * 60 * 1000
+/** An update still installing after this long is reported to Sentry (once). */
+export const STUCK_INSTALL_MS = 5 * 60 * 1000
+
+/** True when the page holds typed text or a focused field (a reload would lose it). */
+export function hasUnsavedInput(doc: Document): boolean {
+  const active = doc.activeElement
+  if (active && (/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName) || (active as HTMLElement).isContentEditable)) return true
+  return Array.from(doc.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input, textarea')).some(
+    (field) => field.type !== 'hidden' && field.type !== 'checkbox' && field.type !== 'radio' && field.value.trim() !== '',
+  )
+}
+
+let pendingApply: (() => void) | null = null
+
+/**
+ * Applies a version that is waiting behind the prompt, when nothing on the
+ * page can be lost. Called on a move to another screen (UpdateOnNavigate) and
+ * on a return to the app. Returns true when the update was applied.
+ */
+export function applyPendingUpdate(doc: Document | undefined = typeof document !== 'undefined' ? document : undefined): boolean {
+  if (!pendingApply || !doc || hasUnsavedInput(doc)) return false
+  const apply = pendingApply
+  pendingApply = null
+  logger.info('[PWA] New version waiting — applying at a safe moment')
+  apply()
+  return true
+}
+
+/** Test helper: forget a pending update between cases. */
+export function resetPendingUpdateForTests(): void {
+  pendingApply = null
+}
+
 export function isSafeSilentUpdate({
   signedIn,
   path,
@@ -66,11 +109,7 @@ export function isSafeSilentUpdate({
   doc: Document
 }): boolean {
   if (signedIn || !SILENT_UPDATE_PATHS.has(path) || sinceLoadMs > SILENT_UPDATE_WINDOW_MS) return false
-  const active = doc.activeElement
-  if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return false
-  return !Array.from(doc.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input, textarea')).some(
-    (field) => field.type !== 'hidden' && field.value.trim() !== '',
-  )
+  return !hasUnsavedInput(doc)
 }
 
 /**
@@ -108,6 +147,7 @@ export function registerServiceWorker({
       return
     }
     logger.info('[PWA] New version waiting — prompt shown')
+    pendingApply = apply
     showPrompt(apply)
   })
 
@@ -125,6 +165,7 @@ export function registerServiceWorker({
     .then((registration) => {
       if (!registration) return
       const check = () => registration.update().catch((err) => logger.error('[PWA] Update check failed:', err))
+      watchForStuckInstall(registration)
       check()
       let intervalId: ReturnType<typeof setInterval> | null = null
       const start = () => {
@@ -134,9 +175,13 @@ export function registerServiceWorker({
         if (intervalId) clearInterval(intervalId)
         intervalId = null
       }
+      let hiddenAt = 0
       doc?.addEventListener('visibilitychange', () => {
-        if (doc.hidden) stop()
-        else {
+        if (doc.hidden) {
+          hiddenAt = Date.now()
+          stop()
+        } else {
+          if (hiddenAt && Date.now() - hiddenAt >= AWAY_BEFORE_APPLY_MS) applyPendingUpdate(doc)
           check()
           start()
         }
@@ -146,6 +191,30 @@ export function registerServiceWorker({
     .catch((err) => logger.error('[PWA] Service Worker registration failed:', err))
 
   return wb
+}
+
+let stuckReported = false
+
+/**
+ * Reports (once per page) a new version that keeps installing for minutes: the
+ * precache download stalls and members stay on the old build without anyone
+ * knowing (staging 2026-11-25: a worker sat in "installing" for hours).
+ */
+export function watchForStuckInstall(registration: ServiceWorkerRegistration, timeoutMs = STUCK_INSTALL_MS): void {
+  const watch = (sw: ServiceWorker | null) => {
+    if (!sw) return
+    setTimeout(() => {
+      if (stuckReported || sw.state !== 'installing') return
+      stuckReported = true
+      Sentry.captureMessage('[PWA] New version still installing after 5 minutes', {
+        level: 'warning',
+        tags: { area: 'service-worker' },
+        extra: { online: typeof navigator !== 'undefined' ? navigator.onLine : undefined },
+      })
+    }, timeoutMs)
+  }
+  watch(registration.installing)
+  registration.addEventListener('updatefound', () => watch(registration.installing))
 }
 
 /** Shared with lazyWithRetry: when the last automatic recovery started (ms). */
