@@ -56,6 +56,13 @@ describe('OAuthConsentPage', () => {
     expect(oauth.approveAuthorization).not.toHaveBeenCalled()
   })
 
+  it('follows redirect_url when Supabase auto-approves (the shape Supabase Auth really returns)', async () => {
+    oauth.getAuthorizationDetails.mockResolvedValue({ data: { redirect_url: 'https://mcp.example/callback?code=9&state=s' }, error: null })
+    renderAt('?authorization_id=abc')
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('https://mcp.example/callback?code=9&state=s'))
+    expect(oauth.approveAuthorization).not.toHaveBeenCalled()
+  })
+
   it('does not follow a bare details redirect_uri (first authorization: no code)', async () => {
     oauth.getAuthorizationDetails.mockResolvedValue({ data: { redirect_uri: 'https://mcp.example/callback', client: { name: 'x' }, scope: '' }, error: null })
     renderAt('?authorization_id=abc')
