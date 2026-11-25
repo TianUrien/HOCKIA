@@ -450,9 +450,10 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Validate migrations (dry-run)
-        # Strict check for staging + PRs: local files and the staging DB's
-        # migration history must reconcile exactly.
-        if: github.ref_name != 'main'
+        # Strict check for staging + PRs into staging: local files and the
+        # staging DB's migration history must reconcile exactly. A PR INTO main
+        # runs on ref "<n>/merge", so the base branch is checked too.
+        if: github.ref_name != 'main' && github.base_ref != 'main'
         run: supabase db push --linked --dry-run --include-all
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -467,7 +468,8 @@ jobs:
         # every migration file on main has already been applied to the staging
         # DB (nothing may reach main without passing through staging first).
         # Staging having EXTRA migrations is the expected steady state.
-        if: github.ref_name == 'main'
+        # Same for a PR into main (base_ref is empty on a push).
+        if: github.ref_name == 'main' || github.base_ref == 'main'
         run: |
           set -euo pipefail
           # Grep a FILE, not `echo | grep -q`: under pipefail, grep -q exiting
