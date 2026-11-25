@@ -393,5 +393,25 @@
       "title": "This link isn't valid",
       "body": "It may have been truncated by your email client. You can respond from your dashboard instead."
     }
+  },
+  "assistantConsent": {
+    "title": "Allow the Hockia connector?",
+    "intro": "An AI assistant you are connecting asks to read your Hockia account through the Hockia connector.",
+    "canRead": "It will be able to read, on your behalf:",
+    "readOwn": "your own profile and applications",
+    "readOpportunities": "open opportunities on Hockia",
+    "readProfiles": "public profiles of other members",
+    "readRecruiting": "for clubs and recruiting coaches: your opportunities and their applicants",
+    "cannot": "It cannot apply, send messages, post or change anything.",
+    "signedInAs": "Signed in as {{name}}",
+    "allow": "Allow",
+    "deny": "Don't allow",
+    "working": "One moment",
+    "signInTitle": "Sign in to continue",
+    "signInBody": "Sign in to Hockia to connect your account to your AI assistant.",
+    "signIn": "Sign in",
+    "invalidTitle": "This link has expired",
+    "invalidBody": "Go back to your AI assistant and start connecting Hockia again.",
+    "failed": "Hockia could not finish connecting. Try again from your AI assistant."
   }
 }

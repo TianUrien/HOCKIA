@@ -58,6 +58,9 @@ const MEANT_TO_BE_PUBLIC = [
   '/', '/signup', '/signin', '/auth/callback', '/verify-email', '/forgot-password', '/reset-password',
   '/privacy-policy', '/terms', '/developers', '/about', '/faq', '/offline',
   '/world', '/post', '/marketplace', '/brands', '/investors', '/invite', '/email-action', '/juniors-waitlist',
+  // Assistant connector consent: shows its own sign-in prompt and keeps the
+  // authorization_id across sign-in, which ProtectedRoute's redirect would drop.
+  '/oauth/consent',
   '/community', '/opportunities',
   '/members', '/players', '/coaches', '/clubs', '/umpires',
 ]

@@ -63,6 +63,7 @@ import { PageSpinner } from '@/components/ui/PageSpinner'
 // initial-load gzip budget keeps headroom (2026-09-21: 477KB / 480KB).
 const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'))
 const DevelopersPage = lazyWithRetry(() => import('@/pages/DevelopersPage'))
+const OAuthConsentPage = lazyWithRetry(() => import('@/pages/OAuthConsentPage'))
 const AboutPage = lazyWithRetry(() => import('@/pages/AboutPage'))
 const FaqPage = lazyWithRetry(() => import('@/pages/FaqPage'))
 const CompleteProfile = lazyWithRetry(() => import('@/pages/CompleteProfile'))
@@ -445,6 +446,7 @@ function App() {
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/developers" element={<DevelopersPage />} />
+                <Route path="/oauth/consent" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OAuthConsentPage /></ErrorBoundary>} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/faq" element={<FaqPage />} />
                 <Route path="/offline" element={<OfflinePage />} />
