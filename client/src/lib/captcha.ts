@@ -7,7 +7,8 @@
  *
  * One invisible widget for the whole app: `getCaptchaToken(action)` renders a
  * fresh single-use token on demand. It stays invisible for real people; only
- * when Cloudflare wants a human check does a small card appear at the bottom.
+ * when Cloudflare wants a human check does it appear, in an app sheet (see
+ * 2026-11-25 below).
  * Keys: the real HOCKIA key against production; Cloudflare's always-pass
  * test key on staging and local dev (Supabase staging enforces with the
  * matching test secret), so automation keeps working.
@@ -24,6 +25,13 @@
  * whether it carried a token (`reportCaptchaCoverage`), unsampled and with the
  * reason when it didn't. Accepted password sign-ins without a token are the
  * real members enforcement would lock out; the share has to be near zero first.
+ *
+ * 2026-11-25 (founder: the check looked cheap and floated over the form): the
+ * check is still Cloudflare's own box, which cannot be restyled, but it now
+ * appears in a sheet in the app's style: a dimmed backdrop, "One moment" and
+ * one line of why, and the box at full width (size "flexible") in the
+ * interface language. A bottom sheet on phones, a centred card on wider
+ * screens. The host stays rendered while idle, as before.
  */
 
 import * as Sentry from '@sentry/react'
@@ -109,20 +117,68 @@ function forgetScript(): void {
   scriptEl = null
 }
 
-/* Only the card chrome toggles; "interaction-only" keeps the widget itself
-   invisible until Cloudflare asks for a human. */
-const HOST_BASE = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483000;display:block;'
-const HOST_IDLE_STYLE = `${HOST_BASE}pointer-events:none;background:transparent;padding:0`
-const HOST_CARD_STYLE = `${HOST_BASE}pointer-events:auto;background:#fff;border-radius:16px;padding:8px;box-shadow:0 8px 30px rgba(15,15,20,.18)`
+/* Only the sheet chrome toggles; "interaction-only" keeps the widget itself
+   invisible until Cloudflare asks for a human. The host is never display:none
+   (an iframe in a hidden box may never run its check in some WebViews). */
+const HOST_IDLE_CLASS = 'pointer-events-none fixed inset-x-0 bottom-0 z-[2147483000] bg-transparent'
+const HOST_CARD_CLASS = [
+  'pointer-events-auto fixed inset-x-0 bottom-0 z-[2147483000] animate-fadeSlideIn bg-white',
+  'rounded-t-[28px] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-5 shadow-[0_-8px_30px_rgba(15,15,20,0.16)]',
+  'max-[359px]:px-2.5',
+  'sm:inset-x-auto sm:bottom-6 sm:left-1/2 sm:w-[400px] sm:-translate-x-1/2 sm:rounded-[24px] sm:p-6 sm:shadow-[0_8px_30px_rgba(15,15,20,0.18)]',
+].join(' ')
+const BACKDROP_CLASS = 'fixed inset-0 z-[2147482999] bg-[rgba(15,15,20,0.32)]'
 
+let slot: HTMLDivElement | null = null
+let header: HTMLDivElement | null = null
+let backdrop: HTMLDivElement | null = null
+
+/** The host (always rendered), its header (shown with the check) and the slot the widget renders into. */
 function ensureHost(): HTMLDivElement {
-  if (host && document.body.contains(host)) return host
+  if (host && slot && document.body.contains(host)) return slot
   host = document.createElement('div')
   host.setAttribute('data-testid', 'captcha-host')
   host.setAttribute('aria-live', 'polite')
-  host.style.cssText = HOST_IDLE_STYLE
-  document.body.appendChild(host)
-  return host
+  host.setAttribute('role', 'dialog')
+  header = document.createElement('div')
+  header.className = 'mb-4 hidden'
+  const title = document.createElement('h2')
+  title.className = 'text-body font-semibold text-ink-1'
+  title.setAttribute('data-testid', 'captcha-title')
+  const body = document.createElement('p')
+  body.className = 'mt-1 text-secondary text-ink-2'
+  header.append(title, body)
+  slot = document.createElement('div')
+  slot.setAttribute('data-testid', 'captcha-slot')
+  host.append(header, slot)
+  backdrop = document.createElement('div')
+  backdrop.setAttribute('data-testid', 'captcha-backdrop')
+  backdrop.setAttribute('aria-hidden', 'true')
+  document.body.append(backdrop, host)
+  showSheet(false)
+  return slot
+}
+
+/** Idle: an invisible, click-through host. Sheet: backdrop, "One moment" and the check. */
+function showSheet(open: boolean): void {
+  if (!host || !header || !backdrop) return
+  host.className = open ? HOST_CARD_CLASS : HOST_IDLE_CLASS
+  host.style.display = 'block'
+  host.setAttribute('aria-modal', open ? 'true' : 'false')
+  if (open) {
+    const [title, body] = Array.from(header.children) as HTMLElement[]
+    title.textContent = tAuth('captcha.sheetTitle')
+    body.textContent = tAuth('captcha.sheetBody')
+    host.setAttribute('aria-label', tAuth('captcha.sheetTitle'))
+  }
+  header.className = open ? 'mb-4' : 'mb-4 hidden'
+  backdrop.className = open ? BACKDROP_CLASS : 'hidden'
+}
+
+/** Cloudflare's language codes are two letters; anything else lets it choose. */
+function widgetLanguage(): string {
+  const lang = (typeof document !== 'undefined' ? document.documentElement.lang : '').slice(0, 2).toLowerCase()
+  return /^[a-z]{2}$/.test(lang) ? lang : 'auto'
 }
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -219,7 +275,7 @@ async function attemptToken(action: CaptchaAction): Promise<CaptchaResult> {
       settled = true
       clearTimeout(timer)
       if (active === me) active = null
-      el.style.cssText = HOST_IDLE_STYLE
+      showSheet(false)
       if (token) { resolve({ token, attempts: 1 }); return }
       const hidden = failure === 'timeout' && document.visibilityState === 'hidden'
       resolve({ reason: hidden ? 'page_hidden' : (failure ?? 'no_token'), attempts: 1 })
@@ -231,16 +287,19 @@ async function attemptToken(action: CaptchaAction): Promise<CaptchaResult> {
         sitekey: key,
         action,
         appearance: 'interaction-only',
+        size: 'flexible',
+        theme: 'light',
+        language: widgetLanguage(),
         callback: (token: string) => done(token),
         'error-callback': (code?: string) => done(undefined, `error_${code ?? 'unknown'}`),
         'timeout-callback': () => done(undefined, 'challenge_timeout'),
         'expired-callback': () => done(undefined, 'expired'),
         'before-interactive-callback': () => {
-          el.style.cssText = HOST_CARD_STYLE
+          showSheet(true)
           clearTimeout(timer)
           timer = setTimeout(() => done(undefined, 'interactive_timeout'), INTERACTIVE_TIMEOUT_MS)
         },
-        'after-interactive-callback': () => { el.style.cssText = HOST_IDLE_STYLE },
+        'after-interactive-callback': () => { showSheet(false) },
       })
     } catch {
       done(undefined, 'render_failed')
