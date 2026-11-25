@@ -49,10 +49,11 @@ describe('OAuthConsentPage', () => {
     expect(oauth.getAuthorizationDetails).not.toHaveBeenCalled()
   })
 
-  it('redirects at once when the member approved before', async () => {
-    oauth.getAuthorizationDetails.mockResolvedValue({ data: { redirect_uri: 'https://mcp.example/callback?code=1' }, error: null })
+  it('never follows the details redirect_uri: it carries no code', async () => {
+    oauth.getAuthorizationDetails.mockResolvedValue({ data: { redirect_uri: 'https://mcp.example/callback', client: { name: 'x' }, scope: '' }, error: null })
     renderAt('?authorization_id=abc')
-    await waitFor(() => expect(assign).toHaveBeenCalledWith('https://mcp.example/callback?code=1'))
+    await screen.findByText('Allow the Hockia connector?')
+    expect(assign).not.toHaveBeenCalled()
   })
 
   it('shows what the connector can read and approves on Allow', async () => {

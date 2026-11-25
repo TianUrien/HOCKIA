@@ -58,8 +58,10 @@ export default function OAuthConsentPage() {
         setState('invalid')
         return
       }
-      // Already approved before: Supabase hands back the redirect straight away.
-      if (data.redirect_uri && goTo(data.redirect_uri)) return
+      // `data.redirect_uri` is the client's registered address without a code
+      // (seen on staging 2026-11-25, although the type says it appears only
+      // after an earlier approval), so it is never followed: the code comes
+      // only from approveAuthorization / denyAuthorization below.
       setState('ready')
     })()
     return () => {
