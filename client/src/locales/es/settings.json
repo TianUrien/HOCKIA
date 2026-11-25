@@ -395,5 +395,25 @@
       "title": "Este enlace no es válido",
       "body": "Puede que tu programa de email lo haya cortado. Puedes responder desde tu panel."
     }
+  },
+  "assistantConsent": {
+    "title": "¿Permitir el conector de Hockia?",
+    "intro": "Un asistente de IA que estás conectando pide leer tu cuenta de Hockia a través del conector de Hockia.",
+    "canRead": "Podrá leer, en tu nombre:",
+    "readOwn": "tu propio perfil y tus postulaciones",
+    "readOpportunities": "las oportunidades abiertas en Hockia",
+    "readProfiles": "los perfiles públicos de otros miembros",
+    "readRecruiting": "para clubes y entrenadores que reclutan: tus oportunidades y sus postulantes",
+    "cannot": "No puede postularse, enviar mensajes, publicar ni cambiar nada.",
+    "signedInAs": "Sesión iniciada como {{name}}",
+    "allow": "Permitir",
+    "deny": "No permitir",
+    "working": "Un momento",
+    "signInTitle": "Inicia sesión para continuar",
+    "signInBody": "Inicia sesión en Hockia para conectar tu cuenta con tu asistente de IA.",
+    "signIn": "Iniciar sesión",
+    "invalidTitle": "Este enlace venció",
+    "invalidBody": "Vuelve a tu asistente de IA y empieza a conectar Hockia de nuevo.",
+    "failed": "Hockia no pudo terminar la conexión. Prueba de nuevo desde tu asistente de IA."
   }
 }

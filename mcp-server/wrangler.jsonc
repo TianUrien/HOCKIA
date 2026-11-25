@@ -1,0 +1,27 @@
+// Hockia assistant connector (remote MCP server). Staging only for now.
+// account_id comes from CLOUDFLARE_ACCOUNT_ID at deploy time (not committed).
+// Secrets (wrangler secret put, never committed):
+//   SUPABASE_ANON_KEY            the project's publishable/anon key
+//   SUPABASE_OAUTH_CLIENT_ID     this Worker's client id on the Supabase OAuth server
+//   SUPABASE_OAUTH_CLIENT_SECRET its secret
+//   CONSENT_SECRET               32+ random characters, signs remembered consent
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hockia-mcp-staging",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  // global_fetch_strictly_public is required for Client ID Metadata Documents (SSRF protection).
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "vars": {
+    "PUBLIC_URL": "https://hockia-mcp-staging.inhockia.workers.dev", // must equal ORIGIN in src/index.ts; confirm the account subdomain at first deploy
+    "SUPABASE_URL": "https://ivjkdaylalhsteyyclvl.supabase.co",
+    "ENVIRONMENT": "staging"
+  },
+  // id filled in at first deploy (npx wrangler kv namespace create OAUTH_KV).
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "REPLACE_AT_FIRST_DEPLOY" }],
+  // Per address, on the sign-in and registration endpoints only. Tool calls are
+  // limited per member in the database (mcp_guard).
+  "ratelimits": [{ "name": "AUTH_LIMITER", "namespace_id": "4201", "simple": { "limit": 30, "period": 60 } }],
+  "observability": { "enabled": true }
+}

@@ -595,6 +595,7 @@ const I18N_MIGRATED = [
   'src/pages/MyApplicationsPage.tsx',
   'src/pages/NeedPage.tsx',
   'src/pages/NotFoundPage.tsx',
+  'src/pages/OAuthConsentPage.tsx',
   'src/pages/OfferDetailPage.tsx',
   'src/pages/OfflinePage.tsx',
   'src/pages/OpportunitiesPage.tsx',

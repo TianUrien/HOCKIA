@@ -238,6 +238,12 @@ the eight `mcp_*` functions, as the signed-in member:
 - Switch: `app_settings` key `mcp_connector_enabled`, absent row = off.
 - Probe: `supabase/tests/security/mcp_connector_read_functions.probe.sql`
   (31 checks; all passed on staging, rolled back, 2026-11-25).
+- The connector itself is `mcp-server/` (Cloudflare Worker, not deployed yet):
+  it is the OAuth server the assistants see and keeps the member's Supabase
+  session encrypted in the grant, so an assistant never holds a Hockia token.
+  Members approve on `/oauth/consent` (client page for the Supabase OAuth 2.1
+  server, where the Worker is the only registered client; dynamic
+  registration off). Details and setup in `mcp-server/README.md`.
 
 ### 3.7 Test-account fencing
 
