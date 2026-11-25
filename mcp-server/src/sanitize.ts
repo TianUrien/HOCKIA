@@ -13,14 +13,16 @@ const LINK = /\b(?:https?:\/\/|www\.)[^\s<>"')\]]+/gi;
 const MARKUP = /<\/?[a-z][^>]*>/gi;
 
 export function cleanText(value: string): string {
-  return value
-    .replace(INVISIBLE, '')
-    .replace(MARKUP, '')
-    // One markup pass can leave a tag behind (`<scr<script>ipt>` becomes
-    // `<script>`), so drop every angle bracket that is left.
-    .replace(/[<>]/g, '')
-    .replace(LINK, '[link removed]')
-    .slice(0, MAX_STRING);
+  let out = value.replace(INVISIBLE, '');
+  // One pass can leave a tag behind (`<scr<script>ipt>` becomes `<script>`):
+  // strip markup until nothing changes, then drop any angle bracket left.
+  let previous: string;
+  do {
+    previous = out;
+    out = out.replace(MARKUP, '');
+  } while (out !== previous);
+  out = out.replace(/[<>]/g, '');
+  return out.replace(LINK, '[link removed]').slice(0, MAX_STRING);
 }
 
 export function sanitize(value: unknown, key?: string): unknown {

@@ -36,7 +36,7 @@ import { buildServer } from './tools';
  * loads (it is the token audience and the issuer), so it is a constant, not a
  * var: change it here and in wrangler.jsonc PUBLIC_URL together.
  */
-const ORIGIN = 'https://hockia-mcp-staging.inhockia.workers.dev';
+const ORIGIN = 'https://hockia-mcp-staging.hockia-ops.workers.dev';
 
 /** Leave this much of the Hockia session unused, so our token always expires first. */
 const SAFETY_SECONDS = 120;

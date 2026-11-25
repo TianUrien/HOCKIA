@@ -14,12 +14,12 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "workers_dev": true,
   "vars": {
-    "PUBLIC_URL": "https://hockia-mcp-staging.inhockia.workers.dev", // must equal ORIGIN in src/index.ts; confirm the account subdomain at first deploy
+    "PUBLIC_URL": "https://hockia-mcp-staging.hockia-ops.workers.dev", // must equal ORIGIN in src/index.ts
     "SUPABASE_URL": "https://ivjkdaylalhsteyyclvl.supabase.co",
     "ENVIRONMENT": "staging"
   },
   // id filled in at first deploy (npx wrangler kv namespace create OAUTH_KV).
-  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "REPLACE_AT_FIRST_DEPLOY" }],
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "f07bf1f0c52347189496adc009a89241" }],
   // Per address, on the sign-in and registration endpoints only. Tool calls are
   // limited per member in the database (mcp_guard).
   "ratelimits": [{ "name": "AUTH_LIMITER", "namespace_id": "4201", "simple": { "limit": 30, "period": 60 } }],
