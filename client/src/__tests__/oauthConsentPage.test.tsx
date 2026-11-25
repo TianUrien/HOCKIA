@@ -49,7 +49,14 @@ describe('OAuthConsentPage', () => {
     expect(oauth.getAuthorizationDetails).not.toHaveBeenCalled()
   })
 
-  it('never follows the details redirect_uri: it carries no code', async () => {
+  it('follows the details redirect_uri at once when Supabase approved automatically (it carries the code)', async () => {
+    oauth.getAuthorizationDetails.mockResolvedValue({ data: { redirect_uri: 'https://mcp.example/callback?code=1&state=s', client: { name: 'x' }, scope: '' }, error: null })
+    renderAt('?authorization_id=abc')
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('https://mcp.example/callback?code=1&state=s'))
+    expect(oauth.approveAuthorization).not.toHaveBeenCalled()
+  })
+
+  it('does not follow a bare details redirect_uri (first authorization: no code)', async () => {
     oauth.getAuthorizationDetails.mockResolvedValue({ data: { redirect_uri: 'https://mcp.example/callback', client: { name: 'x' }, scope: '' }, error: null })
     renderAt('?authorization_id=abc')
     await screen.findByText('Allow the Hockia connector?')
