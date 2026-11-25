@@ -108,4 +108,23 @@ describe('captcha retry and fallback', () => {
     await vi.advanceTimersByTimeAsync(10)
     await expect(p).resolves.toEqual({ token: 'late', attempts: 2 })
   })
+
+  it('shows the check in an app sheet with a title, and goes back to an invisible host after (founder 2026-11-25)', async () => {
+    let opts: Opts | null = null
+    window.turnstile = { render: vi.fn((_el: HTMLElement, o: Opts) => { opts = o; setTimeout(() => cb(o, 'before-interactive-callback')(), 5); return 'w' }), remove: vi.fn() }
+    const pending = getCaptchaTokenResult('login')
+    await vi.waitFor(() => expect(document.querySelector('[data-testid="captcha-host"]')?.getAttribute('aria-modal')).toBe('true'))
+    const host = document.querySelector('[data-testid="captcha-host"]') as HTMLElement
+    expect(host.style.display).toBe('block')
+    expect(host.querySelector('[data-testid="captcha-title"]')?.textContent).toBe('One moment')
+    expect(document.querySelector('[data-testid="captcha-backdrop"]')?.className).not.toContain('hidden')
+    expect(opts).toMatchObject({ appearance: 'interaction-only', size: 'flexible', theme: 'light' })
+    cb(opts as unknown as Opts, 'after-interactive-callback')()
+    cb(opts as unknown as Opts, 'callback')('tok')
+    await expect(pending).resolves.toMatchObject({ token: 'tok' })
+    expect(host.getAttribute('aria-modal')).toBe('false')
+    expect(host.style.display).toBe('block')
+    expect(document.querySelector('[data-testid="captcha-backdrop"]')?.className).toBe('hidden')
+  })
 })
+
