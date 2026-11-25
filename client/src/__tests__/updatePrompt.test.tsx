@@ -216,3 +216,46 @@ describe('a new version stuck installing is reported once', () => {
     vi.useRealTimers()
   })
 })
+
+describe('a version found right after a return from time away is applied (2026-11-25)', () => {
+  it('applies it without the prompt when the member came back after two minutes away', async () => {
+    resetPendingUpdateForTests()
+    document.body.innerHTML = ''
+    vi.useFakeTimers({ toFake: ['Date'] })
+    let hidden = false
+    Object.defineProperty(document, 'hidden', { get: () => hidden, configurable: true })
+    const registration = { update: vi.fn(() => Promise.resolve()), installing: null, addEventListener: vi.fn() }
+    const wb = fakeWorkbox()
+    wb.register = vi.fn(() => Promise.resolve(registration as unknown as ServiceWorkerRegistration))
+    const showPrompt = vi.fn()
+    const reload = vi.fn()
+    registerServiceWorker({ isNative: false, showPrompt, reload, createWorkbox: () => wb, doc: document })
+    await Promise.resolve(); await Promise.resolve()
+
+    hidden = true; document.dispatchEvent(new Event('visibilitychange'))
+    vi.setSystemTime(Date.now() + 3 * 60 * 1000)
+    hidden = false; document.dispatchEvent(new Event('visibilitychange'))
+    // The check on return finds the new version a moment later.
+    wb.fire('waiting')
+    expect(showPrompt).not.toHaveBeenCalled()
+    expect(wb.messageSkipWaiting).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
+  it('still shows the prompt after a short absence', async () => {
+    resetPendingUpdateForTests()
+    let hidden = false
+    Object.defineProperty(document, 'hidden', { get: () => hidden, configurable: true })
+    const registration = { update: vi.fn(() => Promise.resolve()), installing: null, addEventListener: vi.fn() }
+    const wb = fakeWorkbox()
+    wb.register = vi.fn(() => Promise.resolve(registration as unknown as ServiceWorkerRegistration))
+    const showPrompt = vi.fn()
+    registerServiceWorker({ isNative: false, showPrompt, reload: vi.fn(), createWorkbox: () => wb, doc: document })
+    await Promise.resolve(); await Promise.resolve()
+    hidden = true; document.dispatchEvent(new Event('visibilitychange'))
+    hidden = false; document.dispatchEvent(new Event('visibilitychange'))
+    wb.fire('waiting')
+    expect(showPrompt).toHaveBeenCalledTimes(1)
+    expect(wb.messageSkipWaiting).not.toHaveBeenCalled()
+  })
+})
