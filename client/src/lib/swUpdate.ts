@@ -64,6 +64,8 @@ const SILENT_UPDATE_WINDOW_MS = 10_000
 /** Default `canApplySilently` for the web build. */
 /** A return to the app after at least this long away may apply a waiting version. */
 export const AWAY_BEFORE_APPLY_MS = 2 * 60 * 1000
+/** A version found this soon after such a return is applied as part of it. */
+export const RETURN_APPLY_WINDOW_MS = 60 * 1000
 /** An update still installing after this long is reported to Sentry (once). */
 export const STUCK_INSTALL_MS = 5 * 60 * 1000
 
@@ -129,6 +131,10 @@ export function registerServiceWorker({
   const wb = createWorkbox()
   // Only a Reload tap in THIS tab (or the native auto-apply) may reload it.
   let applyRequested = false
+  // When the member came back after a while away. The update check runs on
+  // that return, so the new version is usually found a moment AFTER it: a
+  // version that turns up shortly after a return is applied too.
+  let returnedFromAwayAt = 0
 
   const apply = () => {
     applyRequested = true
@@ -143,6 +149,11 @@ export function registerServiceWorker({
     }
     if (canApplySilently()) {
       logger.info('[PWA] New version waiting — applying (signed-out arrival)')
+      apply()
+      return
+    }
+    if (returnedFromAwayAt && Date.now() - returnedFromAwayAt < RETURN_APPLY_WINDOW_MS && doc && !hasUnsavedInput(doc)) {
+      logger.info('[PWA] New version waiting — applying (back after a while away)')
       apply()
       return
     }
@@ -181,7 +192,10 @@ export function registerServiceWorker({
           hiddenAt = Date.now()
           stop()
         } else {
-          if (hiddenAt && Date.now() - hiddenAt >= AWAY_BEFORE_APPLY_MS) applyPendingUpdate(doc)
+          if (hiddenAt && Date.now() - hiddenAt >= AWAY_BEFORE_APPLY_MS) {
+            returnedFromAwayAt = Date.now()
+            applyPendingUpdate(doc)
+          }
           check()
           start()
         }
