@@ -60,7 +60,7 @@ export function FactTile({ label, value, detail, tone, leading, onClick, full = 
       {leading}
       <span className="min-w-0 flex-1">
         <span className="block text-micro font-semibold uppercase text-ink-3">{label}</span>
-        <span className={cn('block truncate text-[16px] font-semibold leading-[21px]', tone === 'positive' ? 'text-[#15803d]' : tone === 'muted' ? 'text-ink-3' : 'text-ink-1')}>{value}</span>
+        <span className={cn('block text-[16px] font-semibold leading-[21px]', full ? 'line-clamp-2 break-words' : 'truncate', tone === 'positive' ? 'text-[#15803d]' : tone === 'muted' ? 'text-ink-3' : 'text-ink-1')}>{value}</span>
         {detail && <span className="block truncate text-secondary text-ink-2">{detail}</span>}
       </span>
       {onClick && <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={2} />}
