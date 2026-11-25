@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode, useLayoutEffect } from 'react'
 import { personActionGate, useAmbassadorInvite } from '@/lib/ambassadorInvite'
 import { BetaPill } from '@/components/hockiaAi/BetaPill'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Check, ExternalLink, MessageCircle, Plus, Sparkles, Star, UserPlus } from 'lucide-react'
+import { Check, ExternalLink, MessageCircle, Play, Plus, Sparkles, Star, UserPlus } from 'lucide-react'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { useHockiaAiSheet } from '@/components/hockiaAi/hockiaAiSheetStore'
 
@@ -53,7 +53,7 @@ import { GoalCard } from '@/components/home/goal/GoalCard'
 import { type ActionBarButton } from './ProfileActionBar'
 import { ProfileLayout } from './ProfileLayout'
 import { Chip, CommentsPreview, FacesRow, FactTile, PostsPhotosGrid, RoleRow, Section, type GridTile } from './ProfileSections'
-import { safeVideoHref } from '@/lib/videoUrlValidator'
+import { safeVideoHref, videoPlatformLabel, videoThumbnailUrl, videoLinkSite } from '@/lib/videoUrlValidator'
 import { useProfileT } from '@/i18n/ns/profile'
 import { useEnumsT } from '@/i18n/ns/enums'
 import { countryLabel } from '@/i18n/countryNames'
@@ -249,6 +249,16 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
   const shownHighlights = data.highlights.filter((v) => canPlay(v.visibility === 'recruiters'))
   const shownFullMatches = data.fullMatches.filter((v) => canPlay(lockFullMatches || v.visibility === 'recruiters'))
   const shownLinked = Boolean(linkedHighlight && canOpenLinkedHighlight)
+  // The linked highlight is known before the uploaded videos arrive; when those
+  // are inserted in front of it the browser kept the linked tile in view and the
+  // row opened scrolled, hiding the first video (production check 2026-11-24).
+  // Back to the start whenever the tiles change, unless the member moved the row.
+  const videoRailRef = useRef<HTMLDivElement>(null)
+  const videoRailTouched = useRef(false)
+  const videoRailCount = data.highlights.length + data.fullGameLinks.length + (shownLinked ? 1 : 0)
+  useLayoutEffect(() => {
+    if (!videoRailTouched.current && videoRailRef.current) videoRailRef.current.scrollLeft = 0
+  }, [videoRailCount, data.loading])
   const shownVideoCount = shownHighlights.length + (shownLinked ? 1 : 0) + shownFullMatches.length + data.fullGameLinks.length
   const videosHiddenFromViewer = !owner && shownVideoCount < videoTotal
   const { onVideoCounts } = props
@@ -532,17 +542,23 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
         <Section id="videos" title={t('playerProfileV2.videos.title')} action={shownVideoCount > 0 ? t('playerProfileV2.videos.seeAll', { count: shownVideoCount }) : null} onAction={() => props.onOpenSection('videos')}>
           {videoTotal === 0 && !data.loading && dashed(t('playerProfileV2.videos.addHighlight'), () => props.onOpenSection('media'))}
           {shownVideoCount > 0 && (
-            <div className="flex snap-x scroll-pl-4 gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div
+              ref={videoRailRef}
+              onPointerDown={() => { videoRailTouched.current = true }}
+              onWheel={() => { videoRailTouched.current = true }}
+              className="flex snap-x scroll-pl-4 gap-3 overflow-x-auto px-4 [overflow-anchor:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              data-testid="profile-video-rail"
+            >
               {shownHighlights.map((v, i) => <VideoCard key={v.id} title={v.title}><ProfileVideoTile video={v} locked={v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} priority={i === 0} size={{ width: 280, height: 158 }} onOpen={() => openVideo(v, v.visibility === 'recruiters')} className="h-[158px] w-[280px]" /></VideoCard>)}
               {shownLinked && linkedHighlight && (
                 <VideoCard title={t('playerProfileV2.videos.linkedHighlight')}>
-                  <a href={linkedHighlight} target="_blank" rel="noopener noreferrer" className="relative flex h-[158px] w-[280px] items-center justify-center rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-6 w-6" /></a>
+                  <LinkedVideoTile href={linkedHighlight} />
                 </VideoCard>
               )}
               {shownFullMatches.map((v, i) => <VideoCard key={v.id} title={v.title}><ProfileVideoTile video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 1} size={{ width: 280, height: 158 }} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[158px] w-[280px]" /></VideoCard>)}
               {data.fullGameLinks.map((l) => (
                 <VideoCard key={l.id} title={l.match_title?.trim() || (l.opponent_team ? t('playerProfileV2.videos.versus', { team: l.opponent_team }) : t('playerProfileV2.videos.fullMatch'))}>
-                  <a href={safeVideoHref(l.video_url) ?? undefined} target="_blank" rel="noopener noreferrer" className="relative flex h-[158px] w-[280px] items-center justify-center rounded-[16px] bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-6 w-6" /></a>
+                  <LinkedVideoTile href={safeVideoHref(l.video_url)} />
                 </VideoCard>
               ))}
             </div>
@@ -584,7 +600,8 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
             return (
               <button key={r.id} type="button" onClick={() => props.onOpenReference(r.id)} className="w-full text-left" data-testid="profile-reference">
                 <SquircleBox className="flex flex-col gap-3 bg-gold-soft px-[18px] py-4 shadow-[inset_0_0_0_0.5px_rgba(15,15,20,0.06)]">
-                  {r.endorsementText && <p className="line-clamp-5 text-body font-semibold text-ink-1">“{r.endorsementText}”</p>}
+                  {/* Reading size, regular weight: a whole quote in bold read as shouting (design review 2026-11-24). */}
+                  {r.endorsementText && <p className="line-clamp-6 text-row text-ink-1">“{r.endorsementText}”</p>}
                   <span className="flex items-center gap-2.5">
                     <EntityAvatar src={p?.avatarUrl ?? null} name={p?.fullName ?? null} role={p?.role} size={32} />
                     <span className="min-w-0">
@@ -622,13 +639,14 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
               const flag = flagForCountryName(countries, e.locationCountry) ?? e.worldClub?.flag ?? null
               const sub = [e.positionRole?.trim() ? humanizeToken(e.positionRole) : null, [flag, e.locationCity?.trim() || countryLabel(e.locationCountry?.trim()) || null].filter(Boolean).join(' ') || null].filter(Boolean).join(', ')
               return (
+                // The dates sit under the name: beside it they cut every club name short (design review 2026-11-24).
                 <div key={e.id} className="flex items-start gap-3 py-2.5" data-testid="career-row">
-                  <EntityAvatar src={e.worldClub?.avatar_url ?? null} name={e.clubName} role="club" size={40} />
+                  <EntityAvatar src={e.worldClub?.avatar_url ?? null} name={e.clubName} role="club" size={36} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{e.clubName}</span>
+                    <span className="block line-clamp-2 break-words text-row font-semibold text-ink-1">{e.clubName}</span>
                     {sub && <span className="block truncate text-secondary text-ink-2">{sub}</span>}
+                    <span className={cn('block text-caption', now ? 'font-semibold text-hockia-primary' : 'text-ink-3')} data-testid="career-row-dates">{careerSpan(e)}</span>
                   </span>
-                  <span className={cn('shrink-0 text-secondary font-semibold', now ? 'text-hockia-primary' : 'text-ink-3')}>{careerSpan(e)}</span>
                 </div>
               )
             })}
@@ -685,6 +703,51 @@ export default function PlayerProfileV2(props: PlayerProfileV2Props) {
       )}
       <VideoAccessSheets block={videoBlock} firstName={name.split(/\s+/)[0] || null} onClose={() => setVideoBlock(null)} />
     </div>
+  )
+}
+
+/**
+ * A video that lives on another site (design review 2026-11-24: the dark
+ * gradient with an icon read as a broken tile). YouTube links show their own
+ * still; any other link gets a quiet light tile. Both carry a play mark and
+ * say where the link goes.
+ */
+function LinkedVideoTile({ href }: { href: string | null }) {
+  // YouTube answers a removed or private video with a small grey placeholder
+  // (120 px wide) instead of an error: treat that as "no still".
+  const [noStill, setNoStill] = useState(false)
+  const thumb = noStill ? null : videoThumbnailUrl(href)
+  const platform = videoPlatformLabel(href)
+  const label = platform ?? videoLinkSite(href)
+  return (
+    <a
+      href={href ?? undefined}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn('relative flex h-[158px] w-[280px] items-center justify-center overflow-hidden rounded-[16px]', thumb ? 'bg-ink-1' : 'bg-surface-subtle')}
+      data-testid="profile-linked-video"
+    >
+      {thumb && (
+        <img
+          src={thumb}
+          alt=""
+          loading="lazy"
+          onLoad={(e) => { if (e.currentTarget.naturalWidth <= 120) setNoStill(true) }}
+          onError={() => setNoStill(true)}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
+      {thumb && <span className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" aria-hidden="true" />}
+      <span className={cn('relative flex h-12 w-12 items-center justify-center rounded-full', thumb ? 'bg-white/90 text-ink-1' : 'bg-white text-ink-1 shadow-[0_1px_2px_rgba(15,15,20,0.08)]')}>
+        <Play className="ml-0.5 h-5 w-5" strokeWidth={2} fill="currentColor" aria-hidden="true" />
+      </span>
+      {label && (
+        <span className={cn('absolute bottom-2.5 left-2.5 flex max-w-[240px] items-center gap-1 rounded-full px-2.5 py-1 text-caption font-semibold', thumb ? 'bg-black/55 text-white' : 'bg-white text-ink-2')}>
+          <span className="truncate">{label}</span>
+          <ExternalLink className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden="true" />
+        </span>
+      )}
+    </a>
   )
 }
 

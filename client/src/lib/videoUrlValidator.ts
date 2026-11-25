@@ -72,6 +72,16 @@ export function videoPlatformLabel(url: string | null | undefined): string | nul
 }
 
 /**
+ * A still image for a linked video, when the platform serves one without a
+ * key: YouTube only (img.youtube.com is in the image policy). Null otherwise;
+ * the caller draws its own tile.
+ */
+export function videoThumbnailUrl(url: string | null | undefined): string | null {
+  const ref = url ? parseVideoUrl(url) : null
+  return ref?.platform === 'youtube' ? `https://img.youtube.com/vi/${ref.id}/hqdefault.jpg` : null
+}
+
+/**
  * A stored video link that is safe to open: an https web address, else null.
  * Links come from members' own profiles, so a `javascript:` or `data:` value
  * written outside the app must never reach an href (CodeQL 2026-10-23).

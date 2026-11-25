@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { safeVideoHref, validateAndNormalizeVideoUrl, validateFullMatchUrl, videoEmbedUrl, videoLinkSite, videoPlatformLabel } from '@/lib/videoUrlValidator'
+import { safeVideoHref, validateAndNormalizeVideoUrl, validateFullMatchUrl, videoEmbedUrl, videoLinkSite, videoPlatformLabel, videoThumbnailUrl } from '@/lib/videoUrlValidator'
 
 describe('validateAndNormalizeVideoUrl', () => {
   describe('YouTube', () => {
@@ -137,3 +137,20 @@ describe('video links are parsed, not substring-matched', () => {
     }
   })
 })
+
+describe('videoThumbnailUrl', () => {
+  it('gives a YouTube still for every YouTube link shape', () => {
+    for (const url of ['https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'https://youtu.be/dQw4w9WgXcQ', 'https://www.youtube.com/shorts/dQw4w9WgXcQ']) {
+      expect(videoThumbnailUrl(url)).toBe('https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg')
+    }
+  })
+
+  it('gives nothing for other sites, unsafe ids or look-alike hosts', () => {
+    expect(videoThumbnailUrl('https://vimeo.com/123456')).toBeNull()
+    expect(videoThumbnailUrl('https://drive.google.com/file/d/abc/view')).toBeNull()
+    expect(videoThumbnailUrl('https://evil.example/?youtube.com/watch?v=dQw4w9WgXcQ')).toBeNull()
+    expect(videoThumbnailUrl('https://www.youtube.com/watch?v=../../x')).toBeNull()
+    expect(videoThumbnailUrl(null)).toBeNull()
+  })
+})
+
