@@ -35,6 +35,17 @@ function goTo(url: string | undefined): boolean {
   return true
 }
 
+/** True when Supabase's redirect already holds the outcome for the client. */
+function carriesAnswer(url: string | undefined): boolean {
+  if (!url) return false
+  try {
+    const query = new URL(url).searchParams
+    return query.has('code') || query.has('error')
+  } catch {
+    return false
+  }
+}
+
 export default function OAuthConsentPage() {
   const t = useSettingsT()
   const navigate = useNavigate()
@@ -58,10 +69,13 @@ export default function OAuthConsentPage() {
         setState('invalid')
         return
       }
-      // `data.redirect_uri` is the client's registered address without a code
-      // (seen on staging 2026-11-25, although the type says it appears only
-      // after an earlier approval), so it is never followed: the code comes
-      // only from approveAuthorization / denyAuthorization below.
+      // A member who allowed the connector before is approved by Supabase on
+      // the spot ("auto_approved" in the auth log): `redirect_uri` then carries
+      // the code and the authorization is no longer pending, so Allow would
+      // fail. On a first authorization `redirect_uri` is the bare registered
+      // address with no code (both seen on staging 2026-11-25): follow it only
+      // when it carries a code or an error.
+      if (carriesAnswer(data.redirect_uri) && goTo(data.redirect_uri)) return
       setState('ready')
     })()
     return () => {
