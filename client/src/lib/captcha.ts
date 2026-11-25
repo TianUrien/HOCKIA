@@ -125,8 +125,12 @@ const HOST_CARD_CLASS = [
   'pointer-events-auto fixed inset-x-0 bottom-0 z-[2147483000] animate-fadeSlideIn bg-white',
   'rounded-t-[28px] px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-5 shadow-[0_-8px_30px_rgba(15,15,20,0.16)]',
   'max-[359px]:px-2.5',
-  'sm:inset-x-auto sm:bottom-6 sm:left-1/2 sm:w-[400px] sm:-translate-x-1/2 sm:rounded-[24px] sm:p-6 sm:shadow-[0_8px_30px_rgba(15,15,20,0.18)]',
+  /* Desktop: a centred dialog. inset-0 + m-auto centres it without a transform,
+     which the fadeSlideIn animation would otherwise overwrite. */
+  'sm:inset-0 sm:m-auto sm:h-fit sm:w-[400px] sm:rounded-[24px] sm:p-6 sm:shadow-[0_16px_48px_rgba(15,15,20,0.22)]',
 ].join(' ')
+/* Lucide shield-check, static markup (no user input). */
+const SHIELD_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>'
 const BACKDROP_CLASS = 'fixed inset-0 z-[2147482999] bg-[rgba(15,15,20,0.32)]'
 
 let slot: HTMLDivElement | null = null
@@ -142,12 +146,19 @@ function ensureHost(): HTMLDivElement {
   host.setAttribute('role', 'dialog')
   header = document.createElement('div')
   header.className = 'mb-4 hidden'
+  const badge = document.createElement('span')
+  badge.className = 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-primary'
+  badge.setAttribute('aria-hidden', 'true')
+  badge.innerHTML = SHIELD_ICON
+  const text = document.createElement('div')
+  text.className = 'min-w-0'
   const title = document.createElement('h2')
   title.className = 'text-body font-semibold text-ink-1'
   title.setAttribute('data-testid', 'captcha-title')
   const body = document.createElement('p')
-  body.className = 'mt-1 text-secondary text-ink-2'
-  header.append(title, body)
+  body.className = 'mt-0.5 text-secondary text-ink-2'
+  text.append(title, body)
+  header.append(badge, text)
   slot = document.createElement('div')
   slot.setAttribute('data-testid', 'captcha-slot')
   host.append(header, slot)
@@ -166,12 +177,12 @@ function showSheet(open: boolean): void {
   host.style.display = 'block'
   host.setAttribute('aria-modal', open ? 'true' : 'false')
   if (open) {
-    const [title, body] = Array.from(header.children) as HTMLElement[]
+    const [title, body] = Array.from(header.lastElementChild?.children ?? []) as HTMLElement[]
     title.textContent = tAuth('captcha.sheetTitle')
     body.textContent = tAuth('captcha.sheetBody')
     host.setAttribute('aria-label', tAuth('captcha.sheetTitle'))
   }
-  header.className = open ? 'mb-4' : 'mb-4 hidden'
+  header.className = open ? 'mb-4 flex items-start gap-3' : 'mb-4 hidden'
   backdrop.className = open ? BACKDROP_CLASS : 'hidden'
 }
 
