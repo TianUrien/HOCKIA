@@ -6,10 +6,12 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@sentry/react', () => ({ captureMessage: vi.fn() }))
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() } }))
 
 import UpdatePrompt from '@/components/UpdatePrompt'
-import { isSafeSilentUpdate, registerServiceWorker, type WorkboxLike } from '@/lib/swUpdate'
+import * as Sentry from '@sentry/react'
+import { applyPendingUpdate, isSafeSilentUpdate, registerServiceWorker, resetPendingUpdateForTests, watchForStuckInstall, type WorkboxLike } from '@/lib/swUpdate'
 
 describe('UpdatePrompt', () => {
   it('shows the neutral message with Reload and Dismiss', () => {
@@ -149,5 +151,68 @@ describe('silent update for a signed-out arrival (founder ruling 2026-10-10)', (
     input.focus()
     expect(isSafeSilentUpdate({ ...base, path: '/signin', doc: document })).toBe(false)
     document.body.innerHTML = ''
+  })
+})
+
+describe('signed-in members get the waiting version at the next safe moment (2026-11-25)', () => {
+  beforeAll(() => {
+    if (!('serviceWorker' in navigator)) Object.defineProperty(navigator, 'serviceWorker', { value: {}, configurable: true })
+  })
+
+  it('a move to another screen applies a version waiting behind the prompt', () => {
+    resetPendingUpdateForTests()
+    document.body.innerHTML = ''
+    const wb = fakeWorkbox()
+    const reload = vi.fn()
+    registerServiceWorker({ isNative: false, showPrompt: vi.fn(), reload, createWorkbox: () => wb })
+    wb.fire('waiting')
+    expect(wb.messageSkipWaiting).not.toHaveBeenCalled()
+
+    expect(applyPendingUpdate(document)).toBe(true)
+    expect(wb.messageSkipWaiting).toHaveBeenCalledTimes(1)
+    wb.fire('controlling', { isUpdate: true })
+    expect(reload).toHaveBeenCalledTimes(1)
+    // Applied once: a second safe moment does nothing more.
+    expect(applyPendingUpdate(document)).toBe(false)
+  })
+
+  it('never applies while the page holds typed text, and does once it is clear', () => {
+    resetPendingUpdateForTests()
+    document.body.innerHTML = '<textarea></textarea>'
+    const field = document.querySelector('textarea') as HTMLTextAreaElement
+    field.value = 'Hello coach'
+    const wb = fakeWorkbox()
+    registerServiceWorker({ isNative: false, showPrompt: vi.fn(), reload: vi.fn(), createWorkbox: () => wb })
+    wb.fire('waiting')
+
+    expect(applyPendingUpdate(document)).toBe(false)
+    expect(wb.messageSkipWaiting).not.toHaveBeenCalled()
+    field.value = ''
+    field.blur()
+    expect(applyPendingUpdate(document)).toBe(true)
+    document.body.innerHTML = ''
+  })
+
+  it('does nothing when no version is waiting', () => {
+    resetPendingUpdateForTests()
+    expect(applyPendingUpdate(document)).toBe(false)
+  })
+})
+
+describe('a new version stuck installing is reported once', () => {
+  it('reports to Sentry when the worker is still installing after the timeout', () => {
+    vi.useFakeTimers()
+    const sw = { state: 'installing' } as unknown as ServiceWorker
+    const reg = { installing: sw, addEventListener: vi.fn() } as unknown as ServiceWorkerRegistration
+    watchForStuckInstall(reg, 1000)
+    vi.advanceTimersByTime(999)
+    expect(Sentry.captureMessage).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(1)
+    expect(Sentry.captureMessage).toHaveBeenCalledTimes(1)
+    // Once per page, even if another install stalls.
+    watchForStuckInstall(reg, 1000)
+    vi.advanceTimersByTime(1000)
+    expect(Sentry.captureMessage).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
   })
 })

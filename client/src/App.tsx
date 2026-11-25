@@ -22,6 +22,7 @@ import CookieConsent from '@/components/CookieConsent'
 import { RouteMeta } from './components/RouteMeta'
 import PushPrompt from '@/components/PushPrompt'
 import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
+import UpdateOnNavigate from '@/components/UpdateOnNavigate'
 import AppRatingPrompt from '@/components/AppRatingPrompt'
 import { GlobalHockiaAiSheet } from '@/components/hockiaAi/GlobalHockiaAiSheet'
 import { GetReadySheet } from '@/components/marketplace/GetReadySheet'
@@ -407,6 +408,7 @@ function App() {
           <CookieConsent />
           <PushPrompt />
           <NativeUpdatePrompt />
+          <UpdateOnNavigate />
           <AppRatingPrompt />
           <ContactModal />
           <EngagementTracker />
