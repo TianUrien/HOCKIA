@@ -218,6 +218,27 @@ Not covered: the auth account of a blocked member is not banned in
 - Spam limits on new conversations and invites are founder-specified and
   enforced server-side (daily caps, stricter in the first week).
 
+### 3.6a Assistant connector functions (2026-11-25, founder decision 2026-11-24)
+
+Migration `20261125100000_mcp_connector_read_functions`. The planned
+assistant connector (members connect Claude to their own account) calls only
+the eight `mcp_*` functions, as the signed-in member:
+
+- Read only. Each answers for `auth.uid()` alone, returns a fixed field list
+  (never date of birth, email, phone, last-active or internal flags) and
+  applies the hidden-profile, test-account, block-pair and adult fences
+  itself. Lists and counts use the same fence.
+- Players get no counts, fit, levels or rankings. Fit (state only) and a
+  player's level target go to the recruiter who owns the role; recruiter-only
+  tools answer `{"error": "recruiters_only"}` to everyone else.
+- `mcp_guard` (server only) checks the caller, the switch and the account
+  state, then per-member limits through `check_rate_limit` (`mcp_<tool>` and
+  60 calls an hour across tools; member search also 60 a day, ten per page,
+  five pages, no total).
+- Switch: `app_settings` key `mcp_connector_enabled`, absent row = off.
+- Probe: `supabase/tests/security/mcp_connector_read_functions.probe.sql`
+  (31 checks; all passed on staging, rolled back, 2026-11-25).
+
 ### 3.7 Test-account fencing
 
 `profiles.is_test_account` is referenced by 234 migration files, 22 client
