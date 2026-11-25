@@ -70,12 +70,15 @@ export default function OAuthConsentPage() {
         return
       }
       // A member who allowed the connector before is approved by Supabase on
-      // the spot ("auto_approved" in the auth log): `redirect_uri` then carries
-      // the code and the authorization is no longer pending, so Allow would
-      // fail. On a first authorization `redirect_uri` is the bare registered
-      // address with no code (both seen on staging 2026-11-25): follow it only
-      // when it carries a code or an error.
-      if (carriesAnswer(data.redirect_uri) && goTo(data.redirect_uri)) return
+      // the spot ("auto_approved" in the auth log) and the authorization is no
+      // longer pending, so Allow would fail. Supabase Auth then answers with
+      // `redirect_url` (the client address with the code), not the
+      // `redirect_uri` that the supabase-js types declare (supabase/auth
+      // internal/api/oauthserver/authorize.go; seen on staging 2026-11-25).
+      // On a first authorization `redirect_uri` is the bare registered address
+      // with no code. Follow either one only when it carries a code or an error.
+      const answer = (data as { redirect_url?: string }).redirect_url ?? data.redirect_uri
+      if (carriesAnswer(answer) && goTo(answer)) return
       setState('ready')
     })()
     return () => {
