@@ -28,6 +28,12 @@ describe('sanitize', () => {
     expect(out.items[0].bio).toBe('see [link removed]');
   });
 
+  it('leaves no tag behind when tags are nested to survive one pass', () => {
+    const out = cleanText('<scr<script>ipt>alert(1)</script> and 3 < 4 > 2');
+    expect(out).not.toMatch(/[<>]/);
+    expect(out).toBe('iptalert(1) and 3  4  2');
+  });
+
   it('caps very long text', () => {
     expect(cleanText('a'.repeat(10000))).toHaveLength(4000);
   });

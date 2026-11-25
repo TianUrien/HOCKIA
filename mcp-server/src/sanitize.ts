@@ -16,6 +16,9 @@ export function cleanText(value: string): string {
   return value
     .replace(INVISIBLE, '')
     .replace(MARKUP, '')
+    // One markup pass can leave a tag behind (`<scr<script>ipt>` becomes
+    // `<script>`), so drop every angle bracket that is left.
+    .replace(/[<>]/g, '')
     .replace(LINK, '[link removed]')
     .slice(0, MAX_STRING);
 }
