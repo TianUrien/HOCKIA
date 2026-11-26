@@ -16,7 +16,7 @@ import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { extractErrorMessage } from '@/lib/utils'
 import { logger } from '@/lib/logger'
 import { passwordHelp, PASSWORD_MIN_LENGTH, passwordPolicyMessage, passwordProblem } from '@/lib/onboardingV2'
-import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, warmCaptcha } from '@/lib/captcha'
+import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, stopWarmCaptcha, warmCaptcha } from '@/lib/captcha'
 import { useAuthT } from '@/i18n/ns/auth'
 import { currentLanguage } from '@/i18n'
 
@@ -37,7 +37,7 @@ export default function CreateWithEmail() {
   const navigate = useNavigate()
   const t = useAuthT()
   // Get the bot check ready while the member types (lib/captcha).
-  useEffect(() => { warmCaptcha('signup') }, [])
+  useEffect(() => { warmCaptcha('signup'); return () => stopWarmCaptcha('signup') }, [])
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

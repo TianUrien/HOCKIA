@@ -10,7 +10,7 @@ import { logger } from '@/lib/logger'
 import { getSiteUrl } from '@/lib/siteUrl'
 import { checkPasswordResetRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 import { guardCheck, rateLimitedCopy } from '@/lib/authGuard'
-import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, warmCaptcha } from '@/lib/captcha'
+import { captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, stopWarmCaptcha, warmCaptcha } from '@/lib/captcha'
 import { useAuthT } from '@/i18n/ns/auth'
 
 /**
@@ -26,7 +26,7 @@ export default function ForgotPassword() {
   const navigate = useNavigate()
   const t = useAuthT()
   // Get the bot check ready while the member types (lib/captcha).
-  useEffect(() => { warmCaptcha('reset') }, [])
+  useEffect(() => { warmCaptcha('reset'); return () => stopWarmCaptcha('reset') }, [])
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
