@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import fs from 'fs'
 import { execSync } from 'child_process'
 import { buildSentryRelease } from './src/lib/sentryRelease'
 
@@ -101,6 +102,21 @@ export default defineConfig(({ mode, command }) => {
           // (an admin-only recharts chunk showed up in the landing trace).
           // Heavy lazy chunks are excluded from INSTALL-time precache and
           // picked up by the runtime route below on first actual use.
+          // UPDATE SPEED (2026-11-25): only the app SHELL is precached — the JS
+          // that index.html itself loads (entry + modulepreloads), CSS, fonts,
+          // icons and the Spanish catalogs. Every other route chunk (~340 files,
+          // ~6 MB) used to be precached too, so each release had to download
+          // all of them before the new version could even wait; on mobile data
+          // the install kept restarting and members stayed on the old build
+          // for hours. Route chunks now come from the 'lazy-assets' runtime
+          // route below on first use (same as the admin chunks always did).
+          manifestTransforms: [
+            async (entries) => {
+              const shell = fs.readFileSync(path.resolve(__dirname, 'dist/index.html'), 'utf8')
+              const manifest = entries.filter((e) => !/^assets\/.+\.js$/.test(e.url) || shell.includes(e.url))
+              return { manifest, warnings: [] }
+            },
+          ],
           globIgnores: [
             '**/*.map',            // source maps are uploaded to Sentry, never served
             '**/charts-*.js',      // recharts — admin dashboards only
@@ -126,7 +142,7 @@ export default defineConfig(({ mode, command }) => {
               handler: 'CacheFirst',
               options: {
                 cacheName: 'lazy-assets',
-                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30 },
               },
             },
             // NO runtime caching of /rest/v1/ — deliberately removed 2026-08-08.

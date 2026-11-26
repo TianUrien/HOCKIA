@@ -53,6 +53,7 @@ Supporting conventions in `client/vite.config.ts`:
   `tus-js-client` and friends out of the eager `vendor` chunk.
 - Admin chart chunks are stripped from the HTML modulepreload list.
 - Images are never precached by the service worker.
+- Only the app shell is precached (2026-11-25): the JS that `index.html` loads, CSS, fonts, icons and the Spanish catalogs (`manifestTransforms` in `vite.config.ts`). Route chunks are cached on first use. A one-line change renames most chunks (their imports carry hashes), so precaching every chunk made each release a ~300-file download before the new version could wait. A waiting version is applied on the next screen change or return to the app when nothing is typed (`applyPendingUpdate` in `lib/swUpdate.ts`); an install still running after 5 minutes is reported to Sentry.
 - Catalogs (2026-11-16): Spanish text is JSON fetched on demand, outside both gates. An English catalog travels with whatever imports its `i18n/ns/<ns>` module, so a namespace that start-up code needs is split into `<ns>.core.json` (start-up keys) and `<ns>.json` (the rest); start-up files import `i18n/ns/<ns>.core`. `scripts/check-locales.mjs` fails when a start-up file uses a key outside the core file.
 
 See decisions/ADR-0004.
