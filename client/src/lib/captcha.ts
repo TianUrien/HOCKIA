@@ -32,6 +32,13 @@
  * one line of why, and the box at full width (size "flexible") in the
  * interface language. A bottom sheet on phones, a centred card on wider
  * screens. The host stays rendered while idle, as before.
+ *
+ * 2026-11-26 (founder, stuck on the sheet in production): a check warmed by a
+ * sign-in form is stopped when that form closes (`stopWarmCaptcha`), so it can
+ * no longer surface later over Opportunities or any other screen; and the
+ * sheet has a close button, so nobody is ever trapped behind it. Closing
+ * counts as "dismissed": quiet, not retried, the request goes on without a
+ * token and the server decides, as for any missing token.
  */
 
 import * as Sentry from '@sentry/react'
@@ -62,15 +69,15 @@ const MAX_ATTEMPTS = 2
  * the background, or a newer request replaced the widget. None is reported;
  * the first two are not retried either.
  */
-const QUIET_REASONS = new Set(['interactive_timeout', 'superseded', 'page_hidden'])
-const NO_RETRY_REASONS = new Set(['interactive_timeout', 'page_hidden'])
+const QUIET_REASONS = new Set(['interactive_timeout', 'superseded', 'page_hidden', 'dismissed'])
+const NO_RETRY_REASONS = new Set(['interactive_timeout', 'page_hidden', 'dismissed'])
 
 let scriptPromise: Promise<void> | null = null
 let scriptEl: HTMLScriptElement | null = null
 let widgetId: string | null = null
 let host: HTMLDivElement | null = null
 /** The widget currently waiting for a token; a newer render settles it as "superseded". */
-let active: { cancel: () => void } | null = null
+let active: { cancel: () => void; dismiss: () => void } | null = null
 /** The last token request per action, read once by `reportCaptchaCoverage` when the server answers. */
 const lastResult = new Map<CaptchaAction, CaptchaResult>()
 
@@ -130,11 +137,16 @@ const HOST_CARD_CLASS = [
   'sm:inset-0 sm:m-auto sm:h-fit sm:w-[400px] sm:rounded-[24px] sm:p-6 sm:shadow-[0_16px_48px_rgba(15,15,20,0.22)]',
 ].join(' ')
 /* Lucide shield-check, static markup (no user input). */
+/* Lucide x, static markup. */
+const CLOSE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'
 const SHIELD_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>'
 const BACKDROP_CLASS = 'fixed inset-0 z-[2147482999] bg-[rgba(15,15,20,0.32)]'
 
 let slot: HTMLDivElement | null = null
 let header: HTMLDivElement | null = null
+let closeButton: HTMLButtonElement | null = null
+let titleEl: HTMLHeadingElement | null = null
+let bodyEl: HTMLParagraphElement | null = null
 let backdrop: HTMLDivElement | null = null
 
 /** The host (always rendered), its header (shown with the check) and the slot the widget renders into. */
@@ -151,14 +163,22 @@ function ensureHost(): HTMLDivElement {
   badge.setAttribute('aria-hidden', 'true')
   badge.innerHTML = SHIELD_ICON
   const text = document.createElement('div')
-  text.className = 'min-w-0'
+  text.className = 'min-w-0 flex-1'
   const title = document.createElement('h2')
   title.className = 'text-body font-semibold text-ink-1'
   title.setAttribute('data-testid', 'captcha-title')
   const body = document.createElement('p')
   body.className = 'mt-0.5 text-secondary text-ink-2'
   text.append(title, body)
-  header.append(badge, text)
+  titleEl = title
+  bodyEl = body
+  closeButton = document.createElement('button')
+  closeButton.type = 'button'
+  closeButton.setAttribute('data-testid', 'captcha-close')
+  closeButton.className = '-mr-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-2 hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-primary'
+  closeButton.innerHTML = CLOSE_ICON
+  closeButton.addEventListener('click', () => { if (active) active.dismiss() })
+  header.append(badge, text, closeButton)
   slot = document.createElement('div')
   slot.setAttribute('data-testid', 'captcha-slot')
   host.append(header, slot)
@@ -177,10 +197,10 @@ function showSheet(open: boolean): void {
   host.style.display = 'block'
   host.setAttribute('aria-modal', open ? 'true' : 'false')
   if (open) {
-    const [title, body] = Array.from(header.lastElementChild?.children ?? []) as HTMLElement[]
-    title.textContent = tAuth('captcha.sheetTitle')
-    body.textContent = tAuth('captcha.sheetBody')
+    if (titleEl) titleEl.textContent = tAuth('captcha.sheetTitle')
+    if (bodyEl) bodyEl.textContent = tAuth('captcha.sheetBody')
     host.setAttribute('aria-label', tAuth('captcha.sheetTitle'))
+    closeButton?.setAttribute('aria-label', tAuth('captcha.close'))
   }
   header.className = open ? 'mb-4 flex items-start gap-3' : 'mb-4 hidden'
   backdrop.className = open ? BACKDROP_CLASS : 'hidden'
@@ -213,6 +233,18 @@ export function warmCaptcha(action: CaptchaAction): void {
   if (!siteKey() || typeof window === 'undefined') return
   if (warm && warm.action === action && Date.now() - warm.at < WARM_MAX_AGE_MS) return
   warm = { action, at: Date.now(), result: attemptToken(action) }
+}
+
+/**
+ * The form that warmed `action` closed: stop that check so it can't surface
+ * on another screen. A request already in progress is left alone.
+ */
+export function stopWarmCaptcha(action: CaptchaAction): void {
+  if (!warm || warm.action !== action) return
+  warm = null
+  if (active) active.cancel()
+  active = null
+  if (typeof window !== 'undefined') removeWidget(window.turnstile)
 }
 
 /** Drop the warmed token and the widget so the next request starts clean (the "Try again" button). */
@@ -280,7 +312,7 @@ async function attemptToken(action: CaptchaAction): Promise<CaptchaResult> {
   return new Promise<CaptchaResult>((resolve) => {
     let settled = false
     let timer: ReturnType<typeof setTimeout> | undefined
-    const me = { cancel: () => done(undefined, 'superseded') }
+    const me = { cancel: () => done(undefined, 'superseded'), dismiss: () => done(undefined, 'dismissed') }
     function done(token?: string, failure?: string) {
       if (settled) return
       settled = true

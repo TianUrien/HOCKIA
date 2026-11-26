@@ -36,7 +36,7 @@ import { isNetworkFailureError, reportAuthFlowError } from '@/lib/sentryHelpers'
 /** Same words as Community's "Couldn't load members" state: the problem is the connection, not the member. */
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
 import { clearRedirectIntent, stashRedirectIntent } from '@/lib/redirectIntent'
-import { captchaFailedCopy, captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, resetCaptcha, warmCaptcha } from '@/lib/captcha'
+import { captchaFailedCopy, captchaErrorMessage, getCaptchaToken, reportCaptchaCoverage, resetCaptcha, stopWarmCaptcha, warmCaptcha } from '@/lib/captcha'
 import { LanguageSwitch } from '@/components/LanguageSwitch'
 import { useAuthT } from '@/i18n/ns/auth'
 
@@ -51,7 +51,7 @@ export default function AuthScreen() {
   const t = useAuthT()
   const { user, profile, profileStatus, loading: authLoading } = useAuthStore()
   // Get the bot check ready while the member types (lib/captcha).
-  useEffect(() => { warmCaptcha('login') }, [])
+  useEffect(() => { warmCaptcha('login'); return () => stopWarmCaptcha('login') }, [])
 
   // `?next=` preservation — passed through OAuth + magic link so members who
   // clicked "Apply to Opportunity X" return where they started.
