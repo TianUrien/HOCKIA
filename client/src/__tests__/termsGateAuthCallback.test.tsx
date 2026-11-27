@@ -129,7 +129,7 @@ describe('TermsGate — no blank first frame', () => {
 
   it('member with acceptance already in localStorage: first commit, no blank, no RPC', () => {
     mocks.user = { id: 'u-1' }
-    localStorage.setItem('hockia-terms-u-1-1.0', 'accepted')
+    localStorage.setItem('hockia-terms-u-1-1.1', 'accepted')
     const seq = mountFirstCommitProbe('/dashboard/profile')
     expect(seq.indexOf('child-layout')).toBeLessThan(seq.indexOf('sibling-passive'))
     expect(mocks.rpc).not.toHaveBeenCalled()

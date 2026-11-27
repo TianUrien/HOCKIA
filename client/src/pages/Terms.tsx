@@ -24,7 +24,7 @@ export default function Terms() {
             </div>
             <div>
               <h1 className="mb-2 text-title text-ink-1">Terms & Conditions</h1>
-              <p className="text-gray-600">Effective date: March 2026</p>
+              <p className="text-gray-600">Effective date: November 2026</p>
             </div>
           </div>
         </div>
@@ -42,7 +42,7 @@ export default function Terms() {
                 By creating an account or using any part of the Platform, you agree to be bound by these Terms. If you do not agree, you may not use Hockia.
               </p>
               <p>
-                Hockia is operated by Cristian Urien ("we", "us", "our"). For questions about these Terms, contact us at team@inhockia.com.
+                Hockia is operated by Cristian Urien, an individual resident in Argentina ("we", "us", "our"). Hockia is a free networking platform. It is not an employer, recruitment agency, sports agent or club, and it does not take part in any agreement between members. For questions about these Terms, contact us at team@inhockia.com.
               </p>
             </div>
           </section>
@@ -54,7 +54,10 @@ export default function Terms() {
             <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">2. Eligibility</h2>
             <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
-                You must be at least 16 years old to create an account on Hockia. If you are between 16 and 18 years old, you must have consent from a parent or legal guardian to use the Platform.
+                You must be at least 18 years old to create and use an account on Hockia. Club and brand accounts must be created and run by a person aged 18 or over who is authorised to act for the organisation.
+              </p>
+              <p>
+                We may ask you to confirm your date of birth. If you do not confirm it, or we learn that a member is under 18, we may restrict or freeze the account.
               </p>
               <p>
                 By creating an account, you represent and warrant that:
@@ -164,6 +167,30 @@ export default function Terms() {
               <p>
                 We do not verify, endorse, or guarantee the accuracy of opportunity listings, the qualifications of applicants, or the legitimacy of any party involved. Users are responsible for conducting their own due diligence before entering into any agreements or arrangements that result from connections made on the Platform.
               </p>
+              <p>
+                Hockia does not check whether an opportunity, an offer, a club, an organisation or a member is genuine, and does not supervise trials, travel, visas, accommodation, contracts, scholarships, payments or meetings that follow from a connection made on Hockia. Never pay a fee to apply for an opportunity or to be selected. If anyone asks you to, report it to us.
+              </p>
+            </div>
+          </section>
+
+          <hr className="border-gray-200" />
+
+          {/* Section 6A */}
+          <section>
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">6A. Your Dealings with Other Members</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
+              <p>
+                Hockia only puts members in contact. Any conversation, agreement, trial, trip, meeting, contract, payment, scholarship or other arrangement between members is solely between those members. Hockia is not a party to it.
+              </p>
+              <p>
+                You are responsible for checking who you are dealing with and for deciding whether to go ahead. You take part in any such arrangement at your own risk.
+              </p>
+              <p>
+                If you have a dispute with another member, you agree to resolve it directly with that member. To the extent the law allows, you release Hockia and its operator from any claim, demand or damage of any kind, known or unknown, that arises from or is connected with such a dispute or with the conduct of another member, on or off the Platform.
+              </p>
+              <p>
+                We may, but do not have to, review reports, remove content or restrict accounts. Doing so does not make us responsible for what members do.
+              </p>
             </div>
           </section>
 
@@ -220,7 +247,7 @@ export default function Terms() {
             <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">9. Child Safety</h2>
             <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
-                Hockia is committed to the safety and protection of minors. The Platform is not directed at children under 16, and we do not knowingly collect personal data from children under 16 without parental consent.
+                Hockia is committed to the safety and protection of minors. The Platform is for adults. It is not directed at anyone under 18, and we do not knowingly allow anyone under 18 to hold an account.
               </p>
               <p>
                 Users must not use the Platform to exploit, harm, or endanger minors in any way. Any content or behavior that involves child sexual abuse or exploitation (CSAE) is strictly prohibited and will result in immediate account termination and reporting to relevant authorities.
@@ -262,6 +289,24 @@ export default function Terms() {
                 <li>Any third-party content or conduct on the Platform.</li>
                 <li>Any errors, bugs, or interruptions in service.</li>
               </ul>
+              <p>
+                To the extent the law allows, the total liability of Hockia and its operator to you for all claims arising from these Terms or the Platform is limited to fifty United States dollars (USD 50). Hockia is free, and this limit reflects that.
+              </p>
+              <p>
+                Nothing in these Terms limits or excludes liability that cannot be limited or excluded by law, including liability for intent or gross negligence, or your rights as a consumer under mandatory law.
+              </p>
+            </div>
+          </section>
+
+          <hr className="border-gray-200" />
+
+          {/* Section 11A */}
+          <section>
+            <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">11A. Indemnity</h2>
+            <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
+              <p>
+                You agree to defend, indemnify and hold harmless Hockia and its operator from any claim, loss, liability, cost or expense (including reasonable legal fees) made by a third party that arises from your content, your use of the Platform, your dealings with other members, or your breach of these Terms or of the law.
+              </p>
             </div>
           </section>
 
@@ -299,7 +344,16 @@ export default function Terms() {
             <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">14. Governing Law</h2>
             <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
-                These Terms shall be governed by and construed in accordance with applicable laws. Any disputes arising from these Terms or your use of the Platform shall be resolved through good-faith negotiation. If a resolution cannot be reached, disputes may be submitted to the competent courts.
+                These Terms are governed by the laws of the Argentine Republic.
+              </p>
+              <p>
+                Before starting any claim, you agree to contact us at team@inhockia.com and try to resolve it in good faith for at least 30 days.
+              </p>
+              <p>
+                Any dispute will be decided by the ordinary courts of the Autonomous City of Buenos Aires, Argentina, unless mandatory consumer law gives you the right to bring it in the courts where you live.
+              </p>
+              <p>
+                Any claim arising from these Terms or the Platform must be brought within one year after the facts that give rise to it, unless the law requires a longer period.
               </p>
             </div>
           </section>
@@ -311,7 +365,7 @@ export default function Terms() {
             <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">15. Changes to These Terms</h2>
             <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
-                We may update these Terms from time to time to reflect changes in our Platform, practices, or legal requirements. When we make material changes, we will notify you through the Platform or via email. Your continued use of Hockia after the effective date of updated Terms constitutes your acceptance of the changes.
+                We may update these Terms from time to time to reflect changes in our Platform, practices, or legal requirements. When we make material changes, we will notify you through the Platform or via email. For material changes, we will ask you to accept the new Terms in the app before you continue using Hockia, and we keep a record of that acceptance.
               </p>
             </div>
           </section>
@@ -337,7 +391,7 @@ export default function Terms() {
 
           {/* Last Updated */}
           <div className="pt-8 border-t border-gray-200">
-            <p className="text-sm text-gray-500 text-center">Last updated: March 21, 2026</p>
+            <p className="text-sm text-gray-500 text-center">Last updated: November 27, 2026</p>
           </div>
         </div>
       </div>

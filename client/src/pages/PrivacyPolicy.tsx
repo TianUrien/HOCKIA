@@ -287,7 +287,7 @@ export default function PrivacyPolicy() {
             <h2 className="mb-3 font-display text-[19px] font-bold leading-[1.25] tracking-[-0.02em] text-ink-1">9. Children's Privacy</h2>
             <div className="max-w-[70ch] space-y-4 text-[16px] leading-[1.6] text-ink-2">
               <p>
-                Hockia is not directed at children under 16 years of age. We do not knowingly collect personal data from children under 16 without verifiable parental consent. If we learn that we have collected personal data from a child under 16 without appropriate consent, we will take steps to delete that information promptly.
+                Hockia is for adults and is not directed at anyone under 18. If we learn that a member is under 18, we freeze the account so that it is hidden from other members and cannot be contacted, and we contact the member about closing the account.
               </p>
               <p>
                 If you are a parent or guardian and believe your child has provided personal data to Hockia without your consent, please contact us at team@inhockia.com.
