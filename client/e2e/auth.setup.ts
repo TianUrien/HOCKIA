@@ -475,7 +475,8 @@ async function authenticateUser(
   // TermsGate uses user-scoped key: `hockia-terms-${userId}-${version}`.
   await page.evaluate(
     ({ userId }) => {
-      localStorage.setItem(`hockia-terms-${userId}-1.0`, 'accepted')
+      // Every version the app may ask for; bump with CURRENT_TERMS_VERSION in TermsGate.
+      for (const v of ['1.0', '1.1']) localStorage.setItem(`hockia-terms-${userId}-${v}`, 'accepted')
       // Keep legacy key for backwards compat with any old checks
       localStorage.setItem('hockia-terms-1.0', 'accepted')
       // Pre-accept the GDPR cookie banner so its bottom-anchored card

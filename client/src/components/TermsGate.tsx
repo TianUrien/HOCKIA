@@ -8,7 +8,7 @@ import { useBottomPrompt } from '@/lib/bottomPrompt'
 import { TERMS_GATE_OVERLAY } from '@/lib/overlaySequence'
 import { useAuthT } from '@/i18n/ns/auth'
 
-const CURRENT_TERMS_VERSION = '1.0'
+const CURRENT_TERMS_VERSION = '1.1'
 
 /**
  * Never gated: the transient auth callback, the onboarding screens (see
@@ -158,6 +158,8 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
               }}
             />
           </p>
+
+          <p>{t('termsGate.responsibility')}</p>
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-2">
             <p className="font-semibold text-gray-900">{t('termsGate.guidelinesTitle')}</p>
