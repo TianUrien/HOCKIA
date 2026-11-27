@@ -14,7 +14,7 @@ import { queryClient } from './lib/queryClient'
 import { logger } from './lib/logger'
 import { purgeStaleApiCaches } from './lib/purgeStaleApiCaches'
 import { initSentryInAppBrowserContext } from './lib/sentryHelpers'
-import { claimStaleChunkRecovery, isSafeSilentUpdate, recoverFromStaleChunk, registerServiceWorker } from './lib/swUpdate'
+import { claimStaleChunkRecovery, handleStaleChunkRejection, isSafeSilentUpdate, recoverFromStaleChunk, registerServiceWorker } from './lib/swUpdate'
 import { hasPersistedSession } from './lib/persistedSession'
 import { showUpdatePrompt } from './lib/updatePromptRoot'
 import { Capacitor } from '@capacitor/core'
@@ -52,6 +52,10 @@ window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault()
   void recoverFromStaleChunk()
 })
+// Plain import() calls outside lazyWithRetry fail as unhandled rejections;
+// registered before initSentry so the recovery has started (and Sentry's
+// beforeSend drops the event) by the time Sentry sees it.
+window.addEventListener('unhandledrejection', (event) => { handleStaleChunkRejection(event) })
 
 const isNativePlatform = Capacitor.isNativePlatform()
 // Native builds use the platform font (SF Pro / Roboto); the web keeps Inter.
