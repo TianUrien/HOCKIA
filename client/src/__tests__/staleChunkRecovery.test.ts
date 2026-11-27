@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { STALE_CHUNK_KEY, STALE_RETRY_WINDOW_MS, claimStaleChunkRecovery, isStaleChunkRecoveryRunning, recoverFromStaleChunk } from '@/lib/swUpdate'
+import { STALE_CHUNK_KEY, STALE_RETRY_WINDOW_MS, claimStaleChunkRecovery, handleStaleChunkRejection, isStaleChunkRecoveryRunning, recoverFromStaleChunk } from '@/lib/swUpdate'
 
 type Listener = () => void
 
@@ -81,5 +81,41 @@ describe('stale chunk guard (prod 2026-10-30)', () => {
   it('reports a running recovery so routes wait for the reload instead of the error screen', async () => {
     await recoverFromStaleChunk({ reload: vi.fn(), timeoutMs: 1 })
     expect(isStaleChunkRecoveryRunning()).toBe(true)
+  })
+})
+
+describe('unhandled stale-chunk rejections (JAVASCRIPT-REACT-7J, 2026-11-27)', () => {
+  afterEach(() => { sessionStorage.removeItem(STALE_CHUNK_KEY) })
+
+  const rejection = (reason: unknown) => ({ reason, preventDefault: vi.fn() })
+  // Earlier tests started recoveries; a fresh module has none running.
+  const fresh = async () => { vi.resetModules(); return (await import('@/lib/swUpdate')).handleStaleChunkRejection }
+
+  it('recovers once from a plain import() that hit a replaced chunk', async () => {
+    const handleStaleChunkRejection = await fresh()
+    sessionStorage.removeItem(STALE_CHUNK_KEY)
+    const event = rejection(new TypeError('Importing a module script failed.'))
+    const recover = vi.fn().mockResolvedValue(undefined)
+    expect(handleStaleChunkRejection(event, recover)).toBe(true)
+    expect(event.preventDefault).toHaveBeenCalled()
+    expect(recover).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves other rejections alone', () => {
+    const event = rejection(new Error('Something else'))
+    const recover = vi.fn()
+    expect(handleStaleChunkRejection(event, recover)).toBe(false)
+    expect(event.preventDefault).not.toHaveBeenCalled()
+    expect(recover).not.toHaveBeenCalled()
+  })
+
+  it('lets it surface when a recovery already ran within the window', async () => {
+    const handleStaleChunkRejection = await fresh()
+    sessionStorage.setItem(STALE_CHUNK_KEY, String(Date.now()))
+    const event = rejection(new TypeError('Failed to fetch dynamically imported module: /assets/x.js'))
+    const recover = vi.fn()
+    expect(handleStaleChunkRejection(event, recover)).toBe(false)
+    expect(event.preventDefault).not.toHaveBeenCalled()
+    expect(recover).not.toHaveBeenCalled()
   })
 })
