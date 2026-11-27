@@ -247,7 +247,8 @@ the eight `mcp_*` functions, as the signed-in member:
 - Switch: `app_settings` key `mcp_connector_enabled`, absent row = off.
 - Probe: `supabase/tests/security/mcp_connector_read_functions.probe.sql`
   (31 checks; all passed on staging, rolled back, 2026-11-25; block and age
-  cases B4, B5, Y1-Y4 added 2026-11-27).
+  cases B4, B5, Y1-Y4 added 2026-11-27; after the 20261127100000 apply, the
+  full probe ran on staging 2026-11-27: 38 PASS, 0 FAIL, rolled back).
 - The connector itself is `mcp-server/` (Cloudflare Worker, not deployed yet):
   it is the OAuth server the assistants see and keeps the member's Supabase
   session encrypted in the grant, so an assistant never holds a Hockia token.
