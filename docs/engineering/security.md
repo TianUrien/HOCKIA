@@ -235,9 +235,20 @@ the eight `mcp_*` functions, as the signed-in member:
   state, then per-member limits through `check_rate_limit` (`mcp_<tool>` and
   60 calls an hour across tools; member search also 60 a day, ten per page,
   five pages, no total).
+- 18+ (migration `20261127100000_mcp_connector_minors_and_blocks`, founder
+  decision 2026-11-27): a player, coach or umpire must be adult by
+  `profile_is_adult` to use the connector (unknown date of birth = not adult,
+  so `account_unavailable`), and `mcp_get_member_profile` never returns a
+  minor, even by a known id. Clubs and brands have no date of birth and are
+  unaffected.
+- Applicants in a block relationship with the club, either side, are left
+  out of `mcp_list_applicants` and of the counts in
+  `mcp_list_my_opportunities`.
 - Switch: `app_settings` key `mcp_connector_enabled`, absent row = off.
 - Probe: `supabase/tests/security/mcp_connector_read_functions.probe.sql`
-  (31 checks; all passed on staging, rolled back, 2026-11-25).
+  (31 checks; all passed on staging, rolled back, 2026-11-25; block and age
+  cases B4, B5, Y1-Y4 added 2026-11-27; after the 20261127100000 apply, the
+  full probe ran on staging 2026-11-27: 38 PASS, 0 FAIL, rolled back).
 - The connector itself is `mcp-server/` (Cloudflare Worker, not deployed yet):
   it is the OAuth server the assistants see and keeps the member's Supabase
   session encrypted in the grant, so an assistant never holds a Hockia token.

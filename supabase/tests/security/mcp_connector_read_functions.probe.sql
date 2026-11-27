@@ -1,4 +1,5 @@
--- Probe for 20261125100000_mcp_connector_read_functions.sql.
+-- Probe for 20261125100000_mcp_connector_read_functions.sql and
+-- 20261127100000_mcp_connector_minors_and_blocks.sql (cases B4, B5, Y).
 -- Run on STAGING only (fixture ids are the E2E accounts there) via execute_sql.
 -- Identities are switched with SET LOCAL ROLE authenticated|anon + request.jwt.claims.
 -- Everything happens in one transaction that the final RAISE rolls back,
@@ -169,6 +170,53 @@ BEGIN
     RAISE EXCEPTION 'undo';
   EXCEPTION WHEN OTHERS THEN
     IF sqlerrm <> 'undo' THEN v_out := v_out || E'\nFAIL B error: ' || left(sqlerrm, 80); END IF;
+  END;
+
+  -- ── B4/B5: block pair leaves the applicant list and count together, either side (undone) ──
+  BEGIN
+    INSERT INTO user_blocks (blocker_id, blocked_id) VALUES (c_club, c_player);
+    v := pg_temp.mcp_call(c_club, format('public.mcp_list_applicants(%L)', o_role));
+    SELECT count(*) INTO v_n FROM jsonb_array_elements(COALESCE(v->'applicants', '[]'::jsonb)) e WHERE (e->>'member_id')::uuid = c_player;
+    v := pg_temp.mcp_call(c_club, 'public.mcp_list_my_opportunities()');
+    SELECT (e->>'applicant_count')::int INTO v_i FROM jsonb_array_elements(v->'opportunities') e WHERE (e->>'id')::uuid = o_role;
+    v_out := v_out || E'\n' || format('%s B4 club blocked the applicant: list %s, count %s', CASE WHEN v_n = 0 AND v_i = 0 THEN 'PASS' ELSE 'FAIL' END, v_n, v_i);
+    RAISE EXCEPTION 'undo';
+  EXCEPTION WHEN OTHERS THEN
+    IF sqlerrm <> 'undo' THEN v_out := v_out || E'\nFAIL B4 error: ' || left(sqlerrm, 80); END IF;
+  END;
+  BEGIN
+    INSERT INTO user_blocks (blocker_id, blocked_id) VALUES (c_player, c_club);
+    v := pg_temp.mcp_call(c_club, format('public.mcp_list_applicants(%L)', o_role));
+    SELECT count(*) INTO v_n FROM jsonb_array_elements(COALESCE(v->'applicants', '[]'::jsonb)) e WHERE (e->>'member_id')::uuid = c_player;
+    v := pg_temp.mcp_call(c_club, 'public.mcp_list_my_opportunities()');
+    SELECT (e->>'applicant_count')::int INTO v_i FROM jsonb_array_elements(v->'opportunities') e WHERE (e->>'id')::uuid = o_role;
+    v_out := v_out || E'\n' || format('%s B5 applicant blocked the club: list %s, count %s', CASE WHEN v_n = 0 AND v_i = 0 THEN 'PASS' ELSE 'FAIL' END, v_n, v_i);
+    RAISE EXCEPTION 'undo';
+  EXCEPTION WHEN OTHERS THEN
+    IF sqlerrm <> 'undo' THEN v_out := v_out || E'\nFAIL B5 error: ' || left(sqlerrm, 80); END IF;
+  END;
+
+  -- ── Y: under 18 or unknown age (undone); profile_is_hidden stays false here,
+  --    so these check the adult fence itself, not the frozen-minor fence ──
+  BEGIN
+    UPDATE profiles SET date_of_birth = ((timezone('utc', now()))::date - INTERVAL '16 years')::date, frozen_minor_at = NULL WHERE id = c_player;
+    v := pg_temp.mcp_call(c_player, 'public.mcp_get_my_profile()');
+    v_out := v_out || E'\n' || format('%s Y1 a 16-year-old player cannot use the connector → %s', CASE WHEN v->>'error' = 'account_unavailable' THEN 'PASS' ELSE 'FAIL' END, left(v::text, 50));
+    v := pg_temp.mcp_call(c_club, format('public.mcp_get_member_profile(%L)', c_player));
+    v_out := v_out || E'\n' || format('%s Y2 a minor''s profile by known id → %s', CASE WHEN v->>'error' = 'not_found' THEN 'PASS' ELSE 'FAIL' END, left(v::text, 50));
+    RAISE EXCEPTION 'undo';
+  EXCEPTION WHEN OTHERS THEN
+    IF sqlerrm <> 'undo' THEN v_out := v_out || E'\nFAIL Y1/Y2 error: ' || left(sqlerrm, 80); END IF;
+  END;
+  BEGIN
+    UPDATE profiles SET date_of_birth = NULL, frozen_minor_at = NULL WHERE id = c_coach;
+    v := pg_temp.mcp_call(c_coach, 'public.mcp_get_my_profile()');
+    v_out := v_out || E'\n' || format('%s Y3 unknown date of birth counts as not adult → %s', CASE WHEN v->>'error' = 'account_unavailable' THEN 'PASS' ELSE 'FAIL' END, left(v::text, 50));
+    v := pg_temp.mcp_call(c_club, 'public.mcp_get_my_profile()');
+    v_out := v_out || E'\n' || format('%s Y4 a club (no date of birth) still can → %s', CASE WHEN NOT (v ? 'error') THEN 'PASS' ELSE 'FAIL' END, left(v::text, 50));
+    RAISE EXCEPTION 'undo';
+  EXCEPTION WHEN OTHERS THEN
+    IF sqlerrm <> 'undo' THEN v_out := v_out || E'\nFAIL Y3/Y4 error: ' || left(sqlerrm, 80); END IF;
   END;
 
   -- ── D: member search and member profile ──
