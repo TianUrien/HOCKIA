@@ -173,6 +173,16 @@ that returns or counts people must apply it explicitly** (46 migration files
 do). A 2026-07 audit found eight surfaces that leaked by omission; the
 invariant is restated in the root `CLAUDE.md`.
 
+**Member blocks and applicants (2026-11-27, founder decision "hide them in
+both", migration `20261127120000_applicants_hide_blocked_pairs`).** A club
+does not see, or count, an applicant in a block pair with it, whichever side
+blocked: the publisher SELECT policy on `opportunity_applications` and
+`get_my_roles_health` apply `is_blocked_pair(club, applicant)`;
+`fetch_club_opportunities_with_counts` follows through RLS. Removing the block
+brings the application back. Probe:
+`supabase/tests/security/applicants_hide_blocked_pairs.probe.sql`. The
+assistant connector has the same fence (§3.6a).
+
 **Ban evasion (2026-11-10, migration `20261110150000_ban_evasion_guard`).**
 An admin block also records the account's email in `banned_emails`
 (normalised: lower-case, `+tag` removed, Gmail dots removed) and an unblock
