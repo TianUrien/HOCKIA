@@ -134,7 +134,7 @@ describe('post-onboarding overlays — one at a time', () => {
 
   it('a later session: the install card waits for the cookie banner, then shows', async () => {
     markOnboardingCompletedOnDevice()
-    localStorage.setItem('hockia-terms-u-1-1.0', 'accepted')
+    localStorage.setItem('hockia-terms-u-1-1.1', 'accepted')
     newSession()
     renderApp()
     offerInstall()
