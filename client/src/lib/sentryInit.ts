@@ -29,7 +29,8 @@ import * as SentryCapacitor from '@sentry/capacitor'
 import type { CapacitorOptions } from '@sentry/capacitor'
 import { Capacitor } from '@capacitor/core'
 import { isNetworkFailureMessage } from '@/lib/sentryHelpers'
-import { EXPECTED_SAMPLE_RATE, expectedErrorKey, isUnsampledMeasure } from '@/lib/sentryFilters'
+import { EXPECTED_SAMPLE_RATE, expectedErrorKey, isStaleChunkMessage, isUnsampledMeasure } from '@/lib/sentryFilters'
+import { isStaleChunkRecoveryRunning } from '@/lib/swUpdate'
 import { scrubBreadcrumb, scrubEvent } from '@/lib/sentryScrub'
 import { getAppVersion } from '@/lib/appVersion'
 
@@ -147,6 +148,10 @@ function buildSharedOptions(environment: SentryEnvironment): CapacitorOptions {
       const message = [event.message, ...(event.exception?.values?.map((v) => v.value) ?? []), original instanceof Error ? original.message : '']
         .filter((m): m is string => typeof m === 'string')
         .join('\n')
+      // A stale chunk the app is already recovering from by reloading onto
+      // the new release: the member sees a reload, not a failure, so it is
+      // neither an error nor a crashed session (JAVASCRIPT-REACT-7J).
+      if (isStaleChunkMessage(message) && isStaleChunkRecoveryRunning()) return null
       // Expected outcomes the UI already explains: counted (sampled, info,
       // grouped per kind) so a surge is visible, but never paging.
       // A measurement, not a failure: every one counts (lib/captcha coverage).
