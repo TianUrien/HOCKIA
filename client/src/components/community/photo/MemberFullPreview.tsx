@@ -30,6 +30,7 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import { cachedAvatarFull, prefetchAvatarFull, useAvatarFull } from '@/hooks/useAvatarFull'
+import { loadedVariant, preloadPhoto } from '@/lib/imageWarm'
 import { getImageUrl } from '@/lib/imageUrl'
 import { setStatusBarForBackground } from '@/lib/nativeUi'
 import { queryClient } from '@/lib/queryClient'
@@ -194,6 +195,13 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
   const shown = photos.filter((p) => !failed.has(p))
   const current = shown[Math.min(photoIndex, Math.max(shown.length - 1, 0))] ?? null
   useEffect(() => { setPhotoIndex(0) }, [member.id])
+  // Every photo of the member on screen, downloaded as soon as it opens, so a
+  // tap to the next photo shows it at once instead of the member's colour.
+  const shownKey = shown.join('|')
+  useEffect(() => {
+    if (!active || !shownKey) return
+    for (const raw of shownKey.split('|')) preloadPhoto(raw, 'immersive')
+  }, [active, shownKey])
 
   useEffect(() => { if (active) onNestedModal?.(signIn !== null || rolePicker) }, [active, signIn, rolePicker, onNestedModal])
   // Continuous top corners on the summary panel (finish pass).
@@ -603,6 +611,7 @@ function MemberPreviewBody({ member, onClose, age: ageProp = null, fit = null, c
         >
           {current ? (
             <>
+              <GridPhotoUnderlay raw={current} hidden={shownSrc === current} />
               <img
                 key={current}
                 ref={(el) => { if (el?.complete && el.naturalWidth > 0) setShownSrc(current) }}
@@ -1136,17 +1145,20 @@ function firstPhotoOf(m: Profile): string | null {
   return queryClient.getQueryData<string[]>(qk.memberPhotos(m.id))?.[0] ?? null
 }
 
-const preloaded = new Set<string>()
-/** Download and decode an image ahead of time (same URL the card uses). */
+/** Download and decode a member photo at full-screen size ahead of time. */
 function preloadImage(raw: string | null) {
-  if (!raw || typeof Image === 'undefined') return
-  const src = getImageUrl(raw, 'immersive') ?? raw
-  if (preloaded.has(src)) return
-  preloaded.add(src)
-  const img = new Image()
-  img.decoding = 'async'
-  img.src = src
-  void img.decode?.().catch(() => undefined)
+  preloadPhoto(raw, 'immersive')
+}
+
+/**
+ * The grid's own copy of this photo, painted at once (it is already in the
+ * browser cache) while the full-screen variant loads, so opening a member or
+ * stepping to a photo the grid showed never flashes an empty colour.
+ */
+function GridPhotoUnderlay({ raw, hidden }: { raw: string | null; hidden: boolean }) {
+  const src = loadedVariant(raw)
+  if (!src || hidden) return null
+  return <img src={src} alt="" aria-hidden="true" data-testid="photo-underlay" className="absolute inset-0 h-full w-full object-cover" />
 }
 
 // ── Phones: the vertical deck (founder ruling 2026-10-21, Figma 01 Community ·
@@ -1248,6 +1260,8 @@ function ImmersivePage(p: ImmersivePageProps) {
       {/* Photo, full bleed; the member's colour sits behind it while it loads. */}
       <div className="absolute inset-0" style={{ backgroundImage: p.noPhotoBackground }}>
         {p.current ? (
+          <>
+          <GridPhotoUnderlay raw={p.current} hidden={p.shownSrc === p.current} />
           <img
             key={p.current}
             ref={(el) => { if (el?.complete && el.naturalWidth > 0) p.setShownSrc(p.current!) }}
@@ -1261,6 +1275,7 @@ function ImmersivePage(p: ImmersivePageProps) {
               else p.setShownSrc(p.current!)
             }}
           />
+          </>
         ) : (
           <span aria-hidden="true" className="absolute inset-0">
             <img src={pitchVertical} alt="" className="absolute inset-0 h-full w-full" />
@@ -1456,6 +1471,8 @@ function DesktopPage(p: ImmersivePageProps) {
       {/* Photo column */}
       <div className="relative h-full w-[44%] max-w-[440px] shrink-0 overflow-hidden" style={{ backgroundImage: p.noPhotoBackground }}>
         {p.current ? (
+          <>
+          <GridPhotoUnderlay raw={p.current} hidden={p.shownSrc === p.current} />
           <img
             key={p.current}
             ref={(el) => { if (el?.complete && el.naturalWidth > 0) p.setShownSrc(p.current!) }}
@@ -1469,6 +1486,7 @@ function DesktopPage(p: ImmersivePageProps) {
               else p.setShownSrc(p.current!)
             }}
           />
+          </>
         ) : (
           <span aria-hidden="true" className="absolute inset-0">
             <img src={pitchVertical} alt="" className="absolute inset-0 h-full w-full" />

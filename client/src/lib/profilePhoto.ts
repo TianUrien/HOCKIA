@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { optimizeAvatarImage, optimizeImage } from '@/lib/imageOptimization'
+import { warmUploadedPhoto } from '@/lib/imageWarm'
 
 /**
  * A person's profile photo is stored twice (2026-10-23, migration 20261023120000):
@@ -37,6 +38,7 @@ export async function uploadProfilePhoto(userId: string, file: File, { full = tr
   const { error } = await supabase.storage.from('avatars').upload(path, square, { upsert: true, cacheControl: '31536000' })
   if (error) throw error
   const avatarUrl = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+  warmUploadedPhoto(avatarUrl, 'avatar')
 
   let avatarFullUrl: string | null = null
   if (!full || file.type === 'image/png') return { avatarUrl, avatarFullUrl }
@@ -46,6 +48,7 @@ export async function uploadProfilePhoto(userId: string, file: File, { full = tr
     const { error: fullError } = await supabase.storage.from('avatars').upload(fullPath, fullFile, { contentType: 'image/jpeg', upsert: true, cacheControl: '31536000' })
     if (fullError) throw fullError
     avatarFullUrl = supabase.storage.from('avatars').getPublicUrl(fullPath).data.publicUrl
+    warmUploadedPhoto(avatarFullUrl)
   } catch (err) {
     logger.warn('[profilePhoto] full-shape upload failed; keeping the square only', err)
   }

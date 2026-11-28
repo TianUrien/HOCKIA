@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { LogoTile } from './LogoTile'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
+import { rememberLoaded } from '@/lib/imageWarm'
 import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
 import { CARD_SCRIM, HAIRLINE_ON_PHOTO, PRESS, cardPlaceLine, cardRoleLine, roleGradient, type CardMember } from '@/lib/communityCard'
 import pitchVertical from '@/assets/community/pitch-full-vertical.svg'
@@ -76,6 +77,7 @@ export function MemberPhotoCard({ member, photoUrl, pending = false, age, place 
             priority={priority}
             className="object-cover"
             onError={() => setFailed(src)}
+            onLoad={(e) => rememberLoaded(src, e.currentTarget.currentSrc)}
           />
           <span className="absolute inset-0" style={{ backgroundImage: SCRIM }} />
         </span>

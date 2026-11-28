@@ -6,6 +6,7 @@ import { invalidateProfile } from '@/lib/profile'
 import { optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { clearCoverPhotoCache } from '@/hooks/useCoverPhoto'
 import { clearProfileScrollCache } from '@/hooks/useProfileScrollData'
+import { warmUploadedPhoto } from '@/lib/imageWarm'
 
 /**
  * Hockia AI · "Fill my profile for me" (handoff P0–P3, Figma 185:309 /
@@ -233,6 +234,7 @@ export async function saveProfileDraft(userId: string, d: ProfileDraft, photos: 
         const url = supabase.storage.from('gallery').getPublicUrl(path).data.publicUrl
         const { error } = await supabase.from('gallery_photos').insert({ user_id: userId, photo_url: url, file_name: file.name, file_size: optimized.size, order_index: base - i } as never)
         if (error) throw error
+        warmUploadedPhoto(url)
         saved += 1
       }
     } catch (err) { logger.error('[profileBuilder] photos', err); failed.push('photos') }

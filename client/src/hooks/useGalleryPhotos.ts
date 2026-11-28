@@ -6,6 +6,7 @@ import { optimizeImage, validateImage, imageFileExtension } from '@/lib/imageOpt
 import { deleteStorageObject } from '@/lib/storage'
 import { clearCoverPhotoCache } from './useCoverPhoto'
 import { clearProfileScrollCache } from './useProfileScrollData'
+import { warmUploadedPhoto } from '@/lib/imageWarm'
 
 /**
  * A profile's gallery photos (Figma Manage media · Gallery · Photo viewer):
@@ -68,6 +69,7 @@ export function useGalleryPhotos(profileId: string | null | undefined) {
           const url = supabase.storage.from('gallery').getPublicUrl(path).data.publicUrl
           const { error: dbErr } = await supabase.from('gallery_photos').insert({ user_id: profileId, photo_url: url, file_name: file.name, file_size: optimized.size, order_index: base - i })
           if (dbErr) throw dbErr
+          warmUploadedPhoto(url)
           added += 1
           addedFiles.push(file)
           top = Math.max(top, base - i)
