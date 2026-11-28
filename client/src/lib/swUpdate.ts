@@ -1,6 +1,7 @@
 import { Workbox } from 'workbox-window'
 import * as Sentry from '@sentry/react'
 import { logger } from '@/lib/logger'
+import { isStaleChunkMessage } from '@/lib/sentryFilters'
 
 /**
  * Service-worker registration and update flow (onboarding QA 2026-10-04).
@@ -254,6 +255,31 @@ export function claimStaleChunkRecovery(now = Date.now()): boolean {
     if (last && now - last < STALE_RETRY_WINDOW_MS) return false
     sessionStorage.setItem(STALE_CHUNK_KEY, String(now))
   } catch { /* storage blocked: still recover */ }
+  return true
+}
+
+/**
+ * A plain `import()` outside lazyWithRetry (a hook, a sheet's React.lazy, a
+ * library loaded on demand) that hits a chunk a newer release replaced ends
+ * as an unhandled rejection: no reload, and Sentry counts a crashed session
+ * (JAVASCRIPT-REACT-7J, prod 2026-11-27: an iPhone on yesterday's build
+ * opening /home). Run the same one-time recovery as lazyWithRetry. Returns
+ * true when the rejection was a stale chunk this handler took over.
+ */
+export function handleStaleChunkRejection(
+  event: Pick<PromiseRejectionEvent, 'reason' | 'preventDefault'>,
+  recover: () => Promise<void> = recoverFromStaleChunk,
+): boolean {
+  const reason = event.reason as { message?: unknown } | string | null | undefined
+  const message = typeof reason === 'string' ? reason : typeof reason?.message === 'string' ? reason.message : ''
+  if (!isStaleChunkMessage(message)) return false
+  // A recovery already runs (lazyWithRetry or vite:preloadError): the page
+  // reloads at its end, so this failure is part of the same stale shell.
+  if (isStaleChunkRecoveryRunning()) { event.preventDefault(); return true }
+  // Retried within the window: let it surface, the reload did not help.
+  if (!claimStaleChunkRecovery()) return false
+  event.preventDefault()
+  void recover()
   return true
 }
 

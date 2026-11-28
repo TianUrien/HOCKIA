@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // native crash layer is installed; the web must keep calling @sentry/react
 // directly. Both paths must carry the same release/environment/scrubbing.
 
-const state = vi.hoisted(() => ({ native: false, platform: 'web' }))
+const state = vi.hoisted(() => ({ native: false, platform: 'web', recovering: false }))
 
 const sentryReact = vi.hoisted(() => ({
   init: vi.fn(),
@@ -32,7 +32,12 @@ vi.mock('@/lib/sentryHelpers', () => ({ isNetworkFailureMessage: () => false }))
 vi.mock('@/lib/sentryFilters', () => ({
   EXPECTED_REFUSAL_MESSAGES: ['This user is not available for messaging right now.'],
   isExpectedRefusal: () => false,
+  EXPECTED_SAMPLE_RATE: 1,
+  expectedErrorKey: () => null,
+  isUnsampledMeasure: () => false,
+  isStaleChunkMessage: (m: string) => m.toLowerCase().includes('importing a module script failed'),
 }))
+vi.mock('@/lib/swUpdate', () => ({ isStaleChunkRecoveryRunning: () => state.recovering }))
 vi.mock('@/lib/sentryScrub', () => ({
   scrubBreadcrumb: (crumb: unknown) => crumb,
   scrubEvent: (event: unknown) => event,
@@ -46,6 +51,7 @@ async function freshInit() {
 beforeEach(() => {
   state.native = false
   state.platform = 'web'
+  state.recovering = false
   vi.clearAllMocks()
   delete window.__hockiaSentry
 })
@@ -106,6 +112,20 @@ describe('initSentry — shell selection', () => {
       expect(typeof options.beforeBreadcrumb).toBe('function')
       expect(typeof options.beforeSendTransaction).toBe('function')
     }
+  })
+})
+
+describe('initSentry — stale chunks (JAVASCRIPT-REACT-7J)', () => {
+  it('drops a stale-chunk error only while the reload recovery runs', async () => {
+    const init = await freshInit()
+    init()
+    const { beforeSend } = sentryReact.init.mock.calls[0][0]
+    const event = { exception: { values: [{ value: 'Importing a module script failed.' }] } }
+    expect(beforeSend(event, {})).toBe(event)
+    state.recovering = true
+    expect(beforeSend(event, {})).toBeNull()
+    const other = { exception: { values: [{ value: 'Something else' }] } }
+    expect(beforeSend(other, {})).toBe(other)
   })
 })
 
