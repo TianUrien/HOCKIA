@@ -5,6 +5,7 @@ import { optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { deleteStorageObject } from '@/lib/storage'
 import { clearClubProfileScrollCache } from './useClubProfileScrollData'
 import { tClub } from '@/i18n/ns/club'
+import { warmUploadedPhoto } from '@/lib/imageWarm'
 
 /**
  * A club's photos (club_media) for the phone Manage media screen. Same paths
@@ -78,6 +79,7 @@ export function useClubMedia(clubId: string | null | undefined) {
             void deleteStorageObject({ bucket: 'club-media', publicUrl: url, context: 'club-manage-media:insert-failed' })
             throw dbErr
           }
+          warmUploadedPhoto(url)
           added += 1
           addedFiles.push(file)
         } catch (err) {
